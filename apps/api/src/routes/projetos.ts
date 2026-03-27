@@ -1,9 +1,9 @@
-import { Router } from "express";
+import { Router, type Router as IRouter } from "express";
 import { authenticate, requireRole } from "../middleware/auth.js";
 import { supabaseAdmin } from "../config/supabase.js";
 import type { StatusProjeto } from "@link-leagues/types";
 
-export const projetosRouter = Router();
+export const projetosRouter: IRouter = Router();
 
 // GET /projetos
 projetosRouter.get("/", authenticate, async (req, res, next) => {
@@ -38,7 +38,7 @@ projetosRouter.post("/", authenticate, async (req, res, next) => {
 });
 
 // PATCH /projetos/:id/status — fluxo de aprovação
-projetosRouter.patch("/:id/status", authenticate, requireRole("admin", "lider"), async (req, res, next) => {
+projetosRouter.patch("/:id/status", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
     const { status } = req.body as { status: StatusProjeto };
     const statusValidos: StatusProjeto[] = ["rascunho", "em_aprovacao", "aprovado", "rejeitado"];
@@ -63,7 +63,7 @@ projetosRouter.patch("/:id/status", authenticate, requireRole("admin", "lider"),
 });
 
 // DELETE /projetos/:id
-projetosRouter.delete("/:id", authenticate, requireRole("admin"), async (req, res, next) => {
+projetosRouter.delete("/:id", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const { error } = await supabaseAdmin
       .from("projetos")

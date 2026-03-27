@@ -1,8 +1,8 @@
-import { Router } from "express";
+import { Router, type Router as IRouter } from "express";
 import { authenticate, requireRole } from "../middleware/auth.js";
 import { supabaseAdmin } from "../config/supabase.js";
 
-export const ligasRouter = Router();
+export const ligasRouter: IRouter = Router();
 
 // GET /ligas — lista todas as ligas
 ligasRouter.get("/", authenticate, async (_req, res, next) => {
@@ -37,7 +37,7 @@ ligasRouter.get("/:id", authenticate, async (req, res, next) => {
 });
 
 // POST /ligas — criar liga (admin)
-ligasRouter.post("/", authenticate, requireRole("admin"), async (req, res, next) => {
+ligasRouter.post("/", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const { nome, descricao, lider_id } = req.body as {
       nome: string;
@@ -59,7 +59,7 @@ ligasRouter.post("/", authenticate, requireRole("admin"), async (req, res, next)
 });
 
 // PATCH /ligas/:id — editar liga
-ligasRouter.patch("/:id", authenticate, requireRole("admin", "lider"), async (req, res, next) => {
+ligasRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
     const { data, error } = await supabaseAdmin
       .from("ligas")
@@ -76,7 +76,7 @@ ligasRouter.patch("/:id", authenticate, requireRole("admin", "lider"), async (re
 });
 
 // DELETE /ligas/:id — arquivar liga (admin)
-ligasRouter.delete("/:id", authenticate, requireRole("admin"), async (req, res, next) => {
+ligasRouter.delete("/:id", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const { error } = await supabaseAdmin
       .from("ligas")

@@ -1,8 +1,8 @@
-import { Router } from "express";
+import { Router, type Router as IRouter } from "express";
 import { authenticate } from "../middleware/auth.js";
 import { supabaseAdmin } from "../config/supabase.js";
 
-export const presencaRouter = Router();
+export const presencaRouter: IRouter = Router();
 
 // GET /presenca?liga_id=&usuario_id=&periodo_inicio=&periodo_fim=
 presencaRouter.get("/", authenticate, async (req, res, next) => {
