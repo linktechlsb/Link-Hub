@@ -3,6 +3,8 @@
   "permissions": {
     "allow": [
       "Skill(gsd:*)",
+      "Skill(code-review)",
+      "Skill(autoresearch)",
       "Bash(npm run *)",
       "Bash(npm install *)",
       "Bash(git status)",
