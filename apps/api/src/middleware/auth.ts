@@ -34,7 +34,7 @@ export async function authenticate(
   req.user = {
     id: data.user.id,
     email: data.user.email ?? "",
-    role: (data.user.user_metadata?.["role"] as UserRole) ?? "membro",
+    role: (data.user.user_metadata?.["role"] as UserRole) ?? "aluno",
   };
 
   next();

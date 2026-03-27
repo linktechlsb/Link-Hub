@@ -1,8 +1,8 @@
-import { Router } from "express";
+import { Router, type Router as IRouter } from "express";
 import { authenticate } from "../middleware/auth.js";
 import { supabaseAdmin } from "../config/supabase.js";
 
-export const salasRouter = Router();
+export const salasRouter: IRouter = Router();
 
 // GET /salas — lista salas disponíveis
 salasRouter.get("/", authenticate, async (_req, res, next) => {
