@@ -10,6 +10,7 @@ import { ProjetosPage } from "@/pages/projetos/ProjetosPage";
 import { DashboardPage } from "@/pages/dashboard/DashboardPage";
 import { PresencaPage } from "@/pages/presenca/PresencaPage";
 import { SalasPage } from "@/pages/salas/SalasPage";
+import { AdministradorPage } from "@/pages/administrador/AdministradorPage";
 
 export const router: BrowserRouter = createBrowserRouter([
   {
@@ -39,6 +40,7 @@ export const router: BrowserRouter = createBrowserRouter([
           { path: "dashboard", element: <DashboardPage /> },
           { path: "presenca", element: <PresencaPage /> },
           { path: "salas", element: <SalasPage /> },
+          { path: "administrador", element: <AdministradorPage /> },
         ],
       },
     ],

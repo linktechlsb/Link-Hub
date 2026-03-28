@@ -6,12 +6,11 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { FolderKanban, Users, LogOut } from "lucide-react";
+import { FolderKanban, Users, LogOut, ShieldCheck } from "lucide-react";
 
 const navItems = [
   { to: "/projetos", label: "Projetos", icon: FolderKanban },
@@ -41,37 +40,52 @@ export function AppLayout() {
             <SidebarMenu>
               {navItems.map(({ to, label, icon: Icon }) => (
                 <SidebarMenuItem key={to}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={to}
-                      className={({ isActive }) =>
-                        isActive
-                          ? "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium bg-white/15 text-white"
-                          : "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-colors"
-                      }
-                    >
-                      <Icon className="h-4 w-4 flex-shrink-0" />
-                      {label}
-                    </NavLink>
-                  </SidebarMenuButton>
+                  <NavLink
+                    to={to}
+                    className={({ isActive }) =>
+                      isActive
+                        ? "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-white w-full"
+                        : "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-white/70 hover:text-white transition-colors w-full"
+                    }
+                  >
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    {label}
+                  </NavLink>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarContent>
 
-          <SidebarFooter className="px-2 py-3 border-t border-white/10">
+          <SidebarFooter className="px-2 py-3">
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton
+                <NavLink
+                  to="/administrador"
+                  className={({ isActive }) =>
+                    isActive
+                      ? "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-white w-full"
+                      : "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-white/70 hover:text-white transition-colors w-full"
+                  }
+                >
+                  <ShieldCheck className="h-4 w-4 flex-shrink-0" />
+                  Administrador
+                </NavLink>
+              </SidebarMenuItem>
+            </SidebarMenu>
+            <div className="border-t border-white/10 my-2" />
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <button
                   onClick={handleLogout}
-                  className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-colors w-full"
+                  className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-white/70 hover:text-white transition-colors w-full"
                 >
                   <LogOut className="h-4 w-4 flex-shrink-0" />
                   Sair
-                </SidebarMenuButton>
+                </button>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>
+
         </Sidebar>
 
         <div className="flex flex-1 flex-col overflow-hidden">
