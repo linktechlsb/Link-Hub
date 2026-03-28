@@ -1,6 +1,6 @@
 import { Router, type Router as IRouter } from "express";
 import { authenticate, requireRole } from "../middleware/auth.js";
-import { supabaseAdmin } from "../config/supabase.js";
+import { sql } from "../config/db.js";
 import type { StatusProjeto } from "@link-leagues/types";
 
 export const projetosRouter: IRouter = Router();
@@ -10,12 +10,22 @@ projetosRouter.get("/", authenticate, async (req, res, next) => {
   try {
     const ligaId = req.query["liga_id"] as string | undefined;
 
-    let query = supabaseAdmin.from("projetos").select("*, liga:ligas(id, nome)").order("criado_em", { ascending: false });
-    if (ligaId) query = query.eq("liga_id", ligaId);
+    const projetos = ligaId
+      ? await sql`
+          SELECT p.*, json_build_object('id', l.id, 'nome', l.nome) AS liga
+          FROM projetos p
+          LEFT JOIN ligas l ON l.id = p.liga_id
+          WHERE p.liga_id = ${ligaId}
+          ORDER BY p.criado_em DESC
+        `
+      : await sql`
+          SELECT p.*, json_build_object('id', l.id, 'nome', l.nome) AS liga
+          FROM projetos p
+          LEFT JOIN ligas l ON l.id = p.liga_id
+          ORDER BY p.criado_em DESC
+        `;
 
-    const { data, error } = await query;
-    if (error) throw error;
-    res.json(data);
+    res.json(projetos);
   } catch (err) {
     next(err);
   }
@@ -24,14 +34,13 @@ projetosRouter.get("/", authenticate, async (req, res, next) => {
 // POST /projetos
 projetosRouter.post("/", authenticate, async (req, res, next) => {
   try {
-    const { data, error } = await supabaseAdmin
-      .from("projetos")
-      .insert({ ...req.body, status: "rascunho" as StatusProjeto })
-      .select()
-      .single();
+    const body = { ...req.body, status: "rascunho" as StatusProjeto };
 
-    if (error) throw error;
-    res.status(201).json(data);
+    const [projeto] = await sql`
+      INSERT INTO projetos ${sql(body)} RETURNING *
+    `;
+
+    res.status(201).json(projeto);
   } catch (err) {
     next(err);
   }
@@ -48,15 +57,13 @@ projetosRouter.patch("/:id/status", authenticate, requireRole("staff", "diretor"
       return;
     }
 
-    const { data, error } = await supabaseAdmin
-      .from("projetos")
-      .update({ status })
-      .eq("id", req.params["id"])
-      .select()
-      .single();
+    const id = req.params["id"] as string;
+    const [projeto] = await sql`
+      UPDATE projetos SET status = ${status} WHERE id = ${id} RETURNING *
+    `;
 
-    if (error) throw error;
-    res.json(data);
+    if (!projeto) { res.status(404).json({ error: "Projeto não encontrado." }); return; }
+    res.json(projeto);
   } catch (err) {
     next(err);
   }
@@ -65,12 +72,8 @@ projetosRouter.patch("/:id/status", authenticate, requireRole("staff", "diretor"
 // DELETE /projetos/:id
 projetosRouter.delete("/:id", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
-    const { error } = await supabaseAdmin
-      .from("projetos")
-      .delete()
-      .eq("id", req.params["id"]);
-
-    if (error) throw error;
+    const id = req.params["id"] as string;
+    await sql`DELETE FROM projetos WHERE id = ${id}`;
     res.status(204).send();
   } catch (err) {
     next(err);

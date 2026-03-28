@@ -1,15 +1,14 @@
 import { Router, type Router as IRouter } from "express";
 import { authenticate } from "../middleware/auth.js";
-import { supabaseAdmin } from "../config/supabase.js";
+import { sql } from "../config/db.js";
 
 export const salasRouter: IRouter = Router();
 
 // GET /salas — lista salas disponíveis
 salasRouter.get("/", authenticate, async (_req, res, next) => {
   try {
-    const { data, error } = await supabaseAdmin.from("salas").select("*").order("nome");
-    if (error) throw error;
-    res.json(data);
+    const salas = await sql`SELECT * FROM salas ORDER BY nome`;
+    res.json(salas);
   } catch (err) {
     next(err);
   }
@@ -20,18 +19,19 @@ salasRouter.get("/reservas", authenticate, async (req, res, next) => {
   try {
     const { sala_id, data_inicio, data_fim } = req.query as Record<string, string>;
 
-    let query = supabaseAdmin
-      .from("reservas_salas")
-      .select("*, sala:salas(*), liga:ligas(id, nome)")
-      .order("inicio");
+    const reservas = await sql`
+      SELECT r.*, row_to_json(s.*) AS sala, json_build_object('id', l.id, 'nome', l.nome) AS liga
+      FROM reservas_salas r
+      LEFT JOIN salas s ON s.id = r.sala_id
+      LEFT JOIN ligas l ON l.id = r.liga_id
+      WHERE TRUE
+        ${sala_id ? sql`AND r.sala_id = ${sala_id}` : sql``}
+        ${data_inicio ? sql`AND r.inicio >= ${data_inicio}` : sql``}
+        ${data_fim ? sql`AND r.fim <= ${data_fim}` : sql``}
+      ORDER BY r.inicio
+    `;
 
-    if (sala_id) query = query.eq("sala_id", sala_id);
-    if (data_inicio) query = query.gte("inicio", data_inicio);
-    if (data_fim) query = query.lte("fim", data_fim);
-
-    const { data, error } = await query;
-    if (error) throw error;
-    res.json(data);
+    res.json(reservas);
   } catch (err) {
     next(err);
   }
@@ -43,27 +43,24 @@ salasRouter.post("/reservas", authenticate, async (req, res, next) => {
     const { sala_id, inicio, fim } = req.body as { sala_id: string; inicio: string; fim: string };
 
     // Verificar conflito de horário
-    const { data: conflito } = await supabaseAdmin
-      .from("reservas_salas")
-      .select("id")
-      .eq("sala_id", sala_id)
-      .lt("inicio", fim)
-      .gt("fim", inicio)
-      .limit(1);
+    const [conflito] = await sql`
+      SELECT id FROM reservas_salas
+      WHERE sala_id = ${sala_id}
+        AND inicio < ${fim}
+        AND fim > ${inicio}
+      LIMIT 1
+    `;
 
-    if (conflito && conflito.length > 0) {
+    if (conflito) {
       res.status(409).json({ error: "Conflito de horário: a sala já está reservada neste período." });
       return;
     }
 
-    const { data, error } = await supabaseAdmin
-      .from("reservas_salas")
-      .insert(req.body)
-      .select()
-      .single();
+    const [reserva] = await sql`
+      INSERT INTO reservas_salas ${sql(req.body)} RETURNING *
+    `;
 
-    if (error) throw error;
-    res.status(201).json(data);
+    res.status(201).json(reserva);
   } catch (err) {
     next(err);
   }
@@ -72,12 +69,8 @@ salasRouter.post("/reservas", authenticate, async (req, res, next) => {
 // DELETE /salas/reservas/:id — cancelar reserva
 salasRouter.delete("/reservas/:id", authenticate, async (req, res, next) => {
   try {
-    const { error } = await supabaseAdmin
-      .from("reservas_salas")
-      .delete()
-      .eq("id", req.params["id"]);
-
-    if (error) throw error;
+    const id = req.params["id"] as string;
+    await sql`DELETE FROM reservas_salas WHERE id = ${id}`;
     res.status(204).send();
   } catch (err) {
     next(err);

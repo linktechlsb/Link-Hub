@@ -1,42 +1,52 @@
 import { Router, type Router as IRouter } from "express";
 import { authenticate, requireRole } from "../middleware/auth.js";
-import { supabaseAdmin } from "../config/supabase.js";
+import { sql } from "../config/db.js";
 
 export const ligasRouter: IRouter = Router();
 
 // GET /ligas — lista todas as ligas
 ligasRouter.get("/", authenticate, async (_req, res, next) => {
   try {
-    const { data, error } = await supabaseAdmin
-      .from("ligas")
-      .select("*")
-      .order("nome");
-
-    if (error) throw error;
-    res.json(data);
+    const ligas = await sql`SELECT * FROM ligas ORDER BY nome`;
+    res.json(ligas);
   } catch (err) {
     next(err);
   }
 });
 
-// GET /ligas/:id — detalhe de uma liga
+// GET /ligas/:id — detalhe de uma liga com membros
 ligasRouter.get("/:id", authenticate, async (req, res, next) => {
   try {
-    const { data, error } = await supabaseAdmin
-      .from("ligas")
-      .select("*, membros:liga_membros(*, usuario:usuarios(*))")
-      .eq("id", req.params["id"])
-      .single();
+    const id = req.params["id"] as string;
+    const [liga] = await sql`
+      SELECT
+        l.*,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', lm.id,
+              'usuario_id', lm.usuario_id,
+              'cargo', lm.cargo,
+              'usuario', json_build_object('id', u.id, 'nome', u.nome, 'email', u.email)
+            )
+          ) FILTER (WHERE lm.id IS NOT NULL),
+          '[]'
+        ) AS membros
+      FROM ligas l
+      LEFT JOIN liga_membros lm ON lm.liga_id = l.id
+      LEFT JOIN usuarios u ON u.id = lm.usuario_id
+      WHERE l.id = ${id}
+      GROUP BY l.id
+    `;
 
-    if (error) throw error;
-    if (!data) { res.status(404).json({ error: "Liga não encontrada." }); return; }
-    res.json(data);
+    if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
+    res.json(liga);
   } catch (err) {
     next(err);
   }
 });
 
-// POST /ligas — criar liga (admin)
+// POST /ligas — criar liga (staff)
 ligasRouter.post("/", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const { nome, descricao, lider_id } = req.body as {
@@ -45,14 +55,13 @@ ligasRouter.post("/", authenticate, requireRole("staff"), async (req, res, next)
       lider_id: string;
     };
 
-    const { data, error } = await supabaseAdmin
-      .from("ligas")
-      .insert({ nome, descricao, lider_id })
-      .select()
-      .single();
+    const [liga] = await sql`
+      INSERT INTO ligas (nome, descricao, lider_id)
+      VALUES (${nome}, ${descricao ?? null}, ${lider_id})
+      RETURNING *
+    `;
 
-    if (error) throw error;
-    res.status(201).json(data);
+    res.status(201).json(liga);
   } catch (err) {
     next(err);
   }
@@ -61,29 +70,25 @@ ligasRouter.post("/", authenticate, requireRole("staff"), async (req, res, next)
 // PATCH /ligas/:id — editar liga
 ligasRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
-    const { data, error } = await supabaseAdmin
-      .from("ligas")
-      .update(req.body)
-      .eq("id", req.params["id"])
-      .select()
-      .single();
+    const id = req.params["id"] as string;
+    const updates = req.body as Record<string, unknown>;
 
-    if (error) throw error;
-    res.json(data);
+    const [liga] = await sql`
+      UPDATE ligas SET ${sql(updates)} WHERE id = ${id} RETURNING *
+    `;
+
+    if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
+    res.json(liga);
   } catch (err) {
     next(err);
   }
 });
 
-// DELETE /ligas/:id — arquivar liga (admin)
+// DELETE /ligas/:id — arquivar liga (staff)
 ligasRouter.delete("/:id", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
-    const { error } = await supabaseAdmin
-      .from("ligas")
-      .update({ ativo: false })
-      .eq("id", req.params["id"]);
-
-    if (error) throw error;
+    const id = req.params["id"] as string;
+    await sql`UPDATE ligas SET ativo = false WHERE id = ${id}`;
     res.status(204).send();
   } catch (err) {
     next(err);

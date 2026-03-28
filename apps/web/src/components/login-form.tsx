@@ -52,7 +52,7 @@ export function LoginForm({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="seu@link.edu.br"
+                  placeholder="@aluno.lsb.com.br"
                   required
                   value={email}
                   onChange={(e) => onEmailChange(e.target.value)}

@@ -1,5 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
   "permissions": {
     "allow": [
       "Skill(gsd:*)",
@@ -12,7 +15,8 @@
       "Bash(git log *)",
       "Bash(git add *)",
       "Bash(python3 -m py_compile *)",
-      "Bash(npx tsc --noEmit)"
+      "Bash(npx tsc --noEmit)",
+      "Bash(pnpm --filter @link-leagues/api add postgres)"
     ],
     "deny": [
       "Bash(git commit *)",
@@ -21,8 +25,5 @@
       "Read(./.env)",
       "Read(./.env.*)"
     ]
-  },
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   }
 }
