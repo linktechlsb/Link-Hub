@@ -29,7 +29,7 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full bg-[#EAEAEA]">
-        <Sidebar className="border-r-0 bg-[#546484] text-white">
+        <Sidebar className="border-r-0 bg-[#10284F] text-white">
           <SidebarHeader className="px-6 py-5 border-b border-white/10">
             <h1 className="font-display font-bold text-xl tracking-tight text-white">
               Link

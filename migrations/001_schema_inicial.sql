@@ -11,7 +11,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ------------------------------------------------------------
 -- ENUM TYPES
 -- ------------------------------------------------------------
-CREATE TYPE user_role AS ENUM ('staff', 'diretor', 'membro', 'aluno');
+CREATE TYPE user_role AS ENUM ('admin', 'lider', 'membro', 'estudante');
 
 CREATE TYPE status_projeto AS ENUM (
   'rascunho',
@@ -33,7 +33,7 @@ CREATE TABLE usuarios (
   id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   email        TEXT        NOT NULL UNIQUE,
   nome         TEXT        NOT NULL,
-  role         user_role   NOT NULL DEFAULT 'aluno',
+  role         user_role   NOT NULL DEFAULT 'estudante',
   avatar_url   TEXT,
   criado_em    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
