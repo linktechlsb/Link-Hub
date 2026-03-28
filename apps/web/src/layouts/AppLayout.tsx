@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import type { UserRole } from "@link-leagues/types";
 import {
   Sidebar,
   SidebarContent,
@@ -10,20 +12,51 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { FolderKanban, Users, LogOut, ShieldCheck } from "lucide-react";
+import {
+  Home,
+  Users,
+  FolderKanban,
+  Calendar,
+  BookOpen,
+  ShieldCheck,
+  Settings,
+  User,
+  LogOut,
+} from "lucide-react";
 
-const navItems = [
-  { to: "/projetos", label: "Projetos", icon: FolderKanban },
+const mainNavItems = [
+  { to: "/home", label: "Home", icon: Home },
   { to: "/ligas", label: "Ligas", icon: Users },
+  { to: "/projetos", label: "Projetos", icon: FolderKanban },
+  { to: "/agenda", label: "Agenda", icon: Calendar },
+  { to: "/conteudo", label: "Conteúdo", icon: BookOpen },
 ];
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  isActive
+    ? "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-white w-full"
+    : "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-white/70 hover:text-white transition-colors w-full";
 
 export function AppLayout() {
   const navigate = useNavigate();
+  const [role, setRole] = useState<UserRole | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      const session = data.session;
+      if (session) {
+        setRole((session.user.user_metadata?.["role"] as UserRole) ?? "aluno");
+      }
+    });
+  }, []);
 
   async function handleLogout() {
     await supabase.auth.signOut();
     navigate("/auth/login");
   }
+
+  const isStaff = role === "admin";
+  const canManage = role === "admin" || role === "lider";
 
   return (
     <SidebarProvider>
@@ -38,16 +71,9 @@ export function AppLayout() {
 
           <SidebarContent className="px-2 py-3">
             <SidebarMenu>
-              {navItems.map(({ to, label, icon: Icon }) => (
+              {mainNavItems.map(({ to, label, icon: Icon }) => (
                 <SidebarMenuItem key={to}>
-                  <NavLink
-                    to={to}
-                    className={({ isActive }) =>
-                      isActive
-                        ? "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-white w-full"
-                        : "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-white/70 hover:text-white transition-colors w-full"
-                    }
-                  >
+                  <NavLink to={to} className={navLinkClass}>
                     <Icon className="h-4 w-4 flex-shrink-0" />
                     {label}
                   </NavLink>
@@ -57,18 +83,31 @@ export function AppLayout() {
           </SidebarContent>
 
           <SidebarFooter className="px-2 py-3">
+            {(isStaff || canManage) && (
+              <SidebarMenu>
+                {isStaff && (
+                  <SidebarMenuItem>
+                    <NavLink to="/super-admin" className={navLinkClass}>
+                      <ShieldCheck className="h-4 w-4 flex-shrink-0" />
+                      Super Admin
+                    </NavLink>
+                  </SidebarMenuItem>
+                )}
+                {canManage && (
+                  <SidebarMenuItem>
+                    <NavLink to="/gerenciamento" className={navLinkClass}>
+                      <Settings className="h-4 w-4 flex-shrink-0" />
+                      Gerenciamento
+                    </NavLink>
+                  </SidebarMenuItem>
+                )}
+              </SidebarMenu>
+            )}
             <SidebarMenu>
               <SidebarMenuItem>
-                <NavLink
-                  to="/administrador"
-                  className={({ isActive }) =>
-                    isActive
-                      ? "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-white w-full"
-                      : "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-white/70 hover:text-white transition-colors w-full"
-                  }
-                >
-                  <ShieldCheck className="h-4 w-4 flex-shrink-0" />
-                  Administrador
+                <NavLink to="/conta" className={navLinkClass}>
+                  <User className="h-4 w-4 flex-shrink-0" />
+                  Conta
                 </NavLink>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -85,7 +124,6 @@ export function AppLayout() {
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>
-
         </Sidebar>
 
         <div className="flex flex-1 flex-col overflow-hidden">

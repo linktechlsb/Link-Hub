@@ -5,17 +5,19 @@ import { AppLayout } from "@/layouts/AppLayout";
 import { AuthLayout } from "@/layouts/AuthLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { LoginPage } from "@/pages/auth/LoginPage";
+import { HomePage } from "@/pages/home/HomePage";
 import { LigasPage } from "@/pages/ligas/LigasPage";
 import { ProjetosPage } from "@/pages/projetos/ProjetosPage";
-import { DashboardPage } from "@/pages/dashboard/DashboardPage";
-import { PresencaPage } from "@/pages/presenca/PresencaPage";
-import { SalasPage } from "@/pages/salas/SalasPage";
-import { AdministradorPage } from "@/pages/administrador/AdministradorPage";
+import { AgendaPage } from "@/pages/agenda/AgendaPage";
+import { ConteudoPage } from "@/pages/conteudo/ConteudoPage";
+import { SuperAdminPage } from "@/pages/super-admin/SuperAdminPage";
+import { GerenciamentoPage } from "@/pages/gerenciamento/GerenciamentoPage";
+import { ContaPage } from "@/pages/conta/ContaPage";
 
 export const router: BrowserRouter = createBrowserRouter([
   {
     path: "/",
-    element: <Navigate to="/projetos" replace />,
+    element: <Navigate to="/home" replace />,
   },
   {
     path: "/auth",
@@ -31,16 +33,22 @@ export const router: BrowserRouter = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
+          { path: "home", element: <HomePage /> },
+          { path: "ligas", element: <LigasPage /> },
           { path: "projetos", element: <ProjetosPage /> },
+          { path: "agenda", element: <AgendaPage /> },
+          { path: "conteudo", element: <ConteudoPage /> },
           {
-            path: "ligas",
-            element: <ProtectedRoute allowedRoles={["staff", "diretor", "membro"]} />,
-            children: [{ index: true, element: <LigasPage /> }],
+            path: "super-admin",
+            element: <ProtectedRoute allowedRoles={["admin"]} />,
+            children: [{ index: true, element: <SuperAdminPage /> }],
           },
-          { path: "dashboard", element: <DashboardPage /> },
-          { path: "presenca", element: <PresencaPage /> },
-          { path: "salas", element: <SalasPage /> },
-          { path: "administrador", element: <AdministradorPage /> },
+          {
+            path: "gerenciamento",
+            element: <ProtectedRoute allowedRoles={["admin", "lider"]} />,
+            children: [{ index: true, element: <GerenciamentoPage /> }],
+          },
+          { path: "conta", element: <ContaPage /> },
         ],
       },
     ],
