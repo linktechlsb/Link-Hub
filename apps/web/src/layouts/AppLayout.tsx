@@ -42,11 +42,18 @@ export function AppLayout() {
   const [role, setRole] = useState<UserRole | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       const session = data.session;
-      if (session) {
-        setRole((session.user.user_metadata?.["role"] as UserRole) ?? "aluno");
-      }
+      if (!session) return;
+
+      const { data: usuario, error } = await supabase
+        .from("usuarios")
+        .select("role")
+        .eq("email", session.user.email)
+        .single();
+
+      console.log("usuario:", usuario, "error:", error, "email:", session.user.email);
+      setRole((usuario?.role as UserRole) ?? "membro");
     });
   }, []);
 

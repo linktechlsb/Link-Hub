@@ -15,13 +15,28 @@ export function LoginPage() {
     setError(null);
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setError("E-mail ou senha inválidos.");
-    } else {
-      navigate("/projetos");
+      setLoading(false);
+      return;
     }
+
+    const { data: usuario } = await supabase
+      .from("usuarios")
+      .select("id")
+      .eq("email", data.user.email)
+      .single();
+
+    if (!usuario) {
+      await supabase.auth.signOut();
+      setError("Usuário não cadastrado na plataforma. Contate o administrador.");
+      setLoading(false);
+      return;
+    }
+
+    navigate("/home");
 
     setLoading(false);
   }

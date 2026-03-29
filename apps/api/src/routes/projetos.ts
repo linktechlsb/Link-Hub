@@ -47,7 +47,7 @@ projetosRouter.post("/", authenticate, async (req, res, next) => {
 });
 
 // PATCH /projetos/:id/status — fluxo de aprovação
-projetosRouter.patch("/:id/status", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
+projetosRouter.patch("/:id/status", authenticate, requireRole("admin", "lider"), async (req, res, next) => {
   try {
     const { status } = req.body as { status: StatusProjeto };
     const statusValidos: StatusProjeto[] = ["rascunho", "em_aprovacao", "aprovado", "rejeitado"];
@@ -70,7 +70,7 @@ projetosRouter.patch("/:id/status", authenticate, requireRole("staff", "diretor"
 });
 
 // DELETE /projetos/:id
-projetosRouter.delete("/:id", authenticate, requireRole("staff"), async (req, res, next) => {
+projetosRouter.delete("/:id", authenticate, requireRole("admin"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
     await sql`DELETE FROM projetos WHERE id = ${id}`;

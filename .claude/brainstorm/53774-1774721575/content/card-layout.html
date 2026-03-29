@@ -1,0 +1,100 @@
+<h2>Layout do grid de cards de Ligas</h2>
+<p class="subtitle">Qual densidade de cards prefere na tela?</p>
+
+<div class="cards">
+  <!-- Option A: 3 colunas -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f5f5f5;padding:16px;display:flex;flex-direction:column;gap:8px;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+        <!-- Card 1 -->
+        <div style="border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.12);">
+          <div style="height:60px;background:#10284E;"></div>
+          <div style="padding:8px;background:#fff;">
+            <div style="height:8px;background:#10284E;border-radius:4px;width:70%;margin-bottom:4px;"></div>
+            <div style="height:6px;background:#ccc;border-radius:4px;width:90%;margin-bottom:2px;"></div>
+            <div style="height:6px;background:#eee;border-radius:4px;width:50%;"></div>
+          </div>
+        </div>
+        <!-- Card 2 -->
+        <div style="border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.12);">
+          <div style="height:60px;background:#546484;"></div>
+          <div style="padding:8px;background:#fff;">
+            <div style="height:8px;background:#10284E;border-radius:4px;width:70%;margin-bottom:4px;"></div>
+            <div style="height:6px;background:#ccc;border-radius:4px;width:90%;margin-bottom:2px;"></div>
+            <div style="height:6px;background:#eee;border-radius:4px;width:50%;"></div>
+          </div>
+        </div>
+        <!-- Card 3 -->
+        <div style="border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.12);">
+          <div style="height:60px;background:#10284E;"></div>
+          <div style="padding:8px;background:#fff;">
+            <div style="height:8px;background:#10284E;border-radius:4px;width:70%;margin-bottom:4px;"></div>
+            <div style="height:6px;background:#ccc;border-radius:4px;width:90%;margin-bottom:2px;"></div>
+            <div style="height:6px;background:#eee;border-radius:4px;width:50%;"></div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:#888;text-align:center;">3 cards por linha (mais denso)</div>
+    </div>
+    <div class="card-body">
+      <h3>Opção A — 3 colunas</h3>
+      <p>Mostra mais ligas ao mesmo tempo. Bom para plataformas com 6+ ligas.</p>
+    </div>
+  </div>
+
+  <!-- Option B: 2 colunas -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f5f5f5;padding:16px;display:flex;flex-direction:column;gap:8px;">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+        <!-- Card 1 -->
+        <div style="border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.12);">
+          <div style="height:80px;background:#10284E;"></div>
+          <div style="padding:10px;background:#fff;">
+            <div style="height:9px;background:#10284E;border-radius:4px;width:65%;margin-bottom:5px;"></div>
+            <div style="height:7px;background:#ccc;border-radius:4px;width:85%;margin-bottom:3px;"></div>
+            <div style="height:7px;background:#eee;border-radius:4px;width:55%;"></div>
+          </div>
+        </div>
+        <!-- Card 2 -->
+        <div style="border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.12);">
+          <div style="height:80px;background:#546484;"></div>
+          <div style="padding:10px;background:#fff;">
+            <div style="height:9px;background:#10284E;border-radius:4px;width:65%;margin-bottom:5px;"></div>
+            <div style="height:7px;background:#ccc;border-radius:4px;width:85%;margin-bottom:3px;"></div>
+            <div style="height:7px;background:#eee;border-radius:4px;width:55%;"></div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:#888;text-align:center;">2 cards por linha (mais espaçoso)</div>
+    </div>
+    <div class="card-body">
+      <h3>Opção B — 2 colunas</h3>
+      <p>Cards maiores, imagem e texto mais legíveis. Ideal para poucas ligas (2–6).</p>
+    </div>
+  </div>
+
+  <!-- Option C: responsivo 3→2→1 -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f5f5f5;padding:16px;display:flex;flex-direction:column;gap:8px;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:4px;">
+        <div style="border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.1);">
+          <div style="height:50px;background:#10284E;"></div>
+          <div style="padding:6px;background:#fff;"><div style="height:7px;background:#ccc;border-radius:3px;width:75%;"></div></div>
+        </div>
+        <div style="border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.1);">
+          <div style="height:50px;background:#546484;"></div>
+          <div style="padding:6px;background:#fff;"><div style="height:7px;background:#ccc;border-radius:3px;width:75%;"></div></div>
+        </div>
+        <div style="border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.1);">
+          <div style="height:50px;background:#FEC641;"></div>
+          <div style="padding:6px;background:#fff;"><div style="height:7px;background:#ccc;border-radius:3px;width:75%;"></div></div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:#888;text-align:center;">Desktop: 3 col → Tablet: 2 col → Mobile: 1 col</div>
+    </div>
+    <div class="card-body">
+      <h3>Opção C — Responsivo (recomendado)</h3>
+      <p>3 colunas no desktop, 2 no tablet, 1 no mobile. Adapta automaticamente.</p>
+    </div>
+  </div>
+</div>

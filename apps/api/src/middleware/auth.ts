@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { supabaseAnon } from "../config/supabase.js";
+import { supabaseAnon, supabaseAdmin } from "../config/supabase.js";
 import type { UserRole } from "@link-leagues/types";
 
 export interface AuthenticatedRequest extends Request {
@@ -31,10 +31,16 @@ export async function authenticate(
     return;
   }
 
+  const { data: usuario } = await supabaseAdmin
+    .from("usuarios")
+    .select("role")
+    .eq("email", data.user.email)
+    .single();
+
   req.user = {
     id: data.user.id,
     email: data.user.email ?? "",
-    role: (data.user.user_metadata?.["role"] as UserRole) ?? "aluno",
+    role: (usuario?.role as UserRole) ?? "membro",
   };
 
   next();

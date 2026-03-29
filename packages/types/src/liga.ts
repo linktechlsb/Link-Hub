@@ -6,9 +6,13 @@ export interface Liga {
   descricao?: string;
   lider_id: string;
   lider?: Usuario;
+  lider_email?: string;
+  imagem_url?: string;
   ativo: boolean;
   criado_em: string;
   atualizado_em: string;
+  diretores?: { id: string; nome: string }[];
+  projetos_ativos?: number;
 }
 
 export interface LigaMembro {
@@ -16,6 +20,7 @@ export interface LigaMembro {
   liga_id: string;
   usuario_id: string;
   usuario?: Usuario;
+  cargo?: string;
   ingressou_em: string;
 }
 
@@ -23,6 +28,7 @@ export interface CreateLigaInput {
   nome: string;
   descricao?: string;
   lider_id: string;
+  diretores?: string[];
 }
 
 export interface UpdateLigaInput {
@@ -30,4 +36,5 @@ export interface UpdateLigaInput {
   descricao?: string;
   lider_id?: string;
   ativo?: boolean;
+  diretores?: string[];
 }

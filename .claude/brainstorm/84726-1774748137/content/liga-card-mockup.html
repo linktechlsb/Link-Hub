@@ -1,0 +1,74 @@
+<h2>Mockup do Card de Liga</h2>
+<p class="subtitle">Aparência final do card no grid responsivo</p>
+
+<div class="mockup">
+  <div class="mockup-header">Grid — 3 colunas (desktop)</div>
+  <div class="mockup-body" style="background:#f8f8f8;padding:24px;">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+
+      <!-- Card 1 — com imagem real -->
+      <div style="border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.10);background:#fff;position:relative;">
+        <div style="position:absolute;top:8px;right:8px;z-index:10;background:white;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.2);cursor:pointer;font-weight:700;font-size:14px;color:#546484;">⋯</div>
+        <div style="height:120px;background:linear-gradient(135deg,#10284E,#546484);position:relative;overflow:hidden;">
+          <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&q=80" alt="liga" style="width:100%;height:100%;object-fit:cover;opacity:0.7;"/>
+        </div>
+        <div style="padding:12px 14px 14px;">
+          <div style="font-size:15px;font-weight:700;color:#10284E;margin-bottom:6px;font-family:sans-serif;">Liga de Tecnologia</div>
+          <div style="font-size:11px;color:#546484;margin-bottom:4px;font-family:sans-serif;">
+            <span style="font-weight:600;">Diretores:</span> Ana Souza, Pedro Lima
+          </div>
+          <div style="font-size:11px;color:#888;font-family:sans-serif;">
+            <span style="background:#FEC641;color:#10284E;font-weight:600;border-radius:99px;padding:1px 8px;font-size:10px;">3 projetos ativos</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 — sem imagem (placeholder amarelo) -->
+      <div style="border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.10);background:#fff;position:relative;">
+        <div style="position:absolute;top:8px;right:8px;z-index:10;background:white;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.2);cursor:pointer;font-weight:700;font-size:14px;color:#546484;">⋯</div>
+        <div style="height:120px;background:#FEC641;display:flex;align-items:center;justify-content:center;">
+          <span style="font-size:48px;font-weight:800;color:#10284E;font-family:sans-serif;">F</span>
+        </div>
+        <div style="padding:12px 14px 14px;">
+          <div style="font-size:15px;font-weight:700;color:#10284E;margin-bottom:6px;font-family:sans-serif;">Liga de Finanças</div>
+          <div style="font-size:11px;color:#546484;margin-bottom:4px;font-family:sans-serif;">
+            <span style="font-weight:600;">Diretores:</span> Mariana Costa
+          </div>
+          <div style="font-size:11px;color:#888;font-family:sans-serif;">
+            <span style="background:#FEC641;color:#10284E;font-weight:600;border-radius:99px;padding:1px 8px;font-size:10px;">1 projeto ativo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 — sem projetos -->
+      <div style="border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.10);background:#fff;position:relative;">
+        <div style="position:absolute;top:8px;right:8px;z-index:10;background:white;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.2);cursor:pointer;font-weight:700;font-size:14px;color:#546484;">⋯</div>
+        <div style="height:120px;background:#FEC641;display:flex;align-items:center;justify-content:center;">
+          <span style="font-size:48px;font-weight:800;color:#10284E;font-family:sans-serif;">M</span>
+        </div>
+        <div style="padding:12px 14px 14px;">
+          <div style="font-size:15px;font-weight:700;color:#10284E;margin-bottom:6px;font-family:sans-serif;">Liga de Marketing</div>
+          <div style="font-size:11px;color:#546484;margin-bottom:4px;font-family:sans-serif;">
+            <span style="font-weight:600;">Diretores:</span> —
+          </div>
+          <div style="font-size:11px;color:#888;font-family:sans-serif;">
+            <span style="background:#EAEAEA;color:#888;font-weight:600;border-radius:99px;padding:1px 8px;font-size:10px;">Nenhum projeto ativo</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:24px;" class="section">
+  <h3>Legenda</h3>
+  <ul style="font-size:13px;color:#555;line-height:1.8;">
+    <li>⋯ no canto superior direito — visível apenas para <strong>lider</strong> e <strong>admin</strong></li>
+    <li>Imagem: foto real quando cadastrada, amarelo + inicial quando não há imagem</li>
+    <li>Badge amarelo = projetos ativos; badge cinza = sem projetos</li>
+    <li>Grid: 3 col desktop → 2 col tablet → 1 col mobile</li>
+  </ul>
+</div>
+
+<p style="margin-top:16px;font-size:13px;color:#888;">Este é o design final do card. Gostou? Responda no terminal.</p>
