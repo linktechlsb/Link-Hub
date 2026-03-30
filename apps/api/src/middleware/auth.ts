@@ -10,6 +10,15 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
+const SESSION_TTL_MS = 60 * 60 * 1000; // 1 hora
+
+interface CachedSession {
+  user: NonNullable<AuthenticatedRequest["user"]>;
+  expiresAt: number;
+}
+
+const sessionCache = new Map<string, CachedSession>();
+
 export async function authenticate(
   req: AuthenticatedRequest,
   res: Response,
@@ -24,9 +33,17 @@ export async function authenticate(
 
   const token = authHeader.slice(7);
 
+  const cached = sessionCache.get(token);
+  if (cached && cached.expiresAt > Date.now()) {
+    req.user = cached.user;
+    next();
+    return;
+  }
+
   const { data, error } = await supabaseAnon.auth.getUser(token);
 
   if (error || !data.user) {
+    sessionCache.delete(token);
     res.status(401).json({ error: "Token inválido ou expirado." });
     return;
   }
@@ -37,12 +54,15 @@ export async function authenticate(
     .eq("email", data.user.email)
     .single();
 
-  req.user = {
+  const user = {
     id: data.user.id,
     email: data.user.email ?? "",
     role: (usuario?.role as UserRole) ?? "membro",
   };
 
+  sessionCache.set(token, { user, expiresAt: Date.now() + SESSION_TTL_MS });
+
+  req.user = user;
   next();
 }
 
