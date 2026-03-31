@@ -13,24 +13,31 @@ pnpm install
 
 ## 2. Configurar variáveis de ambiente
 
-### API (`apps/api/.env`)
+Copie o arquivo de exemplo e preencha as chaves:
 
-Abra o arquivo e preencha as chaves do Supabase:
+```bash
+cp .env.example .env
+```
+
+Depois, abra o arquivo `.env` na **raiz do projeto** e preencha todas as variáveis:
 
 ```
+# Supabase
 SUPABASE_URL=https://fascinatingmacaque-db.cloudfy.cloud
 SUPABASE_ANON_KEY=<painel Supabase → Settings → API → anon public>
 SUPABASE_SERVICE_ROLE_KEY=<painel Supabase → Settings → API → service_role>
+DATABASE_URL=<painel Supabase → Settings → Database → Connection string>
+
+# API
 API_PORT=3001
 CORS_ORIGIN=http://localhost:3000
-```
 
-### Frontend (`apps/web/.env.local`)
-
-```
+# Frontend (Vite)
 VITE_SUPABASE_URL=https://fascinatingmacaque-db.cloudfy.cloud
 VITE_SUPABASE_ANON_KEY=<painel Supabase → Settings → API → anon public>
 ```
+
+**Importante:** O arquivo `.env` deve estar na **raiz do projeto**, não dentro de nenhuma pasta.
 
 ## 3. Iniciar o projeto
 
