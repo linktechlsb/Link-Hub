@@ -1,0 +1,241 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Montserrat', sans-serif; background: #f5f5f5; }
+  h2 { font-size: 1.3rem; font-weight: 700; color: #10284E; margin-bottom: 4px; }
+  .subtitle { color: #666; font-size: 0.85rem; margin-bottom: 24px; }
+
+  .screen-wrapper {
+    background: white;
+    border-radius: 12px;
+    border: 2px solid #e0e0e0;
+    overflow: hidden;
+    display: flex;
+    height: 460px;
+    margin-bottom: 20px;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 56px;
+    background: #10284E;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 0;
+    gap: 18px;
+    flex-shrink: 0;
+  }
+  .sidebar-logo { width: 30px; height: 30px; background: #FEC641; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 900; color: #10284E; }
+  .sidebar-icon { width: 26px; height: 26px; background: rgba(255,255,255,0.18); border-radius: 6px; }
+  .sidebar-icon.active { background: rgba(255,255,255,0.55); }
+
+  /* Main */
+  .main { flex: 1; background: #f8f9fb; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Page header */
+  .page-header { padding: 18px 20px 12px; background: #f8f9fb; }
+  .page-header h3 { font-size: 1rem; font-weight: 800; color: #10284E; font-family: 'Montserrat', sans-serif; }
+  .page-header p { font-size: 0.7rem; color: #888; margin-top: 2px; }
+
+  /* Full-width carousel */
+  .carousel-container {
+    margin: 0 20px 0;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .liga-slide {
+    height: 220px;
+    background: linear-gradient(135deg, #10284E 0%, #546484 100%);
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .liga-slide-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(16,40,78,0.92) 0%, rgba(16,40,78,0.2) 55%, transparent 100%);
+  }
+
+  .liga-slide-content {
+    position: relative;
+    z-index: 2;
+    padding: 16px 18px;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .liga-slide-info h4 { font-size: 1rem; font-weight: 800; color: white; margin-bottom: 3px; }
+  .liga-slide-info p { font-size: 0.68rem; color: rgba(255,255,255,0.72); }
+
+  .liga-slide-stats { display: flex; gap: 8px; }
+  .liga-stat { background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); border-radius: 8px; padding: 6px 10px; text-align: center; }
+  .liga-stat .v { font-size: 0.9rem; font-weight: 800; color: #FEC641; }
+  .liga-stat .l { font-size: 0.55rem; color: rgba(255,255,255,0.7); margin-top: 1px; }
+
+  /* Dots */
+  .carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    padding: 10px 0 0;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #ccc; }
+  .dot.active { width: 18px; border-radius: 4px; background: #10284E; }
+
+  /* Navigation arrows on slide */
+  .arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 3; width: 28px; height: 28px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem; cursor: pointer; }
+  .arrow-left { left: 10px; }
+  .arrow-right { right: 10px; }
+
+  /* Below carousel — "Explore mais" section */
+  .below { padding: 16px 20px; flex: 1; overflow: hidden; }
+  .below-title { font-size: 0.72rem; font-weight: 700; color: #10284E; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+  .below-title a { font-size: 0.65rem; color: #546484; font-weight: 600; }
+  .quick-row { display: flex; gap: 8px; }
+  .quick-card { background: white; border-radius: 8px; border: 1.5px solid #eaeaea; padding: 10px; flex: 1; }
+  .quick-card .qv { font-size: 1rem; font-weight: 800; color: #10284E; }
+  .quick-card .ql { font-size: 0.58rem; color: #888; margin-top: 2px; }
+  .quick-card .qi { font-size: 0.62rem; color: #FEC641; font-weight: 700; }
+
+  /* Annotation */
+  .annotation {
+    background: #fff;
+    border: 1.5px solid #eaeaea;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 0.78rem;
+    color: #444;
+    line-height: 1.7;
+  }
+  .annotation strong { color: #10284E; }
+  .annotation ul { margin: 8px 0 0 16px; }
+  .annotation li { margin-bottom: 4px; }
+  .badge { display: inline-block; background: #FEC641; color: #10284E; border-radius: 4px; padding: 1px 7px; font-size: 0.65rem; font-weight: 700; margin-right: 4px; }
+
+  /* Question */
+  .question-box {
+    background: #f0f4ff;
+    border: 1.5px solid #546484;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 0.8rem;
+    color: #10284E;
+    margin-top: 16px;
+    font-weight: 600;
+  }
+
+  .options { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+  .option {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    color: #10284E;
+    font-weight: 600;
+    transition: all 0.15s;
+    flex: 1;
+    min-width: 140px;
+  }
+  .option:hover { border-color: #546484; }
+  .option.selected { border-color: #10284E; background: #f0f4ff; }
+  .option .letter { display: inline-block; background: #10284E; color: white; border-radius: 4px; padding: 1px 7px; margin-right: 6px; font-size: 0.7rem; }
+  .option .content { margin-top: 4px; }
+  .option p { font-size: 0.68rem; color: #888; font-weight: 400; margin-top: 4px; }
+</style>
+
+<h2>Home Page — Carrossel Full-Width</h2>
+<p class="subtitle">Card da liga ocupa toda a largura. Auto-avanço a cada 1,5s.</p>
+
+<!-- MOCKUP -->
+<div class="screen-wrapper">
+  <div class="sidebar">
+    <div class="sidebar-logo">L</div>
+    <div class="sidebar-icon active"></div>
+    <div class="sidebar-icon"></div>
+    <div class="sidebar-icon"></div>
+    <div class="sidebar-icon"></div>
+    <div class="sidebar-icon"></div>
+  </div>
+  <div class="main">
+    <div class="page-header">
+      <h3>Olá, Rafael 👋</h3>
+      <p>Explore as ligas da plataforma</p>
+    </div>
+
+    <div class="carousel-container">
+      <div class="liga-slide">
+        <!-- Gradient background simula imagem da liga -->
+        <div class="liga-slide-overlay"></div>
+        <div class="arrow arrow-left">‹</div>
+        <div class="arrow arrow-right">›</div>
+        <div class="liga-slide-content">
+          <div class="liga-slide-info">
+            <h4>Liga de Finanças</h4>
+            <p>Líder: Ana Souza  ·  14 membros</p>
+          </div>
+          <div class="liga-slide-stats">
+            <div class="liga-stat"><div class="v">92</div><div class="l">Score</div></div>
+            <div class="liga-stat"><div class="v">3</div><div class="l">Projetos</div></div>
+            <div class="liga-stat"><div class="v">87%</div><div class="l">Presença</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="carousel-dots">
+        <div class="dot active"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+
+    <div class="below">
+      <div class="below-title">Destaques desta semana</div>
+      <div class="quick-row">
+        <div class="quick-card"><div class="qi">↑ Score</div><div class="qv">Liga de Marketing</div><div class="ql">+12pts essa semana</div></div>
+        <div class="quick-card"><div class="qi">📅 Evento</div><div class="qv">Reunião Geral</div><div class="ql">Sex, 18h — Sala 204</div></div>
+        <div class="quick-card"><div class="qi">✅ Projeto</div><div class="qv">Análise de Mercado</div><div class="ql">Concluído ontem</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ANOTAÇÕES -->
+<div class="annotation">
+  <strong>Como funciona:</strong>
+  <ul>
+    <li>Carrossel ocupa <strong>100% da largura</strong> do content area</li>
+    <li>Cada card mostra: imagem/cor da liga, nome, líder, membros, score, projetos ativos, presença</li>
+    <li>Setas ‹ › para navegar manualmente + <strong>auto-avanço 1,5s</strong></li>
+    <li>Dots indicam posição atual na lista de ligas</li>
+    <li>Clicar no card → redireciona para <code>/ligas/:id</code></li>
+  </ul>
+</div>
+
+<!-- PERGUNTA -->
+<div class="question-box">
+  Abaixo do carrossel, o que deve aparecer?
+</div>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <span class="letter">A</span> Nada — só o carrossel
+    <p>Home page minimalista, foco total nas ligas</p>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <span class="letter">B</span> Destaques da semana
+    <p>Cards de eventos próximos, projetos concluídos, etc.</p>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <span class="letter">C</span> Métricas do usuário
+    <p>Presença, score pessoal, próximo evento do membro</p>
+  </div>
+</div>
