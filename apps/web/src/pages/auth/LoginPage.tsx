@@ -15,29 +15,19 @@ export function LoginPage() {
     setError(null);
     setLoading(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
 
     if (error) {
-      setError("E-mail ou senha inválidos.");
-      setLoading(false);
-      return;
-    }
-
-    const { data: usuario } = await supabase
-      .from("usuarios")
-      .select("id")
-      .eq("email", data.user.email)
-      .single();
-
-    if (!usuario) {
-      await supabase.auth.signOut();
-      setError("Usuário não cadastrado na plataforma. Contate o administrador.");
+      if (error.message.toLowerCase().includes("email not confirmed")) {
+        setError("E-mail não confirmado. Verifique sua caixa de entrada.");
+      } else {
+        setError("E-mail ou senha inválidos.");
+      }
       setLoading(false);
       return;
     }
 
     navigate("/home");
-
     setLoading(false);
   }
 

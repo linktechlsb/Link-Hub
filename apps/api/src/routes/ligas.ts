@@ -49,6 +49,32 @@ ligasRouter.get("/", authenticate, async (_req, res, next) => {
   }
 });
 
+// GET /ligas/minha — liga do usuário autenticado (via liga_membros ou lider_id)
+ligasRouter.get("/minha", authenticate, async (req, res, next) => {
+  try {
+    const email = (req as AuthenticatedRequest).user!.email;
+    const [liga] = await sql`
+      SELECT l.*, lu.email AS lider_email
+      FROM ligas l
+      LEFT JOIN usuarios lu ON lu.id = l.lider_id
+      WHERE l.ativo = true
+        AND (
+          l.lider_id = (SELECT id FROM usuarios WHERE email = ${email})
+          OR EXISTS (
+            SELECT 1 FROM liga_membros lm
+            JOIN usuarios u ON u.id = lm.usuario_id
+            WHERE lm.liga_id = l.id AND u.email = ${email}
+          )
+        )
+      LIMIT 1
+    `;
+    if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
+    res.json(liga);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /ligas/:id — detalhe de uma liga com membros
 ligasRouter.get("/:id", authenticate, async (req, res, next) => {
   try {
@@ -76,6 +102,85 @@ ligasRouter.get("/:id", authenticate, async (req, res, next) => {
 
     if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
     res.json(liga);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /ligas/:id/membros — membros da liga com cargo e data de ingresso
+ligasRouter.get("/:id/membros", authenticate, async (req, res, next) => {
+  try {
+    const id = req.params["id"] as string;
+    const membros = await sql`
+      SELECT
+        lm.id, lm.usuario_id, lm.cargo, lm.ingressou_em,
+        u.nome, u.email
+      FROM liga_membros lm
+      JOIN usuarios u ON u.id = lm.usuario_id
+      WHERE lm.liga_id = ${id}
+      ORDER BY lm.ingressou_em ASC
+    `;
+    res.json(membros);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /ligas/:id/projetos — projetos da liga
+ligasRouter.get("/:id/projetos", authenticate, async (req, res, next) => {
+  try {
+    const id = req.params["id"] as string;
+    const projetos = await sql`
+      SELECT p.*, u.nome AS responsavel_nome
+      FROM projetos p
+      LEFT JOIN usuarios u ON u.id = p.responsavel_id
+      WHERE p.liga_id = ${id}
+      ORDER BY p.criado_em DESC
+    `;
+    res.json(projetos);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /ligas/:id/presenca — registros de presença agrupados por evento
+ligasRouter.get("/:id/presenca", authenticate, async (req, res, next) => {
+  try {
+    const id = req.params["id"] as string;
+    const registros = await sql`
+      SELECT
+        e.id AS evento_id,
+        e.titulo AS evento_titulo,
+        e.data AS evento_data,
+        pr.id,
+        pr.usuario_id,
+        pr.status,
+        pr.justificativa,
+        u.nome AS usuario_nome
+      FROM eventos e
+      LEFT JOIN presencas pr ON pr.evento_id = e.id
+      LEFT JOIN usuarios u ON u.id = pr.usuario_id
+      WHERE e.liga_id = ${id}
+      ORDER BY e.data DESC
+    `;
+    res.json(registros);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /ligas/:id/eventos/proximo — próximo evento futuro da liga
+ligasRouter.get("/:id/eventos/proximo", authenticate, async (req, res, next) => {
+  try {
+    const id = req.params["id"] as string;
+    const [evento] = await sql`
+      SELECT * FROM eventos
+      WHERE liga_id = ${id} AND data > NOW()
+      ORDER BY data ASC
+      LIMIT 1
+    `;
+    if (!evento) { res.status(404).json({ error: "Nenhum evento futuro." }); return; }
+    res.json(evento);
   } catch (err) {
     next(err);
   }

@@ -1,0 +1,282 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Montserrat', sans-serif; background: #f5f5f5; }
+
+  h2 { font-size: 1.3rem; font-weight: 700; color: #10284E; margin-bottom: 4px; }
+  .subtitle { color: #666; font-size: 0.85rem; margin-bottom: 24px; }
+
+  .layouts { display: flex; gap: 20px; flex-wrap: wrap; }
+
+  .layout-card {
+    background: white;
+    border-radius: 12px;
+    border: 2.5px solid #e0e0e0;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    flex: 1;
+    min-width: 280px;
+  }
+  .layout-card:hover { border-color: #546484; }
+  .layout-card.selected { border-color: #10284E; box-shadow: 0 0 0 3px rgba(16,40,78,0.12); }
+
+  .layout-label {
+    padding: 12px 16px;
+    background: #10284E;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .layout-label span { background: #FEC641; color: #10284E; border-radius: 4px; padding: 1px 7px; font-size: 0.75rem; }
+
+  .screen { display: flex; height: 380px; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 52px;
+    background: #10284E;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+  .sidebar-logo { width: 28px; height: 28px; background: #FEC641; border-radius: 6px; }
+  .sidebar-icon { width: 24px; height: 24px; background: rgba(255,255,255,0.2); border-radius: 5px; }
+  .sidebar-icon.active { background: rgba(255,255,255,0.5); }
+
+  /* Main content */
+  .main { flex: 1; background: #f8f9fb; overflow: hidden; display: flex; flex-direction: column; }
+
+  /* Layout A - Hero + Carousel Below */
+  .hero-welcome {
+    background: linear-gradient(135deg, #10284E 0%, #546484 100%);
+    padding: 20px 20px 16px;
+    color: white;
+  }
+  .hero-welcome h3 { font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
+  .hero-welcome p { font-size: 0.7rem; opacity: 0.75; }
+  .hero-stats { display: flex; gap: 10px; margin-top: 12px; }
+  .hero-stat { background: rgba(255,255,255,0.15); border-radius: 8px; padding: 7px 12px; }
+  .hero-stat .val { font-size: 1.1rem; font-weight: 700; }
+  .hero-stat .lbl { font-size: 0.6rem; opacity: 0.8; }
+
+  .carousel-section { padding: 14px 16px; flex: 1; overflow: hidden; }
+  .carousel-title { font-size: 0.75rem; font-weight: 700; color: #10284E; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .carousel-title small { background: #eaeaea; color: #546484; border-radius: 10px; padding: 1px 7px; font-size: 0.65rem; }
+  .carousel-row { display: flex; gap: 10px; }
+
+  .liga-card {
+    background: white;
+    border-radius: 10px;
+    border: 1.5px solid #eaeaea;
+    overflow: hidden;
+    width: 130px;
+    flex-shrink: 0;
+  }
+  .liga-card-img { height: 60px; background: linear-gradient(135deg, #546484, #10284E); position: relative; }
+  .liga-card-img-b { background: linear-gradient(135deg, #FEC641, #f59e0b); }
+  .liga-card-img-c { background: linear-gradient(135deg, #6366f1, #10284E); }
+  .liga-card-img-d { background: linear-gradient(135deg, #10b981, #546484); }
+  .liga-card-body { padding: 8px; }
+  .liga-card-body h4 { font-size: 0.65rem; font-weight: 700; color: #10284E; margin-bottom: 3px; }
+  .liga-card-body p { font-size: 0.6rem; color: #888; }
+  .liga-card-footer { padding: 5px 8px; background: #f8f9fb; border-top: 1px solid #eaeaea; display: flex; justify-content: space-between; align-items: center; }
+  .liga-card-footer span { font-size: 0.58rem; color: #546484; font-weight: 600; }
+  .liga-card-badge { background: #FEC641; color: #10284E; border-radius: 4px; padding: 1px 5px; font-size: 0.58rem; font-weight: 700; }
+
+  /* Layout B - Full Width Carousel + Info Bar */
+  .info-bar { background: white; border-bottom: 1.5px solid #eaeaea; padding: 10px 16px; display: flex; gap: 16px; align-items: center; }
+  .info-bar-item { text-align: center; }
+  .info-bar-item .v { font-size: 0.95rem; font-weight: 700; color: #10284E; }
+  .info-bar-item .l { font-size: 0.58rem; color: #888; }
+  .info-bar-divider { width: 1px; height: 28px; background: #eaeaea; }
+
+  .carousel-full { padding: 16px; flex: 1; }
+  .carousel-full-title { font-size: 0.8rem; font-weight: 700; color: #10284E; margin-bottom: 12px; }
+  .carousel-full-row { display: flex; gap: 10px; }
+  .liga-card-lg {
+    background: white;
+    border-radius: 10px;
+    border: 1.5px solid #eaeaea;
+    overflow: hidden;
+    width: 145px;
+    flex-shrink: 0;
+  }
+  .liga-card-lg-img { height: 80px; background: linear-gradient(135deg, #546484, #10284E); }
+  .liga-card-lg-img-b { background: linear-gradient(135deg, #FEC641, #f59e0b); }
+  .liga-card-lg-img-c { background: linear-gradient(135deg, #6366f1, #10284E); }
+  .liga-card-lg-body { padding: 9px 10px; }
+  .liga-card-lg-body h4 { font-size: 0.7rem; font-weight: 700; color: #10284E; margin-bottom: 3px; }
+  .liga-card-lg-body p { font-size: 0.62rem; color: #888; line-height: 1.4; }
+  .liga-card-lg-footer { padding: 6px 10px; border-top: 1px solid #eaeaea; display: flex; gap: 6px; }
+  .pill { background: #f0f4ff; color: #546484; border-radius: 20px; padding: 2px 7px; font-size: 0.58rem; font-weight: 600; }
+  .pill-y { background: #fff8e1; color: #f59e0b; }
+
+  /* Layout C - Grid masonry */
+  .search-bar { padding: 12px 16px 8px; }
+  .search-input { background: white; border: 1.5px solid #eaeaea; border-radius: 8px; padding: 6px 12px; font-size: 0.7rem; color: #888; width: 100%; display: flex; align-items: center; gap: 6px; }
+  .grid-section { padding: 0 16px; flex: 1; }
+  .grid-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .grid-card { background: white; border-radius: 8px; border: 1.5px solid #eaeaea; overflow: hidden; flex: 1; }
+  .grid-card-img { height: 48px; background: linear-gradient(135deg, #546484, #10284E); }
+  .grid-card-img-b { background: linear-gradient(135deg, #FEC641, #f59e0b); }
+  .grid-card-img-c { background: linear-gradient(135deg, #6366f1, #10284E); }
+  .grid-card-img-d { background: linear-gradient(135deg, #10b981, #546484); }
+  .grid-card-body { padding: 7px; }
+  .grid-card-body h4 { font-size: 0.62rem; font-weight: 700; color: #10284E; margin-bottom: 2px; }
+  .grid-card-body p { font-size: 0.57rem; color: #888; }
+
+  .desc { padding: 12px 16px; font-size: 0.75rem; color: #555; line-height: 1.5; border-top: 1.5px solid #eaeaea; }
+  .desc strong { color: #10284E; }
+
+  .tag { display: inline-block; background: #e8f0fe; color: #546484; border-radius: 4px; padding: 1px 6px; font-size: 0.65rem; font-weight: 600; margin-right: 4px; }
+  .tag-g { background: #e6f4ea; color: #1a7a35; }
+</style>
+
+<h2>Home Page — Layout do Carrossel</h2>
+<p class="subtitle">Como apresentar as ligas para o membro na tela inicial?</p>
+
+<div class="layouts">
+
+  <!-- OPTION A -->
+  <div class="layout-card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="layout-label">A — Hero + Carrossel <span>Recomendado</span></div>
+    <div class="screen">
+      <div class="sidebar">
+        <div class="sidebar-logo"></div>
+        <div class="sidebar-icon active"></div>
+        <div class="sidebar-icon"></div>
+        <div class="sidebar-icon"></div>
+        <div class="sidebar-icon"></div>
+      </div>
+      <div class="main">
+        <div class="hero-welcome">
+          <h3>Olá, Rafael 👋</h3>
+          <p>Bem-vindo de volta à plataforma</p>
+          <div class="hero-stats">
+            <div class="hero-stat"><div class="val">12</div><div class="lbl">Ligas ativas</div></div>
+            <div class="hero-stat"><div class="val">87%</div><div class="lbl">Sua presença</div></div>
+            <div class="hero-stat"><div class="val">5</div><div class="lbl">Eventos este mês</div></div>
+          </div>
+        </div>
+        <div class="carousel-section">
+          <div class="carousel-title">Todas as ligas <small>12 ligas</small></div>
+          <div class="carousel-row">
+            <div class="liga-card">
+              <div class="liga-card-img"></div>
+              <div class="liga-card-body"><h4>Liga de Finanças</h4><p>Líder: Ana Souza</p></div>
+              <div class="liga-card-footer"><span>3 projetos</span><span class="liga-card-badge">92pts</span></div>
+            </div>
+            <div class="liga-card">
+              <div class="liga-card-img liga-card-img-b"></div>
+              <div class="liga-card-body"><h4>Liga de Marketing</h4><p>Líder: Pedro Lima</p></div>
+              <div class="liga-card-footer"><span>5 projetos</span><span class="liga-card-badge">78pts</span></div>
+            </div>
+            <div class="liga-card">
+              <div class="liga-card-img liga-card-img-c"></div>
+              <div class="liga-card-body"><h4>Liga de Inovação</h4><p>Líder: Julia Matos</p></div>
+              <div class="liga-card-footer"><span>2 projetos</span><span class="liga-card-badge">85pts</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="desc">
+      <strong>Hero com boas-vindas + stats globais</strong> no topo em navy, depois carrossel horizontal de ligas.<br>
+      <span class="tag">Engajamento alto</span><span class="tag-g">Visualmente forte</span>
+    </div>
+  </div>
+
+  <!-- OPTION B -->
+  <div class="layout-card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="layout-label">B — Barra de Métricas + Carrossel</div>
+    <div class="screen">
+      <div class="sidebar">
+        <div class="sidebar-logo"></div>
+        <div class="sidebar-icon active"></div>
+        <div class="sidebar-icon"></div>
+        <div class="sidebar-icon"></div>
+        <div class="sidebar-icon"></div>
+      </div>
+      <div class="main">
+        <div class="info-bar">
+          <div class="info-bar-item"><div class="v">12</div><div class="l">Ligas ativas</div></div>
+          <div class="info-bar-divider"></div>
+          <div class="info-bar-item"><div class="v">87%</div><div class="l">Presença</div></div>
+          <div class="info-bar-divider"></div>
+          <div class="info-bar-item"><div class="v">3</div><div class="l">Proj. ativos</div></div>
+          <div class="info-bar-divider"></div>
+          <div class="info-bar-item"><div class="v">Sex</div><div class="l">Próx. evento</div></div>
+        </div>
+        <div class="carousel-full">
+          <div class="carousel-full-title">Todas as Ligas</div>
+          <div class="carousel-full-row">
+            <div class="liga-card-lg">
+              <div class="liga-card-lg-img"></div>
+              <div class="liga-card-lg-body"><h4>Liga de Finanças</h4><p>3 projetos ativos</p></div>
+              <div class="liga-card-lg-footer"><span class="pill">92 pts</span><span class="pill pill-y">85% pres.</span></div>
+            </div>
+            <div class="liga-card-lg">
+              <div class="liga-card-lg-img liga-card-lg-img-b"></div>
+              <div class="liga-card-lg-body"><h4>Liga de Marketing</h4><p>5 projetos ativos</p></div>
+              <div class="liga-card-lg-footer"><span class="pill">78 pts</span><span class="pill pill-y">91% pres.</span></div>
+            </div>
+            <div class="liga-card-lg">
+              <div class="liga-card-lg-img liga-card-lg-img-c"></div>
+              <div class="liga-card-lg-body"><h4>Liga de Inovação</h4><p>2 projetos ativos</p></div>
+              <div class="liga-card-lg-footer"><span class="pill">85 pts</span><span class="pill pill-y">79% pres.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="desc">
+      <strong>Barra compacta de métricas</strong> fixada no topo, carrossel de ligas com mais espaço e cards maiores.<br>
+      <span class="tag">Mais espaço para ligas</span>
+    </div>
+  </div>
+
+  <!-- OPTION C -->
+  <div class="layout-card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="layout-label">C — Grid com Busca</div>
+    <div class="screen">
+      <div class="sidebar">
+        <div class="sidebar-logo"></div>
+        <div class="sidebar-icon active"></div>
+        <div class="sidebar-icon"></div>
+        <div class="sidebar-icon"></div>
+        <div class="sidebar-icon"></div>
+      </div>
+      <div class="main">
+        <div style="padding: 12px 16px 0; background: white; border-bottom: 1.5px solid #eaeaea;">
+          <div style="font-size: 0.8rem; font-weight: 700; color: #10284E; margin-bottom: 8px;">Todas as Ligas</div>
+          <div class="search-input">🔍 Buscar liga...</div>
+          <div style="height: 8px;"></div>
+        </div>
+        <div class="grid-section" style="padding-top: 10px;">
+          <div class="grid-row">
+            <div class="grid-card"><div class="grid-card-img"></div><div class="grid-card-body"><h4>Liga de Finanças</h4><p>3 projetos · 92pts</p></div></div>
+            <div class="grid-card"><div class="grid-card-img grid-card-img-b"></div><div class="grid-card-body"><h4>Liga de Marketing</h4><p>5 projetos · 78pts</p></div></div>
+            <div class="grid-card"><div class="grid-card-img grid-card-img-c"></div><div class="grid-card-body"><h4>Liga de Inovação</h4><p>2 projetos · 85pts</p></div></div>
+          </div>
+          <div class="grid-row">
+            <div class="grid-card"><div class="grid-card-img grid-card-img-d"></div><div class="grid-card-body"><h4>Liga de RH</h4><p>4 projetos · 70pts</p></div></div>
+            <div class="grid-card"><div class="grid-card-img"></div><div class="grid-card-body"><h4>Liga de Dados</h4><p>1 projeto · 88pts</p></div></div>
+            <div class="grid-card"><div class="grid-card-img grid-card-img-b"></div><div class="grid-card-body"><h4>Liga de Vendas</h4><p>6 projetos · 65pts</p></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="desc">
+      <strong>Grid 3 colunas</strong> com campo de busca. Sem carrossel — vê todas as ligas de uma vez, filtrável.<br>
+      <span class="tag">Mais ligas visíveis</span>
+    </div>
+  </div>
+
+</div>

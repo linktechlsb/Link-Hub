@@ -1,0 +1,319 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Montserrat', sans-serif; background: #f5f5f5; }
+  h2 { font-size: 1.3rem; font-weight: 700; color: #10284E; margin-bottom: 4px; }
+  .subtitle { color: #666; font-size: 0.85rem; margin-bottom: 20px; }
+
+  .screen-wrapper {
+    background: #f8f9fb;
+    border-radius: 12px;
+    border: 2px solid #e0e0e0;
+    overflow: hidden;
+    display: flex;
+    height: 620px;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 56px;
+    background: #10284E;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 0;
+    gap: 18px;
+    flex-shrink: 0;
+  }
+  .sidebar-logo { width: 30px; height: 30px; background: #FEC641; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 900; color: #10284E; }
+  .sidebar-icon { width: 26px; height: 26px; background: rgba(255,255,255,0.18); border-radius: 6px; }
+  .sidebar-icon.active { background: rgba(255,255,255,0.55); }
+
+  /* Main scroll area */
+  .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+  /* ── HERO DA LIGA ── */
+  .liga-hero {
+    height: 120px;
+    background: linear-gradient(135deg, #10284E 0%, #546484 100%);
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-end;
+  }
+  .liga-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(16,40,78,0.85) 0%, transparent 60%); }
+  .back-btn {
+    position: absolute;
+    top: 12px; left: 14px;
+    background: rgba(255,255,255,0.18);
+    color: white;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    z-index: 2;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .liga-hero-content {
+    position: relative; z-index: 2;
+    padding: 12px 16px;
+    width: 100%;
+    display: flex; align-items: flex-end; justify-content: space-between;
+  }
+  .liga-hero-content h3 { font-size: 1rem; font-weight: 800; color: white; }
+  .liga-hero-content p { font-size: 0.65rem; color: rgba(255,255,255,0.72); margin-top: 2px; }
+  .liga-badge { background: #FEC641; color: #10284E; border-radius: 5px; padding: 3px 9px; font-size: 0.62rem; font-weight: 800; }
+
+  /* ── CONTENT AREA ── */
+  .content { padding: 16px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+
+  /* Section label */
+  .sec-label {
+    font-size: 0.65rem; font-weight: 700; color: #546484;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+  }
+  .sec-label::after { content: ''; flex: 1; height: 1px; background: #eaeaea; }
+
+  /* ── MÉTRICAS (4 cards) ── */
+  .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .metric-card {
+    background: white;
+    border-radius: 10px;
+    border: 1.5px solid #eaeaea;
+    padding: 11px 10px;
+    text-align: center;
+  }
+  .metric-icon { font-size: 1rem; margin-bottom: 4px; }
+  .metric-val { font-size: 1.15rem; font-weight: 800; color: #10284E; }
+  .metric-val.yellow { color: #f59e0b; }
+  .metric-val.green { color: #16a34a; }
+  .metric-val.blue { color: #546484; }
+  .metric-lbl { font-size: 0.55rem; color: #888; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .metric-sub { font-size: 0.55rem; color: #aaa; margin-top: 3px; }
+
+  /* ── LINHA INFERIOR: Próximo Evento + Ranking ── */
+  .bottom-row { display: flex; gap: 10px; flex: 1; min-height: 0; }
+
+  /* Próximo Evento */
+  .evento-card {
+    background: white;
+    border-radius: 10px;
+    border: 1.5px solid #eaeaea;
+    padding: 12px;
+    width: 180px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .evento-date-badge {
+    background: #10284E;
+    color: white;
+    border-radius: 8px;
+    padding: 8px 12px;
+    text-align: center;
+  }
+  .evento-date-badge .day { font-size: 1.4rem; font-weight: 800; line-height: 1; }
+  .evento-date-badge .month { font-size: 0.6rem; opacity: 0.75; text-transform: uppercase; margin-top: 1px; }
+  .evento-info h4 { font-size: 0.75rem; font-weight: 700; color: #10284E; }
+  .evento-info p { font-size: 0.62rem; color: #888; margin-top: 2px; line-height: 1.5; }
+  .evento-pill { background: #fff3cd; color: #856404; border-radius: 5px; padding: 3px 8px; font-size: 0.6rem; font-weight: 700; display: inline-block; }
+
+  /* Ranking */
+  .ranking-card {
+    background: white;
+    border-radius: 10px;
+    border: 1.5px solid #eaeaea;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .ranking-header {
+    padding: 10px 12px;
+    border-bottom: 1.5px solid #eaeaea;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .ranking-header h4 { font-size: 0.72rem; font-weight: 700; color: #10284E; }
+  .ranking-header span { font-size: 0.6rem; color: #888; }
+
+  .ranking-table { flex: 1; overflow-y: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: #f8f9fb; }
+  th { font-size: 0.58rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.4px; padding: 6px 10px; text-align: left; border-bottom: 1px solid #eaeaea; }
+  td { font-size: 0.65rem; color: #333; padding: 7px 10px; border-bottom: 1px solid #f0f0f0; }
+  tr.highlight td { background: #fff8e1; }
+  tr:last-child td { border-bottom: none; }
+
+  .rank-num { font-weight: 800; color: #10284E; }
+  .rank-num.gold { color: #f59e0b; }
+  .rank-num.silver { color: #9ca3af; }
+  .rank-num.bronze { color: #cd7c3b; }
+
+  .score-bar-wrap { display: flex; align-items: center; gap: 6px; }
+  .score-bar { height: 4px; border-radius: 2px; background: #eaeaea; flex: 1; }
+  .score-bar-fill { height: 4px; border-radius: 2px; background: #10284E; }
+  .score-val { font-size: 0.62rem; font-weight: 700; color: #10284E; white-space: nowrap; }
+
+  .my-tag { background: #FEC641; color: #10284E; border-radius: 4px; padding: 1px 5px; font-size: 0.55rem; font-weight: 700; }
+</style>
+
+<h2>Página de Detalhe da Liga <code style="font-size:0.75rem;color:#546484">/ligas/:id</code></h2>
+<p class="subtitle">Visão geral da liga para o membro</p>
+
+<div class="screen-wrapper">
+  <div class="sidebar">
+    <div class="sidebar-logo">L</div>
+    <div class="sidebar-icon"></div>
+    <div class="sidebar-icon active"></div>
+    <div class="sidebar-icon"></div>
+    <div class="sidebar-icon"></div>
+    <div class="sidebar-icon"></div>
+  </div>
+
+  <div class="main">
+
+    <!-- HERO -->
+    <div class="liga-hero">
+      <div class="liga-hero-overlay"></div>
+      <div class="back-btn">← Home</div>
+      <div class="liga-hero-content">
+        <div>
+          <h3>Liga de Marketing</h3>
+          <p>Líder: Pedro Lima · 18 membros</p>
+        </div>
+        <div class="liga-badge">Minha Liga</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- MÉTRICAS -->
+      <div>
+        <div class="sec-label">Visão Geral</div>
+        <div class="metrics-row">
+          <div class="metric-card">
+            <div class="metric-icon">📁</div>
+            <div class="metric-val">5</div>
+            <div class="metric-lbl">Proj. Ativos</div>
+            <div class="metric-sub">2 próx. do prazo</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">⭐</div>
+            <div class="metric-val yellow">78</div>
+            <div class="metric-lbl">Score</div>
+            <div class="metric-sub">+4 esta semana</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">✅</div>
+            <div class="metric-val green">91%</div>
+            <div class="metric-lbl">Presença</div>
+            <div class="metric-sub">11 / 12 eventos</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">💰</div>
+            <div class="metric-val blue">R$420</div>
+            <div class="metric-lbl">Fat./Membro</div>
+            <div class="metric-sub">Valor fictício</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LINHA INFERIOR -->
+      <div class="bottom-row">
+
+        <!-- Próximo Evento -->
+        <div class="evento-card">
+          <div class="sec-label">Próximo Evento</div>
+          <div class="evento-date-badge">
+            <div class="day">18</div>
+            <div class="month">Abr</div>
+          </div>
+          <div class="evento-info">
+            <h4>Reunião Semanal</h4>
+            <p>Sexta-feira · 18h00<br>Sala 204 — Bloco B</p>
+          </div>
+          <span class="evento-pill">em 5 dias</span>
+        </div>
+
+        <!-- Ranking -->
+        <div class="ranking-card">
+          <div class="ranking-header">
+            <h4>🏆 Ranking de Ligas</h4>
+            <span>Temporada 2025.1</span>
+          </div>
+          <div class="ranking-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Liga</th>
+                  <th>Score</th>
+                  <th>Presença</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="rank-num gold">1</span></td>
+                  <td>Liga de Finanças</td>
+                  <td>
+                    <div class="score-bar-wrap">
+                      <div class="score-bar"><div class="score-bar-fill" style="width:100%"></div></div>
+                      <span class="score-val">92</span>
+                    </div>
+                  </td>
+                  <td>87%</td>
+                </tr>
+                <tr>
+                  <td><span class="rank-num silver">2</span></td>
+                  <td>Liga de Inovação</td>
+                  <td>
+                    <div class="score-bar-wrap">
+                      <div class="score-bar"><div class="score-bar-fill" style="width:92%"></div></div>
+                      <span class="score-val">85</span>
+                    </div>
+                  </td>
+                  <td>90%</td>
+                </tr>
+                <tr>
+                  <td><span class="rank-num bronze">3</span></td>
+                  <td>Liga de Dados</td>
+                  <td>
+                    <div class="score-bar-wrap">
+                      <div class="score-bar"><div class="score-bar-fill" style="width:88%"></div></div>
+                      <span class="score-val">81</span>
+                    </div>
+                  </td>
+                  <td>83%</td>
+                </tr>
+                <tr class="highlight">
+                  <td><span class="rank-num">4</span></td>
+                  <td>Liga de Marketing <span class="my-tag">você</span></td>
+                  <td>
+                    <div class="score-bar-wrap">
+                      <div class="score-bar"><div class="score-bar-fill" style="width:85%;background:#f59e0b"></div></div>
+                      <span class="score-val" style="color:#f59e0b">78</span>
+                    </div>
+                  </td>
+                  <td>91%</td>
+                </tr>
+                <tr>
+                  <td><span class="rank-num">5</span></td>
+                  <td>Liga de Vendas</td>
+                  <td>
+                    <div class="score-bar-wrap">
+                      <div class="score-bar"><div class="score-bar-fill" style="width:71%"></div></div>
+                      <span class="score-val">65</span>
+                    </div>
+                  </td>
+                  <td>78%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

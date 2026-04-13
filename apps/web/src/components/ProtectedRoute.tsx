@@ -13,14 +13,27 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const [role, setRole] = useState<UserRole | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       const session = data.session;
-      if (session) {
-        setAuthenticated(true);
-        setRole(
-          (session.user.user_metadata?.["role"] as UserRole) ?? "aluno"
-        );
+      if (!session) {
+        setLoading(false);
+        return;
       }
+
+      setAuthenticated(true);
+
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL ?? "http://localhost:3001"}/usuarios/me`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.ok) {
+          const usuario = await res.json() as { role: UserRole };
+          setRole(usuario.role);
+        }
+      } catch {
+        // fallback silencioso — acesso ainda permitido, role não definido
+      }
+
       setLoading(false);
     });
   }, []);
@@ -30,7 +43,7 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   if (!authenticated) return <Navigate to="/auth/login" replace />;
 
   if (allowedRoles && role && !allowedRoles.includes(role)) {
-    return <Navigate to="/projetos" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   return <Outlet />;

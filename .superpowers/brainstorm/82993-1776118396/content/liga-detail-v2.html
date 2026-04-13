@@ -1,0 +1,340 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Montserrat', sans-serif; background: #f5f5f5; }
+  h2 { font-size: 1.3rem; font-weight: 700; color: #10284E; margin-bottom: 4px; }
+  .subtitle { color: #666; font-size: 0.85rem; margin-bottom: 20px; }
+
+  .screen-wrapper {
+    background: #f8f9fb;
+    border-radius: 12px;
+    border: 2px solid #e0e0e0;
+    overflow: hidden;
+    display: flex;
+    height: 600px;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 56px;
+    background: #10284E;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 0;
+    gap: 18px;
+    flex-shrink: 0;
+  }
+  .sidebar-logo { width: 30px; height: 30px; background: #FEC641; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 900; color: #10284E; }
+  .sidebar-icon { width: 26px; height: 26px; background: rgba(255,255,255,0.18); border-radius: 6px; }
+  .sidebar-icon.active { background: rgba(255,255,255,0.55); }
+
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ── HERO ── */
+  .liga-hero {
+    height: 110px;
+    background: linear-gradient(135deg, #10284E 0%, #546484 100%);
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-end;
+  }
+  .liga-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(16,40,78,0.85) 0%, transparent 60%); }
+  .back-btn { position: absolute; top: 10px; left: 14px; background: rgba(255,255,255,0.18); color: white; border-radius: 6px; padding: 3px 9px; font-size: 0.6rem; font-weight: 600; z-index: 2; }
+  .liga-hero-content { position: relative; z-index: 2; padding: 10px 16px; width: 100%; display: flex; align-items: flex-end; justify-content: space-between; }
+  .liga-hero-content h3 { font-size: 0.95rem; font-weight: 800; color: white; }
+  .liga-hero-content p { font-size: 0.63rem; color: rgba(255,255,255,0.7); margin-top: 2px; }
+  .liga-badge { background: #FEC641; color: #10284E; border-radius: 5px; padding: 3px 9px; font-size: 0.6rem; font-weight: 800; }
+
+  /* ── TABS ── */
+  .tabs-bar {
+    background: white;
+    border-bottom: 2px solid #eaeaea;
+    display: flex;
+    overflow-x: auto;
+    flex-shrink: 0;
+    padding: 0 16px;
+  }
+  .tabs-bar::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 10px 14px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #888;
+    white-space: nowrap;
+    cursor: pointer;
+    border-bottom: 2.5px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .tab.active { color: #10284E; border-bottom-color: #10284E; font-weight: 700; }
+  .tab:hover:not(.active) { color: #546484; }
+  .tab-icon { font-size: 0.75rem; }
+
+  /* ── TAB CONTENT ── */
+  .tab-content { flex: 1; overflow-y: auto; padding: 16px; }
+
+  /* Visão Geral */
+  .sec-label {
+    font-size: 0.63rem; font-weight: 700; color: #546484;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+  }
+  .sec-label::after { content: ''; flex: 1; height: 1px; background: #eaeaea; }
+
+  .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+  .metric-card { background: white; border-radius: 10px; border: 1.5px solid #eaeaea; padding: 11px 10px; text-align: center; }
+  .metric-icon { font-size: 1rem; margin-bottom: 4px; }
+  .metric-val { font-size: 1.1rem; font-weight: 800; color: #10284E; }
+  .metric-val.yellow { color: #f59e0b; }
+  .metric-val.green { color: #16a34a; }
+  .metric-val.blue { color: #546484; }
+  .metric-lbl { font-size: 0.54rem; color: #888; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .metric-sub { font-size: 0.52rem; color: #aaa; margin-top: 3px; }
+
+  .evento-card {
+    background: white; border-radius: 10px; border: 1.5px solid #eaeaea; padding: 12px 14px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .evento-date-badge { background: #10284E; color: white; border-radius: 8px; padding: 8px 12px; text-align: center; flex-shrink: 0; }
+  .evento-date-badge .day { font-size: 1.3rem; font-weight: 800; line-height: 1; }
+  .evento-date-badge .month { font-size: 0.58rem; opacity: 0.75; text-transform: uppercase; margin-top: 1px; }
+  .evento-info h4 { font-size: 0.78rem; font-weight: 700; color: #10284E; }
+  .evento-info p { font-size: 0.62rem; color: #888; margin-top: 3px; line-height: 1.5; }
+  .evento-pill { background: #fff3cd; color: #856404; border-radius: 5px; padding: 2px 7px; font-size: 0.58rem; font-weight: 700; display: inline-block; margin-top: 5px; }
+
+  /* Presença tab preview */
+  .presenca-preview { background: white; border-radius: 10px; border: 1.5px solid #eaeaea; overflow: hidden; }
+  .presenca-header { background: #f8f9fb; padding: 8px 12px; border-bottom: 1px solid #eaeaea; display: flex; justify-content: space-between; align-items: center; }
+  .presenca-header span { font-size: 0.65rem; font-weight: 700; color: #10284E; }
+  .presenca-header small { font-size: 0.6rem; color: #888; }
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 0.57rem; font-weight: 700; color: #888; text-transform: uppercase; padding: 6px 10px; text-align: left; border-bottom: 1px solid #eaeaea; background: #fafafa; }
+  td { font-size: 0.63rem; color: #333; padding: 7px 10px; border-bottom: 1px solid #f0f0f0; }
+  tr:last-child td { border-bottom: none; }
+  .badge-p { background: #dcfce7; color: #16a34a; border-radius: 4px; padding: 2px 7px; font-size: 0.58rem; font-weight: 700; }
+  .badge-a { background: #fee2e2; color: #dc2626; border-radius: 4px; padding: 2px 7px; font-size: 0.58rem; font-weight: 700; }
+  .badge-j { background: #fef9c3; color: #854d0e; border-radius: 4px; padding: 2px 7px; font-size: 0.58rem; font-weight: 700; }
+
+  .tab-preview-label { font-size: 0.68rem; color: #546484; font-style: italic; margin-bottom: 8px; display: block; }
+
+  /* Annotation */
+  .annotation { margin-top: 16px; background: white; border: 1.5px solid #eaeaea; border-radius: 10px; padding: 14px 18px; font-size: 0.78rem; color: #444; line-height: 1.7; }
+  .annotation strong { color: #10284E; }
+  .annotation ul { margin: 6px 0 0 16px; }
+  .annotation li { margin-bottom: 5px; }
+  code { background: #f0f4ff; color: #546484; border-radius: 3px; padding: 1px 5px; font-size: 0.72rem; }
+</style>
+
+<h2>Página da Liga — Com Sub-abas</h2>
+<p class="subtitle">Aba ativa: <strong>Visão Geral</strong>. Clique nas abas para ver previews.</p>
+
+<div class="screen-wrapper">
+  <div class="sidebar">
+    <div class="sidebar-logo">L</div>
+    <div class="sidebar-icon"></div>
+    <div class="sidebar-icon active"></div>
+    <div class="sidebar-icon"></div>
+    <div class="sidebar-icon"></div>
+    <div class="sidebar-icon"></div>
+  </div>
+
+  <div class="main">
+
+    <!-- HERO -->
+    <div class="liga-hero">
+      <div class="liga-hero-overlay"></div>
+      <div class="back-btn">← Home</div>
+      <div class="liga-hero-content">
+        <div>
+          <h3>Liga de Marketing</h3>
+          <p>Líder: Pedro Lima · 18 membros</p>
+        </div>
+        <div class="liga-badge">Minha Liga</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-bar" id="tabs">
+      <div class="tab active" onclick="showTab('geral', this)"><span class="tab-icon">📊</span>Visão Geral</div>
+      <div class="tab" onclick="showTab('lider', this)"><span class="tab-icon">👤</span>Líder</div>
+      <div class="tab" onclick="showTab('membros', this)"><span class="tab-icon">👥</span>Membros</div>
+      <div class="tab" onclick="showTab('presenca', this)"><span class="tab-icon">✅</span>Presença</div>
+      <div class="tab" onclick="showTab('projetos', this)"><span class="tab-icon">📁</span>Projetos</div>
+      <div class="tab" onclick="showTab('recursos', this)"><span class="tab-icon">📚</span>Recursos</div>
+    </div>
+
+    <!-- TAB CONTENT -->
+    <div class="tab-content">
+
+      <!-- VISÃO GERAL -->
+      <div id="tab-geral">
+        <div class="sec-label">Métricas da Liga</div>
+        <div class="metrics-row">
+          <div class="metric-card">
+            <div class="metric-icon">📁</div>
+            <div class="metric-val">5</div>
+            <div class="metric-lbl">Proj. Ativos</div>
+            <div class="metric-sub">2 próx. do prazo</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">⭐</div>
+            <div class="metric-val yellow">78</div>
+            <div class="metric-lbl">Score</div>
+            <div class="metric-sub">+4 esta semana</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">✅</div>
+            <div class="metric-val green">91%</div>
+            <div class="metric-lbl">Presença</div>
+            <div class="metric-sub">11 / 12 eventos</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">💰</div>
+            <div class="metric-val blue">R$420</div>
+            <div class="metric-lbl">Fat./Membro</div>
+            <div class="metric-sub">Valor fictício</div>
+          </div>
+        </div>
+
+        <div class="sec-label">Próximo Evento</div>
+        <div class="evento-card">
+          <div class="evento-date-badge">
+            <div class="day">18</div>
+            <div class="month">Abr</div>
+          </div>
+          <div class="evento-info">
+            <h4>Reunião Semanal</h4>
+            <p>Sexta-feira · 18h00 · Sala 204 — Bloco B</p>
+            <span class="evento-pill">em 5 dias</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LÍDER -->
+      <div id="tab-lider" style="display:none">
+        <div class="sec-label">Líder da Liga</div>
+        <div style="background:white;border-radius:10px;border:1.5px solid #eaeaea;padding:16px;display:flex;gap:14px;align-items:center;">
+          <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#10284E,#546484);flex-shrink:0;"></div>
+          <div>
+            <div style="font-size:0.85rem;font-weight:800;color:#10284E;">Pedro Lima</div>
+            <div style="font-size:0.65rem;color:#888;margin-top:3px;">pedro.lima@faculdade.edu</div>
+            <div style="font-size:0.62rem;color:#546484;margin-top:4px;">Líder desde Jan 2025 · 3 semestres</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;" class="sec-label">Diretores</div>
+        <div style="display:flex;gap:8px;">
+          <div style="background:white;border:1.5px solid #eaeaea;border-radius:8px;padding:10px 12px;flex:1;display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:50%;background:#546484;flex-shrink:0;"></div>
+            <div><div style="font-size:0.7rem;font-weight:700;color:#10284E;">Ana Costa</div><div style="font-size:0.58rem;color:#888;">Diretora de Projetos</div></div>
+          </div>
+          <div style="background:white;border:1.5px solid #eaeaea;border-radius:8px;padding:10px 12px;flex:1;display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:50%;background:#FEC641;flex-shrink:0;"></div>
+            <div><div style="font-size:0.7rem;font-weight:700;color:#10284E;">Lucas Ramos</div><div style="font-size:0.58rem;color:#888;">Diretor Financeiro</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MEMBROS -->
+      <div id="tab-membros" style="display:none">
+        <div class="sec-label">Membros <span style="font-size:0.6rem;background:#eaeaea;color:#546484;border-radius:10px;padding:1px 7px;margin-left:4px;">18</span></div>
+        <div style="background:white;border-radius:10px;border:1.5px solid #eaeaea;overflow:hidden;">
+          <table>
+            <thead><tr><th>Membro</th><th>Cargo</th><th>Ingresso</th></tr></thead>
+            <tbody>
+              <tr><td style="display:flex;align-items:center;gap:8px;"><div style="width:22px;height:22px;border-radius:50%;background:#10284E;flex-shrink:0;"></div>Rafael Oliveira</td><td>Membro</td><td>Mar 2025</td></tr>
+              <tr><td style="display:flex;align-items:center;gap:8px;"><div style="width:22px;height:22px;border-radius:50%;background:#546484;flex-shrink:0;"></div>Mariana Dias</td><td>Membro</td><td>Fev 2025</td></tr>
+              <tr><td style="display:flex;align-items:center;gap:8px;"><div style="width:22px;height:22px;border-radius:50%;background:#FEC641;flex-shrink:0;"></div>Carlos Mendes</td><td>Membro</td><td>Jan 2025</td></tr>
+              <tr><td style="display:flex;align-items:center;gap:8px;"><div style="width:22px;height:22px;border-radius:50%;background:#6366f1;flex-shrink:0;"></div>Beatriz Faria</td><td>Membro</td><td>Ago 2024</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PRESENÇA -->
+      <div id="tab-presenca" style="display:none">
+        <div class="sec-label">Presença dos Membros</div>
+        <div class="presenca-preview">
+          <div class="presenca-header"><span>Histórico de Presenças</span><small>Evento: Reunião 14/04</small></div>
+          <table>
+            <thead><tr><th>Membro</th><th>Status</th><th>Justificativa</th></tr></thead>
+            <tbody>
+              <tr><td>Rafael Oliveira</td><td><span class="badge-p">Presente</span></td><td style="color:#aaa;font-size:0.58rem;">—</td></tr>
+              <tr><td>Mariana Dias</td><td><span class="badge-p">Presente</span></td><td style="color:#aaa;font-size:0.58rem;">—</td></tr>
+              <tr><td>Carlos Mendes</td><td><span class="badge-a">Ausente</span></td><td style="font-size:0.58rem;color:#888;">Sem justificativa</td></tr>
+              <tr><td>Beatriz Faria</td><td><span class="badge-j">Justificado</span></td><td style="font-size:0.58rem;color:#888;">Prova de cálculo</td></tr>
+              <tr><td>Thiago Nunes</td><td><span class="badge-p">Presente</span></td><td style="color:#aaa;font-size:0.58rem;">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PROJETOS -->
+      <div id="tab-projetos" style="display:none">
+        <div class="sec-label">Projetos da Liga</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="background:white;border-radius:8px;border:1.5px solid #eaeaea;padding:11px 13px;display:flex;justify-content:space-between;align-items:center;">
+            <div><div style="font-size:0.73rem;font-weight:700;color:#10284E;">Análise de Mercado B2B</div><div style="font-size:0.6rem;color:#888;margin-top:2px;">Resp: Ana Costa · Prazo: 30 Abr</div></div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><span style="background:#dbeafe;color:#1d4ed8;border-radius:4px;padding:2px 7px;font-size:0.58rem;font-weight:700;">Em andamento</span><div style="font-size:0.6rem;color:#888;">72% concluído</div></div>
+          </div>
+          <div style="background:white;border-radius:8px;border:1.5px solid #eaeaea;padding:11px 13px;display:flex;justify-content:space-between;align-items:center;">
+            <div><div style="font-size:0.73rem;font-weight:700;color:#10284E;">Campanha de Social Media</div><div style="font-size:0.6rem;color:#888;margin-top:2px;">Resp: Lucas Ramos · Prazo: 15 Mai</div></div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><span style="background:#dbeafe;color:#1d4ed8;border-radius:4px;padding:2px 7px;font-size:0.58rem;font-weight:700;">Em andamento</span><div style="font-size:0.6rem;color:#888;">40% concluído</div></div>
+          </div>
+          <div style="background:white;border-radius:8px;border:1.5px solid #eaeaea;padding:11px 13px;display:flex;justify-content:space-between;align-items:center;">
+            <div><div style="font-size:0.73rem;font-weight:700;color:#10284E;">Pitch de Parceria</div><div style="font-size:0.6rem;color:#888;margin-top:2px;">Resp: Rafael Oliveira · Prazo: 10 Mai</div></div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><span style="background:#fef9c3;color:#854d0e;border-radius:4px;padding:2px 7px;font-size:0.58rem;font-weight:700;">Em aprovação</span><div style="font-size:0.6rem;color:#888;">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECURSOS -->
+      <div id="tab-recursos" style="display:none">
+        <div class="sec-label">Recursos da Liga</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="background:white;border-radius:8px;border:1.5px solid #eaeaea;padding:11px 13px;display:flex;align-items:center;gap:12px;">
+            <div style="width:32px;height:32px;border-radius:7px;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">🎓</div>
+            <div style="flex:1;"><div style="font-size:0.72rem;font-weight:700;color:#10284E;">Marketing Digital — Fundamentos</div><div style="font-size:0.6rem;color:#888;margin-top:2px;">Curso · Adicionado por Pedro Lima</div></div>
+            <span style="font-size:0.65rem;color:#546484;font-weight:600;">↗ Abrir</span>
+          </div>
+          <div style="background:white;border-radius:8px;border:1.5px solid #eaeaea;padding:11px 13px;display:flex;align-items:center;gap:12px;">
+            <div style="width:32px;height:32px;border-radius:7px;background:#dcfce7;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">📄</div>
+            <div style="flex:1;"><div style="font-size:0.72rem;font-weight:700;color:#10284E;">Template de Pitch</div><div style="font-size:0.6rem;color:#888;margin-top:2px;">Documento · Google Slides</div></div>
+            <span style="font-size:0.65rem;color:#546484;font-weight:600;">↗ Abrir</span>
+          </div>
+          <div style="background:white;border-radius:8px;border:1.5px solid #eaeaea;padding:11px 13px;display:flex;align-items:center;gap:12px;">
+            <div style="width:32px;height:32px;border-radius:7px;background:#fef9c3;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">🎥</div>
+            <div style="flex:1;"><div style="font-size:0.72rem;font-weight:700;color:#10284E;">Aula: Estratégia de Conteúdo</div><div style="font-size:0.6rem;color:#888;margin-top:2px;">Vídeo · 42 min</div></div>
+            <span style="font-size:0.65rem;color:#546484;font-weight:600;">↗ Abrir</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(name, el) {
+  document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+  document.getElementById('tab-' + name).style.display = 'block';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+
+<div class="annotation">
+  <strong>Sub-abas da página da liga:</strong>
+  <ul>
+    <li><strong>Visão Geral</strong> — 4 métricas (Projetos, Score, Presença, Fat./Membro) + card do próximo evento</li>
+    <li><strong>Líder</strong> — perfil do líder + diretores da liga</li>
+    <li><strong>Membros</strong> — tabela com todos os membros e data de ingresso</li>
+    <li><strong>Presença</strong> — tabela de presenças por evento (presente / ausente / justificado)</li>
+    <li><strong>Projetos</strong> — lista de projetos com status e % de conclusão</li>
+    <li><strong>Recursos</strong> — links de cursos, aulas, documentos adicionados pela liga</li>
+  </ul>
+  Ranking de ligas <strong>removido</strong> desta tela. <code>Faturamento/Membro</code> com valor fictício até integração.
+</div>
