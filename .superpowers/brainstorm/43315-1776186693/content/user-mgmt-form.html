@@ -1,0 +1,77 @@
+<h2>Como criar/editar usuários?</h2>
+<p class="subtitle">Quando o admin clica em "Novo Usuário" ou no ícone de editar, como deve aparecer o formulário?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Sheet Lateral (gaveta)</h3>
+      <p>Abre um painel deslizando da direita — mesmo padrão já usado nas Ligas (LigaSheet). Campos: nome, email, role, liga. Não sai da página principal, contexto preservado.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Modal/Dialog centralizado</h3>
+      <p>Um popup no centro da tela com o formulário de criação/edição. Fundo escurecido. Mais focado, mas cobre o conteúdo de baixo.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:2rem">
+  <h3>Pré-visualização da tabela de usuários</h3>
+  <p class="subtitle">A seção ficaria assim (com botão de criar e ações de editar/remover):</p>
+
+  <div class="mockup">
+    <div class="mockup-header">Gestão de Usuários</div>
+    <div class="mockup-body" style="padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="mock-input" style="width:260px">🔍 Buscar por nome ou email...</div>
+        <button class="mock-button" style="background:#10284E;color:white;padding:6px 14px;border-radius:6px;border:none;font-size:12px">+ Novo Usuário</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="background:#f5f5f5;border-bottom:1px solid #EAEAEA">
+            <th style="text-align:left;padding:8px;color:#546484;font-size:11px;text-transform:uppercase">Nome</th>
+            <th style="text-align:left;padding:8px;color:#546484;font-size:11px;text-transform:uppercase">Email</th>
+            <th style="text-align:left;padding:8px;color:#546484;font-size:11px;text-transform:uppercase">Role</th>
+            <th style="text-align:left;padding:8px;color:#546484;font-size:11px;text-transform:uppercase">Liga</th>
+            <th style="text-align:left;padding:8px;color:#546484;font-size:11px;text-transform:uppercase">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #EAEAEA">
+            <td style="padding:8px;color:#10284E;font-weight:500">Ana Souza</td>
+            <td style="padding:8px;color:#546484">ana.souza@facul.edu.br</td>
+            <td style="padding:8px"><span style="background:#FEC64120;color:#10284E;font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px">lider</span></td>
+            <td style="padding:8px;color:#546484">Liga de Finanças</td>
+            <td style="padding:8px;display:flex;gap:6px">
+              <span style="cursor:pointer;color:#546484;font-size:11px;border:1px solid #EAEAEA;padding:2px 8px;border-radius:4px">Editar</span>
+              <span style="cursor:pointer;color:#dc2626;font-size:11px;border:1px solid #fca5a5;padding:2px 8px;border-radius:4px">Remover</span>
+            </td>
+          </tr>
+          <tr style="border-bottom:1px solid #EAEAEA">
+            <td style="padding:8px;color:#10284E;font-weight:500">Carlos Lima</td>
+            <td style="padding:8px;color:#546484">carlos.lima@facul.edu.br</td>
+            <td style="padding:8px"><span style="background:#10284E20;color:#10284E;font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px">membro</span></td>
+            <td style="padding:8px;color:#546484">Liga de Marketing</td>
+            <td style="padding:8px;display:flex;gap:6px">
+              <span style="cursor:pointer;color:#546484;font-size:11px;border:1px solid #EAEAEA;padding:2px 8px;border-radius:4px">Editar</span>
+              <span style="cursor:pointer;color:#dc2626;font-size:11px;border:1px solid #fca5a5;padding:2px 8px;border-radius:4px">Remover</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px;color:#10284E;font-weight:500">Mariana Torres</td>
+            <td style="padding:8px;color:#546484">mariana.t@facul.edu.br</td>
+            <td style="padding:8px"><span style="background:#dc262620;color:#dc2626;font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px">admin</span></td>
+            <td style="padding:8px;color:#546484">—</td>
+            <td style="padding:8px;display:flex;gap:6px">
+              <span style="cursor:pointer;color:#546484;font-size:11px;border:1px solid #EAEAEA;padding:2px 8px;border-radius:4px">Editar</span>
+              <span style="cursor:pointer;color:#dc2626;font-size:11px;border:1px solid #fca5a5;padding:2px 8px;border-radius:4px">Remover</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

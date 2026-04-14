@@ -322,6 +322,42 @@ ligasRouter.patch("/:id", authenticate, requireRole("admin", "lider"), async (re
   }
 });
 
+// POST /ligas/:id/membros — adiciona membro à liga (admin)
+ligasRouter.post("/:id/membros", authenticate, requireRole("admin"), async (req, res, next) => {
+  try {
+    const liga_id = req.params["id"] as string;
+    const { usuario_id, cargo } = req.body as { usuario_id: string; cargo?: string };
+
+    await sql`
+      INSERT INTO liga_membros (liga_id, usuario_id, cargo)
+      VALUES (${liga_id}, ${usuario_id}, ${cargo ?? null})
+      ON CONFLICT (liga_id, usuario_id)
+      DO UPDATE SET cargo = EXCLUDED.cargo
+    `;
+
+    res.status(201).json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /ligas/:id/membros/:userId — remove membro da liga (admin)
+ligasRouter.delete("/:id/membros/:userId", authenticate, requireRole("admin"), async (req, res, next) => {
+  try {
+    const liga_id = req.params["id"] as string;
+    const usuario_id = req.params["userId"] as string;
+
+    await sql`
+      DELETE FROM liga_membros
+      WHERE liga_id = ${liga_id} AND usuario_id = ${usuario_id}
+    `;
+
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
 // DELETE /ligas/:id — arquivar liga (admin)
 ligasRouter.delete("/:id", authenticate, requireRole("admin"), async (req, res, next) => {
   try {

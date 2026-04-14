@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "lider" | "membro" | "estudante";
+export type UserRole = "admin" | "lider" | "membro" | "estudante" | "professor";
 
 export interface Usuario {
   id: string;
@@ -6,6 +6,7 @@ export interface Usuario {
   nome: string;
   role: UserRole;
   avatar_url?: string;
+  biografia?: string;
   criado_em: string;
   atualizado_em: string;
 }
