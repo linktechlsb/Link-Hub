@@ -14,6 +14,9 @@ export interface UsuarioMe {
   role: string;
   avatar_url: string | null;
   biografia: string | null;
+  instagram: string | null;
+  linkedin: string | null;
+  semestre: string | null;
 }
 
 export async function carregarUsuarioMe(): Promise<UsuarioMe | null> {
@@ -29,6 +32,9 @@ export async function carregarUsuarioMe(): Promise<UsuarioMe | null> {
 export async function salvarPerfilMe(data: {
   nome?: string;
   biografia?: string;
+  instagram?: string;
+  linkedin?: string;
+  semestre?: string;
 }): Promise<UsuarioMe | null> {
   const token = await getToken();
   if (!token) return null;

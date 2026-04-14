@@ -398,6 +398,8 @@ export function ContaProfessorView() {
         nome: usuario.nome,
         email: usuario.email,
         bio: usuario.biografia ?? "",
+        instagram: usuario.instagram ?? "",
+        linkedin: usuario.linkedin ?? "",
       }));
     });
   }, []);
@@ -412,9 +414,20 @@ export function ContaProfessorView() {
   }
 
   async function salvarPerfil() {
-    const resultado = await salvarPerfilMe({ nome: dados.nome, biografia: dados.bio });
+    const resultado = await salvarPerfilMe({
+      nome: dados.nome,
+      biografia: dados.bio,
+      instagram: dados.instagram,
+      linkedin: dados.linkedin,
+    });
     if (resultado) {
-      setDados((prev) => ({ ...prev, nome: resultado.nome, bio: resultado.biografia ?? "" }));
+      setDados((prev) => ({
+        ...prev,
+        nome: resultado.nome,
+        bio: resultado.biografia ?? "",
+        instagram: resultado.instagram ?? "",
+        linkedin: resultado.linkedin ?? "",
+      }));
       exibirToast("Alterações salvas com sucesso.");
     } else {
       exibirToast("Erro ao salvar. Tente novamente.");

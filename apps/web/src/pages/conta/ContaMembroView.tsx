@@ -16,7 +16,6 @@ type DadosUsuario = {
   bio: string;
   instagram: string;
   linkedin: string;
-  curso: string;
   semestre: string;
   liga: string;
   cargo: string;
@@ -248,7 +247,7 @@ function AbaPerfil({
 
 // ─── Aba: Dados Acadêmicos ────────────────────────────────────────────────────
 
-const SEMESTRES = ["1", "2", "3", "4", "5", "6", "7", "8"];
+const SEMESTRES = ["1", "2", "3", "4", "5", "6", "7", "8", "alumni"];
 
 function AbaDadosAcademicos({
   dados,
@@ -261,22 +260,19 @@ function AbaDadosAcademicos({
 }) {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Campo label="Curso">
-          <InputTexto value={dados.curso} onChange={(v) => onChange("curso", v)} placeholder="Ex: Administração" />
-        </Campo>
-        <Campo label="Semestre atual">
-          <select
-            value={dados.semestre}
-            onChange={(e) => onChange("semestre", e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-navy/20"
-          >
-            {SEMESTRES.map((s) => (
-              <option key={s} value={s}>{s}º semestre</option>
-            ))}
-          </select>
-        </Campo>
-      </div>
+      <Campo label="Semestre atual">
+        <select
+          value={dados.semestre}
+          onChange={(e) => onChange("semestre", e.target.value)}
+          className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-navy/20 max-w-xs"
+        >
+          {SEMESTRES.map((s) => (
+            <option key={s} value={s}>
+              {s === "alumni" ? "Alumni" : `${s}º semestre`}
+            </option>
+          ))}
+        </select>
+      </Campo>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Campo label="Liga" dica="Para trocar de liga, fale com o Staff">
@@ -463,7 +459,6 @@ const DADOS_INICIAIS: DadosUsuario = {
   bio: "",
   instagram: "",
   linkedin: "",
-  curso: "",
   semestre: "1",
   liga: "",
   cargo: "Membro",
@@ -486,6 +481,9 @@ export function ContaMembroView() {
         nome: usuario.nome,
         email: usuario.email,
         bio: usuario.biografia ?? "",
+        instagram: usuario.instagram ?? "",
+        linkedin: usuario.linkedin ?? "",
+        semestre: usuario.semestre ?? "1",
       }));
     });
   }, []);
@@ -500,9 +498,29 @@ export function ContaMembroView() {
   }
 
   async function salvarPerfil() {
-    const resultado = await salvarPerfilMe({ nome: dados.nome, biografia: dados.bio });
+    const resultado = await salvarPerfilMe({
+      nome: dados.nome,
+      biografia: dados.bio,
+      instagram: dados.instagram,
+      linkedin: dados.linkedin,
+    });
     if (resultado) {
-      setDados((prev) => ({ ...prev, nome: resultado.nome, bio: resultado.biografia ?? "" }));
+      setDados((prev) => ({
+        ...prev,
+        nome: resultado.nome,
+        bio: resultado.biografia ?? "",
+        instagram: resultado.instagram ?? "",
+        linkedin: resultado.linkedin ?? "",
+      }));
+      exibirToast("Alterações salvas com sucesso.");
+    } else {
+      exibirToast("Erro ao salvar. Tente novamente.");
+    }
+  }
+
+  async function salvarDadosAcademicos() {
+    const resultado = await salvarPerfilMe({ semestre: dados.semestre });
+    if (resultado) {
       exibirToast("Alterações salvas com sucesso.");
     } else {
       exibirToast("Erro ao salvar. Tente novamente.");
@@ -546,7 +564,7 @@ export function ContaMembroView() {
 
       <div className="bg-white border border-brand-gray rounded-lg p-6">
         {abaAtiva === "perfil"       && <AbaPerfil dados={dados} avatarUrl={avatarUrl} uploadandoAvatar={uploadandoAvatar} onChange={alterarDado} onSalvar={salvarPerfil} onAvatarChange={handleAvatarChange} />}
-        {abaAtiva === "academico"    && <AbaDadosAcademicos dados={dados} onChange={alterarDado} onSalvar={() => exibirToast("Alterações salvas com sucesso.")} />}
+        {abaAtiva === "academico"    && <AbaDadosAcademicos dados={dados} onChange={alterarDado} onSalvar={salvarDadosAcademicos} />}
         {abaAtiva === "seguranca"    && <AbaSeguranca onToast={exibirToast} />}
         {abaAtiva === "notificacoes" && <AbaNotificacoes notif={notif} onChange={(k, v) => setNotif((p) => ({ ...p, [k]: v }))} onSalvar={() => exibirToast("Preferências salvas.")} />}
       </div>

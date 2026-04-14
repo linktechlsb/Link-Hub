@@ -22,7 +22,7 @@ const upload = multer({
 usuariosRouter.get("/me", authenticate, async (req, res, next) => {
   try {
     const [usuario] = await sql`
-      SELECT id, nome, email, role, avatar_url, biografia FROM usuarios
+      SELECT id, nome, email, role, avatar_url, biografia, instagram, linkedin, semestre FROM usuarios
       WHERE email = ${(req as AuthenticatedRequest).user!.email}
       LIMIT 1
     `;
@@ -41,15 +41,24 @@ usuariosRouter.get("/me", authenticate, async (req, res, next) => {
 // PATCH /usuarios/me — atualiza nome e/ou biografia do usuário autenticado
 usuariosRouter.patch("/me", authenticate, async (req, res, next) => {
   try {
-    const { nome, biografia } = req.body as { nome?: string; biografia?: string };
+    const { nome, biografia, instagram, linkedin, semestre } = req.body as {
+      nome?: string;
+      biografia?: string;
+      instagram?: string;
+      linkedin?: string;
+      semestre?: string;
+    };
 
     const [usuario] = await sql`
       UPDATE usuarios
       SET
         nome      = COALESCE(${nome ?? null}, nome),
-        biografia = COALESCE(${biografia ?? null}, biografia)
+        biografia = COALESCE(${biografia ?? null}, biografia),
+        instagram = COALESCE(${instagram ?? null}, instagram),
+        linkedin  = COALESCE(${linkedin ?? null}, linkedin),
+        semestre  = COALESCE(${semestre ?? null}, semestre)
       WHERE email = ${(req as AuthenticatedRequest).user!.email}
-      RETURNING id, nome, email, role, avatar_url, biografia
+      RETURNING id, nome, email, role, avatar_url, biografia, instagram, linkedin, semestre
     `;
 
     if (!usuario) {
@@ -107,7 +116,7 @@ usuariosRouter.post(
       const [usuario] = await sql`
         UPDATE usuarios SET avatar_url = ${avatar_url}
         WHERE id = ${usuarioAtual.id}
-        RETURNING id, nome, email, role, avatar_url, biografia
+        RETURNING id, nome, email, role, avatar_url, biografia, instagram, linkedin, semestre
       `;
 
       res.json(usuario);
