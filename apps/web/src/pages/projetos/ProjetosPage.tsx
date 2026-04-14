@@ -4,6 +4,7 @@ import { Search, X } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
 import { ProjetosLiderView } from "./ProjetosLiderView";
 import { ProjetosStaffView } from "./ProjetosStaffView";
+import { ProjetosProfessorView } from "./ProjetosProfessorView";
 
 // ID fixo do membro mockado que "participa" do projeto Landing page da liga
 const MOCK_MEMBER_ID = "user-al";
@@ -169,6 +170,11 @@ export function ProjetosPage() {
   // Visão do staff (admin)
   if (role === "admin") {
     return <ProjetosStaffView />;
+  }
+
+  // Visão do professor
+  if (role === "professor") {
+    return <ProjetosProfessorView />;
   }
 
   // Visão do líder
