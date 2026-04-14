@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
-import { Eye, EyeOff, Save, Lock, User, X } from "lucide-react";
+import { Eye, EyeOff, Save, Lock, User, X, Camera } from "lucide-react";
+import { carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -10,13 +10,7 @@ type Aba = "perfil" | "seguranca";
 type DadosUsuario = {
   nome: string;
   email: string;
-};
-
-// ─── Mock data ────────────────────────────────────────────────────────────────
-
-const MOCK_USUARIO: DadosUsuario = {
-  nome: "Carol Fuji",
-  email: "admin@email.com",
+  bio: string;
 };
 
 // ─── Utilitários ──────────────────────────────────────────────────────────────
@@ -77,24 +71,62 @@ function Toast({ mensagem, onFechar }: { mensagem: string; onFechar: () => void 
 
 function AbaPerfil({
   dados,
+  avatarUrl,
+  uploadandoAvatar,
   onChange,
   onSalvar,
+  onAvatarChange,
 }: {
   dados: DadosUsuario;
+  avatarUrl: string | null;
+  uploadandoAvatar: boolean;
   onChange: (campo: keyof DadosUsuario, valor: string) => void;
   onSalvar: () => void;
+  onAvatarChange: (file: File) => void;
 }) {
+  const fileRef = useRef<HTMLInputElement>(null);
   const iniciais = gerarIniciais(dados.nome);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <div className="h-16 w-16 rounded-full bg-navy text-white text-xl font-bold flex items-center justify-center shrink-0">
-          {iniciais}
+        <div
+          className="relative group cursor-pointer shrink-0"
+          onClick={() => fileRef.current?.click()}
+        >
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="Avatar"
+              className="h-16 w-16 rounded-full object-cover"
+            />
+          ) : (
+            <div className="h-16 w-16 rounded-full bg-navy text-white text-xl font-bold flex items-center justify-center">
+              {iniciais}
+            </div>
+          )}
+          <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            {uploadandoAvatar ? (
+              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Camera className="h-5 w-5 text-white" />
+            )}
+          </div>
         </div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/jpeg,image/png"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) onAvatarChange(file);
+            e.target.value = "";
+          }}
+        />
         <div>
           <p className="text-sm font-bold text-navy">{dados.nome}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Upload de foto em breve</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Clique na foto para alterar</p>
         </div>
       </div>
 
@@ -117,6 +149,17 @@ function AbaPerfil({
           />
         </Campo>
       </div>
+
+      <Campo label={`Bio — ${dados.bio.length}/160 caracteres`} dica="Aparece no seu perfil da plataforma">
+        <textarea
+          value={dados.bio}
+          onChange={(e) => onChange("bio", e.target.value)}
+          maxLength={160}
+          rows={3}
+          placeholder="Conte um pouco sobre você..."
+          className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-navy/20 resize-none"
+        />
+      </Campo>
 
       <button
         onClick={onSalvar}
@@ -217,26 +260,56 @@ const ABAS: { key: Aba; label: string; icon: React.ElementType }[] = [
   { key: "seguranca", label: "Segurança", icon: Lock },
 ];
 
+const DADOS_INICIAIS: DadosUsuario = {
+  nome: "",
+  email: "",
+  bio: "",
+};
+
 export function ContaStaffView() {
   const [abaAtiva, setAbaAtiva] = useState<Aba>("perfil");
-  const [dados, setDados] = useState<DadosUsuario>(MOCK_USUARIO);
+  const [dados, setDados] = useState<DadosUsuario>(DADOS_INICIAIS);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadandoAvatar, setUploadandoAvatar] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      const user = data.session?.user;
-      if (!user) return;
-      setDados((prev) => ({
-        ...prev,
-        email: user.email ?? prev.email,
-        nome: user.user_metadata?.nome ?? user.user_metadata?.full_name ?? prev.nome,
-      }));
+    carregarUsuarioMe().then((usuario) => {
+      if (!usuario) return;
+      setAvatarUrl(usuario.avatar_url);
+      setDados({
+        nome: usuario.nome,
+        email: usuario.email,
+        bio: usuario.biografia ?? "",
+      });
     });
   }, []);
 
   function exibirToast(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
+  }
+
+  async function salvarPerfil() {
+    const resultado = await salvarPerfilMe({ nome: dados.nome, biografia: dados.bio });
+    if (resultado) {
+      setDados((prev) => ({ ...prev, nome: resultado.nome, bio: resultado.biografia ?? "" }));
+      exibirToast("Alterações salvas com sucesso.");
+    } else {
+      exibirToast("Erro ao salvar. Tente novamente.");
+    }
+  }
+
+  async function handleAvatarChange(file: File) {
+    setUploadandoAvatar(true);
+    const resultado = await uploadAvatarMe(file);
+    setUploadandoAvatar(false);
+    if (resultado?.avatar_url) {
+      setAvatarUrl(resultado.avatar_url);
+      exibirToast("Foto atualizada com sucesso.");
+    } else {
+      exibirToast("Erro ao enviar a foto. Tente novamente.");
+    }
   }
 
   return (
@@ -268,8 +341,11 @@ export function ContaStaffView() {
         {abaAtiva === "perfil" && (
           <AbaPerfil
             dados={dados}
+            avatarUrl={avatarUrl}
+            uploadandoAvatar={uploadandoAvatar}
             onChange={(campo, valor) => setDados((prev) => ({ ...prev, [campo]: valor }))}
-            onSalvar={() => exibirToast("Alterações salvas com sucesso.")}
+            onSalvar={salvarPerfil}
+            onAvatarChange={handleAvatarChange}
           />
         )}
         {abaAtiva === "seguranca" && <AbaSeguranca onToast={exibirToast} />}

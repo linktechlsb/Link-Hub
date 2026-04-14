@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
 import {
   Eye, EyeOff, Save, Bell, Lock, GraduationCap,
-  User, AlertTriangle, X,
+  User, AlertTriangle, X, Camera,
 } from "lucide-react";
+import { carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -29,20 +29,6 @@ type Notificacoes = {
   presenca: boolean;
   novosMembros: boolean;
   projetosAguardando: boolean;
-};
-
-// ─── Mock data ────────────────────────────────────────────────────────────────
-
-const MOCK_USUARIO: DadosUsuario = {
-  nome: "Ana Lima",
-  email: "lider@email.com",
-  bio: "",
-  instagram: "",
-  linkedin: "",
-  curso: "Administração",
-  semestre: "5",
-  liga: "Tech",
-  cargo: "Líder",
 };
 
 // ─── Utilitários ──────────────────────────────────────────────────────────────
@@ -190,24 +176,62 @@ function Toggle({ ativo, onToggle }: { ativo: boolean; onToggle: () => void }) {
 
 function AbaPerfil({
   dados,
+  avatarUrl,
+  uploadandoAvatar,
   onChange,
   onSalvar,
+  onAvatarChange,
 }: {
   dados: DadosUsuario;
+  avatarUrl: string | null;
+  uploadandoAvatar: boolean;
   onChange: (campo: keyof DadosUsuario, valor: string) => void;
   onSalvar: () => void;
+  onAvatarChange: (file: File) => void;
 }) {
+  const fileRef = useRef<HTMLInputElement>(null);
   const iniciais = gerarIniciais(dados.nome);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <div className="h-16 w-16 rounded-full bg-navy text-white text-xl font-bold flex items-center justify-center shrink-0">
-          {iniciais}
+        <div
+          className="relative group cursor-pointer shrink-0"
+          onClick={() => fileRef.current?.click()}
+        >
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="Avatar"
+              className="h-16 w-16 rounded-full object-cover"
+            />
+          ) : (
+            <div className="h-16 w-16 rounded-full bg-navy text-white text-xl font-bold flex items-center justify-center">
+              {iniciais}
+            </div>
+          )}
+          <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            {uploadandoAvatar ? (
+              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Camera className="h-5 w-5 text-white" />
+            )}
+          </div>
         </div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/jpeg,image/png"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) onAvatarChange(file);
+            e.target.value = "";
+          }}
+        />
         <div>
           <p className="text-sm font-bold text-navy">{dados.nome}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Upload de foto em breve</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Clique na foto para alterar</p>
         </div>
       </div>
 
@@ -434,10 +458,7 @@ function AbaNotificacoes({
 
   return (
     <div className="space-y-6">
-      {/* Notificações gerais */}
       <div>{base.map(renderOpcao)}</div>
-
-      {/* Notificações exclusivas do Líder */}
       <div>
         <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-1">
           Exclusivo do Líder
@@ -446,7 +467,6 @@ function AbaNotificacoes({
           {lider.map(renderOpcao)}
         </div>
       </div>
-
       <BotaoSalvar onClick={onSalvar} label="Salvar preferências" />
     </div>
   );
@@ -461,9 +481,23 @@ const ABAS: { key: Aba; label: string; icon: React.ElementType }[] = [
   { key: "notificacoes",  label: "Notificações",      icon: Bell },
 ];
 
+const DADOS_INICIAIS: DadosUsuario = {
+  nome: "",
+  email: "",
+  bio: "",
+  instagram: "",
+  linkedin: "",
+  curso: "",
+  semestre: "1",
+  liga: "",
+  cargo: "Líder",
+};
+
 export function ContaLiderView() {
   const [abaAtiva, setAbaAtiva] = useState<Aba>("perfil");
-  const [dados, setDados] = useState<DadosUsuario>(MOCK_USUARIO);
+  const [dados, setDados] = useState<DadosUsuario>(DADOS_INICIAIS);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadandoAvatar, setUploadandoAvatar] = useState(false);
   const [notif, setNotif] = useState<Notificacoes>({
     eventos: true,
     projetos: true,
@@ -475,13 +509,14 @@ export function ContaLiderView() {
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      const user = data.session?.user;
-      if (!user) return;
+    carregarUsuarioMe().then((usuario) => {
+      if (!usuario) return;
+      setAvatarUrl(usuario.avatar_url);
       setDados((prev) => ({
         ...prev,
-        email: user.email ?? prev.email,
-        nome: user.user_metadata?.nome ?? user.user_metadata?.full_name ?? prev.nome,
+        nome: usuario.nome,
+        email: usuario.email,
+        bio: usuario.biografia ?? "",
       }));
     });
   }, []);
@@ -493,6 +528,28 @@ export function ContaLiderView() {
   function exibirToast(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
+  }
+
+  async function salvarPerfil() {
+    const resultado = await salvarPerfilMe({ nome: dados.nome, biografia: dados.bio });
+    if (resultado) {
+      setDados((prev) => ({ ...prev, nome: resultado.nome, bio: resultado.biografia ?? "" }));
+      exibirToast("Alterações salvas com sucesso.");
+    } else {
+      exibirToast("Erro ao salvar. Tente novamente.");
+    }
+  }
+
+  async function handleAvatarChange(file: File) {
+    setUploadandoAvatar(true);
+    const resultado = await uploadAvatarMe(file);
+    setUploadandoAvatar(false);
+    if (resultado?.avatar_url) {
+      setAvatarUrl(resultado.avatar_url);
+      exibirToast("Foto atualizada com sucesso.");
+    } else {
+      exibirToast("Erro ao enviar a foto. Tente novamente.");
+    }
   }
 
   return (
@@ -519,7 +576,7 @@ export function ContaLiderView() {
       </div>
 
       <div className="bg-white border border-brand-gray rounded-lg p-6">
-        {abaAtiva === "perfil"       && <AbaPerfil dados={dados} onChange={alterarDado} onSalvar={() => exibirToast("Alterações salvas com sucesso.")} />}
+        {abaAtiva === "perfil"       && <AbaPerfil dados={dados} avatarUrl={avatarUrl} uploadandoAvatar={uploadandoAvatar} onChange={alterarDado} onSalvar={salvarPerfil} onAvatarChange={handleAvatarChange} />}
         {abaAtiva === "academico"    && <AbaDadosAcademicos dados={dados} onChange={alterarDado} onSalvar={() => exibirToast("Alterações salvas com sucesso.")} />}
         {abaAtiva === "seguranca"    && <AbaSeguranca onToast={exibirToast} />}
         {abaAtiva === "notificacoes" && <AbaNotificacoes notif={notif} onChange={(k, v) => setNotif((p) => ({ ...p, [k]: v }))} onSalvar={() => exibirToast("Preferências salvas.")} />}

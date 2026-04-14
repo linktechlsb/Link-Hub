@@ -6,6 +6,7 @@ export interface Usuario {
   nome: string;
   role: UserRole;
   avatar_url?: string;
+  biografia?: string;
   criado_em: string;
   atualizado_em: string;
 }
