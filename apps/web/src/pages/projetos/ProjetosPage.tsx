@@ -2,6 +2,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Search, X } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
+import { ProjetosLiderView } from "./ProjetosLiderView";
 
 // ID fixo do membro mockado que "participa" do projeto Landing page da liga
 const MOCK_MEMBER_ID = "user-al";
@@ -164,7 +165,12 @@ export function ProjetosPage() {
     );
   }
 
-  // Visão para outros perfis (admin, lider, estudante) — não alterada
+  // Visão do líder
+  if (role === "lider") {
+    return <ProjetosLiderView />;
+  }
+
+  // Visão para admin e estudante — não alterada
   if (role !== "membro") {
     return (
       <div className="p-8">
