@@ -40,7 +40,7 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
 
   if (loading) return null;
 
-  if (!authenticated) return <Navigate to="/auth/login" replace />;
+  if (!authenticated) return <Navigate to="/login" replace />;
 
   if (allowedRoles && role && !allowedRoles.includes(role)) {
     return <Navigate to="/home" replace />;

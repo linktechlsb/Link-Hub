@@ -21,7 +21,7 @@ export function LoginPage() {
       if (error.message.toLowerCase().includes("email not confirmed")) {
         setError("E-mail não confirmado. Verifique sua caixa de entrada.");
       } else {
-        setError("E-mail ou senha inválidos.");
+        setError(`Erro: ${error.message}`);
       }
       setLoading(false);
       return;

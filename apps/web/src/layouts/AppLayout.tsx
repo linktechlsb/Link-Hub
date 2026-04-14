@@ -59,7 +59,7 @@ export function AppLayout() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    navigate("/auth/login");
+    navigate("/login");
   }
 
   const isStaff = role === "admin";

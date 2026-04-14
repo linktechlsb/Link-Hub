@@ -2,6 +2,8 @@ import { createBrowserRouter, Navigate, type RouterProviderProps } from "react-r
 
 type BrowserRouter = RouterProviderProps["router"];
 import { AppLayout } from "@/layouts/AppLayout";
+import { AuthLayout } from "@/layouts/AuthLayout";
+import { LoginPage } from "@/pages/auth/LoginPage";
 import { HomePage } from "@/pages/home/HomePage";
 import { LigasPage } from "@/pages/ligas/LigasPage";
 import { LigaDetailPage } from "@/pages/ligas/LigaDetailPage";
@@ -16,6 +18,13 @@ export const router: BrowserRouter = createBrowserRouter([
   {
     path: "/",
     element: <Navigate to="/home" replace />,
+  },
+  {
+    path: "/",
+    element: <AuthLayout />,
+    children: [
+      { path: "login", element: <LoginPage /> },
+    ],
   },
   {
     path: "/",
