@@ -21,7 +21,8 @@
       "Bash(xargs kill:*)",
       "Bash(/Users/diogochiapetagarcia/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh --project-dir /Users/diogochiapetagarcia/Cursor/Link-Hub)",
       "Bash(pnpm typecheck:*)",
-      "Bash(wc -l /Users/diogochiapetagarcia/Cursor/Link-Hub/apps/api/src/routes/*.ts)"
+      "Bash(wc -l /Users/diogochiapetagarcia/Cursor/Link-Hub/apps/api/src/routes/*.ts)",
+      "Bash(npx shadcn@latest add alert-dialog --yes)"
     ],
     "deny": [
       "Bash(git commit *)",

@@ -19,15 +19,6 @@ interface UsuarioAdmin {
   liga_id?: string;
 }
 
-interface UsuarioVisaoGeral {
-  id: string;
-  nome: string;
-  email: string;
-  role: UserRole;
-  liga_nome?: string;
-  presenca_pct?: number | null;
-}
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 async function getToken(): Promise<string> {
@@ -64,19 +55,12 @@ function RoleBadge({ role }: { role: UserRole }) {
   );
 }
 
-function presencaCor(pct: number | null | undefined): string {
-  if (pct == null) return "text-muted-foreground";
-  if (pct >= 80) return "text-green-600 font-bold";
-  if (pct >= 60) return "text-yellow-600 font-bold";
-  return "text-red-600 font-bold";
-}
-
 // ─── Componente principal ──────────────────────────────────────────────────────
 
 export function SuperAdminPage() {
   const [usuarios, setUsuarios] = useState<UsuarioAdmin[]>([]);
   const [ligas, setLigas] = useState<Liga[]>([]);
-  const [visaoGeral, setVisaoGeral] = useState<UsuarioVisaoGeral[]>([]);
+  const [presencaMedia, setPresencaMedia] = useState<number | null>(null);
   const [carregando, setCarregando] = useState(true);
 
   const [busca, setBusca] = useState("");
@@ -105,7 +89,15 @@ export function SuperAdminPage() {
 
     if (resUsuarios.ok) setUsuarios(await resUsuarios.json());
     if (resLigas.ok) setLigas(await resLigas.json());
-    if (resVisao.ok) setVisaoGeral(await resVisao.json());
+    if (resVisao.ok) {
+      const visao: { presenca_pct?: number | null }[] = await resVisao.json();
+      const comPresenca = visao.filter((u) => u.presenca_pct != null);
+      setPresencaMedia(
+        comPresenca.length > 0
+          ? Math.round(comPresenca.reduce((acc, u) => acc + (u.presenca_pct ?? 0), 0) / comPresenca.length)
+          : null
+      );
+    }
 
     setCarregando(false);
   }
@@ -121,7 +113,6 @@ export function SuperAdminPage() {
       headers: { Authorization: `Bearer ${token}` },
     });
     setUsuarios((prev) => prev.filter((u) => u.id !== id));
-    setVisaoGeral((prev) => prev.filter((u) => u.id !== id));
     setConfirmarRemocaoId(null);
   }
 
@@ -138,13 +129,6 @@ export function SuperAdminPage() {
   // ─── Stats ─────────────────────────────────────────────────────────────────
 
   const totalProjetos = ligas.reduce((acc, l) => acc + (l.projetos_ativos ?? 0), 0);
-  const presencaMedia =
-    visaoGeral.length > 0
-      ? Math.round(
-          visaoGeral.filter((u) => u.presenca_pct != null).reduce((acc, u) => acc + (u.presenca_pct ?? 0), 0) /
-            visaoGeral.filter((u) => u.presenca_pct != null).length
-        )
-      : null;
 
   // ─── Filtro de usuários ────────────────────────────────────────────────────
 
@@ -172,11 +156,7 @@ export function SuperAdminPage() {
           { label: "Usuários", value: carregando ? "—" : usuarios.length, icon: Users },
           { label: "Ligas Ativas", value: carregando ? "—" : ligas.length, icon: Building2 },
           { label: "Projetos Ativos", value: carregando ? "—" : totalProjetos, icon: FolderOpen },
-          {
-            label: "Presença Geral",
-            value: carregando ? "—" : presencaMedia != null ? `${presencaMedia}%` : "—",
-            icon: BarChart2,
-          },
+          { label: "Presença Geral", value: carregando ? "—" : presencaMedia != null ? `${presencaMedia}%` : "—", icon: BarChart2 },
         ].map(({ label, value, icon: Icon }) => (
           <div key={label} className="bg-white border border-brand-gray rounded-xl p-5">
             <div className="flex items-center gap-2 mb-2">
@@ -188,103 +168,6 @@ export function SuperAdminPage() {
             <p className="text-3xl font-display font-bold text-navy">{value}</p>
           </div>
         ))}
-      </div>
-
-      {/* ── Gestão de Usuários ────────────────────────────────────────────────── */}
-      <div className="bg-white border border-brand-gray rounded-xl overflow-hidden">
-        <div className="p-6 border-b border-brand-gray flex items-center justify-between gap-4">
-          <div>
-            <h2 className="font-display font-bold text-lg text-navy">Gestão de Usuários</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Criar, editar e remover usuários da plataforma</p>
-          </div>
-          <Button
-            className="bg-navy hover:bg-navy/90 text-white font-semibold flex-shrink-0"
-            onClick={() => {
-              setUsuarioParaEditar(undefined);
-              setSheetUsuarioOpen(true);
-            }}
-          >
-            + Novo Usuário
-          </Button>
-        </div>
-
-        <div className="px-6 py-4 border-b border-brand-gray">
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Buscar por nome ou email..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-brand-gray rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-navy/20"
-            />
-          </div>
-        </div>
-
-        {carregando ? (
-          <p className="text-sm text-muted-foreground p-6">Carregando...</p>
-        ) : usuariosFiltrados.length === 0 ? (
-          <p className="text-sm text-muted-foreground p-6">Nenhum usuário encontrado.</p>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="bg-brand-gray/40 border-b border-brand-gray">
-                <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Nome</th>
-                <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Email</th>
-                <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Role</th>
-                <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Liga</th>
-                <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {usuariosFiltrados.map((u) => (
-                <tr key={u.id} className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors">
-                  <td className="px-6 py-3 text-sm font-semibold text-navy">{u.nome}</td>
-                  <td className="px-6 py-3 text-sm text-link-blue">{u.email}</td>
-                  <td className="px-6 py-3"><RoleBadge role={u.role} /></td>
-                  <td className="px-6 py-3 text-sm text-muted-foreground">{u.liga_nome ?? "—"}</td>
-                  <td className="px-6 py-3">
-                    {confirmarRemocaoId === u.id ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-red-600 font-medium">Confirmar?</span>
-                        <button
-                          onClick={() => removerUsuario(u.id)}
-                          className="text-xs font-semibold text-red-600 border border-red-200 px-2 py-1 rounded hover:bg-red-50"
-                        >
-                          Sim
-                        </button>
-                        <button
-                          onClick={() => setConfirmarRemocaoId(null)}
-                          className="text-xs text-muted-foreground hover:text-navy"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            setUsuarioParaEditar(u);
-                            setSheetUsuarioOpen(true);
-                          }}
-                          className="text-xs font-medium text-link-blue border border-brand-gray px-2.5 py-1 rounded hover:border-link-blue/40 transition-colors"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => setConfirmarRemocaoId(u.id)}
-                          className="text-xs font-medium text-red-500 border border-red-100 px-2.5 py-1 rounded hover:bg-red-50 transition-colors"
-                        >
-                          Remover
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
       </div>
 
       {/* ── Gestão de Ligas ───────────────────────────────────────────────────── */}
@@ -384,39 +267,95 @@ export function SuperAdminPage() {
         )}
       </div>
 
-      {/* ── Visão Geral ───────────────────────────────────────────────────────── */}
+      {/* ── Gestão de Usuários ────────────────────────────────────────────────── */}
       <div className="bg-white border border-brand-gray rounded-xl overflow-hidden">
-        <div className="p-6 border-b border-brand-gray">
-          <h2 className="font-display font-bold text-lg text-navy">Visão Geral — Todos os Usuários</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Nome, email, role, liga e presença de todos os membros e líderes
-          </p>
+        <div className="p-6 border-b border-brand-gray flex items-center justify-between gap-4">
+          <div>
+            <h2 className="font-display font-bold text-lg text-navy">Gestão de Usuários</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Criar, editar e remover usuários da plataforma</p>
+          </div>
+          <Button
+            className="bg-navy hover:bg-navy/90 text-white font-semibold flex-shrink-0"
+            onClick={() => {
+              setUsuarioParaEditar(undefined);
+              setSheetUsuarioOpen(true);
+            }}
+          >
+            + Novo Usuário
+          </Button>
+        </div>
+
+        <div className="px-6 py-4 border-b border-brand-gray">
+          <div className="relative max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Buscar por nome ou email..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm border border-brand-gray rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-navy/20"
+            />
+          </div>
         </div>
 
         {carregando ? (
           <p className="text-sm text-muted-foreground p-6">Carregando...</p>
-        ) : visaoGeral.length === 0 ? (
-          <p className="text-sm text-muted-foreground p-6">Nenhum dado disponível.</p>
+        ) : usuariosFiltrados.length === 0 ? (
+          <p className="text-sm text-muted-foreground p-6">Nenhum usuário encontrado.</p>
         ) : (
           <table className="w-full">
             <thead>
               <tr className="bg-brand-gray/40 border-b border-brand-gray">
-                <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Nome Completo</th>
-                <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Email Estudantil</th>
+                <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Nome</th>
+                <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Email</th>
                 <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Role</th>
                 <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Liga</th>
-                <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Presença</th>
+                <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Ações</th>
               </tr>
             </thead>
             <tbody>
-              {visaoGeral.map((u) => (
+              {usuariosFiltrados.map((u) => (
                 <tr key={u.id} className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors">
                   <td className="px-6 py-3 text-sm font-semibold text-navy">{u.nome}</td>
                   <td className="px-6 py-3 text-sm text-link-blue">{u.email}</td>
                   <td className="px-6 py-3"><RoleBadge role={u.role} /></td>
                   <td className="px-6 py-3 text-sm text-muted-foreground">{u.liga_nome ?? "—"}</td>
-                  <td className={cn("px-6 py-3 text-sm", presencaCor(u.presenca_pct))}>
-                    {u.presenca_pct != null ? `${u.presenca_pct}%` : "—"}
+                  <td className="px-6 py-3">
+                    {confirmarRemocaoId === u.id ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-red-600 font-medium">Confirmar?</span>
+                        <button
+                          onClick={() => removerUsuario(u.id)}
+                          className="text-xs font-semibold text-red-600 border border-red-200 px-2 py-1 rounded hover:bg-red-50"
+                        >
+                          Sim
+                        </button>
+                        <button
+                          onClick={() => setConfirmarRemocaoId(null)}
+                          className="text-xs text-muted-foreground hover:text-navy"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setUsuarioParaEditar(u);
+                            setSheetUsuarioOpen(true);
+                          }}
+                          className="text-xs font-medium text-link-blue border border-brand-gray px-2.5 py-1 rounded hover:border-link-blue/40 transition-colors"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => setConfirmarRemocaoId(u.id)}
+                          className="text-xs font-medium text-red-500 border border-red-100 px-2.5 py-1 rounded hover:bg-red-50 transition-colors"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

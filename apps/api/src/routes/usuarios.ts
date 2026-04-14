@@ -181,7 +181,11 @@ usuariosRouter.post("/", authenticate, requireRole("admin"), async (req, res, ne
     });
 
     if (authError || !authData.user) {
-      res.status(400).json({ error: authError?.message ?? "Erro ao criar usuário no Auth." });
+      let mensagemErro = authError?.message ?? "Erro ao criar usuário no Auth.";
+      if (mensagemErro.toLowerCase().includes("already been registered")) {
+        mensagemErro = "Já existe um usuário cadastrado com este e-mail.";
+      }
+      res.status(400).json({ error: mensagemErro });
       return;
     }
 
