@@ -7,6 +7,7 @@ import { usuariosRouter } from "./usuarios.js";
 import { eventosRouter } from "./eventos.js";
 import { recursosRouter } from "./recursos.js";
 import { receitasRouter } from "./receitas.js";
+import { pendentesRouter } from "./pendentes.js";
 
 export const router: IRouter = Router();
 
@@ -22,3 +23,4 @@ router.use("/usuarios", usuariosRouter);
 router.use("/eventos", eventosRouter);
 router.use("/recursos", recursosRouter);
 router.use("/receitas", receitasRouter);
+router.use("/pendentes", pendentesRouter);

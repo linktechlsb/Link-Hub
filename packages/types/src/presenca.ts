@@ -2,12 +2,20 @@ import type { Usuario } from "./user.js";
 
 export type StatusPresenca = "presente" | "ausente" | "justificado";
 
+export type CategoriaEvento = "encontro" | "aula" | "cowork" | "evento" | "hub";
+
 export interface Evento {
   id: string;
   liga_id: string;
   titulo: string;
   descricao?: string;
   data: string;
+  categoria: CategoriaEvento;
+  sala_id?: string;
+  hora_inicio?: string;
+  hora_fim?: string;
+  requer_aprovacao: boolean;
+  status_aprovacao?: "pendente" | "aprovado" | "rejeitado" | null;
   criado_em: string;
 }
 

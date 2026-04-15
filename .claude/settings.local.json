@@ -26,7 +26,16 @@
       "Bash(pnpm build:web)",
       "Bash(curl -s http://localhost:3001/api/health)",
       "Bash(curl -s http://localhost:3001/health)",
-      "Bash(pnpm dev:*)"
+      "Bash(pnpm dev:*)",
+      "Bash(curl -s -H \"Accept: application/json\" http://localhost:3001/health)",
+      "Bash(awk '{print $2, $11, $12, $13}')",
+      "Bash(lsof -nP -iTCP -sTCP:LISTEN)",
+      "Bash(grep -v \"127.0.0.1:[0-9]\\\\{5,\\\\}\")",
+      "Bash(ps -o pid,ppid,command -p 71559 71531 14658)",
+      "Bash(curl -s http://127.0.0.1:3001/health)",
+      "Bash(curl -s http://127.0.0.1:3001/ligas)",
+      "Bash(lsof -nP -iTCP:3001 -sTCP:LISTEN)",
+      "Bash(grep -r \"export interface\\\\|export type\" /Users/diogochiapetagarcia/Cursor/Link-Hub/packages/types/src/*.ts)"
     ],
     "deny": [
       "Bash(git commit *)",

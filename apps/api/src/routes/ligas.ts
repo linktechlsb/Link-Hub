@@ -54,18 +54,29 @@ ligasRouter.get("/minha", authenticate, async (req, res, next) => {
   try {
     const email = (req as AuthenticatedRequest).user!.email;
     const [liga] = await sql`
-      SELECT l.*, lu.email AS lider_email
+      SELECT
+        l.*,
+        lu.email AS lider_email,
+        COALESCE(
+          json_agg(
+            json_build_object('id', u.id, 'nome', u.nome)
+          ) FILTER (WHERE (lm.cargo = 'Diretor' OR u.role = 'diretor') AND lm.id IS NOT NULL),
+          '[]'
+        ) AS diretores
       FROM ligas l
       LEFT JOIN usuarios lu ON lu.id = l.lider_id
+      LEFT JOIN liga_membros lm ON lm.liga_id = l.id
+      LEFT JOIN usuarios u ON u.id = lm.usuario_id
       WHERE l.ativo = true
         AND (
           l.lider_id = (SELECT id FROM usuarios WHERE email = ${email})
           OR EXISTS (
-            SELECT 1 FROM liga_membros lm
-            JOIN usuarios u ON u.id = lm.usuario_id
-            WHERE lm.liga_id = l.id AND u.email = ${email}
+            SELECT 1 FROM liga_membros lm2
+            JOIN usuarios u2 ON u2.id = lm2.usuario_id
+            WHERE lm2.liga_id = l.id AND u2.email = ${email}
           )
         )
+      GROUP BY l.id, lu.email
       LIMIT 1
     `;
     if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }

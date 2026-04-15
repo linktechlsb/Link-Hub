@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight, Calendar, X, Plus } from "lucide-react";
-import type { Liga, Evento, UserRole } from "@link-leagues/types";
+import type { Liga, Evento, UserRole, Sala, CategoriaEvento } from "@link-leagues/types";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -58,10 +58,13 @@ function formatTime(dateStr: string) {
 
 interface NovoEventoForm {
   liga_id: string;
+  categoria: CategoriaEvento;
   titulo: string;
   descricao: string;
   data: string;
-  hora: string;
+  sala_id: string;
+  hora_inicio: string;
+  hora_fim: string;
 }
 
 export function AgendaPage() {
@@ -71,6 +74,7 @@ export function AgendaPage() {
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [eventos, setEventos] = useState<EventoComLiga[]>([]);
   const [ligas, setLigas] = useState<Liga[]>([]);
+  const [salas, setSalas] = useState<Sala[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedEvento, setSelectedEvento] = useState<EventoComLiga | null>(null);
   const [filterLiga, setFilterLiga] = useState<string>("");
@@ -78,7 +82,8 @@ export function AgendaPage() {
   const [role, setRole] = useState<UserRole | null>(null);
   const [showCriarEvento, setShowCriarEvento] = useState(false);
   const [novoEvento, setNovoEvento] = useState<NovoEventoForm>({
-    liga_id: "", titulo: "", descricao: "", data: todayStr, hora: "",
+    liga_id: "", categoria: "encontro", titulo: "", descricao: "", data: todayStr,
+    sala_id: "", hora_inicio: "", hora_fim: "",
   });
   const [salvando, setSalvando] = useState(false);
   const [erroSalvar, setErroSalvar] = useState<string | null>(null);
@@ -131,17 +136,27 @@ export function AgendaPage() {
     carregar();
   }, [year, month, filterLiga]);
 
-  const podeGerenciar = role === "admin" || role === "diretor";
+  const podeGerenciar = role === "staff" || role === "diretor";
+
+  useEffect(() => {
+    if (!podeGerenciar) return;
+    async function carregarSalas() {
+      const token = await getToken();
+      const res = await fetch("/api/salas", { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) setSalas(await res.json());
+    }
+    carregarSalas();
+  }, [podeGerenciar]);
 
   async function handleCriarEvento(e: React.FormEvent) {
     e.preventDefault();
     setSalvando(true);
     setErroSalvar(null);
+
+    const precisaSala = ["encontro", "aula", "evento", "hub"].includes(novoEvento.categoria);
+
     try {
       const token = await getToken();
-      const dataISO = novoEvento.hora
-        ? `${novoEvento.data}T${novoEvento.hora}:00`
-        : novoEvento.data;
 
       const res = await fetch("/api/eventos", {
         method: "POST",
@@ -153,7 +168,11 @@ export function AgendaPage() {
           liga_id: novoEvento.liga_id,
           titulo: novoEvento.titulo,
           descricao: novoEvento.descricao || undefined,
-          data: dataISO,
+          data: novoEvento.data,
+          categoria: novoEvento.categoria,
+          sala_id: precisaSala && novoEvento.sala_id ? novoEvento.sala_id : undefined,
+          hora_inicio: precisaSala && novoEvento.hora_inicio ? novoEvento.hora_inicio : undefined,
+          hora_fim: precisaSala && novoEvento.hora_fim ? novoEvento.hora_fim : undefined,
         }),
       });
 
@@ -163,7 +182,10 @@ export function AgendaPage() {
       }
 
       setShowCriarEvento(false);
-      setNovoEvento({ liga_id: "", titulo: "", descricao: "", data: todayStr, hora: "" });
+      setNovoEvento({
+        liga_id: "", categoria: "encontro", titulo: "", descricao: "", data: todayStr,
+        sala_id: "", hora_inicio: "", hora_fim: "",
+      });
       // Recarregar eventos do mês atual
       const inicio = toDateStr(year, month, 1);
       const fim = toDateStr(year, month, getDaysInMonth(year, month));
@@ -244,6 +266,7 @@ export function AgendaPage() {
             </div>
 
             <form onSubmit={handleCriarEvento} className="px-6 py-5 space-y-4">
+              {/* Liga */}
               <div>
                 <label className="block text-xs font-semibold text-navy mb-1">Liga</label>
                 <select
@@ -259,6 +282,30 @@ export function AgendaPage() {
                 </select>
               </div>
 
+              {/* Categoria */}
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1">Categoria</label>
+                <select
+                  required
+                  value={novoEvento.categoria}
+                  onChange={e => setNovoEvento(f => ({
+                    ...f,
+                    categoria: e.target.value as CategoriaEvento,
+                    sala_id: "",
+                    hora_inicio: "",
+                    hora_fim: "",
+                  }))}
+                  className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy bg-white focus:outline-none focus:ring-2 focus:ring-navy/20"
+                >
+                  <option value="encontro">Encontro</option>
+                  <option value="aula">Aula</option>
+                  <option value="cowork">Cowork</option>
+                  <option value="evento">Evento</option>
+                  <option value="hub">Hub</option>
+                </select>
+              </div>
+
+              {/* Título */}
               <div>
                 <label className="block text-xs font-semibold text-navy mb-1">Título</label>
                 <input
@@ -271,28 +318,69 @@ export function AgendaPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-navy mb-1">Data</label>
-                  <input
-                    required
-                    type="date"
-                    value={novoEvento.data}
-                    onChange={e => setNovoEvento(f => ({ ...f, data: e.target.value }))}
-                    className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy focus:outline-none focus:ring-2 focus:ring-navy/20"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-navy mb-1">Horário (opcional)</label>
-                  <input
-                    type="time"
-                    value={novoEvento.hora}
-                    onChange={e => setNovoEvento(f => ({ ...f, hora: e.target.value }))}
-                    className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy focus:outline-none focus:ring-2 focus:ring-navy/20"
-                  />
-                </div>
+              {/* Data */}
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1">Data</label>
+                <input
+                  required
+                  type="date"
+                  value={novoEvento.data}
+                  onChange={e => setNovoEvento(f => ({ ...f, data: e.target.value }))}
+                  className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy focus:outline-none focus:ring-2 focus:ring-navy/20"
+                />
               </div>
 
+              {/* Sala + Horário (Encontro, Aula, Evento, Hub) */}
+              {["encontro", "aula", "evento", "hub"].includes(novoEvento.categoria) && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-navy mb-1">Sala</label>
+                    <select
+                      value={novoEvento.sala_id}
+                      onChange={e => setNovoEvento(f => ({ ...f, sala_id: e.target.value }))}
+                      className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy bg-white focus:outline-none focus:ring-2 focus:ring-navy/20"
+                    >
+                      <option value="">Selecionar sala...</option>
+                      {salas.map(sala => (
+                        <option key={sala.id} value={sala.id}>{sala.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-navy mb-1">Horário início</label>
+                      <input
+                        type="time"
+                        value={novoEvento.hora_inicio}
+                        onChange={e => setNovoEvento(f => ({ ...f, hora_inicio: e.target.value }))}
+                        className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy focus:outline-none focus:ring-2 focus:ring-navy/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-navy mb-1">Horário fim</label>
+                      <input
+                        type="time"
+                        value={novoEvento.hora_fim}
+                        onChange={e => setNovoEvento(f => ({ ...f, hora_fim: e.target.value }))}
+                        className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy focus:outline-none focus:ring-2 focus:ring-navy/20"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Aviso de aprovação (Evento, Hub) */}
+              {["evento", "hub"].includes(novoEvento.categoria) && (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-brand-yellow/15 border border-brand-yellow/40">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow flex-shrink-0" />
+                  <p className="text-xs text-navy/80 font-medium">
+                    Este evento requer aprovação do staff antes de ser publicado.
+                  </p>
+                </div>
+              )}
+
+              {/* Descrição */}
               <div>
                 <label className="block text-xs font-semibold text-navy mb-1">Descrição (opcional)</label>
                 <textarea

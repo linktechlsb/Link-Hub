@@ -95,7 +95,6 @@ const METRICAS_ENGAJAMENTO_STAFF = [
 // ordenados por urgência: menor engajamento primeiro
 const ALERTAS_STAFF = [
   { id: "s1", titulo: "Liga RH", descricao: "Engajamento em 32% — abaixo do mínimo", rota: "/gerenciamento", Icon: Activity },
-  { id: "s2", titulo: "3 projetos aguardando Staff", descricao: "Aprovação pendente há mais de 2 dias", rota: "/projetos", Icon: Clock },
   { id: "s3", titulo: "Liga Marketing", descricao: "Sem reunião registrada há 2 semanas", rota: "/gerenciamento", Icon: CalendarX },
 ];
 
@@ -124,6 +123,7 @@ export function HomePage() {
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const [role, setRole] = useState<string | null>(null);
   const [visao, setVisao] = useState<"minha" | "global">("minha");
+  const [pendentes, setPendentes] = useState<{ projetos: { id: string; titulo: string; liga?: { nome: string } }[]; eventos: { id: string; titulo: string; liga?: { nome: string } }[] }>({ projetos: [], eventos: [] });
 
   useEffect(() => {
     async function carregar() {
@@ -143,6 +143,12 @@ export function HomePage() {
         if (usuario?.nome) setNomeUsuario(usuario.nome as string);
         else setNomeUsuario(email.split("@")[0] ?? "Usuário");
         if (usuario?.role) setRole(usuario.role as string);
+
+        // Carregar pendentes para staff
+        if (usuario?.role === "staff") {
+          const pendentesRes = await fetch("/api/pendentes", { headers });
+          if (pendentesRes.ok) setPendentes(await pendentesRes.json());
+        }
       }
 
       const [ligasRes, minhaRes] = await Promise.all([
@@ -230,7 +236,9 @@ export function HomePage() {
                   {ligaAtual.nome}
                 </h2>
                 <p className="text-white/70 text-xs mt-0.5">
-                  Líder: {ligaAtual.lider_email ?? "—"}
+                  Diretor: {ligaAtual.diretores && ligaAtual.diretores.length > 0
+                    ? ligaAtual.diretores.map(d => d.nome).join(", ")
+                    : "—"}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -277,7 +285,9 @@ export function HomePage() {
               <div>
                 <h3 className="font-bold text-white text-sm">{minhaLiga.nome}</h3>
                 <p className="text-white/70 text-xs mt-0.5">
-                  Líder: {minhaLiga.lider_email ?? "—"}
+                  Diretor: {minhaLiga.diretores && minhaLiga.diretores.length > 0
+                    ? minhaLiga.diretores.map(d => d.nome).join(", ")
+                    : "—"}
                 </p>
               </div>
               <button
@@ -320,7 +330,7 @@ export function HomePage() {
       )}
 
       {/* Zona 3 — Destaques da semana (fictícios) — oculto para professor */}
-      {role === "admin" && <div>
+      {role === "staff" && <div>
         <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-2">
           Destaques da Semana
         </p>
@@ -486,7 +496,7 @@ export function HomePage() {
       )}
 
       {/* ── Seções exclusivas do perfil Staff ── */}
-      {role === "admin" && (
+      {role === "staff" && (
         <>
           {/* Métricas globais */}
           <div>
@@ -515,13 +525,14 @@ export function HomePage() {
                 Alertas de Atenção
               </p>
               <button
-                onClick={() => navigate("/projetos")}
+                onClick={() => navigate("/super-admin")}
                 className="text-xs text-purple-600 font-semibold hover:underline"
               >
                 Ver todos
               </button>
             </div>
             <div className="space-y-2">
+              {/* Alertas de engajamento (mock) */}
               {ALERTAS_STAFF.map((a) => (
                 <button
                   key={a.id}
@@ -535,6 +546,38 @@ export function HomePage() {
                   </div>
                 </button>
               ))}
+
+              {/* Projetos aguardando aprovação */}
+              {pendentes.projetos.length > 0 && (
+                <button
+                  onClick={() => navigate("/super-admin")}
+                  className="w-full text-left bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3 hover:bg-amber-100 transition-colors"
+                >
+                  <Clock className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-navy">
+                      {pendentes.projetos.length} projeto{pendentes.projetos.length > 1 ? "s" : ""} aguardando aprovação
+                    </p>
+                    <p className="text-xs text-amber-700 mt-0.5">Clique para revisar e aprovar</p>
+                  </div>
+                </button>
+              )}
+
+              {/* Eventos aguardando aprovação */}
+              {pendentes.eventos.length > 0 && (
+                <button
+                  onClick={() => navigate("/super-admin")}
+                  className="w-full text-left bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3 hover:bg-amber-100 transition-colors"
+                >
+                  <CalendarX className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-navy">
+                      {pendentes.eventos.length} evento{pendentes.eventos.length > 1 ? "s" : ""} aguardando aprovação
+                    </p>
+                    <p className="text-xs text-amber-700 mt-0.5">Clique para revisar e aprovar</p>
+                  </div>
+                </button>
+              )}
             </div>
           </div>
 
