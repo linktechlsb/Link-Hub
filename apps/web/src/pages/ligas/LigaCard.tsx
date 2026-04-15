@@ -1,6 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import type { Liga } from "@link-leagues/types";
 
+function primeiroUltimoNome(nome: string): string {
+  const partes = nome.trim().split(/\s+/);
+  if (partes.length <= 2) return nome;
+  return `${partes[0]} ${partes[partes.length - 1]}`;
+}
+
 interface LigaCardProps {
   liga: Liga;
 }
@@ -43,7 +49,7 @@ export function LigaCard({ liga }: LigaCardProps) {
         <p className="text-xs text-link-blue">
           <span className="font-semibold">Diretores:</span>{" "}
           {diretores.length > 0
-            ? diretores.map((d) => d.nome).join(", ")
+            ? diretores.map((d) => primeiroUltimoNome(d.nome)).join(", ")
             : "—"}
         </p>
 

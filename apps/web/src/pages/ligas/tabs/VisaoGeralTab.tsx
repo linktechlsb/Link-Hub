@@ -7,18 +7,23 @@ async function getToken(): Promise<string> {
   return data.session?.access_token ?? "";
 }
 
+function primeiroUltimoNome(nome: string): string {
+  const partes = nome.trim().split(/\s+/);
+  if (partes.length <= 2) return nome;
+  return `${partes[0]} ${partes[partes.length - 1]}`;
+}
+
 interface Props {
   ligaId: string;
+  diretores: { id: string; nome: string }[];
 }
 
 function MetricCard({
-  icon,
   value,
   label,
   sub,
   valueClass = "text-navy",
 }: {
-  icon: string;
   value: string;
   label: string;
   sub: string;
@@ -26,7 +31,6 @@ function MetricCard({
 }) {
   return (
     <div className="bg-white border border-brand-gray rounded-lg p-3 text-center">
-      <div className="text-xl mb-1">{icon}</div>
       <div className={`text-xl font-bold ${valueClass}`}>{value}</div>
       <div className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">{label}</div>
       <div className="text-xs text-muted-foreground/60 mt-0.5">{sub}</div>
@@ -34,7 +38,7 @@ function MetricCard({
   );
 }
 
-export function VisaoGeralTab({ ligaId }: Props) {
+export function VisaoGeralTab({ ligaId, diretores }: Props) {
   const [projetos, setProjetos] = useState<Projeto[]>([]);
   const [presencaPercent, setPresencaPercent] = useState<number | null>(null);
   const [proximoEvento, setProximoEvento] = useState<Evento | null>(null);
@@ -75,32 +79,51 @@ export function VisaoGeralTab({ ligaId }: Props) {
     <div className="space-y-6">
       <div>
         <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+          Diretores
+        </p>
+        {diretores.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {diretores.map((d) => (
+              <div
+                key={d.id}
+                className="bg-white border border-brand-gray rounded-lg p-3 flex items-center gap-3"
+              >
+                <div className="w-8 h-8 rounded-full bg-link-blue flex-shrink-0 flex items-center justify-center text-white text-xs font-bold">
+                  {d.nome.charAt(0).toUpperCase()}
+                </div>
+                <div className="font-semibold text-navy text-sm">{primeiroUltimoNome(d.nome)}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Nenhum diretor cadastrado.</p>
+        )}
+      </div>
+
+      <div>
+        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
           Métricas da Liga
         </p>
         <div className="grid grid-cols-4 gap-3">
           <MetricCard
-            icon="📁"
-            value={String(projetosAtivos)}
+value={String(projetosAtivos)}
             label="Proj. Ativos"
             sub="em andamento"
           />
           <MetricCard
-            icon="⭐"
-            value={String(score)}
+value={String(score)}
             label="Score"
             sub="valor fictício"
             valueClass="text-amber-500"
           />
           <MetricCard
-            icon="✅"
-            value={presencaPercent !== null ? `${presencaPercent}%` : "—"}
+value={presencaPercent !== null ? `${presencaPercent}%` : "—"}
             label="Presença"
             sub="média da liga"
             valueClass="text-green-600"
           />
           <MetricCard
-            icon="💰"
-            value={faturamentoPorMembro}
+value={faturamentoPorMembro}
             label="Fat./Membro"
             sub="valor fictício"
             valueClass="text-link-blue"

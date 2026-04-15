@@ -3,17 +3,21 @@ import { useParams, useNavigate } from "react-router-dom";
 import type { Liga } from "@link-leagues/types";
 import { supabase } from "@/lib/supabase";
 import { VisaoGeralTab } from "./tabs/VisaoGeralTab";
-import { LiderTab } from "./tabs/LiderTab";
 import { MembrosTab } from "./tabs/MembrosTab";
 import { PresencaTab } from "./tabs/PresencaTab";
 import { ProjetosTab } from "./tabs/ProjetosTab";
 import { RecursosTab } from "./tabs/RecursosTab";
 
-type AbaId = "visao-geral" | "lider" | "membros" | "presenca" | "projetos" | "recursos";
+type AbaId = "visao-geral" | "membros" | "presenca" | "projetos" | "recursos";
+
+function primeiroUltimoNome(nome: string): string {
+  const partes = nome.trim().split(/\s+/);
+  if (partes.length <= 2) return nome;
+  return `${partes[0]} ${partes[partes.length - 1]}`;
+}
 
 const ABAS: { id: AbaId; label: string }[] = [
   { id: "visao-geral", label: "Visão Geral" },
-  { id: "lider", label: "Diretor" },
   { id: "membros", label: "Membros" },
   { id: "presenca", label: "Presença" },
   { id: "projetos", label: "Projetos" },
@@ -90,7 +94,7 @@ export function LigaDetailPage() {
           <div>
             <h1 className="font-display font-bold text-lg text-white leading-tight">{liga.nome}</h1>
             <p className="text-xs text-white/70 mt-0.5">
-              Diretor: {liga.diretores && liga.diretores.length > 0 ? liga.diretores.map((d) => d.nome).join(", ") : "—"} · {membros.length} membros
+              Diretor: {liga.diretores && liga.diretores.length > 0 ? liga.diretores.map((d) => primeiroUltimoNome(d.nome)).join(", ") : "—"} · {membros.length} membros
             </p>
           </div>
           {ehMinhaLiga && (
@@ -120,8 +124,7 @@ export function LigaDetailPage() {
 
       {/* Conteúdo da aba */}
       <div className="flex-1 overflow-y-auto p-6">
-        {abaAtiva === "visao-geral" && <VisaoGeralTab ligaId={liga.id} />}
-        {abaAtiva === "lider" && <LiderTab liga={liga} />}
+        {abaAtiva === "visao-geral" && <VisaoGeralTab ligaId={liga.id} diretores={liga.diretores ?? []} />}
         {abaAtiva === "membros" && <MembrosTab ligaId={liga.id} />}
         {abaAtiva === "presenca" && <PresencaTab ligaId={liga.id} />}
         {abaAtiva === "projetos" && <ProjetosTab ligaId={liga.id} />}

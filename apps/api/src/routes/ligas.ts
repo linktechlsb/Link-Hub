@@ -28,7 +28,7 @@ ligasRouter.get("/", authenticate, async (_req, res, next) => {
         COALESCE(
           json_agg(
             json_build_object('id', u.id, 'nome', u.nome)
-          ) FILTER (WHERE lm.cargo = 'Diretor' AND lm.id IS NOT NULL),
+          ) FILTER (WHERE (lm.cargo = 'Diretor' OR u.role = 'diretor') AND lm.id IS NOT NULL),
           '[]'
         ) AS diretores,
         COUNT(p.id) FILTER (
@@ -92,7 +92,13 @@ ligasRouter.get("/:id", authenticate, async (req, res, next) => {
             )
           ) FILTER (WHERE lm.id IS NOT NULL),
           '[]'
-        ) AS membros
+        ) AS membros,
+        COALESCE(
+          json_agg(
+            json_build_object('id', u.id, 'nome', u.nome)
+          ) FILTER (WHERE (lm.cargo = 'Diretor' OR u.role = 'diretor') AND lm.id IS NOT NULL),
+          '[]'
+        ) AS diretores
       FROM ligas l
       LEFT JOIN liga_membros lm ON lm.liga_id = l.id
       LEFT JOIN usuarios u ON u.id = lm.usuario_id
