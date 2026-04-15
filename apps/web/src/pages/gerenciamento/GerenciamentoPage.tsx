@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { GerenciamentoStaffPage } from "./GerenciamentoStaffPage";
@@ -12,11 +12,20 @@ import {
   FileText,
   Image,
   Globe,
+  Folder,
+  BookOpen,
+  Code2,
+  Video,
+  Music,
+  Star,
+  Upload,
+  Loader2,
+  type LucideIcon,
 } from "lucide-react";
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
-type Cargo = "Membro" | "Diretor";
+type Cargo = "Membro" | "Diretor" | "Admin";
 
 interface ConvitePendente {
   id: string;
@@ -40,6 +49,119 @@ interface Recurso {
   nome: string;
   tipo: string;
   url: string;
+  icone: string;
+  cor: string;
+}
+
+// ─── picker de ícone/cor ──────────────────────────────────────────────────────
+
+const ICONES: { id: string; componente: LucideIcon }[] = [
+  { id: "link",      componente: Link },
+  { id: "file-text", componente: FileText },
+  { id: "image",     componente: Image },
+  { id: "globe",     componente: Globe },
+  { id: "folder",    componente: Folder },
+  { id: "book-open", componente: BookOpen },
+  { id: "code2",     componente: Code2 },
+  { id: "video",     componente: Video },
+  { id: "music",     componente: Music },
+  { id: "star",      componente: Star },
+];
+
+const CORES_PICKER = [
+  "#10284E", // navy
+  "#546484", // link-blue
+  "#7C3AED", // purple
+  "#16A34A", // green
+  "#D97706", // amber
+  "#DC2626", // red
+  "#DB2777", // pink
+  "#0D9488", // teal
+];
+
+function iconeComponente(id: string): LucideIcon {
+  return ICONES.find((i) => i.id === id)?.componente ?? Link;
+}
+
+function RecursoIcone({ id, className }: { id: string; className?: string }) {
+  const Comp = iconeComponente(id);
+  return <Comp className={className ?? "h-4 w-4 text-white"} />;
+}
+
+function IconeCor({
+  icone,
+  cor,
+  onChange,
+}: {
+  icone: string;
+  cor: string;
+  onChange: (icone: string, cor: string) => void;
+}) {
+  const [aberto, setAberto] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function fechar(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setAberto(false);
+    }
+    document.addEventListener("mousedown", fechar);
+    return () => document.removeEventListener("mousedown", fechar);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setAberto((v) => !v)}
+        className="h-9 w-9 rounded-lg flex items-center justify-center border-2 border-transparent hover:border-navy/20 transition-colors"
+        style={{ backgroundColor: cor }}
+        title="Escolher ícone e cor"
+      >
+        <RecursoIcone id={icone} />
+      </button>
+
+      {aberto && (
+        <div className="absolute left-0 top-11 z-50 bg-white border border-brand-gray rounded-xl shadow-lg p-3 w-56">
+          <p className="text-[10px] font-bold text-link-blue uppercase tracking-wider mb-2">Ícone</p>
+          <div className="grid grid-cols-5 gap-1.5 mb-3">
+            {ICONES.map((ic) => {
+              const Comp = ic.componente;
+              return (
+                <button
+                  key={ic.id}
+                  type="button"
+                  onClick={() => onChange(ic.id, cor)}
+                  className={cn(
+                    "h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
+                    icone === ic.id
+                      ? "bg-navy text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  )}
+                >
+                  <Comp className="h-4 w-4" />
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[10px] font-bold text-link-blue uppercase tracking-wider mb-2">Cor</p>
+          <div className="flex flex-wrap gap-1.5">
+            {CORES_PICKER.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => onChange(icone, c)}
+                className={cn(
+                  "h-6 w-6 rounded-full border-2 transition-colors",
+                  cor === c ? "border-navy scale-110" : "border-transparent"
+                )}
+                style={{ backgroundColor: c }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 interface InfoLiga {
@@ -53,61 +175,50 @@ interface InfoLiga {
   bannerUrl: string;
 }
 
-// ─── mock ─────────────────────────────────────────────────────────────────────
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+const INFO_VAZIO: InfoLiga = {
+  nome: "", area: "", descricao: "", semestre: "",
+  emailContato: "", instagram: "", linkedin: "", bannerUrl: "",
+};
 
 const CORES = ["#10284E", "#546484", "#FEC641", "#6366f1", "#14b8a6", "#f97316"];
 
-const MOCK_CONVITES: ConvitePendente[] = [
-  { id: "c1", email: "marcos.silva@faculdade.edu", cargo: "Membro", diasAtras: 2 },
-  { id: "c2", email: "julia.ramos@faculdade.edu", cargo: "Membro", diasAtras: 5 },
-];
+function corPorNome(nome: string): string {
+  return CORES[nome.charCodeAt(0) % CORES.length]!;
+}
 
-const MOCK_MEMBROS: MembroAtivo[] = [
-  { id: "m1", nome: "Ana Lima", email: "ana.lima@faculdade.edu", cargo: "Diretor", iniciais: "AL", cor: CORES[0] },
-  { id: "m2", nome: "Carlos Mota", email: "carlos.mota@faculdade.edu", cargo: "Membro", iniciais: "CM", cor: CORES[1] },
-  { id: "m3", nome: "Julia Ramos", email: "julia.r@faculdade.edu", cargo: "Membro", iniciais: "JR", cor: CORES[2] },
-  { id: "m4", nome: "Pedro Alves", email: "pedro.alves@faculdade.edu", cargo: "Membro", iniciais: "PA", cor: CORES[3] },
-  { id: "m5", nome: "Marina Santos", email: "marina.s@faculdade.edu", cargo: "Membro", iniciais: "MS", cor: CORES[4], novo: true },
-];
+interface MembroAPI {
+  id: string;
+  usuario_id: string;
+  nome: string;
+  email: string;
+  cargo: string | null;
+  role: string | null;
+}
 
-const MOCK_RECURSOS: Recurso[] = [
-  { id: "r1", nome: "Notion da Liga", tipo: "Documento", url: "https://notion.so" },
-  { id: "r2", nome: "Google Drive", tipo: "Armazenamento", url: "https://drive.google.com" },
-  { id: "r3", nome: "Figma", tipo: "Design", url: "https://figma.com" },
-];
-
-const MOCK_INFO: InfoLiga = {
-  nome: "Liga Tech",
-  area: "Tecnologia e Inovação",
-  descricao: "Liga acadêmica voltada para o desenvolvimento de habilidades técnicas e projetos de impacto.",
-  semestre: "2023.1",
-  emailContato: "liga.tech@faculdade.edu",
-  instagram: "@ligatech",
-  linkedin: "liga-tech-faculdade",
-  bannerUrl: "",
-};
-
-const MOCK_PROFESSOR_MENTOR = "Prof. Dr. Ricardo Oliveira";
-
-// ─── helpers ──────────────────────────────────────────────────────────────────
+function apiParaMembro(m: MembroAPI): MembroAtivo {
+  let cargo: Cargo;
+  if (m.cargo === "Diretor") {
+    cargo = "Diretor";
+  } else if (m.role === "admin") {
+    cargo = "Admin";
+  } else if (m.role === "lider") {
+    cargo = "Diretor";
+  } else {
+    cargo = "Membro";
+  }
+  const nome = m.nome ?? m.email;
+  const iniciais = nome.split(" ").slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("");
+  return { id: m.usuario_id, nome, email: m.email, cargo, iniciais, cor: corPorNome(nome) };
+}
 
 function cargoBadgeClass(cargo: Cargo) {
   if (cargo === "Diretor") return "bg-purple-100 text-purple-700";
+if (cargo === "Admin") return "bg-red-100 text-red-700";
   return "bg-gray-100 text-gray-600";
 }
 
-function recursoIcone(tipo: string) {
-  const t = tipo.toLowerCase();
-  if (t.includes("design")) return <Image className="h-4 w-4 text-white" />;
-  if (t.includes("doc")) return <FileText className="h-4 w-4 text-white" />;
-  if (t.includes("armazen")) return <Globe className="h-4 w-4 text-white" />;
-  return <Link className="h-4 w-4 text-white" />;
-}
-
-function inicialCor(nome: string): string {
-  const idx = nome.charCodeAt(0) % CORES.length;
-  return CORES[idx];
-}
 
 async function getToken() {
   const { data } = await supabase.auth.getSession();
@@ -117,14 +228,36 @@ async function getToken() {
 // ─── sub-componentes de aba ───────────────────────────────────────────────────
 
 // ── Membros ──
-function AbaMembros() {
-  const [convites, setConvites] = useState<ConvitePendente[]>(MOCK_CONVITES);
-  const [membros, setMembros] = useState<MembroAtivo[]>(MOCK_MEMBROS);
+function AbaMembros({ ligaId }: { ligaId: string | null }) {
+  const [convites, setConvites] = useState<ConvitePendente[]>([]);
+  const [membros, setMembros] = useState<MembroAtivo[]>([]);
   const [emailConvite, setEmailConvite] = useState("");
   const [cargoConvite, setCargoConvite] = useState<Cargo>("Membro");
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [novoCargoEdit, setNovoCargoEdit] = useState<Cargo>("Membro");
   const [confirmandoRemoverId, setConfirmandoRemoverId] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    if (!ligaId) { setCarregando(false); return; }
+    async function carregar() {
+      try {
+        const token = await getToken();
+        const res = await fetch(`/api/ligas/${ligaId}/membros`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json() as MembroAPI[];
+          setMembros(data.map(apiParaMembro));
+        }
+      } finally {
+        setCarregando(false);
+      }
+    }
+    void carregar();
+  }, [ligaId]);
+
+  if (carregando) return <p className="text-sm text-muted-foreground">Carregando membros…</p>;
 
   function convidar() {
     if (!emailConvite.trim()) return;
@@ -332,25 +465,59 @@ function AbaMembros() {
 }
 
 // ── Informações ──
-function AbaInformacoes() {
-  const [original] = useState<InfoLiga>(MOCK_INFO);
-  const [form, setForm] = useState<InfoLiga>(MOCK_INFO);
+function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initialInfo: InfoLiga }) {
+  const [form, setForm] = useState<InfoLiga>(initialInfo);
+  const [bannerPreview, setBannerPreview] = useState<string>(initialInfo.bannerUrl);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [salvando, setSalvando] = useState(false);
   const [salvo, setSalvo] = useState(false);
-  const [bannerPreview, setBannerPreview] = useState<string>(MOCK_INFO.bannerUrl);
+  const [erro, setErro] = useState<string | null>(null);
 
-  const alterado = JSON.stringify(form) !== JSON.stringify(original) || bannerPreview !== original.bannerUrl;
+  const alterado = JSON.stringify(form) !== JSON.stringify(initialInfo) || bannerFile !== null;
 
-  function salvar() {
-    setSalvo(true);
-    setTimeout(() => setSalvo(false), 2000);
+  async function salvar() {
+    if (!ligaId) return;
+    setSalvando(true);
+    setErro(null);
+    try {
+      const token = await getToken();
+      if (bannerFile) {
+        const fd = new FormData();
+        fd.append("imagem", bannerFile);
+        const imgRes = await fetch(`/api/ligas/${ligaId}/imagem`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        });
+        if (!imgRes.ok) { setErro("Erro ao enviar imagem."); return; }
+        setBannerFile(null);
+      }
+      const res = await fetch(`/api/ligas/${ligaId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          nome: form.nome,
+          descricao: form.descricao,
+          area: form.area,
+          semestre_fundacao: form.semestre,
+          email_contato: form.emailContato,
+          instagram: form.instagram,
+          linkedin: form.linkedin,
+        }),
+      });
+      if (!res.ok) { setErro("Erro ao salvar informações."); return; }
+      setSalvo(true);
+      setTimeout(() => setSalvo(false), 2000);
+    } finally {
+      setSalvando(false);
+    }
   }
 
   function handleBannerChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setBannerPreview(url);
-    setForm((prev) => ({ ...prev, bannerUrl: url }));
+    setBannerFile(file);
+    setBannerPreview(URL.createObjectURL(file));
   }
 
   const inputClass = "w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20";
@@ -449,31 +616,18 @@ function AbaInformacoes() {
         </div>
       </div>
 
-      {/* Professor mentor */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5 space-y-3">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">
-          Professor Mentor
-        </p>
-        <input
-          value={MOCK_PROFESSOR_MENTOR}
-          readOnly
-          className="w-full border border-brand-gray rounded-lg px-3 py-2 text-sm bg-gray-50 text-muted-foreground cursor-not-allowed"
-        />
-        <p className="text-xs text-muted-foreground">
-          Para trocar o professor mentor, entre em contato com o Staff.
-        </p>
-      </div>
-
       {/* Botão salvar */}
       {alterado && (
         <div className="flex items-center gap-3">
           <button
-            onClick={salvar}
-            className="bg-navy hover:bg-navy/90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+            onClick={() => void salvar()}
+            disabled={salvando}
+            className="bg-navy hover:bg-navy/90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
           >
-            Salvar alterações
+            {salvando ? "Salvando…" : "Salvar alterações"}
           </button>
           {salvo && <span className="text-sm text-green-600">Salvo com sucesso!</span>}
+          {erro && <span className="text-sm text-red-500">{erro}</span>}
         </div>
       )}
     </div>
@@ -481,128 +635,266 @@ function AbaInformacoes() {
 }
 
 // ── Recursos ──
-function AbaRecursos() {
-  const [recursos, setRecursos] = useState<Recurso[]>(MOCK_RECURSOS);
+const TIPOS_COM_ARQUIVO = ["Apresentação", "Vídeo", "Documento"] as const;
+
+type RecursoAPI = { id: string; titulo: string; tipo: string; url: string; icone: string; cor: string };
+
+function apiParaRecurso(r: RecursoAPI): Recurso {
+  return { id: r.id, nome: r.titulo, tipo: r.tipo, url: r.url, icone: r.icone ?? "link", cor: r.cor ?? "#546484" };
+}
+
+function AbaRecursos({ ligaId }: { ligaId: string | null }) {
+  const [recursos, setRecursos] = useState<Recurso[]>([]);
   const [novoNome, setNovoNome] = useState("");
-  const [novoTipo, setNovoTipo] = useState("Documento");
+  const [novoTipo, setNovoTipo] = useState("URL");
   const [novoUrl, setNovoUrl] = useState("");
+  const [novoIcone, setNovoIcone] = useState("link");
+  const [novoCor, setNovoCor] = useState("#546484");
+  const [novoEnviando, setNovoEnviando] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Recurso>>({});
+  const [editEnviando, setEditEnviando] = useState(false);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
 
-  function adicionar() {
-    if (!novoNome.trim() || !novoUrl.trim()) return;
-    const novo: Recurso = {
-      id: crypto.randomUUID(),
-      nome: novoNome.trim(),
-      tipo: novoTipo,
-      url: novoUrl.trim(),
-    };
-    setRecursos((prev) => [...prev, novo]);
-    setNovoNome("");
-    setNovoUrl("");
+  async function uploadArquivo(
+    file: File,
+    setUrl: (url: string) => void,
+    setEnviando: (v: boolean) => void,
+  ) {
+    setEnviando(true);
+    const ext = file.name.split(".").pop() ?? "bin";
+    const path = `${ligaId ?? "geral"}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("recursos").upload(path, file, { upsert: false });
+    if (error) {
+      setEnviando(false);
+      return;
+    }
+    const { data } = supabase.storage.from("recursos").getPublicUrl(path);
+    setUrl(data.publicUrl);
+    setEnviando(false);
   }
 
-  function remover(id: string) {
-    setRecursos((prev) => prev.filter((r) => r.id !== id));
+  useEffect(() => {
+    if (!ligaId) {
+      setCarregando(false);
+      return;
+    }
+    async function carregar() {
+      try {
+        const token = await getToken();
+        const res = await fetch(`/api/recursos?liga_id=${ligaId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json() as RecursoAPI[];
+          setRecursos(data.map(apiParaRecurso));
+        }
+      } finally {
+        setCarregando(false);
+      }
+    }
+    void carregar();
+  }, [ligaId]);
+
+  async function adicionar() {
+    setErro(null);
+    if (!novoNome.trim()) { setErro("Informe o nome do recurso."); return; }
+    if (!novoUrl.trim())  { setErro("Informe a URL."); return; }
+    if (!ligaId)          { setErro("Liga não identificada. Recarregue a página."); return; }
+    const token = await getToken();
+    const res = await fetch("/api/recursos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ liga_id: ligaId, titulo: novoNome.trim(), tipo: novoTipo, url: novoUrl.trim(), icone: novoIcone, cor: novoCor }),
+    });
+    if (res.ok) {
+      const criado = await res.json() as RecursoAPI;
+      setRecursos((prev) => [apiParaRecurso(criado), ...prev]);
+      setNovoNome("");
+      setNovoUrl("");
+      setNovoIcone("link");
+      setNovoCor("#546484");
+    } else {
+      const body = await res.json().catch(() => ({})) as { error?: string };
+      setErro(body.error ?? `Erro ${res.status} ao salvar.`);
+    }
+  }
+
+  async function remover(id: string) {
+    const token = await getToken();
+    const res = await fetch(`/api/recursos/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      setRecursos((prev) => prev.filter((r) => r.id !== id));
+    }
   }
 
   function iniciarEdicao(r: Recurso) {
     setEditandoId(r.id);
-    setEditForm({ nome: r.nome, tipo: r.tipo, url: r.url });
+    setEditForm({ nome: r.nome, tipo: r.tipo, url: r.url, icone: r.icone, cor: r.cor });
   }
 
-  function salvarEdicao(id: string) {
-    setRecursos((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, ...editForm } as Recurso : r))
-    );
+  async function salvarEdicao(id: string) {
+    const token = await getToken();
+    const res = await fetch(`/api/recursos/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ titulo: editForm.nome, tipo: editForm.tipo, url: editForm.url, icone: editForm.icone, cor: editForm.cor }),
+    });
+    if (res.ok) {
+      const atualizado = await res.json() as RecursoAPI;
+      setRecursos((prev) => prev.map((r) => (r.id === id ? apiParaRecurso(atualizado) : r)));
+    }
     setEditandoId(null);
+  }
+
+  if (carregando) {
+    return <p className="text-sm text-muted-foreground">Carregando recursos…</p>;
   }
 
   return (
     <div className="space-y-4">
+      {/* Lista */}
       <div className="bg-white border border-brand-gray rounded-xl p-5">
         <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
           Recursos ({recursos.length})
         </p>
-        <div className="divide-y divide-brand-gray">
-          {recursos.map((r) => (
-            <div key={r.id} className="py-3">
-              {editandoId === r.id ? (
-                <div className="flex flex-col gap-2">
-                  <input
-                    value={editForm.nome ?? ""}
-                    onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
-                    placeholder="Nome"
-                    className="border border-brand-gray rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
-                  />
-                  <div className="flex gap-2">
-                    <input
-                      value={editForm.url ?? ""}
-                      onChange={(e) => setEditForm({ ...editForm, url: e.target.value })}
-                      placeholder="URL"
-                      className="flex-1 border border-brand-gray rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
-                    />
-                    <select
-                      value={editForm.tipo ?? "Documento"}
-                      onChange={(e) => setEditForm({ ...editForm, tipo: e.target.value })}
-                      className="border border-brand-gray rounded-lg px-2 py-1.5 text-sm bg-white"
-                    >
-                      <option>Documento</option>
-                      <option>Armazenamento</option>
-                      <option>Design</option>
-                      <option>Link</option>
-                    </select>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => salvarEdicao(r.id)}
-                      className="bg-navy text-white text-xs px-3 py-1.5 rounded-lg hover:bg-navy/90 transition-colors"
-                    >
-                      Salvar
-                    </button>
-                    <button
-                      onClick={() => setEditandoId(null)}
-                      className="border border-brand-gray text-sm px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-xs"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: inicialCor(r.nome) }}
-                    >
-                      {recursoIcone(r.tipo)}
+        {recursos.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum recurso cadastrado ainda.</p>
+        ) : (
+          <div className="divide-y divide-brand-gray">
+            {recursos.map((r) => (
+              <div key={r.id} className="py-3">
+                {editandoId === r.id ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2 items-center">
+                      <IconeCor
+                        icone={editForm.icone ?? "link"}
+                        cor={editForm.cor ?? "#546484"}
+                        onChange={(ic, c) => setEditForm({ ...editForm, icone: ic, cor: c })}
+                      />
+                      <input
+                        value={editForm.nome ?? ""}
+                        onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
+                        placeholder="Nome"
+                        className="flex-1 border border-brand-gray rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+                      />
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-navy">{r.nome}</p>
-                      <p className="text-xs text-muted-foreground">{r.tipo}</p>
+                    <div className="flex gap-2">
+                      <select
+                        value={editForm.tipo ?? "URL"}
+                        onChange={(e) => setEditForm({ ...editForm, tipo: e.target.value })}
+                        className="w-36 border border-brand-gray rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 bg-white"
+                      >
+                        <option>URL</option>
+                        <option>Documento</option>
+                        <option>Notion</option>
+                        <option>Planilha</option>
+                        <option>Apresentação</option>
+                        <option>Vídeo</option>
+                        <option>Outro</option>
+                      </select>
+                    </div>
+                    {(TIPOS_COM_ARQUIVO as readonly string[]).includes(editForm.tipo ?? "") ? (
+                      <div>
+                        <label className={cn(
+                          "flex items-center gap-2 w-full border-2 border-dashed rounded-lg px-3 py-2 cursor-pointer transition-colors text-sm",
+                          editEnviando
+                            ? "border-navy/30 bg-navy/5 text-navy/60 cursor-not-allowed"
+                            : "border-brand-gray hover:border-navy/30 text-muted-foreground hover:text-navy",
+                        )}>
+                          {editEnviando
+                            ? <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                            : <Upload className="h-4 w-4 shrink-0" />}
+                          <span className="truncate text-xs">
+                            {editEnviando
+                              ? "Enviando…"
+                              : editForm.url
+                              ? "Arquivo enviado — clique para substituir"
+                              : "Clique para enviar arquivo"}
+                          </span>
+                          <input
+                            type="file"
+                            className="sr-only"
+                            disabled={editEnviando}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) void uploadArquivo(
+                                file,
+                                (url) => setEditForm((f) => ({ ...f, url })),
+                                setEditEnviando,
+                              );
+                              e.target.value = "";
+                            }}
+                          />
+                        </label>
+                        {editForm.url && (
+                          <p className="mt-1 text-xs text-green-600 truncate">✓ {editForm.url}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <input
+                        value={editForm.url ?? ""}
+                        onChange={(e) => setEditForm({ ...editForm, url: e.target.value })}
+                        placeholder="URL"
+                        className="w-full border border-brand-gray rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+                      />
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => void salvarEdicao(r.id)}
+                        disabled={editEnviando}
+                        className="bg-navy text-white text-xs px-3 py-1.5 rounded-lg hover:bg-navy/90 transition-colors disabled:opacity-50"
+                      >
+                        Salvar
+                      </button>
+                      <button
+                        onClick={() => setEditandoId(null)}
+                        className="border border-brand-gray text-xs px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        Cancelar
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => iniciarEdicao(r)}
-                      className="text-link-blue hover:bg-gray-50 p-1.5 rounded-md transition-colors"
-                      title="Editar"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => remover(r.id)}
-                      className="text-red-400 hover:bg-red-50 p-1.5 rounded-md transition-colors"
-                      title="Remover"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: r.cor }}
+                      >
+                        <RecursoIcone id={r.icone} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-navy">{r.nome}</p>
+                        <p className="text-xs text-muted-foreground">{r.tipo}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => iniciarEdicao(r)}
+                        className="text-link-blue hover:bg-gray-50 p-1.5 rounded-md transition-colors"
+                        title="Editar"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => void remover(r.id)}
+                        className="text-red-400 hover:bg-red-50 p-1.5 rounded-md transition-colors"
+                        title="Remover"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Adicionar novo recurso */}
@@ -610,37 +902,79 @@ function AbaRecursos() {
         <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
           Adicionar Recurso
         </p>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
+          <IconeCor
+            icone={novoIcone}
+            cor={novoCor}
+            onChange={(ic, c) => { setNovoIcone(ic); setNovoCor(c); }}
+          />
           <input
             value={novoNome}
             onChange={(e) => setNovoNome(e.target.value)}
             placeholder="Nome do recurso"
             className="flex-1 min-w-[140px] border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
           />
-          <input
-            value={novoUrl}
-            onChange={(e) => setNovoUrl(e.target.value)}
-            placeholder="URL"
-            className="flex-1 min-w-[160px] border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
-          />
           <select
             value={novoTipo}
             onChange={(e) => setNovoTipo(e.target.value)}
-            className="border border-brand-gray rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-navy/20"
+            className="w-36 border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 bg-white"
           >
+            <option>URL</option>
             <option>Documento</option>
-            <option>Armazenamento</option>
-            <option>Design</option>
-            <option>Link</option>
+            <option>Notion</option>
+            <option>Planilha</option>
+            <option>Apresentação</option>
+            <option>Vídeo</option>
+            <option>Outro</option>
           </select>
           <button
-            onClick={adicionar}
-            className="flex items-center gap-1.5 bg-navy hover:bg-navy/90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+            onClick={() => void adicionar()}
+            disabled={novoEnviando}
+            className="flex items-center gap-1.5 bg-navy hover:bg-navy/90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
           >
             <Plus className="h-4 w-4" />
             Adicionar
           </button>
         </div>
+        <div className="mt-3">
+          {(TIPOS_COM_ARQUIVO as readonly string[]).includes(novoTipo) ? (
+            <label className={cn(
+              "flex items-center gap-2 w-full border-2 border-dashed rounded-lg px-4 py-3 cursor-pointer transition-colors text-sm",
+              novoEnviando
+                ? "border-navy/30 bg-navy/5 text-navy/60 cursor-not-allowed"
+                : "border-brand-gray hover:border-navy/30 text-muted-foreground hover:text-navy",
+            )}>
+              {novoEnviando
+                ? <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                : <Upload className="h-4 w-4 shrink-0" />}
+              <span className="truncate">
+                {novoEnviando
+                  ? "Enviando arquivo…"
+                  : novoUrl
+                  ? "Arquivo enviado — clique para substituir"
+                  : "Clique para selecionar arquivo"}
+              </span>
+              <input
+                type="file"
+                className="sr-only"
+                disabled={novoEnviando}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void uploadArquivo(file, setNovoUrl, setNovoEnviando);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          ) : (
+            <input
+              value={novoUrl}
+              onChange={(e) => setNovoUrl(e.target.value)}
+              placeholder="URL do recurso"
+              className="w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+            />
+          )}
+        </div>
+        {erro && <p className="mt-2 text-sm text-red-500">{erro}</p>}
       </div>
     </div>
   );
@@ -751,10 +1085,14 @@ type Aba = "Membros" | "Informações" | "Recursos" | "Desempenho";
 
 const ABAS: Aba[] = ["Membros", "Informações", "Recursos", "Desempenho"];
 
+const INFO_VAZIA: InfoLiga = { nome: "", area: "", descricao: "", semestre: "", emailContato: "", instagram: "", linkedin: "", bannerUrl: "" };
+
 export function GerenciamentoPage() {
   const [abaAtiva, setAbaAtiva] = useState<Aba>("Membros");
-  const [ligaNome, setLigaNome] = useState("Liga Tech");
-  const [diretorNome, setDiretorNome] = useState("Ana Lima");
+  const [ligaNome, setLigaNome] = useState("");
+  const [diretorNome, setDiretorNome] = useState("");
+  const [ligaId, setLigaId] = useState<string | null>(null);
+  const [ligaInfo, setLigaInfo] = useState<InfoLiga>(INFO_VAZIA);
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
@@ -764,7 +1102,6 @@ export function GerenciamentoPage() {
         if (!token) return;
         const headers = { Authorization: `Bearer ${token}` };
 
-        // detecta role via tabela usuarios (mesmo padrão do AppLayout)
         const { data: sessionData } = await supabase.auth.getSession();
         const email = sessionData.session?.user.email;
         if (email) {
@@ -778,15 +1115,26 @@ export function GerenciamentoPage() {
 
         const res = await fetch("/api/ligas/minha", { headers });
         if (res.ok) {
-          const liga = await res.json();
-          if (liga?.nome) setLigaNome(liga.nome);
-          if (liga?.lider_nome) setDiretorNome(liga.lider_nome);
+          const l = await res.json() as Record<string, unknown>;
+          if (l.id) setLigaId(l.id as string);
+          if (l.nome) setLigaNome(l.nome as string);
+          setDiretorNome((l.lider_email as string) ?? "");
+          setLigaInfo({
+            nome: (l.nome as string) ?? "",
+            area: (l.area as string) ?? "",
+            descricao: (l.descricao as string) ?? "",
+            semestre: (l.semestre_fundacao as string) ?? "",
+            emailContato: (l.email_contato as string) ?? "",
+            instagram: (l.instagram as string) ?? "",
+            linkedin: (l.linkedin as string) ?? "",
+            bannerUrl: (l.imagem_url as string) ?? "",
+          });
         }
       } catch {
-        // fallback nos dados mockados
+        // silencioso
       }
     }
-    carregarDados();
+    void carregarDados();
   }, []);
 
   // perfil Staff (admin) → página própria com todas as ligas
@@ -798,7 +1146,7 @@ export function GerenciamentoPage() {
       <div className="mb-6">
         <h1 className="font-display font-bold text-2xl text-navy">Gerenciamento</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {ligaNome} · Diretor: {diretorNome}
+          {ligaNome || "Carregando…"}{diretorNome ? ` · ${diretorNome}` : ""}
         </p>
       </div>
 
@@ -823,9 +1171,9 @@ export function GerenciamentoPage() {
       </div>
 
       {/* Conteúdo da aba */}
-      {abaAtiva === "Membros" && <AbaMembros />}
-      {abaAtiva === "Informações" && <AbaInformacoes />}
-      {abaAtiva === "Recursos" && <AbaRecursos />}
+      {abaAtiva === "Membros" && <AbaMembros ligaId={ligaId} />}
+      {abaAtiva === "Informações" && <AbaInformacoes ligaId={ligaId} initialInfo={ligaInfo} />}
+      {abaAtiva === "Recursos" && <AbaRecursos ligaId={ligaId} />}
       {abaAtiva === "Desempenho" && <AbaDesempenho />}
     </div>
   );

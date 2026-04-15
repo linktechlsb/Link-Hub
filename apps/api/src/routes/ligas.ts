@@ -114,7 +114,7 @@ ligasRouter.get("/:id/membros", authenticate, async (req, res, next) => {
     const membros = await sql`
       SELECT
         lm.id, lm.usuario_id, lm.cargo, lm.ingressou_em,
-        u.nome, u.email
+        u.nome, u.email, u.role
       FROM liga_membros lm
       JOIN usuarios u ON u.id = lm.usuario_id
       WHERE lm.liga_id = ${id}

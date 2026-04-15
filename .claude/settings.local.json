@@ -22,7 +22,10 @@
       "Bash(/Users/diogochiapetagarcia/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh --project-dir /Users/diogochiapetagarcia/Cursor/Link-Hub)",
       "Bash(pnpm typecheck:*)",
       "Bash(wc -l /Users/diogochiapetagarcia/Cursor/Link-Hub/apps/api/src/routes/*.ts)",
-      "Bash(npx shadcn@latest add alert-dialog --yes)"
+      "Bash(npx shadcn@latest add alert-dialog --yes)",
+      "Bash(pnpm build:web)",
+      "Bash(curl -s http://localhost:3001/api/health)",
+      "Bash(curl -s http://localhost:3001/health)"
     ],
     "deny": [
       "Bash(git commit *)",
