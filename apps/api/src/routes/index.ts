@@ -6,6 +6,7 @@ import { salasRouter } from "./salas.js";
 import { usuariosRouter } from "./usuarios.js";
 import { eventosRouter } from "./eventos.js";
 import { recursosRouter } from "./recursos.js";
+import { receitasRouter } from "./receitas.js";
 
 export const router: IRouter = Router();
 
@@ -20,3 +21,4 @@ router.use("/salas", salasRouter);
 router.use("/usuarios", usuariosRouter);
 router.use("/eventos", eventosRouter);
 router.use("/recursos", recursosRouter);
+router.use("/receitas", receitasRouter);

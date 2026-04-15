@@ -980,6 +980,321 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
   );
 }
 
+// ── Receita ──
+
+interface RegistroFinanceiro {
+  id: string;
+  tipo: "receita" | "custo";
+  recorrencia: "unico" | "recorrente";
+  descricao: string;
+  observacao: string;
+  valor: number;
+  data: string;
+}
+
+type RegistroFinanceiroAPI = {
+  id: string;
+  tipo: string;
+  recorrencia: string;
+  descricao: string;
+  observacao: string | null;
+  valor: string | number;
+  data: string;
+};
+
+function formatarMoeda(valor: number) {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function apiParaRegistro(r: RegistroFinanceiroAPI): RegistroFinanceiro {
+  return {
+    id: r.id,
+    tipo: r.tipo as "receita" | "custo",
+    recorrencia: r.recorrencia === "recorrente" ? "recorrente" : "unico",
+    descricao: r.descricao,
+    observacao: r.observacao ?? "",
+    valor: typeof r.valor === "string" ? parseFloat(r.valor) : r.valor,
+    data: r.data,
+  };
+}
+
+function AbaReceita({ ligaId }: { ligaId: string | null }) {
+  const [registros, setRegistros] = useState<RegistroFinanceiro[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
+
+  // form novo registro
+  const [novoTipo, setNovoTipo] = useState<"receita" | "custo">("receita");
+  const [novaRecorrencia, setNovaRecorrencia] = useState<"unico" | "recorrente">("unico");
+  const [novaDescricao, setNovaDescricao] = useState("");
+  const [novaObs, setNovaObs] = useState("");
+  const [novoValor, setNovoValor] = useState("");
+  const [novaData, setNovaData] = useState(new Date().toISOString().slice(0, 10));
+  const [enviando, setEnviando] = useState(false);
+
+  useEffect(() => {
+    if (!ligaId) { setCarregando(false); return; }
+    async function carregar() {
+      try {
+        const token = await getToken();
+        const res = await fetch(`/api/receitas?liga_id=${ligaId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json() as RegistroFinanceiroAPI[];
+          setRegistros(data.map(apiParaRegistro));
+        }
+      } finally {
+        setCarregando(false);
+      }
+    }
+    void carregar();
+  }, [ligaId]);
+
+  async function adicionar() {
+    setErro(null);
+    if (!novaDescricao.trim()) { setErro("Informe a descrição."); return; }
+    const valorNum = parseFloat(novoValor.replace(",", "."));
+    if (isNaN(valorNum) || valorNum < 0) { setErro("Informe um valor válido."); return; }
+    if (!ligaId) { setErro("Liga não identificada. Recarregue a página."); return; }
+    setEnviando(true);
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/receitas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          liga_id: ligaId,
+          tipo: novoTipo,
+          recorrencia: novaRecorrencia,
+          descricao: novaDescricao.trim(),
+          observacao: novaObs.trim() || undefined,
+          valor: valorNum,
+          data: novaData,
+        }),
+      });
+      if (res.ok) {
+        const criado = await res.json() as RegistroFinanceiroAPI;
+        setRegistros((prev) => [apiParaRegistro(criado), ...prev]);
+        setNovaDescricao("");
+        setNovaObs("");
+        setNovoValor("");
+        setNovaRecorrencia("unico");
+        setNovaData(new Date().toISOString().slice(0, 10));
+      } else {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        setErro(body.error ?? `Erro ${res.status} ao salvar.`);
+      }
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  async function remover(id: string) {
+    const token = await getToken();
+    const res = await fetch(`/api/receitas/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      setRegistros((prev) => prev.filter((r) => r.id !== id));
+    }
+  }
+
+  const totalReceitas = registros.filter((r) => r.tipo === "receita").reduce((s, r) => s + r.valor, 0);
+  const totalCustos = registros.filter((r) => r.tipo === "custo").reduce((s, r) => s + r.valor, 0);
+  const saldo = totalReceitas - totalCustos;
+
+  if (carregando) {
+    return <p className="text-sm text-muted-foreground">Carregando financeiro…</p>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Resumo */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white border border-brand-gray rounded-xl p-4">
+          <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-1">Receitas</p>
+          <p className="font-display font-bold text-xl text-green-600">{formatarMoeda(totalReceitas)}</p>
+        </div>
+        <div className="bg-white border border-brand-gray rounded-xl p-4">
+          <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-1">Custos</p>
+          <p className="font-display font-bold text-xl text-red-500">{formatarMoeda(totalCustos)}</p>
+        </div>
+        <div className="bg-white border border-brand-gray rounded-xl p-4">
+          <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-1">Saldo</p>
+          <p className={cn("font-display font-bold text-xl", saldo >= 0 ? "text-navy" : "text-red-500")}>
+            {formatarMoeda(saldo)}
+          </p>
+        </div>
+      </div>
+
+      {/* Lista */}
+      <div className="bg-white border border-brand-gray rounded-xl p-5">
+        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+          Lançamentos ({registros.length})
+        </p>
+        {registros.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum lançamento ainda.</p>
+        ) : (
+          <div className="divide-y divide-brand-gray">
+            {registros.map((r) => (
+              <div key={r.id} className="py-3 flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div
+                    className={cn(
+                      "h-8 w-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 text-white text-xs font-bold",
+                      r.tipo === "receita" ? "bg-green-500" : "bg-red-400"
+                    )}
+                  >
+                    {r.tipo === "receita" ? "+" : "−"}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-navy">{r.descricao}</p>
+                    {r.observacao && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{r.observacao}</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(r.data + "T00:00:00").toLocaleDateString("pt-BR")}
+                      </p>
+                      <span
+                        className={cn(
+                          "text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
+                          r.recorrencia === "recorrente"
+                            ? "bg-blue-100 text-blue-600"
+                            : "bg-gray-100 text-gray-500"
+                        )}
+                      >
+                        {r.recorrencia === "recorrente" ? "Recorrente" : "Único"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span
+                    className={cn(
+                      "text-sm font-bold",
+                      r.tipo === "receita" ? "text-green-600" : "text-red-500"
+                    )}
+                  >
+                    {r.tipo === "receita" ? "+" : "−"}{formatarMoeda(r.valor)}
+                  </span>
+                  <button
+                    onClick={() => void remover(r.id)}
+                    className="text-red-400 hover:bg-red-50 p-1.5 rounded-md transition-colors"
+                    title="Remover"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Adicionar */}
+      <div className="bg-white border border-brand-gray rounded-xl p-5">
+        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+          Adicionar Lançamento
+        </p>
+        <div className="space-y-3">
+          {/* Tipo */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setNovoTipo("receita")}
+              className={cn(
+                "flex-1 py-2 text-sm font-semibold rounded-lg border-2 transition-colors",
+                novoTipo === "receita"
+                  ? "border-green-500 bg-green-50 text-green-700"
+                  : "border-brand-gray text-muted-foreground hover:border-green-300"
+              )}
+            >
+              + Receita
+            </button>
+            <button
+              type="button"
+              onClick={() => setNovoTipo("custo")}
+              className={cn(
+                "flex-1 py-2 text-sm font-semibold rounded-lg border-2 transition-colors",
+                novoTipo === "custo"
+                  ? "border-red-400 bg-red-50 text-red-600"
+                  : "border-brand-gray text-muted-foreground hover:border-red-300"
+              )}
+            >
+              − Custo
+            </button>
+          </div>
+
+          {/* Recorrência */}
+          <select
+            value={novaRecorrencia}
+            onChange={(e) => setNovaRecorrencia(e.target.value as "unico" | "recorrente")}
+            className="w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 bg-white text-navy"
+          >
+            <option value="unico">Único</option>
+            <option value="recorrente">Recorrente</option>
+          </select>
+
+          {/* Descrição */}
+          <input
+            value={novaDescricao}
+            onChange={(e) => setNovaDescricao(e.target.value)}
+            placeholder="Descrição"
+            className="w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+          />
+
+          {/* Observação */}
+          <input
+            value={novaObs}
+            onChange={(e) => setNovaObs(e.target.value)}
+            placeholder="Observação (opcional)"
+            className="w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+          />
+
+          {/* Valor + Data */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">R$</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={novoValor}
+                onChange={(e) => {
+                  // aceita apenas dígitos, vírgula e ponto
+                  const v = e.target.value.replace(/[^0-9.,]/g, "");
+                  setNovoValor(v);
+                }}
+                placeholder="0,00"
+                className="w-full border border-brand-gray rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+              />
+            </div>
+            <input
+              type="date"
+              value={novaData}
+              onChange={(e) => setNovaData(e.target.value)}
+              className="w-40 border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 bg-white"
+            />
+          </div>
+
+          {erro && <p className="text-sm text-red-500">{erro}</p>}
+
+          <button
+            onClick={() => void adicionar()}
+            disabled={enviando}
+            className="flex items-center gap-1.5 bg-navy hover:bg-navy/90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+          >
+            <Plus className="h-4 w-4" />
+            {enviando ? "Salvando…" : "Adicionar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Desempenho ──
 function AbaDesempenho() {
   const score = 840;
@@ -1081,9 +1396,9 @@ function AbaDesempenho() {
 
 // ─── página principal ─────────────────────────────────────────────────────────
 
-type Aba = "Membros" | "Informações" | "Recursos" | "Desempenho";
+type Aba = "Membros" | "Informações" | "Recursos" | "Receita" | "Desempenho";
 
-const ABAS: Aba[] = ["Membros", "Informações", "Recursos", "Desempenho"];
+const ABAS: Aba[] = ["Membros", "Informações", "Recursos", "Receita", "Desempenho"];
 
 const INFO_VAZIA: InfoLiga = { nome: "", area: "", descricao: "", semestre: "", emailContato: "", instagram: "", linkedin: "", bannerUrl: "" };
 
@@ -1174,6 +1489,7 @@ export function GerenciamentoPage() {
       {abaAtiva === "Membros" && <AbaMembros ligaId={ligaId} />}
       {abaAtiva === "Informações" && <AbaInformacoes ligaId={ligaId} initialInfo={ligaInfo} />}
       {abaAtiva === "Recursos" && <AbaRecursos ligaId={ligaId} />}
+      {abaAtiva === "Receita" && <AbaReceita ligaId={ligaId} />}
       {abaAtiva === "Desempenho" && <AbaDesempenho />}
     </div>
   );
