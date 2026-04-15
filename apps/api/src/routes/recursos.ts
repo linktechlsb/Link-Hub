@@ -28,7 +28,7 @@ recursosRouter.get("/", authenticate, async (req, res, next) => {
 });
 
 // POST /recursos — cria um recurso (lider da liga ou admin)
-recursosRouter.post("/", authenticate, requireRole("admin", "lider"), async (req, res, next) => {
+recursosRouter.post("/", authenticate, requireRole("admin", "diretor"), async (req, res, next) => {
   try {
     const email = (req as AuthenticatedRequest).user!.email;
     const { liga_id, titulo, tipo, url, icone, cor } = req.body as {
@@ -68,7 +68,7 @@ recursosRouter.post("/", authenticate, requireRole("admin", "lider"), async (req
 });
 
 // PATCH /recursos/:id — atualiza um recurso (lider ou admin)
-recursosRouter.patch("/:id", authenticate, requireRole("admin", "lider"), async (req, res, next) => {
+recursosRouter.patch("/:id", authenticate, requireRole("admin", "diretor"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
     const { titulo, tipo, url, icone, cor } = req.body as {
@@ -103,7 +103,7 @@ recursosRouter.patch("/:id", authenticate, requireRole("admin", "lider"), async 
 });
 
 // DELETE /recursos/:id — remove um recurso (lider ou admin)
-recursosRouter.delete("/:id", authenticate, requireRole("admin", "lider"), async (req, res, next) => {
+recursosRouter.delete("/:id", authenticate, requireRole("admin", "diretor"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
 

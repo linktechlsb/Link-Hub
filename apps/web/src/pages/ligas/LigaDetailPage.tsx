@@ -13,7 +13,7 @@ type AbaId = "visao-geral" | "lider" | "membros" | "presenca" | "projetos" | "re
 
 const ABAS: { id: AbaId; label: string }[] = [
   { id: "visao-geral", label: "Visão Geral" },
-  { id: "lider", label: "Líder" },
+  { id: "lider", label: "Diretor" },
   { id: "membros", label: "Membros" },
   { id: "presenca", label: "Presença" },
   { id: "projetos", label: "Projetos" },
@@ -90,7 +90,7 @@ export function LigaDetailPage() {
           <div>
             <h1 className="font-display font-bold text-lg text-white leading-tight">{liga.nome}</h1>
             <p className="text-xs text-white/70 mt-0.5">
-              Líder: {liga.lider_email ?? "—"} · {membros.length} membros
+              Diretor: {liga.diretores && liga.diretores.length > 0 ? liga.diretores.map((d) => d.nome).join(", ") : "—"} · {membros.length} membros
             </p>
           </div>
           {ehMinhaLiga && (
@@ -125,7 +125,7 @@ export function LigaDetailPage() {
         {abaAtiva === "membros" && <MembrosTab ligaId={liga.id} />}
         {abaAtiva === "presenca" && <PresencaTab ligaId={liga.id} />}
         {abaAtiva === "projetos" && <ProjetosTab ligaId={liga.id} />}
-        {abaAtiva === "recursos" && <RecursosTab />}
+        {abaAtiva === "recursos" && <RecursosTab ligaId={liga.id} />}
       </div>
     </div>
   );

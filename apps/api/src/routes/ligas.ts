@@ -190,7 +190,7 @@ ligasRouter.get("/:id/eventos/proximo", authenticate, async (req, res, next) => 
 ligasRouter.post(
   "/:id/imagem",
   authenticate,
-  requireRole("admin", "lider"),
+  requireRole("admin", "diretor"),
   upload.single("imagem"),
   async (req, res, next) => {
     try {
@@ -264,7 +264,7 @@ ligasRouter.post("/", authenticate, requireRole("admin"), async (req, res, next)
           DO UPDATE SET cargo = 'Diretor'
         `;
         await sql`
-          UPDATE usuarios SET role = 'lider' WHERE id = ${usuario_id}
+          UPDATE usuarios SET role = 'diretor' WHERE id = ${usuario_id}
         `;
       }
     }
@@ -276,7 +276,7 @@ ligasRouter.post("/", authenticate, requireRole("admin"), async (req, res, next)
 });
 
 // PATCH /ligas/:id — editar liga (admin ou lider)
-ligasRouter.patch("/:id", authenticate, requireRole("admin", "lider"), async (req, res, next) => {
+ligasRouter.patch("/:id", authenticate, requireRole("admin", "diretor"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
     const { diretores, ...updates } = req.body as Record<string, unknown> & {
@@ -311,7 +311,7 @@ ligasRouter.patch("/:id", authenticate, requireRole("admin", "lider"), async (re
           DO UPDATE SET cargo = 'Diretor'
         `;
         await sql`
-          UPDATE usuarios SET role = 'lider' WHERE id = ${usuario_id}
+          UPDATE usuarios SET role = 'diretor' WHERE id = ${usuario_id}
         `;
       }
     }

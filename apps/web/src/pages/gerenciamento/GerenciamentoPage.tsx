@@ -203,7 +203,7 @@ function apiParaMembro(m: MembroAPI): MembroAtivo {
     cargo = "Diretor";
   } else if (m.role === "admin") {
     cargo = "Admin";
-  } else if (m.role === "lider") {
+  } else if (m.role === "diretor") {
     cargo = "Diretor";
   } else {
     cargo = "Membro";

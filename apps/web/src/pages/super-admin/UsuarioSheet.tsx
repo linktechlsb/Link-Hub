@@ -41,7 +41,7 @@ async function getToken(): Promise<string> {
 
 const ROLES: { value: UserRole; label: string }[] = [
   { value: "membro", label: "Membro" },
-  { value: "lider", label: "Líder" },
+  { value: "diretor", label: "Diretor" },
   { value: "professor", label: "Professor" },
   { value: "admin", label: "Admin" },
 ];

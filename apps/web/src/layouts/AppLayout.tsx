@@ -63,7 +63,7 @@ export function AppLayout() {
   }
 
   const isStaff = role === "admin";
-  const canManage = role === "admin" || role === "lider";
+  const canManage = role === "admin" || role === "diretor";
 
   return (
     <SidebarProvider>

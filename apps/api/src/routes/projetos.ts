@@ -47,7 +47,7 @@ projetosRouter.post("/", authenticate, async (req, res, next) => {
 });
 
 // PATCH /projetos/:id/status — fluxo de aprovação
-projetosRouter.patch("/:id/status", authenticate, requireRole("admin", "lider"), async (req, res, next) => {
+projetosRouter.patch("/:id/status", authenticate, requireRole("admin", "diretor"), async (req, res, next) => {
   try {
     const { status } = req.body as { status: StatusProjeto };
     const statusValidos: StatusProjeto[] = ["rascunho", "em_aprovacao", "aprovado", "rejeitado"];

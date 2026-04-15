@@ -63,7 +63,7 @@ export function LigasPage() {
     setSheetOpen(true);
   }
 
-  const canManage = role === "admin" || role === "lider";
+  const canManage = role === "admin" || role === "diretor";
 
   return (
     <div className="p-8">
@@ -83,7 +83,7 @@ export function LigasPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {role === "lider" && (
+              {role === "diretor" && (
                 <DropdownMenuItem onClick={abrirEditar}>
                   Editar liga
                 </DropdownMenuItem>

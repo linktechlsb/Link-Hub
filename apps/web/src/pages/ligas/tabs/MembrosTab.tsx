@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+const ROLE_LABEL: Record<string, string> = {
+  admin: "Admin",
+  diretor: "Diretor",
+  membro: "Membro",
+  estudante: "Estudante",
+};
+
 interface MembroRow {
   id: string;
   usuario_id: string;
-  cargo: string | null;
+  role: string;
   ingressou_em: string;
   nome: string;
   email: string;
@@ -75,7 +82,7 @@ export function MembrosTab({ ligaId }: Props) {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">
-                    {m.cargo ?? "Membro"}
+                    {ROLE_LABEL[m.role] ?? m.role}
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">
                     {new Date(m.ingressou_em).toLocaleDateString("pt-BR", {

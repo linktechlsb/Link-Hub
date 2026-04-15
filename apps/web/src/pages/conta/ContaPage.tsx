@@ -15,7 +15,7 @@ export function ContaPage() {
     );
   }
 
-  if (role === "lider") {
+  if (role === "diretor") {
     return <ContaLiderView />;
   }
 

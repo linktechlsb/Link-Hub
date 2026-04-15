@@ -6,6 +6,8 @@ export interface Recurso {
   titulo: string;
   tipo: TipoRecurso;
   url: string;
+  icone: string;
+  cor: string;
   criado_por?: string;
   criado_em: string;
 }

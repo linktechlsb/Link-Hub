@@ -181,8 +181,8 @@ export function ProjetosPage() {
     return <ProjetosProfessorView />;
   }
 
-  // Visão do líder
-  if (role === "lider") {
+  // Visão do diretor
+  if (role === "diretor") {
     return <ProjetosLiderView />;
   }
 

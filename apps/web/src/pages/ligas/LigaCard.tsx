@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import type { Liga } from "@link-leagues/types";
 
 interface LigaCardProps {
@@ -5,13 +6,17 @@ interface LigaCardProps {
 }
 
 export function LigaCard({ liga }: LigaCardProps) {
+  const navigate = useNavigate();
   const inicial = liga.nome.charAt(0).toUpperCase();
   const temImagem = Boolean(liga.imagem_url);
   const diretores = liga.diretores ?? [];
   const projetosAtivos = liga.projetos_ativos ?? 0;
 
   return (
-    <div className="rounded-xl overflow-hidden shadow-sm bg-white border border-brand-gray">
+    <div
+      className="rounded-xl overflow-hidden shadow-sm bg-white border border-brand-gray cursor-pointer hover:shadow-md transition-shadow"
+      onClick={() => navigate(`/ligas/${liga.id}`)}
+    >
       {/* Área da imagem */}
       <div className="relative h-32 w-full">
         {temImagem ? (

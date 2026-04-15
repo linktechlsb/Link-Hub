@@ -144,7 +144,7 @@ usuariosRouter.get("/visao-geral", authenticate, requireRole("admin"), async (_r
       LEFT JOIN liga_membros lm ON lm.usuario_id = u.id
       LEFT JOIN ligas l ON l.id = lm.liga_id AND l.ativo = true
       LEFT JOIN presencas p ON p.usuario_id = u.id
-      WHERE u.role IN ('lider', 'membro')
+      WHERE u.role IN ('diretor', 'membro')
       GROUP BY u.id, u.nome, u.email, u.role, l.nome
       ORDER BY u.nome
     `;
@@ -259,7 +259,7 @@ usuariosRouter.delete("/:id", authenticate, requireRole("admin"), async (req, re
 });
 
 // GET /usuarios/busca?email= — busca usuários por e-mail (autocomplete de diretores)
-usuariosRouter.get("/busca", authenticate, requireRole("admin", "lider"), async (req, res, next) => {
+usuariosRouter.get("/busca", authenticate, requireRole("admin", "diretor"), async (req, res, next) => {
   try {
     const email = (req.query["email"] as string) ?? "";
 

@@ -340,7 +340,7 @@ export function HomePage() {
       </div>}
 
       {/* ── Seções exclusivas do perfil Líder ── */}
-      {role === "lider" && (
+      {role === "diretor" && (
         <>
           {/* Toggle Minha liga / Visão global */}
           <div>
