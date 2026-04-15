@@ -201,7 +201,7 @@ function apiParaMembro(m: MembroAPI): MembroAtivo {
   let cargo: Cargo;
   if (m.cargo === "Diretor") {
     cargo = "Diretor";
-  } else if (m.role === "admin") {
+  } else if (m.role === "staff") {
     cargo = "Admin";
   } else if (m.role === "diretor") {
     cargo = "Diretor";
@@ -1453,7 +1453,7 @@ export function GerenciamentoPage() {
   }, []);
 
   // perfil Staff (admin) → página própria com todas as ligas
-  if (role === "admin") return <GerenciamentoStaffPage />;
+  if (role === "staff") return <GerenciamentoStaffPage />;
 
   return (
     <div className="p-8">

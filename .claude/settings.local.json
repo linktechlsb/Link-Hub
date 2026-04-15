@@ -25,7 +25,8 @@
       "Bash(npx shadcn@latest add alert-dialog --yes)",
       "Bash(pnpm build:web)",
       "Bash(curl -s http://localhost:3001/api/health)",
-      "Bash(curl -s http://localhost:3001/health)"
+      "Bash(curl -s http://localhost:3001/health)",
+      "Bash(pnpm dev:*)"
     ],
     "deny": [
       "Bash(git commit *)",

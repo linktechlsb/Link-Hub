@@ -27,7 +27,7 @@ export function ContaPage() {
     return <ContaMembroView />;
   }
 
-  if (role === "admin") {
+  if (role === "staff") {
     return <ContaStaffView />;
   }
 

@@ -127,7 +127,7 @@ usuariosRouter.post(
 );
 
 // GET /usuarios/visao-geral — usuários (lider/membro) com liga e % de presença (admin)
-usuariosRouter.get("/visao-geral", authenticate, requireRole("admin"), async (_req, res, next) => {
+usuariosRouter.get("/visao-geral", authenticate, requireRole("staff"), async (_req, res, next) => {
   try {
     const usuarios = await sql`
       SELECT
@@ -155,7 +155,7 @@ usuariosRouter.get("/visao-geral", authenticate, requireRole("admin"), async (_r
 });
 
 // GET /usuarios — lista todos os usuários com liga (admin)
-usuariosRouter.get("/", authenticate, requireRole("admin"), async (_req, res, next) => {
+usuariosRouter.get("/", authenticate, requireRole("staff"), async (_req, res, next) => {
   try {
     const usuarios = await sql`
       SELECT
@@ -174,7 +174,7 @@ usuariosRouter.get("/", authenticate, requireRole("admin"), async (_req, res, ne
 });
 
 // POST /usuarios — cria usuário no Supabase Auth + tabela (admin)
-usuariosRouter.post("/", authenticate, requireRole("admin"), async (req, res, next) => {
+usuariosRouter.post("/", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const { nome, email, role, liga_id } = req.body as {
       nome: string;
@@ -219,7 +219,7 @@ usuariosRouter.post("/", authenticate, requireRole("admin"), async (req, res, ne
 });
 
 // PATCH /usuarios/:id — atualiza nome e/ou role (admin)
-usuariosRouter.patch("/:id", authenticate, requireRole("admin"), async (req, res, next) => {
+usuariosRouter.patch("/:id", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
     const { nome, role } = req.body as { nome?: string; role?: string };
@@ -245,7 +245,7 @@ usuariosRouter.patch("/:id", authenticate, requireRole("admin"), async (req, res
 });
 
 // DELETE /usuarios/:id — remove do Supabase Auth + tabela (admin)
-usuariosRouter.delete("/:id", authenticate, requireRole("admin"), async (req, res, next) => {
+usuariosRouter.delete("/:id", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
 
@@ -259,7 +259,7 @@ usuariosRouter.delete("/:id", authenticate, requireRole("admin"), async (req, re
 });
 
 // GET /usuarios/busca?email= — busca usuários por e-mail (autocomplete de diretores)
-usuariosRouter.get("/busca", authenticate, requireRole("admin", "diretor"), async (req, res, next) => {
+usuariosRouter.get("/busca", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
     const email = (req.query["email"] as string) ?? "";
 

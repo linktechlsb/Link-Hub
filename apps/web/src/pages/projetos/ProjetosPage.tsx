@@ -172,7 +172,7 @@ export function ProjetosPage() {
   }
 
   // Visão do staff (admin)
-  if (role === "admin") {
+  if (role === "staff") {
     return <ProjetosStaffView />;
   }
 

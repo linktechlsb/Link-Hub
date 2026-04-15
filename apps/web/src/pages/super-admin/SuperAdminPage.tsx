@@ -27,7 +27,7 @@ async function getToken(): Promise<string> {
 }
 
 const ROLE_BADGE: Record<UserRole, string> = {
-  admin: "bg-brand-yellow text-navy",
+  staff: "bg-brand-yellow text-navy",
   diretor: "bg-navy/10 text-navy",
   membro: "bg-link-blue/10 text-link-blue",
   professor: "bg-blue-100 text-blue-700",
@@ -35,7 +35,7 @@ const ROLE_BADGE: Record<UserRole, string> = {
 };
 
 const ROLE_LABEL: Record<UserRole, string> = {
-  admin: "admin",
+  staff: "staff",
   diretor: "diretor",
   membro: "membro",
   professor: "professor",

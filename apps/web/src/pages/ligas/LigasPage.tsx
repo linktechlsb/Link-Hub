@@ -71,7 +71,7 @@ export function LigasPage() {
         <div>
           <h1 className="font-display font-bold text-2xl text-navy">Ligas</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Ligas acadêmicas da Link Faculdade de Negócios
+            Ligas acadêmicas da Link School of Business
           </p>
         </div>
 

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Calendar, X } from "lucide-react";
-import type { Liga, Evento } from "@link-leagues/types";
+import { ChevronLeft, ChevronRight, Calendar, X, Plus } from "lucide-react";
+import type { Liga, Evento, UserRole } from "@link-leagues/types";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +56,14 @@ function formatTime(dateStr: string) {
   return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
 }
 
+interface NovoEventoForm {
+  liga_id: string;
+  titulo: string;
+  descricao: string;
+  data: string;
+  hora: string;
+}
+
 export function AgendaPage() {
   const today = new Date();
   const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
@@ -67,6 +75,13 @@ export function AgendaPage() {
   const [selectedEvento, setSelectedEvento] = useState<EventoComLiga | null>(null);
   const [filterLiga, setFilterLiga] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState<UserRole | null>(null);
+  const [showCriarEvento, setShowCriarEvento] = useState(false);
+  const [novoEvento, setNovoEvento] = useState<NovoEventoForm>({
+    liga_id: "", titulo: "", descricao: "", data: todayStr, hora: "",
+  });
+  const [salvando, setSalvando] = useState(false);
+  const [erroSalvar, setErroSalvar] = useState<string | null>(null);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -78,6 +93,19 @@ export function AgendaPage() {
     });
     return map;
   }, [ligas]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      const session = data.session;
+      if (!session) return;
+      const { data: usuario } = await supabase
+        .from("usuarios")
+        .select("role")
+        .eq("email", session.user.email)
+        .single();
+      setRole((usuario?.role as UserRole) ?? "membro");
+    });
+  }, []);
 
   useEffect(() => {
     async function carregar() {
@@ -102,6 +130,55 @@ export function AgendaPage() {
     }
     carregar();
   }, [year, month, filterLiga]);
+
+  const podeGerenciar = role === "admin" || role === "diretor";
+
+  async function handleCriarEvento(e: React.FormEvent) {
+    e.preventDefault();
+    setSalvando(true);
+    setErroSalvar(null);
+    try {
+      const token = await getToken();
+      const dataISO = novoEvento.hora
+        ? `${novoEvento.data}T${novoEvento.hora}:00`
+        : novoEvento.data;
+
+      const res = await fetch("/api/eventos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          liga_id: novoEvento.liga_id,
+          titulo: novoEvento.titulo,
+          descricao: novoEvento.descricao || undefined,
+          data: dataISO,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { message?: string }).message ?? "Erro ao criar evento");
+      }
+
+      setShowCriarEvento(false);
+      setNovoEvento({ liga_id: "", titulo: "", descricao: "", data: todayStr, hora: "" });
+      // Recarregar eventos do mês atual
+      const inicio = toDateStr(year, month, 1);
+      const fim = toDateStr(year, month, getDaysInMonth(year, month));
+      const ligaParam = filterLiga ? `&liga_id=${filterLiga}` : "";
+      const eventosRes = await fetch(
+        `/api/eventos?inicio=${inicio}&fim=${fim}${ligaParam}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (eventosRes.ok) setEventos(await eventosRes.json());
+    } catch (err) {
+      setErroSalvar(err instanceof Error ? err.message : "Erro desconhecido");
+    } finally {
+      setSalvando(false);
+    }
+  }
 
   // Montar grade do calendário
   const daysInMonth = getDaysInMonth(year, month);
@@ -152,6 +229,106 @@ export function AgendaPage() {
 
   return (
     <div className="p-8">
+      {/* Dialog Criar Evento */}
+      {showCriarEvento && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-brand-gray">
+              <h2 className="font-display font-bold text-base text-navy">Criar Evento</h2>
+              <button
+                onClick={() => { setShowCriarEvento(false); setErroSalvar(null); }}
+                className="p-1 rounded-lg hover:bg-brand-gray text-muted-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCriarEvento} className="px-6 py-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1">Liga</label>
+                <select
+                  required
+                  value={novoEvento.liga_id}
+                  onChange={e => setNovoEvento(f => ({ ...f, liga_id: e.target.value }))}
+                  className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy bg-white focus:outline-none focus:ring-2 focus:ring-navy/20"
+                >
+                  <option value="">Selecionar liga...</option>
+                  {ligas.map(liga => (
+                    <option key={liga.id} value={liga.id}>{liga.nome}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1">Título</label>
+                <input
+                  required
+                  type="text"
+                  value={novoEvento.titulo}
+                  onChange={e => setNovoEvento(f => ({ ...f, titulo: e.target.value }))}
+                  placeholder="Nome do evento"
+                  className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-navy/20"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-navy mb-1">Data</label>
+                  <input
+                    required
+                    type="date"
+                    value={novoEvento.data}
+                    onChange={e => setNovoEvento(f => ({ ...f, data: e.target.value }))}
+                    className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy focus:outline-none focus:ring-2 focus:ring-navy/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-navy mb-1">Horário (opcional)</label>
+                  <input
+                    type="time"
+                    value={novoEvento.hora}
+                    onChange={e => setNovoEvento(f => ({ ...f, hora: e.target.value }))}
+                    className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy focus:outline-none focus:ring-2 focus:ring-navy/20"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1">Descrição (opcional)</label>
+                <textarea
+                  value={novoEvento.descricao}
+                  onChange={e => setNovoEvento(f => ({ ...f, descricao: e.target.value }))}
+                  placeholder="Detalhes do evento..."
+                  rows={3}
+                  className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-navy/20 resize-none"
+                />
+              </div>
+
+              {erroSalvar && (
+                <p className="text-xs text-rose-600 font-medium">{erroSalvar}</p>
+              )}
+
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => { setShowCriarEvento(false); setErroSalvar(null); }}
+                  className="text-sm px-4 py-2 rounded-lg border border-brand-gray text-navy hover:bg-brand-gray transition-colors font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={salvando}
+                  className="text-sm px-4 py-2 rounded-lg bg-navy text-white hover:bg-navy/90 transition-colors font-medium disabled:opacity-60"
+                >
+                  {salvando ? "Salvando..." : "Criar evento"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Cabeçalho */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -162,6 +339,15 @@ export function AgendaPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {podeGerenciar && (
+            <button
+              onClick={() => setShowCriarEvento(true)}
+              className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-navy text-white hover:bg-navy/90 transition-colors font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              Criar evento
+            </button>
+          )}
           <button
             onClick={goToToday}
             className="text-sm px-3 py-1.5 rounded-lg border border-brand-gray text-navy hover:bg-brand-gray transition-colors font-medium"

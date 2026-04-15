@@ -17,7 +17,6 @@ import {
   Users,
   FolderKanban,
   Calendar,
-  BookOpen,
   ShieldCheck,
   Settings,
   User,
@@ -29,7 +28,6 @@ const mainNavItems = [
   { to: "/ligas", label: "Ligas", icon: Users },
   { to: "/projetos", label: "Projetos", icon: FolderKanban },
   { to: "/agenda", label: "Agenda", icon: Calendar },
-  { to: "/conteudo", label: "Conteúdo", icon: BookOpen },
 ];
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -62,8 +60,8 @@ export function AppLayout() {
     navigate("/login");
   }
 
-  const isStaff = role === "admin";
-  const canManage = role === "admin" || role === "diretor";
+  const isStaff = role === "staff";
+  const canManage = role === "staff" || role === "diretor";
 
   return (
     <SidebarProvider>

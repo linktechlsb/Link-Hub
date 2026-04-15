@@ -196,7 +196,7 @@ ligasRouter.get("/:id/eventos/proximo", authenticate, async (req, res, next) => 
 ligasRouter.post(
   "/:id/imagem",
   authenticate,
-  requireRole("admin", "diretor"),
+  requireRole("staff", "diretor"),
   upload.single("imagem"),
   async (req, res, next) => {
     try {
@@ -239,8 +239,8 @@ ligasRouter.post(
   }
 );
 
-// POST /ligas — criar liga (admin)
-ligasRouter.post("/", authenticate, requireRole("admin"), async (req, res, next) => {
+// POST /ligas — criar liga (staff)
+ligasRouter.post("/", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const { nome, descricao, diretores } = req.body as {
       nome: string;
@@ -281,8 +281,8 @@ ligasRouter.post("/", authenticate, requireRole("admin"), async (req, res, next)
   }
 });
 
-// PATCH /ligas/:id — editar liga (admin ou lider)
-ligasRouter.patch("/:id", authenticate, requireRole("admin", "diretor"), async (req, res, next) => {
+// PATCH /ligas/:id — editar liga (staff ou lider)
+ligasRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
     const { diretores, ...updates } = req.body as Record<string, unknown> & {
@@ -328,8 +328,8 @@ ligasRouter.patch("/:id", authenticate, requireRole("admin", "diretor"), async (
   }
 });
 
-// POST /ligas/:id/membros — adiciona membro à liga (admin)
-ligasRouter.post("/:id/membros", authenticate, requireRole("admin"), async (req, res, next) => {
+// POST /ligas/:id/membros — adiciona membro à liga (staff)
+ligasRouter.post("/:id/membros", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const liga_id = req.params["id"] as string;
     const { usuario_id, cargo } = req.body as { usuario_id: string; cargo?: string };
@@ -347,8 +347,8 @@ ligasRouter.post("/:id/membros", authenticate, requireRole("admin"), async (req,
   }
 });
 
-// DELETE /ligas/:id/membros/:userId — remove membro da liga (admin)
-ligasRouter.delete("/:id/membros/:userId", authenticate, requireRole("admin"), async (req, res, next) => {
+// DELETE /ligas/:id/membros/:userId — remove membro da liga (staff)
+ligasRouter.delete("/:id/membros/:userId", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const liga_id = req.params["id"] as string;
     const usuario_id = req.params["userId"] as string;
@@ -364,8 +364,8 @@ ligasRouter.delete("/:id/membros/:userId", authenticate, requireRole("admin"), a
   }
 });
 
-// DELETE /ligas/:id — arquivar liga (admin)
-ligasRouter.delete("/:id", authenticate, requireRole("admin"), async (req, res, next) => {
+// DELETE /ligas/:id — arquivar liga (staff)
+ligasRouter.delete("/:id", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
     await sql`UPDATE ligas SET ativo = false WHERE id = ${id}`;
