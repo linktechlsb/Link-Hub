@@ -639,6 +639,10 @@ export function ProjetosLiderView() {
     const passaStatus = filtroStatus === "todos" || p.status === filtroStatus;
     const passaBusca = p.nome.toLowerCase().includes(busca.toLowerCase());
     return passaStatus && passaBusca;
+  }).sort((a, b) => {
+    const da = a.prazo ?? "9999-99-99";
+    const db = b.prazo ?? "9999-99-99";
+    return da.localeCompare(db);
   });
 
   function toggleSelecionado(id: string) {

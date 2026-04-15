@@ -424,10 +424,11 @@ const FILTRO_STATUS: Record<Filtro, StatusProfessor[]> = {
 
 export function ProjetosProfessorView() {
   const [projetos, setProjetos] = useState<ProjetoProfessor[]>(
-    // ordena aguardando por mais antigos primeiro
-    [...MOCK_PROJETOS_PROFESSOR].sort((a, b) =>
-      a.submissaoEm.localeCompare(b.submissaoEm)
-    )
+    [...MOCK_PROJETOS_PROFESSOR].sort((a, b) => {
+      const da = a.prazo ?? "9999-99-99";
+      const db = b.prazo ?? "9999-99-99";
+      return da.localeCompare(db);
+    })
   );
   const [filtroAtivo, setFiltroAtivo] = useState<Filtro>("aguardando");
   const [visualizacao, setVisualizacao] = useState<"lista" | "kanban">("kanban");
@@ -773,7 +774,11 @@ function KanbanView({
       {COLUNAS_KANBAN.map((col) => {
         const cards = projetos
           .filter((p) => p.status === col.key)
-          .sort((a, b) => a.submissaoEm.localeCompare(b.submissaoEm));
+          .sort((a, b) => {
+            const da = a.prazo ?? "9999-99-99";
+            const db = b.prazo ?? "9999-99-99";
+            return da.localeCompare(db);
+          });
 
         return (
           <div key={col.key} className="flex flex-col gap-2">
