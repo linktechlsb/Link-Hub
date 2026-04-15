@@ -603,6 +603,10 @@ export function ProjetosStaffView() {
     const passaStatus = filtroStatus === "todos" || p.status === filtroStatus;
     const passaBusca  = p.nome.toLowerCase().includes(busca.toLowerCase());
     return passaLiga && passaStatus && passaBusca;
+  }).sort((a, b) => {
+    const da = a.prazo ?? "9999-99-99";
+    const db = b.prazo ?? "9999-99-99";
+    return da.localeCompare(db);
   });
 
   // ── Subtítulo dinâmico ────────────────────────────────────────────────────

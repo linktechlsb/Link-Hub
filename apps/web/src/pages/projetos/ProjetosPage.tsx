@@ -152,6 +152,10 @@ export function ProjetosPage() {
         : true;
     const passaBusca = p.nome.toLowerCase().includes(busca.toLowerCase());
     return passaFiltro && passaBusca;
+  }).sort((a, b) => {
+    const da = a.prazo ?? "9999-99-99";
+    const db = b.prazo ?? "9999-99-99";
+    return da.localeCompare(db);
   });
 
   const meusProjetos = MOCK_PROJETOS.filter((p) =>
