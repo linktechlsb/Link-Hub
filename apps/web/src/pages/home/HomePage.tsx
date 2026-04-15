@@ -131,19 +131,17 @@ export function HomePage() {
       const headers = { Authorization: `Bearer ${token}` };
 
       const { data: sessionData } = await supabase.auth.getSession();
-      const meta = sessionData.session?.user.user_metadata;
       const email = sessionData.session?.user.email ?? "";
-      setNomeUsuario(
-        (meta?.full_name as string | undefined) ?? email.split("@")[0] ?? "Usuário"
-      );
 
-      // detecta role
+      // busca nome e role da tabela de usuários
       if (email) {
         const { data: usuario } = await supabase
           .from("usuarios")
-          .select("role")
+          .select("nome, role")
           .eq("email", email)
           .single();
+        if (usuario?.nome) setNomeUsuario(usuario.nome as string);
+        else setNomeUsuario(email.split("@")[0] ?? "Usuário");
         if (usuario?.role) setRole(usuario.role as string);
       }
 
