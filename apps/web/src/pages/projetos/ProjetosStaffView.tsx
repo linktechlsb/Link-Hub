@@ -7,7 +7,8 @@ import {
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
-type StatusStaff = "rascunho" | "em_aprovacao" | "ag_staff" | "rejeitado" | "aprovado";
+type StatusStaff = "rascunho" | "em_aprovacao" | "rejeitado" | "aprovado";
+type StatusAprovacao = "pendente" | "aprovado" | "rejeitado";
 
 type MembroStaff = { id: string; nome: string; iniciais: string; cargo: string };
 
@@ -31,6 +32,8 @@ type ProjetoStaff = {
   prazo?: string;
   motivoRecusa?: string;
   submissaoEm?: string; // data em que entrou na fila do staff
+  aprovacaoProfessor?: StatusAprovacao;
+  aprovacaoStaff?: StatusAprovacao;
   observacao?: string;
   membros?: MembroStaff[];
   historico?: HistoricoEntry[];
@@ -39,15 +42,14 @@ type ProjetoStaff = {
 // ─── Configuração de status ───────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<StatusStaff, { label: string; badge: string }> = {
-  rascunho:     { label: "Rascunho",      badge: "bg-gray-100 text-gray-600" },
-  em_aprovacao: { label: "Com Professor", badge: "bg-yellow-100 text-yellow-700" },
-  ag_staff:     { label: "Aguardando Staff", badge: "bg-orange-100 text-orange-700" },
-  rejeitado:    { label: "Recusado",      badge: "bg-red-100 text-red-700" },
-  aprovado:     { label: "Aprovado",      badge: "bg-green-100 text-green-700" },
+  rascunho:     { label: "Rascunho",       badge: "bg-gray-100 text-gray-600" },
+  em_aprovacao: { label: "Em Aprovação",   badge: "bg-yellow-100 text-yellow-700" },
+  rejeitado:    { label: "Recusado",       badge: "bg-red-100 text-red-700" },
+  aprovado:     { label: "Aprovado",       badge: "bg-green-100 text-green-700" },
 };
 
 // Colunas do kanban
-const COLUNAS_KANBAN: StatusStaff[] = ["em_aprovacao", "ag_staff", "aprovado", "rejeitado"];
+const COLUNAS_KANBAN: StatusStaff[] = ["em_aprovacao", "aprovado", "rejeitado"];
 
 const LIGAS = ["Todas as ligas", "Liga Tech", "Liga Finanças", "Liga Marketing", "Liga RH"];
 
@@ -75,6 +77,8 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     responsavel: "Marina Silva",
     iniciais: "MS",
     status: "em_aprovacao",
+    aprovacaoProfessor: "pendente",
+    aprovacaoStaff: "pendente",
     prazo: "2026-03-01",
     historico: [
       { etapa: "Criação",   acao: "submetido", por: "Marina Silva",  em: "2026-02-10" },
@@ -89,6 +93,8 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     responsavel: "Carla Nunes",
     iniciais: "CN",
     status: "em_aprovacao",
+    aprovacaoProfessor: "pendente",
+    aprovacaoStaff: "pendente",
     historico: [
       { etapa: "Criação",   acao: "submetido", por: "Carla Nunes", em: "2026-03-01" },
       { etapa: "Professor", acao: "submetido", por: "Carla Nunes", em: "2026-03-05" },
@@ -102,6 +108,8 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     responsavel: "Ana Lima",
     iniciais: "AL",
     status: "em_aprovacao",
+    aprovacaoProfessor: "pendente",
+    aprovacaoStaff: "pendente",
     historico: [
       { etapa: "Criação",   acao: "submetido", por: "Ana Lima", em: "2026-03-10" },
       { etapa: "Professor", acao: "submetido", por: "Ana Lima", em: "2026-04-11" },
@@ -114,7 +122,9 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     descricao: "Sistema de inscrições e check-in via QR code para eventos da liga.",
     responsavel: "Lucas Ferreira",
     iniciais: "LF",
-    status: "ag_staff",
+    status: "em_aprovacao",
+    aprovacaoProfessor: "aprovado",
+    aprovacaoStaff: "pendente",
     submissaoEm: "2026-04-08",
     receita: 4500,
     prazo: "2026-08-15",
@@ -132,7 +142,9 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     descricao: "Envio semanal de resumos das atividades das ligas para os membros.",
     responsavel: "Renata Barros",
     iniciais: "RB",
-    status: "ag_staff",
+    status: "em_aprovacao",
+    aprovacaoProfessor: "aprovado",
+    aprovacaoStaff: "pendente",
     submissaoEm: "2026-04-11",
     prazo: "2026-06-01",
     historico: [
@@ -150,6 +162,8 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     responsavel: "Ana Lima",
     iniciais: "AL",
     status: "aprovado",
+    aprovacaoProfessor: "aprovado",
+    aprovacaoStaff: "aprovado",
     receita: 2500,
     prazo: "2025-06-30",
     historico: [
@@ -166,6 +180,8 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     responsavel: "Rafael Costa",
     iniciais: "RC",
     status: "aprovado",
+    aprovacaoProfessor: "aprovado",
+    aprovacaoStaff: "aprovado",
     receita: 3200,
     prazo: "2026-07-01",
     historico: [
@@ -182,6 +198,8 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     responsavel: "Beatriz Costa",
     iniciais: "BC",
     status: "rejeitado",
+    aprovacaoProfessor: "aprovado",
+    aprovacaoStaff: "rejeitado",
     motivoRecusa: "Orçamento acima do permitido para o semestre.",
     historico: [
       { etapa: "Criação",   acao: "submetido", por: "Beatriz Costa", em: "2026-02-05" },
@@ -482,6 +500,24 @@ function PainelDetalhes({
   );
 }
 
+// ─── Indicador de aprovação ───────────────────────────────────────────────────
+
+const APROVACAO_STYLE: Record<StatusAprovacao, { text: string; classe: string }> = {
+  pendente:  { text: "Pendente",  classe: "text-yellow-600" },
+  aprovado:  { text: "Aprovado",  classe: "text-green-600" },
+  rejeitado: { text: "Recusado",  classe: "text-red-600" },
+};
+
+function AprovacaoIndicador({ label, status }: { label: string; status: StatusAprovacao }) {
+  const { text, classe } = APROVACAO_STYLE[status];
+  return (
+    <div className="flex items-center justify-between text-[11px]">
+      <span className="text-muted-foreground font-medium">{label}</span>
+      <span className={cn("font-semibold", classe)}>{text}</span>
+    </div>
+  );
+}
+
 // ─── Card Kanban ──────────────────────────────────────────────────────────────
 
 function KanbanCard({
@@ -548,8 +584,8 @@ function KanbanCard({
         </div>
       )}
 
-      {/* Há X dias aguardando — somente ag_staff */}
-      {projeto.status === "ag_staff" && dias !== null && (
+      {/* Há X dias aguardando — somente em_aprovacao */}
+      {projeto.status === "em_aprovacao" && dias !== null && (
         <p className="text-[11px] text-orange-600 font-medium mb-2 flex items-center gap-1">
           <Clock className="h-3 w-3 shrink-0" />
           {dias === 0 ? "Recebido hoje" : `há ${dias} ${dias === 1 ? "dia" : "dias"}`}
@@ -562,8 +598,16 @@ function KanbanCard({
         <span className="text-xs text-muted-foreground">{projeto.responsavel}</span>
       </div>
 
-      {/* Ações Staff — somente ag_staff */}
-      {projeto.status === "ag_staff" && (
+      {/* Indicadores de aprovação — somente em_aprovacao */}
+      {projeto.status === "em_aprovacao" && (
+        <div className="flex flex-col gap-1 mb-3 bg-gray-50 rounded-md p-2">
+          <AprovacaoIndicador label="Professor" status={projeto.aprovacaoProfessor ?? "pendente"} />
+          <AprovacaoIndicador label="Staff" status={projeto.aprovacaoStaff ?? "pendente"} />
+        </div>
+      )}
+
+      {/* Ações Staff — somente em_aprovacao */}
+      {projeto.status === "em_aprovacao" && (
         <div className="flex gap-2">
           <button
             onClick={(e) => { e.stopPropagation(); onAprovar(projeto.id); }}
@@ -611,37 +655,39 @@ export function ProjetosStaffView() {
 
   // ── Subtítulo dinâmico ────────────────────────────────────────────────────
 
-  const aguardandoStaff = projetos.filter((p) => p.status === "ag_staff").length;
-  const subtitulo = aguardandoStaff > 0
-    ? `${aguardandoStaff} ${aguardandoStaff === 1 ? "projeto aguardando aprovação" : "projetos aguardando aprovação"}`
+  const aguardandoAprovacao = projetos.filter((p) => p.status === "em_aprovacao").length;
+  const subtitulo = aguardandoAprovacao > 0
+    ? `${aguardandoAprovacao} ${aguardandoAprovacao === 1 ? "projeto aguardando aprovação" : "projetos aguardando aprovação"}`
     : `${projetos.length} projetos no total`;
 
   // ── Ações ─────────────────────────────────────────────────────────────────
 
   function aprovar(id: string) {
-    const hoje = new Date().toISOString().substring(0, 10);
-    setProjetos((prev) => prev.map((p) =>
-      p.id !== id ? p : {
-        ...p,
-        status: "aprovado" as StatusStaff,
-        historico: [...(p.historico ?? []), { etapa: "Staff", acao: "aprovado", por: "Staff", em: hoje }],
-      }
-    ));
-    if (selecionado === id) setSelecionado(null);
+    setProjetos((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        const novaProfessor = p.aprovacaoProfessor ?? "pendente";
+        const novoStatus: StatusStaff =
+          novaProfessor === "aprovado" ? "aprovado" : p.status;
+        return { ...p, aprovacaoStaff: "aprovado" as StatusAprovacao, status: novoStatus };
+      })
+    );
+    setSelecionado(null);
   }
 
   function recusar(id: string, motivo: string) {
-    const hoje = new Date().toISOString().substring(0, 10);
-    setProjetos((prev) => prev.map((p) =>
-      p.id !== id ? p : {
-        ...p,
-        status: "rejeitado" as StatusStaff,
-        motivoRecusa: motivo,
-        historico: [...(p.historico ?? []), { etapa: "Staff", acao: "recusado", por: "Staff", em: hoje, motivo }],
-      }
-    ));
+    setProjetos((prev) =>
+      prev.map((p) =>
+        p.id !== id ? p : {
+          ...p,
+          aprovacaoStaff: "rejeitado" as StatusAprovacao,
+          status: "rejeitado" as StatusStaff,
+          motivoRecusa: motivo,
+        }
+      )
+    );
     setRecusarId(null);
-    if (selecionado === id) setSelecionado(null);
+    setSelecionado(null);
   }
 
   function salvarProjeto(atualizado: ProjetoStaff) {
@@ -658,9 +704,7 @@ export function ProjetosStaffView() {
 
   const STATUS_OPTIONS: { value: StatusStaff | "todos"; label: string }[] = [
     { value: "todos",        label: "Todos" },
-
-    { value: "em_aprovacao", label: "Com Professor" },
-    { value: "ag_staff",     label: "Aguardando Staff" },
+    { value: "em_aprovacao", label: "Em Aprovação" },
     { value: "aprovado",     label: "Aprovado" },
     { value: "rejeitado",    label: "Recusado" },
   ];
@@ -844,7 +888,7 @@ export function ProjetosStaffView() {
                           {p.receita ? formatarReceita(p.receita) : "—"}
                         </td>
                         <td className="px-6 py-4">
-                          {p.status === "ag_staff" ? (
+                          {p.status === "em_aprovacao" ? (
                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => aprovar(p.id)}

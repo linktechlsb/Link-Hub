@@ -69,6 +69,63 @@ projetosRouter.patch("/:id/status", authenticate, requireRole("staff", "diretor"
   }
 });
 
+// PATCH /projetos/:id/aprovacao — professor ou staff registra sua decisão
+projetosRouter.patch("/:id/aprovacao", authenticate, requireRole("professor", "staff", "diretor"), async (req, res, next) => {
+  try {
+    const { papel, decisao } = req.body as {
+      papel: "professor" | "staff";
+      decisao: "aprovado" | "rejeitado";
+    };
+
+    if (!["professor", "staff"].includes(papel)) {
+      res.status(400).json({ error: "Papel inválido. Use 'professor' ou 'staff'." });
+      return;
+    }
+    if (!["aprovado", "rejeitado"].includes(decisao)) {
+      res.status(400).json({ error: "Decisão inválida. Use 'aprovado' ou 'rejeitado'." });
+      return;
+    }
+
+    const id = req.params["id"] as string;
+
+    // Registra a decisão do papel usando dois blocos explícitos (evita interpolação de identificador)
+    const atualizadoRows = papel === "professor"
+      ? await sql`
+          UPDATE projetos SET aprovacao_professor = ${decisao}
+          WHERE id = ${id} AND status = 'em_aprovacao'
+          RETURNING *
+        `
+      : await sql`
+          UPDATE projetos SET aprovacao_staff = ${decisao}
+          WHERE id = ${id} AND status = 'em_aprovacao'
+          RETURNING *
+        `;
+
+    const atualizado = atualizadoRows[0];
+
+    if (!atualizado) {
+      res.status(404).json({ error: "Projeto não encontrado ou não está em aprovação." });
+      return;
+    }
+
+    // Transição automática de status
+    if (atualizado["aprovacao_professor"] === "aprovado" && atualizado["aprovacao_staff"] === "aprovado") {
+      const rows = await sql`UPDATE projetos SET status = 'aprovado' WHERE id = ${id} RETURNING *`;
+      res.json(rows[0]);
+      return;
+    }
+    if (atualizado["aprovacao_professor"] === "rejeitado" || atualizado["aprovacao_staff"] === "rejeitado") {
+      const rows = await sql`UPDATE projetos SET status = 'rejeitado' WHERE id = ${id} RETURNING *`;
+      res.json(rows[0]);
+      return;
+    }
+
+    res.json(atualizado);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // DELETE /projetos/:id
 projetosRouter.delete("/:id", authenticate, requireRole("staff"), async (req, res, next) => {
   try {

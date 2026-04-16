@@ -4,7 +4,8 @@ import { Search, Plus, X, LayoutGrid, List, ChevronRight, FolderOpen, Clock, Ale
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
-type StatusLider = "rascunho" | "em_aprovacao" | "ag_staff" | "rejeitado" | "aprovado";
+type StatusLider = "rascunho" | "em_aprovacao" | "rejeitado" | "aprovado";
+type StatusAprovacao = "pendente" | "aprovado" | "rejeitado";
 
 type MembroLiga = {
   id: string;
@@ -26,6 +27,8 @@ type ProjetoLider = {
   membros?: MembroLiga[];
   observacao?: string;
   submissaoEm?: string; // ISO date — quando entrou na fila de espera
+  aprovacaoProfessor?: StatusAprovacao;
+  aprovacaoStaff?: StatusAprovacao;
 };
 
 // ─── Mock membros da liga ─────────────────────────────────────────────────────
@@ -68,6 +71,8 @@ const MOCK_PROJETOS_LIDER: ProjetoLider[] = [
     iniciais: "AL",
     status: "em_aprovacao",
     submissaoEm: "2026-04-11",
+    aprovacaoProfessor: "pendente",
+    aprovacaoStaff: "pendente",
   },
   {
     id: "l7",
@@ -75,8 +80,10 @@ const MOCK_PROJETOS_LIDER: ProjetoLider[] = [
     descricao: "Comunicado mensal com novidades e conquistas da liga.",
     responsavel: "Beatriz Costa",
     iniciais: "BC",
-    status: "ag_staff",
+    status: "em_aprovacao",
     submissaoEm: "2026-04-08",
+    aprovacaoProfessor: "aprovado",
+    aprovacaoStaff: "pendente",
   },
   {
     id: "l4",
@@ -86,6 +93,8 @@ const MOCK_PROJETOS_LIDER: ProjetoLider[] = [
     iniciais: "AL",
     status: "rejeitado",
     motivoRecusa: "Escopo muito amplo",
+    aprovacaoProfessor: "rejeitado",
+    aprovacaoStaff: "pendente",
   },
   {
     id: "l5",
@@ -96,6 +105,8 @@ const MOCK_PROJETOS_LIDER: ProjetoLider[] = [
     status: "aprovado",
     receita: 4500,
     prazo: "2026-08-15",
+    aprovacaoProfessor: "aprovado",
+    aprovacaoStaff: "aprovado",
   },
   {
     id: "l6",
@@ -106,20 +117,21 @@ const MOCK_PROJETOS_LIDER: ProjetoLider[] = [
     status: "aprovado",
     receita: 2500,
     prazo: "2025-06-30", // vencido
+    aprovacaoProfessor: "aprovado",
+    aprovacaoStaff: "aprovado",
   },
 ];
 
 // ─── Configuração de status ───────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<StatusLider, { label: string; badge: string }> = {
-  rascunho:    { label: "Rascunho",       badge: "bg-gray-100 text-gray-600" },
-  em_aprovacao:{ label: "Com Professor",  badge: "bg-yellow-100 text-yellow-700" },
-  ag_staff:    { label: "Com Staff",      badge: "bg-orange-100 text-orange-700" },
-  rejeitado:   { label: "Recusado",       badge: "bg-red-100 text-red-700" },
-  aprovado:    { label: "Aprovado",       badge: "bg-green-100 text-green-700" },
+  rascunho:     { label: "Rascunho",      badge: "bg-gray-100 text-gray-600" },
+  em_aprovacao: { label: "Em Aprovação",  badge: "bg-yellow-100 text-yellow-700" },
+  rejeitado:    { label: "Recusado",      badge: "bg-red-100 text-red-700" },
+  aprovado:     { label: "Aprovado",      badge: "bg-green-100 text-green-700" },
 };
 
-const COLUNAS: StatusLider[] = ["rascunho", "em_aprovacao", "ag_staff", "rejeitado", "aprovado"];
+const COLUNAS: StatusLider[] = ["rascunho", "em_aprovacao", "rejeitado", "aprovado"];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -165,6 +177,24 @@ function StatusBadge({ status }: { status: StatusLider }) {
     <span className={cn("text-[11px] font-bold px-2 py-0.5 rounded-md", s.badge)}>
       {s.label}
     </span>
+  );
+}
+
+// ─── Indicador de aprovação ───────────────────────────────────────────────────
+
+const APROVACAO_STYLE: Record<StatusAprovacao, { text: string; classe: string }> = {
+  pendente:  { text: "Pendente",  classe: "text-yellow-600" },
+  aprovado:  { text: "Aprovado",  classe: "text-green-600" },
+  rejeitado: { text: "Recusado",  classe: "text-red-600" },
+};
+
+function AprovacaoIndicador({ label, status }: { label: string; status: StatusAprovacao }) {
+  const { text, classe } = APROVACAO_STYLE[status];
+  return (
+    <div className="flex items-center justify-between text-[11px]">
+      <span className="text-muted-foreground font-medium">{label}</span>
+      <span className={cn("font-semibold", classe)}>{text}</span>
+    </div>
   );
 }
 
@@ -229,11 +259,19 @@ function KanbanCard({
       )}
 
       {/* Aguardando há X dias */}
-      {dias !== null && (projeto.status === "em_aprovacao" || projeto.status === "ag_staff") && (
+      {dias !== null && projeto.status === "em_aprovacao" && (
         <p className="text-[11px] text-muted-foreground mb-3 flex items-center gap-1">
           <AlertCircle className="h-3 w-3 shrink-0" />
           {dias === 0 ? "Enviado hoje" : `há ${dias} ${dias === 1 ? "dia" : "dias"}`}
         </p>
+      )}
+
+      {/* Indicadores de aprovação */}
+      {projeto.status === "em_aprovacao" && (
+        <div className="flex flex-col gap-1 mb-3 bg-gray-50 rounded-md p-2">
+          <AprovacaoIndicador label="Professor" status={projeto.aprovacaoProfessor ?? "pendente"} />
+          <AprovacaoIndicador label="Staff" status={projeto.aprovacaoStaff ?? "pendente"} />
+        </div>
       )}
 
       {/* Responsável */}
@@ -322,7 +360,7 @@ function PainelDetalhes({
               Atrasado
             </span>
           )}
-          {dias !== null && (projeto.status === "em_aprovacao" || projeto.status === "ag_staff") && (
+          {dias !== null && projeto.status === "em_aprovacao" && (
             <span className="text-[11px] text-muted-foreground flex items-center gap-1">
               <AlertCircle className="h-3 w-3" />
               {dias === 0 ? "Enviado hoje" : `há ${dias} ${dias === 1 ? "dia" : "dias"}`}
@@ -683,8 +721,7 @@ export function ProjetosLiderView() {
   const PILLS: { value: StatusLider | "todos"; label: string }[] = [
     { value: "todos",        label: "Todos" },
     { value: "rascunho",     label: "Rascunho" },
-    { value: "em_aprovacao", label: "Com Professor" },
-    { value: "ag_staff",     label: "Com Staff" },
+    { value: "em_aprovacao", label: "Em Aprovação" },
     { value: "rejeitado",    label: "Recusado" },
     { value: "aprovado",     label: "Aprovado" },
   ];
@@ -769,7 +806,7 @@ export function ProjetosLiderView() {
 
       {/* ── Kanban ─────────────────────────────────────────────────────────── */}
       {visualizacao === "kanban" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {COLUNAS.map((col) => {
             const colProjetos = projetosFiltrados.filter((p) => p.status === col);
             const cfg = STATUS_CONFIG[col];

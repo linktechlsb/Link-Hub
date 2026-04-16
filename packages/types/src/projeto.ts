@@ -10,6 +10,8 @@ export type StatusProjeto =
   | "concluido"
   | "cancelado";
 
+export type StatusAprovacao = "pendente" | "aprovado" | "rejeitado";
+
 export interface Projeto {
   id: string;
   liga_id: string;
@@ -21,6 +23,8 @@ export interface Projeto {
   status: StatusProjeto;
   prazo?: string;
   percentual_concluido: number;
+  aprovacao_professor: StatusAprovacao;
+  aprovacao_staff: StatusAprovacao;
   criado_em: string;
   atualizado_em: string;
 }
