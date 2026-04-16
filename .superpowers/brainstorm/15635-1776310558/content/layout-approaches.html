@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home Page — Abordagens de Design</title>
+<script src="http://localhost:56589/helper.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; padding: 32px 24px 60px; }
+
+  .page-title { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .page-sub { font-size: 14px; color: #94a3b8; margin-bottom: 32px; }
+
+  .options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+  .option-card {
+    border: 2px solid #1e2535;
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    background: #141824;
+  }
+  .option-card:hover { border-color: #546484; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(84,100,132,0.25); }
+  .option-card.selected { border-color: #FEC641 !important; box-shadow: 0 0 0 3px rgba(254,198,65,0.2); }
+
+  .option-label {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid #1e2535;
+  }
+  .option-letter {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: #10284E; color: #FEC641;
+    font-weight: 800; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .option-letter.b { background: #546484; color: #fff; }
+  .option-letter.c { background: #1e2535; color: #94a3b8; }
+  .option-title { font-size: 15px; font-weight: 700; color: #fff; }
+  .option-badge { margin-left: auto; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 99px; background: #FEC641; color: #10284E; }
+
+  .mockup-area { padding: 12px; }
+
+  /* ---- OPTION A: Modern Dashboard ---- */
+  .mock-a { background: #f8fafc; border-radius: 8px; overflow: hidden; }
+  .mock-a-header { background: #10284E; padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
+  .mock-a-avatar { width: 24px; height: 24px; border-radius: 50%; background: #FEC641; }
+  .mock-a-greeting { font-size: 11px; color: #fff; font-weight: 600; }
+  .mock-a-sub { font-size: 9px; color: rgba(255,255,255,0.6); }
+  .mock-a-body { padding: 10px 12px; }
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
+  .kpi-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 7px 8px; }
+  .kpi-val { font-size: 16px; font-weight: 800; color: #10284E; line-height: 1; }
+  .kpi-lbl { font-size: 8px; color: #64748b; margin-top: 2px; }
+  .kpi-trend { font-size: 8px; color: #22c55e; margin-top: 2px; }
+  .mock-table { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; }
+  .mock-table-header { background: #f1f5f9; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; padding: 5px 8px; gap: 4px; }
+  .mock-table-header span { font-size: 8px; font-weight: 600; color: #64748b; text-transform: uppercase; }
+  .mock-table-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; padding: 5px 8px; gap: 4px; border-top: 1px solid #f1f5f9; align-items: center; }
+  .mock-table-row span { font-size: 9px; color: #334155; }
+  .mock-badge { font-size: 7px; padding: 1px 5px; border-radius: 99px; font-weight: 600; display: inline-block; }
+  .mock-badge.green { background: #dcfce7; color: #166534; }
+  .mock-badge.yellow { background: #fef9c3; color: #854d0e; }
+  .mock-badge.blue { background: #dbeafe; color: #1e40af; }
+  .mock-progress { height: 4px; background: #e2e8f0; border-radius: 99px; overflow: hidden; margin-top: 2px; }
+  .mock-progress-fill { height: 100%; background: #10284E; border-radius: 99px; }
+  .mock-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 4px; padding: 6px 8px; border-top: 1px solid #f1f5f9; background: #fff; }
+  .pg-btn { width: 18px; height: 18px; border-radius: 4px; border: 1px solid #e2e8f0; background: #fff; font-size: 8px; display: flex; align-items: center; justify-content: center; color: #64748b; }
+  .pg-btn.active { background: #10284E; color: #fff; border-color: #10284E; }
+  .mock-skeleton { height: 8px; background: #e2e8f0; border-radius: 4px; margin: 3px 0; }
+  .mock-skeleton.w50 { width: 50%; }
+  .mock-skeleton.w70 { width: 70%; }
+
+  /* ---- OPTION B: Analytics / Widget Grid ---- */
+  .mock-b { background: #f1f5f9; border-radius: 8px; overflow: hidden; }
+  .mock-b-header { background: linear-gradient(135deg, #10284E 0%, #546484 100%); padding: 10px 12px; }
+  .mock-b-title { font-size: 13px; font-weight: 800; color: #fff; }
+  .mock-b-sub { font-size: 8px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+  .mock-b-metrics { display: flex; gap: 8px; margin-top: 8px; }
+  .mock-b-metric { flex: 1; background: rgba(255,255,255,0.15); border-radius: 6px; padding: 6px 8px; }
+  .mock-b-metric-val { font-size: 18px; font-weight: 900; color: #FEC641; line-height: 1; }
+  .mock-b-metric-lbl { font-size: 8px; color: rgba(255,255,255,0.8); margin-top: 1px; }
+  .mock-b-body { padding: 10px; display: grid; grid-template-columns: 1.5fr 1fr; gap: 8px; }
+  .widget { background: #fff; border-radius: 6px; padding: 8px; }
+  .widget-title { font-size: 9px; font-weight: 700; color: #10284E; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .ranking-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+  .rank-num { font-size: 10px; font-weight: 800; color: #94a3b8; width: 12px; }
+  .rank-bar-bg { flex: 1; height: 6px; background: #f1f5f9; border-radius: 99px; overflow: hidden; }
+  .rank-bar-fill { height: 100%; border-radius: 99px; }
+  .rank-name { font-size: 8px; color: #334155; width: 40px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rank-score { font-size: 9px; font-weight: 700; color: #10284E; }
+  .alert-item { display: flex; gap-5px; margin-bottom: 5px; align-items: flex-start; gap: 5px; }
+  .alert-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
+  .alert-text { font-size: 8px; color: #475569; line-height: 1.4; }
+  .mini-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+  .mini-tab { font-size: 8px; padding: 3px 7px; border-radius: 99px; font-weight: 600; }
+  .mini-tab.active { background: #10284E; color: #fff; }
+  .mini-tab.inactive { background: #f1f5f9; color: #64748b; }
+
+  /* ---- OPTION C: Compact Tabs ---- */
+  .mock-c { background: #fff; border-radius: 8px; overflow: hidden; }
+  .mock-c-topbar { background: #10284E; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; }
+  .mock-c-brand { font-size: 11px; font-weight: 800; color: #FEC641; letter-spacing: 0.05em; }
+  .mock-c-user { display: flex; align-items: center; gap: 5px; }
+  .mock-c-avatar { width: 20px; height: 20px; border-radius: 50%; background: #546484; }
+  .mock-c-username { font-size: 9px; color: rgba(255,255,255,0.8); }
+  .mock-c-tabs { display: flex; border-bottom: 1px solid #e2e8f0; padding: 0 12px; background: #fff; }
+  .mock-c-tab { padding: 7px 10px; font-size: 9px; font-weight: 600; color: #94a3b8; border-bottom: 2px solid transparent; }
+  .mock-c-tab.active { color: #10284E; border-bottom-color: #10284E; }
+  .mock-c-body { padding: 10px 12px; }
+  .c-kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+  .c-kpi { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; }
+  .c-kpi-val { font-size: 20px; font-weight: 900; color: #10284E; line-height: 1; }
+  .c-kpi-lbl { font-size: 8px; color: #64748b; margin-top: 2px; }
+  .c-kpi-badge { display: inline-flex; align-items: center; gap: 2px; font-size: 8px; color: #22c55e; margin-top: 3px; }
+  .c-section-title { font-size: 10px; font-weight: 700; color: #10284E; margin-bottom: 6px; }
+  .c-table { border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; }
+  .c-table-head { display: grid; grid-template-columns: 2fr 1fr 1fr; background: #f8fafc; padding: 4px 8px; border-bottom: 1px solid #e2e8f0; }
+  .c-table-head span { font-size: 7px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+  .c-table-row { display: grid; grid-template-columns: 2fr 1fr 1fr; padding: 4px 8px; border-bottom: 1px solid #f1f5f9; }
+  .c-table-row span { font-size: 8px; color: #334155; }
+  .c-dropdown-row { display: flex; gap: 6px; margin-bottom: 8px; }
+  .c-dropdown { border: 1px solid #e2e8f0; border-radius: 5px; padding: 3px 8px; font-size: 8px; color: #334155; background: #fff; display: flex; align-items: center; gap: 4px; }
+  .c-dropdown::after { content: '▾'; color: #94a3b8; }
+
+  .option-desc { padding: 12px 16px 14px; border-top: 1px solid #1e2535; }
+  .option-desc p { font-size: 12px; color: #94a3b8; line-height: 1.5; }
+  .option-desc strong { color: #e2e8f0; }
+  .feature-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .pill { font-size: 10px; padding: 3px 8px; border-radius: 99px; background: #1e2535; color: #94a3b8; }
+  .pill.highlight { background: rgba(254,198,65,0.15); color: #FEC641; }
+
+  .selection-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #141824; border-top: 1px solid #1e2535;
+    padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .sel-text { font-size: 13px; color: #94a3b8; }
+  .sel-text span { color: #FEC641; font-weight: 700; }
+  .sel-btn {
+    background: #FEC641; color: #10284E; font-weight: 700; font-size: 13px;
+    border: none; border-radius: 8px; padding: 8px 20px; cursor: pointer;
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .sel-btn.visible { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="page-title">Qual direção de design você prefere para a Home?</div>
+<div class="page-sub">Clique em uma opção para selecioná-la. Todas usam as cores da marca Link: Navy, Link Blue e Brand Yellow.</div>
+
+<div class="options-grid">
+
+  <!-- OPTION A: Modern Dashboard -->
+  <div class="option-card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="option-label">
+      <div class="option-letter">A</div>
+      <div class="option-title">Dashboard Moderno</div>
+      <div class="option-badge">Recomendado</div>
+    </div>
+    <div class="mockup-area">
+      <div class="mock-a">
+        <div class="mock-a-header">
+          <div class="mock-a-avatar"></div>
+          <div>
+            <div class="mock-a-greeting">Olá, João Silva 👋</div>
+            <div class="mock-a-sub">Link — Faculdade de Negócios</div>
+          </div>
+        </div>
+        <div class="mock-a-body">
+          <!-- KPI Cards -->
+          <div class="kpi-row">
+            <div class="kpi-card">
+              <div class="kpi-val">12</div>
+              <div class="kpi-lbl">Ligas Ativas</div>
+              <div class="kpi-trend">↑ 2 novas</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-val">87</div>
+              <div class="kpi-lbl">Membros</div>
+              <div class="kpi-trend">↑ 5 este mês</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-val">34</div>
+              <div class="kpi-lbl">Projetos</div>
+              <div class="kpi-trend" style="color:#f59e0b">↔ estável</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-val">78%</div>
+              <div class="kpi-lbl">Presença</div>
+              <div class="kpi-trend">↑ +3%</div>
+            </div>
+          </div>
+          <!-- Table -->
+          <div class="mock-table">
+            <div class="mock-table-header">
+              <span>Projeto</span>
+              <span>Status</span>
+              <span>Progresso</span>
+              <span>Prazo</span>
+            </div>
+            <div class="mock-table-row">
+              <span>Pesquisa de Mercado</span>
+              <span><span class="mock-badge green">Aprovado</span></span>
+              <span><div class="mock-progress"><div class="mock-progress-fill" style="width:65%"></div></div></span>
+              <span style="font-size:8px;color:#64748b">15/05</span>
+            </div>
+            <div class="mock-table-row">
+              <span>Plano de Marketing</span>
+              <span><span class="mock-badge yellow">Revisão</span></span>
+              <span><div class="mock-progress"><div class="mock-progress-fill" style="width:30%"></div></div></span>
+              <span style="font-size:8px;color:#64748b">20/05</span>
+            </div>
+            <div class="mock-table-row">
+              <span>Análise Financeira</span>
+              <span><span class="mock-badge blue">Em andamento</span></span>
+              <span><div class="mock-progress"><div class="mock-progress-fill" style="width:80%"></div></div></span>
+              <span style="font-size:8px;color:#64748b">30/05</span>
+            </div>
+            <div class="mock-pagination">
+              <span style="font-size:8px;color:#94a3b8;margin-right:4px">1–3 de 12</span>
+              <div class="pg-btn">‹</div>
+              <div class="pg-btn active">1</div>
+              <div class="pg-btn">2</div>
+              <div class="pg-btn">3</div>
+              <div class="pg-btn">›</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="option-desc">
+      <p><strong>Cards de métricas no topo</strong>, depois uma tabela paginada de projetos/eventos. Layout limpo, muito espaço branco, skeleton loading nos cards.</p>
+      <div class="feature-pills">
+        <span class="pill highlight">Skeleton loading</span>
+        <span class="pill highlight">Tabela paginada</span>
+        <span class="pill">Dropdown filtros</span>
+        <span class="pill">KPI cards</span>
+        <span class="pill">Progress bar</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTION B: Analytics / Widget Grid -->
+  <div class="option-card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="option-label">
+      <div class="option-letter b">B</div>
+      <div class="option-title">Analytics Grid</div>
+    </div>
+    <div class="mockup-area">
+      <div class="mock-b">
+        <div class="mock-b-header">
+          <div class="mock-b-title">Visão Geral da Liga</div>
+          <div class="mock-b-sub">Semana de 14–20 abr • Liga de Finanças</div>
+          <div class="mock-b-metrics">
+            <div class="mock-b-metric">
+              <div class="mock-b-metric-val">92</div>
+              <div class="mock-b-metric-lbl">Score</div>
+            </div>
+            <div class="mock-b-metric">
+              <div class="mock-b-metric-val">78%</div>
+              <div class="mock-b-metric-lbl">Presença</div>
+            </div>
+            <div class="mock-b-metric">
+              <div class="mock-b-metric-val">8</div>
+              <div class="mock-b-metric-lbl">Projetos</div>
+            </div>
+            <div class="mock-b-metric">
+              <div class="mock-b-metric-val">24</div>
+              <div class="mock-b-metric-lbl">Membros</div>
+            </div>
+          </div>
+        </div>
+        <div class="mock-b-body">
+          <!-- Ranking widget -->
+          <div class="widget">
+            <div class="widget-title">Ranking de Ligas</div>
+            <div class="mini-tabs">
+              <div class="mini-tab active">Score</div>
+              <div class="mini-tab inactive">Presença</div>
+            </div>
+            <div class="ranking-row">
+              <div class="rank-num">#1</div>
+              <div class="rank-name">Finanças</div>
+              <div class="rank-bar-bg"><div class="rank-bar-fill" style="width:92%;background:#10284E"></div></div>
+              <div class="rank-score">92</div>
+            </div>
+            <div class="ranking-row">
+              <div class="rank-num">#2</div>
+              <div class="rank-name">Marketing</div>
+              <div class="rank-bar-bg"><div class="rank-bar-fill" style="width:85%;background:#546484"></div></div>
+              <div class="rank-score">85</div>
+            </div>
+            <div class="ranking-row">
+              <div class="rank-num">#3</div>
+              <div class="rank-name">TI</div>
+              <div class="rank-bar-bg"><div class="rank-bar-fill" style="width:71%;background:#94a3b8"></div></div>
+              <div class="rank-score">71</div>
+            </div>
+            <div class="ranking-row">
+              <div class="rank-num">#4</div>
+              <div class="rank-name">Jurídico</div>
+              <div class="rank-bar-bg"><div class="rank-bar-fill" style="width:63%;background:#e2e8f0"></div></div>
+              <div class="rank-score">63</div>
+            </div>
+          </div>
+          <!-- Alerts widget -->
+          <div class="widget">
+            <div class="widget-title">Alertas & Ações</div>
+            <div class="alert-item">
+              <div class="alert-dot" style="background:#ef4444"></div>
+              <div class="alert-text">2 projetos aguardando aprovação há mais de 7 dias</div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-dot" style="background:#f59e0b"></div>
+              <div class="alert-text">Liga TI com presença abaixo de 50%</div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-dot" style="background:#22c55e"></div>
+              <div class="alert-text">Próximo evento: hoje às 19h — Sala B201</div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-dot" style="background:#3b82f6"></div>
+              <div class="alert-text">3 novos membros aguardando confirmação</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="option-desc">
+      <p>Header com <strong>métricas grandes em destaque</strong>, depois grid de widgets independentes. Inspirado em dashboards analytics/BI.</p>
+      <div class="feature-pills">
+        <span class="pill highlight">Header com métricas</span>
+        <span class="pill highlight">Widget grid</span>
+        <span class="pill">Ranking com barras</span>
+        <span class="pill">Feed de alertas</span>
+        <span class="pill">Mini-tabs</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTION C: Tabs + Compact -->
+  <div class="option-card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="option-label">
+      <div class="option-letter c">C</div>
+      <div class="option-title">Tabs por Contexto</div>
+    </div>
+    <div class="mockup-area">
+      <div class="mock-c">
+        <div class="mock-c-topbar">
+          <div class="mock-c-brand">LINK</div>
+          <div class="mock-c-user">
+            <div class="mock-c-avatar"></div>
+            <div class="mock-c-username">Maria P. ▾</div>
+          </div>
+        </div>
+        <div class="mock-c-tabs">
+          <div class="mock-c-tab active">Visão Geral</div>
+          <div class="mock-c-tab">Projetos</div>
+          <div class="mock-c-tab">Presença</div>
+          <div class="mock-c-tab">Salas</div>
+        </div>
+        <div class="mock-c-body">
+          <!-- Dropdowns filtro -->
+          <div class="c-dropdown-row">
+            <div class="c-dropdown">Todas as Ligas</div>
+            <div class="c-dropdown">Abril 2026</div>
+            <div class="c-dropdown">Todos os Status</div>
+          </div>
+          <!-- KPIs -->
+          <div class="c-kpi-row">
+            <div class="c-kpi">
+              <div class="c-kpi-val">34</div>
+              <div class="c-kpi-lbl">Projetos Ativos</div>
+              <div class="c-kpi-badge">↑ +4</div>
+            </div>
+            <div class="c-kpi">
+              <div class="c-kpi-val">78%</div>
+              <div class="c-kpi-lbl">Frequência</div>
+              <div class="c-kpi-badge" style="color:#f59e0b">↔ estável</div>
+            </div>
+            <div class="c-kpi">
+              <div class="c-kpi-val">12</div>
+              <div class="c-kpi-lbl">Ligas Ativas</div>
+              <div class="c-kpi-badge">↑ +2</div>
+            </div>
+          </div>
+          <!-- Table -->
+          <div class="c-section-title">Projetos Recentes</div>
+          <div class="c-table">
+            <div class="c-table-head">
+              <span>Nome</span>
+              <span>Liga</span>
+              <span>Status</span>
+            </div>
+            <div class="c-table-row">
+              <span>Pesquisa de Mercado</span>
+              <span style="color:#546484">Finanças</span>
+              <span><span class="mock-badge green">Aprovado</span></span>
+            </div>
+            <div class="c-table-row">
+              <span>Plano de Marketing</span>
+              <span style="color:#546484">Marketing</span>
+              <span><span class="mock-badge yellow">Revisão</span></span>
+            </div>
+            <div class="c-table-row">
+              <span>Análise Jurídica</span>
+              <span style="color:#546484">Jurídico</span>
+              <span><span class="mock-badge blue">Andamento</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="option-desc">
+      <p>Navegação por <strong>abas contextuais</strong> (Visão Geral, Projetos, Presença, Salas) com dropdowns de filtro inline. Mais compacto.</p>
+      <div class="feature-pills">
+        <span class="pill highlight">Tabs contextuais</span>
+        <span class="pill highlight">Dropdown menus</span>
+        <span class="pill">Filtros inline</span>
+        <span class="pill">KPI compacto</span>
+        <span class="pill">Tabela simples</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="selection-bar">
+  <div class="sel-text" id="sel-text">Clique em uma opção para selecionar</div>
+  <button class="sel-btn" id="sel-btn">Confirmar escolha →</button>
+</div>
+
+<script>
+function toggleSelect(el) {
+  const allCards = document.querySelectorAll('.option-card');
+  allCards.forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+
+  const choice = el.getAttribute('data-choice').toUpperCase();
+  const titles = { A: 'Dashboard Moderno', B: 'Analytics Grid', C: 'Tabs por Contexto' };
+  document.getElementById('sel-text').innerHTML = `Selecionado: <span>${choice} — ${titles[choice]}</span>`;
+  document.getElementById('sel-btn').classList.add('visible');
+
+  if (window.recordChoice) window.recordChoice(el);
+}
+</script>
+
+</body>
+</html>

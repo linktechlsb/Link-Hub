@@ -25,7 +25,30 @@
       "Bash(npx shadcn@latest add alert-dialog --yes)",
       "Bash(pnpm build:web)",
       "Bash(curl -s http://localhost:3001/api/health)",
-      "Bash(curl -s http://localhost:3001/health)"
+      "Bash(curl -s http://localhost:3001/health)",
+      "Bash(pnpm dev:*)",
+      "Bash(curl -s -H \"Accept: application/json\" http://localhost:3001/health)",
+      "Bash(awk '{print $2, $11, $12, $13}')",
+      "Bash(lsof -nP -iTCP -sTCP:LISTEN)",
+      "Bash(grep -v \"127.0.0.1:[0-9]\\\\{5,\\\\}\")",
+      "Bash(ps -o pid,ppid,command -p 71559 71531 14658)",
+      "Bash(curl -s http://127.0.0.1:3001/health)",
+      "Bash(curl -s http://127.0.0.1:3001/ligas)",
+      "Bash(lsof -nP -iTCP:3001 -sTCP:LISTEN)",
+      "Bash(grep -r \"export interface\\\\|export type\" /Users/diogochiapetagarcia/Cursor/Link-Hub/packages/types/src/*.ts)",
+      "Skill(commit-commands:commit)",
+      "Skill(commit-commands:commit:*)",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub diff --stat 5f514a64952d37566b00063e1bea5bd75adcc3b6..HEAD)",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub diff 5f514a64952d37566b00063e1bea5bd75adcc3b6..HEAD)",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub status)",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub log --oneline -5)",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub diff --cached)",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub show HEAD:apps/api/src/routes/eventos.ts)",
+      "Bash(pnpm dlx *)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(bash /Users/diogochiapetagarcia/Cursor/Link-Hub/.claude/skills/brainstorming/scripts/start-server.sh --project-dir /Users/diogochiapetagarcia/Cursor/Link-Hub)",
+      "Bash(pnpm build:api)"
     ],
     "deny": [
       "Bash(git commit *)",
@@ -33,6 +56,30 @@
       "Bash(rm -rf *)",
       "Read(./.env)",
       "Read(./.env.*)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "afplay /System/Library/Sounds/Glass.aiff 2>/dev/null || true",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "afplay /System/Library/Sounds/Ping.aiff 2>/dev/null || true",
+            "async": true
+          }
+        ]
+      }
     ]
   }
 }

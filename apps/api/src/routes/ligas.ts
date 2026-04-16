@@ -54,18 +54,29 @@ ligasRouter.get("/minha", authenticate, async (req, res, next) => {
   try {
     const email = (req as AuthenticatedRequest).user!.email;
     const [liga] = await sql`
-      SELECT l.*, lu.email AS lider_email
+      SELECT
+        l.*,
+        lu.email AS lider_email,
+        COALESCE(
+          json_agg(
+            json_build_object('id', u.id, 'nome', u.nome)
+          ) FILTER (WHERE (lm.cargo = 'Diretor' OR u.role = 'diretor') AND lm.id IS NOT NULL),
+          '[]'
+        ) AS diretores
       FROM ligas l
       LEFT JOIN usuarios lu ON lu.id = l.lider_id
+      LEFT JOIN liga_membros lm ON lm.liga_id = l.id
+      LEFT JOIN usuarios u ON u.id = lm.usuario_id
       WHERE l.ativo = true
         AND (
           l.lider_id = (SELECT id FROM usuarios WHERE email = ${email})
           OR EXISTS (
-            SELECT 1 FROM liga_membros lm
-            JOIN usuarios u ON u.id = lm.usuario_id
-            WHERE lm.liga_id = l.id AND u.email = ${email}
+            SELECT 1 FROM liga_membros lm2
+            JOIN usuarios u2 ON u2.id = lm2.usuario_id
+            WHERE lm2.liga_id = l.id AND u2.email = ${email}
           )
         )
+      GROUP BY l.id, lu.email
       LIMIT 1
     `;
     if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
@@ -196,11 +207,24 @@ ligasRouter.get("/:id/eventos/proximo", authenticate, async (req, res, next) => 
 ligasRouter.post(
   "/:id/imagem",
   authenticate,
-  requireRole("admin", "diretor"),
+  requireRole("staff", "diretor"),
   upload.single("imagem"),
   async (req, res, next) => {
     try {
       const id = req.params["id"] as string;
+      const user = (req as AuthenticatedRequest).user!;
+
+      if (user.role === "diretor") {
+        const [membro] = await sql`
+          SELECT 1 FROM liga_membros lm
+          JOIN usuarios u ON u.id = lm.usuario_id
+          WHERE lm.liga_id = ${id} AND u.email = ${user.email} AND lm.cargo = 'Diretor'
+        `;
+        if (!membro) {
+          res.status(403).json({ error: "Você só pode editar a sua própria liga." });
+          return;
+        }
+      }
 
       if (!req.file) {
         res.status(400).json({ error: "Arquivo de imagem obrigatório." });
@@ -239,14 +263,19 @@ ligasRouter.post(
   }
 );
 
-// POST /ligas — criar liga (admin)
-ligasRouter.post("/", authenticate, requireRole("admin"), async (req, res, next) => {
+// POST /ligas — criar liga (staff)
+ligasRouter.post("/", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const { nome, descricao, diretores } = req.body as {
       nome: string;
       descricao?: string;
       diretores?: string[];
     };
+
+    if (!nome || !nome.trim()) {
+      res.status(400).json({ error: "O nome da liga é obrigatório." });
+      return;
+    }
 
     // Resolve o usuarios.id do admin logado pelo email
     const [adminUsuario] = await sql`
@@ -281,13 +310,33 @@ ligasRouter.post("/", authenticate, requireRole("admin"), async (req, res, next)
   }
 });
 
-// PATCH /ligas/:id — editar liga (admin ou lider)
-ligasRouter.patch("/:id", authenticate, requireRole("admin", "diretor"), async (req, res, next) => {
+// PATCH /ligas/:id — editar liga (staff ou lider)
+ligasRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
-    const { diretores, ...updates } = req.body as Record<string, unknown> & {
+    const user = (req as AuthenticatedRequest).user!;
+
+    if (user.role === "diretor") {
+      const [membro] = await sql`
+        SELECT 1 FROM liga_membros lm
+        JOIN usuarios u ON u.id = lm.usuario_id
+        WHERE lm.liga_id = ${id} AND u.email = ${user.email} AND lm.cargo = 'Diretor'
+      `;
+      if (!membro) {
+        res.status(403).json({ error: "Você só pode editar a sua própria liga." });
+        return;
+      }
+    }
+
+    const { diretores, ...rawUpdates } = req.body as Record<string, unknown> & {
       diretores?: string[];
     };
+
+    const camposPermitidos = ["nome", "descricao", "categoria", "ativo"] as const;
+    const updates: Record<string, unknown> = {};
+    for (const campo of camposPermitidos) {
+      if (campo in rawUpdates) updates[campo] = rawUpdates[campo];
+    }
 
     let liga;
     if (Object.keys(updates).length > 0) {
@@ -303,6 +352,17 @@ ligasRouter.patch("/:id", authenticate, requireRole("admin", "diretor"), async (
     if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
 
     if (diretores !== undefined) {
+      // Get current directors and revoke role for those being removed
+      const diretoresAtuais = await sql`
+        SELECT usuario_id FROM liga_membros WHERE liga_id = ${id} AND cargo = 'Diretor'
+      `;
+      const idsAtuais = diretoresAtuais.map((d) => d["usuario_id"] as string);
+      const idsNovos = new Set(diretores);
+      const idsRemovidos = idsAtuais.filter((uid: string) => !idsNovos.has(uid));
+      if (idsRemovidos.length > 0) {
+        await sql`UPDATE usuarios SET role = 'membro' WHERE id = ANY(${idsRemovidos})`;
+      }
+
       // Remove diretores anteriores
       await sql`
         UPDATE liga_membros SET cargo = NULL
@@ -328,8 +388,8 @@ ligasRouter.patch("/:id", authenticate, requireRole("admin", "diretor"), async (
   }
 });
 
-// POST /ligas/:id/membros — adiciona membro à liga (admin)
-ligasRouter.post("/:id/membros", authenticate, requireRole("admin"), async (req, res, next) => {
+// POST /ligas/:id/membros — adiciona membro à liga (staff)
+ligasRouter.post("/:id/membros", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const liga_id = req.params["id"] as string;
     const { usuario_id, cargo } = req.body as { usuario_id: string; cargo?: string };
@@ -347,8 +407,8 @@ ligasRouter.post("/:id/membros", authenticate, requireRole("admin"), async (req,
   }
 });
 
-// DELETE /ligas/:id/membros/:userId — remove membro da liga (admin)
-ligasRouter.delete("/:id/membros/:userId", authenticate, requireRole("admin"), async (req, res, next) => {
+// DELETE /ligas/:id/membros/:userId — remove membro da liga (staff)
+ligasRouter.delete("/:id/membros/:userId", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const liga_id = req.params["id"] as string;
     const usuario_id = req.params["userId"] as string;
@@ -364,8 +424,8 @@ ligasRouter.delete("/:id/membros/:userId", authenticate, requireRole("admin"), a
   }
 });
 
-// DELETE /ligas/:id — arquivar liga (admin)
-ligasRouter.delete("/:id", authenticate, requireRole("admin"), async (req, res, next) => {
+// DELETE /ligas/:id — arquivar liga (staff)
+ligasRouter.delete("/:id", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
     await sql`UPDATE ligas SET ativo = false WHERE id = ${id}`;

@@ -7,11 +7,8 @@ import {
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
-type StatusProfessor =
-  | "aguardando_professor"
-  | "aprovado_professor"
-  | "recusado_professor"
-  | "aprovado_staff";
+type StatusAprovacao = "pendente" | "aprovado" | "rejeitado";
+type ProjetoStatusGlobal = "em_aprovacao" | "aprovado" | "rejeitado";
 
 type MembroProfessor = { id: string; nome: string; iniciais: string };
 
@@ -30,7 +27,9 @@ type ProjetoProfessor = {
   liga: string;
   submetidoPor: string;
   submetidoPorIniciais: string;
-  status: StatusProfessor;
+  statusGlobal: ProjetoStatusGlobal;
+  aprovacaoProfessor: StatusAprovacao;
+  aprovacaoStaff: StatusAprovacao;
   receita?: number;
   prazo?: string;
   observacao?: string;
@@ -51,7 +50,9 @@ const MOCK_PROJETOS_PROFESSOR: ProjetoProfessor[] = [
     liga: "Liga Tech",
     submetidoPor: "Mariana Silva",
     submetidoPorIniciais: "MS",
-    status: "aguardando_professor",
+    statusGlobal: "em_aprovacao",
+    aprovacaoProfessor: "pendente",
+    aprovacaoStaff: "pendente",
     receita: 3200,
     prazo: "2026-05-10",
     observacao: "Projeto estratégico para o semestre.",
@@ -72,7 +73,9 @@ const MOCK_PROJETOS_PROFESSOR: ProjetoProfessor[] = [
     liga: "Liga Tech",
     submetidoPor: "Ana Lima",
     submetidoPorIniciais: "AL",
-    status: "aguardando_professor",
+    statusGlobal: "em_aprovacao",
+    aprovacaoProfessor: "pendente",
+    aprovacaoStaff: "pendente",
     receita: 5000,
     prazo: "2026-06-30",
     submissaoEm: "2026-04-12", // 2 dias atrás
@@ -93,7 +96,9 @@ const MOCK_PROJETOS_PROFESSOR: ProjetoProfessor[] = [
     liga: "Liga Marketing",
     submetidoPor: "Ana Lima",
     submetidoPorIniciais: "AL",
-    status: "aguardando_professor",
+    statusGlobal: "em_aprovacao",
+    aprovacaoProfessor: "pendente",
+    aprovacaoStaff: "pendente",
     receita: 1800,
     prazo: "2026-04-10", // prazo vencido!
     submissaoEm: "2026-04-13", // 1 dia atrás
@@ -112,7 +117,9 @@ const MOCK_PROJETOS_PROFESSOR: ProjetoProfessor[] = [
     liga: "Liga Finanças",
     submetidoPor: "Rafael Costa",
     submetidoPorIniciais: "RC",
-    status: "aprovado_professor",
+    statusGlobal: "em_aprovacao",
+    aprovacaoProfessor: "aprovado",
+    aprovacaoStaff: "pendente",
     receita: 6000,
     prazo: "2026-07-15",
     submissaoEm: "2026-04-01",
@@ -133,7 +140,9 @@ const MOCK_PROJETOS_PROFESSOR: ProjetoProfessor[] = [
     liga: "Liga Tech",
     submetidoPor: "João Rocha",
     submetidoPorIniciais: "JR",
-    status: "recusado_professor",
+    statusGlobal: "rejeitado",
+    aprovacaoProfessor: "rejeitado",
+    aprovacaoStaff: "pendente",
     receita: 2500,
     prazo: "2026-06-01",
     motivoRecusa: "Escopo fora do prazo do semestre.",
@@ -184,16 +193,33 @@ function Avatar({ iniciais, title }: { iniciais: string; title?: string }) {
   );
 }
 
-function StatusBadge({ status }: { status: StatusProfessor }) {
-  const map: Record<StatusProfessor, { label: string; cls: string }> = {
-    aguardando_professor: { label: "Ag. Professor", cls: "bg-yellow-100 text-yellow-700" },
-    aprovado_professor:   { label: "Aprovado por mim", cls: "bg-blue-100 text-blue-700" },
-    recusado_professor:   { label: "Recusado por mim", cls: "bg-red-100 text-red-700" },
-    aprovado_staff:       { label: "Aprovado pelo staff", cls: "bg-green-100 text-green-700" },
-  };
-  const { label, cls } = map[status];
+function StatusBadge({ statusGlobal, aprovacaoProfessor }: { statusGlobal: ProjetoStatusGlobal; aprovacaoProfessor: StatusAprovacao }) {
+  if (statusGlobal === "aprovado") {
+    return <span className={cn("text-xs font-bold px-2 py-0.5 rounded-md", "bg-green-100 text-green-700")}>Aprovado</span>;
+  }
+  if (statusGlobal === "rejeitado") {
+    return <span className={cn("text-xs font-bold px-2 py-0.5 rounded-md", "bg-red-100 text-red-700")}>Recusado por mim</span>;
+  }
+  // em_aprovacao
+  if (aprovacaoProfessor === "aprovado") {
+    return <span className={cn("text-xs font-bold px-2 py-0.5 rounded-md", "bg-blue-100 text-blue-700")}>Aprovado por mim</span>;
+  }
+  return <span className={cn("text-xs font-bold px-2 py-0.5 rounded-md", "bg-yellow-100 text-yellow-700")}>Ag. Professor</span>;
+}
+
+const APROVACAO_STYLE: Record<StatusAprovacao, { text: string; classe: string }> = {
+  pendente:  { text: "Pendente",  classe: "text-yellow-600" },
+  aprovado:  { text: "Aprovado",  classe: "text-green-600" },
+  rejeitado: { text: "Recusado",  classe: "text-red-600" },
+};
+
+function AprovacaoIndicador({ label, status }: { label: string; status: StatusAprovacao }) {
+  const { text, classe } = APROVACAO_STYLE[status];
   return (
-    <span className={cn("text-xs font-bold px-2 py-0.5 rounded-md", cls)}>{label}</span>
+    <div className="flex items-center justify-between text-[11px]">
+      <span className="text-muted-foreground font-medium">{label}</span>
+      <span className={cn("font-semibold", classe)}>{text}</span>
+    </div>
   );
 }
 
@@ -234,7 +260,7 @@ function PainelDetalhes({
   onFechar: () => void;
 }) {
   const dias = diasAguardando(projeto.submissaoEm);
-  const urgente = projeto.status === "aguardando_professor" && dias > 7;
+  const urgente = projeto.aprovacaoProfessor === "pendente" && projeto.statusGlobal === "em_aprovacao" && dias > 7;
 
   return (
     <div className="bg-white border border-brand-gray rounded-lg p-6 mx-1">
@@ -279,7 +305,7 @@ function PainelDetalhes({
         <div>
           <span className="text-xs font-bold text-link-blue uppercase tracking-wider">Status</span>
           <p className="mt-0.5">
-            <StatusBadge status={projeto.status} />
+            <StatusBadge statusGlobal={projeto.statusGlobal} aprovacaoProfessor={projeto.aprovacaoProfessor} />
           </p>
         </div>
         <div>
@@ -411,14 +437,20 @@ function ModalRecusa({
 
 // ─── Tipos de filtro / abas ───────────────────────────────────────────────────
 
-type Filtro = "aguardando" | "aprovados" | "recusados" | "aprovados_staff";
+type FiltroAbaProfessor = "aguardando" | "aprovados" | "recusados";
 
-const FILTRO_STATUS: Record<Filtro, StatusProfessor[]> = {
-  aguardando: ["aguardando_professor"],
-  aprovados: ["aprovado_professor"],
-  recusados: ["recusado_professor"],
-  aprovados_staff: ["aprovado_staff"],
-};
+const COLUNAS_PROFESSOR: { id: FiltroAbaProfessor; label: string; borderClass: string }[] = [
+  { id: "aguardando", label: "Aguardando minha decisão", borderClass: "border-yellow-400" },
+  { id: "aprovados",  label: "Aprovados por mim",        borderClass: "border-blue-400" },
+  { id: "recusados",  label: "Recusados por mim",        borderClass: "border-red-400" },
+];
+
+function filtrarProjetos(projetos: ProjetoProfessor[], filtro: FiltroAbaProfessor): ProjetoProfessor[] {
+  if (filtro === "aguardando") return projetos.filter((p) => p.aprovacaoProfessor === "pendente" && p.statusGlobal === "em_aprovacao");
+  if (filtro === "aprovados")  return projetos.filter((p) => p.aprovacaoProfessor === "aprovado");
+  if (filtro === "recusados")  return projetos.filter((p) => p.aprovacaoProfessor === "rejeitado");
+  return projetos;
+}
 
 // ─── View principal ───────────────────────────────────────────────────────────
 
@@ -430,23 +462,27 @@ export function ProjetosProfessorView() {
       return da.localeCompare(db);
     })
   );
-  const [filtroAtivo, setFiltroAtivo] = useState<Filtro>("aguardando");
+  const [filtroAtivo, setFiltroAtivo] = useState<FiltroAbaProfessor>("aguardando");
   const [visualizacao, setVisualizacao] = useState<"lista" | "kanban">("kanban");
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [recusandoId, setRecusandoId] = useState<string | null>(null);
 
   // ── Contadores para os pills
-  const contadores: Record<Filtro, number> = {
-    aguardando: projetos.filter((p) => p.status === "aguardando_professor").length,
-    aprovados: projetos.filter((p) => p.status === "aprovado_professor").length,
-    recusados: projetos.filter((p) => p.status === "recusado_professor").length,
-    aprovados_staff: projetos.filter((p) => p.status === "aprovado_staff").length,
+  const contadores = {
+    aguardando: projetos.filter((p) => p.aprovacaoProfessor === "pendente" && p.statusGlobal === "em_aprovacao").length,
+    aprovados:  projetos.filter((p) => p.aprovacaoProfessor === "aprovado").length,
+    recusados:  projetos.filter((p) => p.aprovacaoProfessor === "rejeitado").length,
   };
 
   // ── Ações
   function aprovar(id: string) {
     setProjetos((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: "aprovado_professor" } : p))
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        const novoStatus: ProjetoStatusGlobal =
+          p.aprovacaoStaff === "aprovado" ? "aprovado" : "em_aprovacao";
+        return { ...p, aprovacaoProfessor: "aprovado" as StatusAprovacao, statusGlobal: novoStatus };
+      })
     );
     setSelecionado(null);
   }
@@ -454,9 +490,12 @@ export function ProjetosProfessorView() {
   function recusar(id: string, motivo: string) {
     setProjetos((prev) =>
       prev.map((p) =>
-        p.id === id
-          ? { ...p, status: "recusado_professor", motivoRecusa: motivo }
-          : p
+        p.id !== id ? p : {
+          ...p,
+          aprovacaoProfessor: "rejeitado" as StatusAprovacao,
+          statusGlobal: "rejeitado" as ProjetoStatusGlobal,
+          motivoRecusa: motivo,
+        }
       )
     );
     setRecusandoId(null);
@@ -464,9 +503,7 @@ export function ProjetosProfessorView() {
   }
 
   // ── Projetos filtrados
-  const projetosFiltrados = projetos.filter((p) =>
-    FILTRO_STATUS[filtroAtivo].includes(p.status)
-  );
+  const projetosFiltrados = filtrarProjetos(projetos, filtroAtivo);
 
   const projetoRecusando = recusandoId
     ? projetos.find((p) => p.id === recusandoId)
@@ -519,37 +556,30 @@ export function ProjetosProfessorView() {
 
       {/* Pills de filtro */}
       <div className="flex items-center gap-2 mb-6 flex-wrap">
-        {(
-          [
-            { key: "aguardando", label: "Aguardando minha aprovação" },
-            { key: "aprovados", label: "Aprovados por mim" },
-            { key: "recusados", label: "Recusados por mim" },
-            { key: "aprovados_staff", label: "Aprovados pelo staff" },
-          ] as { key: Filtro; label: string }[]
-        ).map(({ key, label }) => (
+        {COLUNAS_PROFESSOR.map(({ id, label }) => (
           <button
-            key={key}
-            onClick={() => { setFiltroAtivo(key); setSelecionado(null); }}
+            key={id}
+            onClick={() => { setFiltroAtivo(id); setSelecionado(null); }}
             className={cn(
               "flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full border transition-colors",
-              filtroAtivo === key
+              filtroAtivo === id
                 ? "bg-navy text-white border-navy"
                 : "bg-white text-navy border-brand-gray hover:border-navy/40"
             )}
           >
             {label}
-            {contadores[key] > 0 && (
+            {contadores[id] > 0 && (
               <span
                 className={cn(
                   "text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none",
-                  filtroAtivo === key
+                  filtroAtivo === id
                     ? "bg-white/20 text-white"
-                    : key === "aguardando"
+                    : id === "aguardando"
                     ? "bg-yellow-100 text-yellow-700"
                     : "bg-gray-100 text-gray-600"
                 )}
               >
-                {contadores[key]}
+                {contadores[id]}
               </span>
             )}
           </button>
@@ -646,7 +676,7 @@ function ListaView({
           {projetos.map((p) => {
             const isAberto = selecionado === p.id;
             const dias = diasAguardando(p.submissaoEm);
-            const urgente = p.status === "aguardando_professor" && dias > 7;
+            const urgente = p.aprovacaoProfessor === "pendente" && p.statusGlobal === "em_aprovacao" && dias > 7;
             const vencido = prazoVencido(p.prazo);
 
             return (
@@ -697,7 +727,7 @@ function ListaView({
 
                   {/* Status */}
                   <td className="px-6 py-4">
-                    <StatusBadge status={p.status} />
+                    <StatusBadge statusGlobal={p.statusGlobal} aprovacaoProfessor={p.aprovacaoProfessor} />
                     {p.motivoRecusa && (
                       <p className="text-[10px] text-red-600 mt-1 max-w-[180px] truncate" title={p.motivoRecusa}>
                         {p.motivoRecusa}
@@ -707,7 +737,7 @@ function ListaView({
 
                   {/* Ações */}
                   <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                    {p.status === "aguardando_professor" ? (
+                    {p.aprovacaoProfessor === "pendente" && p.statusGlobal === "em_aprovacao" ? (
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => onAprovar(p.id)}
@@ -749,13 +779,6 @@ function ListaView({
 
 // ─── Visão Kanban ─────────────────────────────────────────────────────────────
 
-const COLUNAS_KANBAN: { key: StatusProfessor; label: string; cor: string }[] = [
-  { key: "aguardando_professor", label: "Aguardando minha aprovação", cor: "border-t-yellow-400" },
-  { key: "aprovado_professor",   label: "Aprovados por mim",          cor: "border-t-blue-500" },
-  { key: "recusado_professor",   label: "Recusados por mim",          cor: "border-t-red-500" },
-  { key: "aprovado_staff",       label: "Aprovados pelo staff",       cor: "border-t-green-500" },
-];
-
 function KanbanView({
   projetos,
   onAprovar,
@@ -770,10 +793,9 @@ function KanbanView({
   selecionado: string | null;
 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-      {COLUNAS_KANBAN.map((col) => {
-        const cards = projetos
-          .filter((p) => p.status === col.key)
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+      {COLUNAS_PROFESSOR.map((col) => {
+        const cards = filtrarProjetos(projetos, col.id)
           .sort((a, b) => {
             const da = a.prazo ?? "9999-99-99";
             const db = b.prazo ?? "9999-99-99";
@@ -781,7 +803,7 @@ function KanbanView({
           });
 
         return (
-          <div key={col.key} className="flex flex-col gap-2">
+          <div key={col.id} className="flex flex-col gap-2">
             {/* Cabeçalho da coluna */}
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-bold text-link-blue uppercase tracking-wider">
@@ -796,7 +818,7 @@ function KanbanView({
             <div
               className={cn(
                 "bg-white border border-brand-gray rounded-lg border-t-2 overflow-hidden",
-                col.cor
+                col.borderClass
               )}
             >
               {cards.length === 0 ? (
@@ -837,7 +859,7 @@ function KanbanCard({
   onRecusar: (id: string) => void;
 }) {
   const dias = diasAguardando(projeto.submissaoEm);
-  const urgente = projeto.status === "aguardando_professor" && dias > 7;
+  const urgente = projeto.aprovacaoProfessor === "pendente" && projeto.statusGlobal === "em_aprovacao" && dias > 7;
   const vencido = prazoVencido(projeto.prazo);
 
   return (
@@ -880,6 +902,14 @@ function KanbanCard({
         )}
       </div>
 
+      {/* Indicadores de aprovação dupla */}
+      {projeto.statusGlobal === "em_aprovacao" && (
+        <div className="flex flex-col gap-1 mb-3 bg-gray-50 rounded-md p-2">
+          <AprovacaoIndicador label="Professor (eu)" status={projeto.aprovacaoProfessor} />
+          <AprovacaoIndicador label="Staff" status={projeto.aprovacaoStaff} />
+        </div>
+      )}
+
       {/* Motivo de recusa */}
       {projeto.motivoRecusa && (
         <p className="text-[10px] text-red-600 bg-red-50 rounded px-2 py-1 mb-2 line-clamp-2">
@@ -888,7 +918,7 @@ function KanbanCard({
       )}
 
       {/* Ações */}
-      {projeto.status === "aguardando_professor" && (
+      {projeto.aprovacaoProfessor === "pendente" && projeto.statusGlobal === "em_aprovacao" && (
         <div className="flex gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => onAprovar(projeto.id)}

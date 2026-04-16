@@ -10,31 +10,35 @@ export type StatusProjeto =
   | "concluido"
   | "cancelado";
 
+export type StatusAprovacao = "pendente" | "aprovado" | "rejeitado";
+
 export interface Projeto {
   id: string;
   liga_id: string;
   liga?: Pick<Liga, "id" | "nome">;
-  nome: string;
+  titulo: string;
   descricao?: string;
   responsavel_id: string;
   responsavel?: Usuario;
   status: StatusProjeto;
   prazo?: string;
   percentual_concluido: number;
+  aprovacao_professor: StatusAprovacao;
+  aprovacao_staff: StatusAprovacao;
   criado_em: string;
   atualizado_em: string;
 }
 
 export interface CreateProjetoInput {
   liga_id: string;
-  nome: string;
+  titulo: string;
   descricao?: string;
   responsavel_id: string;
   prazo?: string;
 }
 
 export interface UpdateProjetoInput {
-  nome?: string;
+  titulo?: string;
   descricao?: string;
   responsavel_id?: string;
   prazo?: string;

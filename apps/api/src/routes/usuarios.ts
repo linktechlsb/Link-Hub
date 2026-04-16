@@ -1,4 +1,5 @@
 import { Router, type Router as IRouter } from "express";
+import { randomBytes } from "crypto";
 import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 import { sql } from "../config/db.js";
 import { supabaseAdmin } from "../config/supabase.js";
@@ -127,7 +128,7 @@ usuariosRouter.post(
 );
 
 // GET /usuarios/visao-geral — usuários (lider/membro) com liga e % de presença (admin)
-usuariosRouter.get("/visao-geral", authenticate, requireRole("admin"), async (_req, res, next) => {
+usuariosRouter.get("/visao-geral", authenticate, requireRole("staff"), async (_req, res, next) => {
   try {
     const usuarios = await sql`
       SELECT
@@ -155,7 +156,7 @@ usuariosRouter.get("/visao-geral", authenticate, requireRole("admin"), async (_r
 });
 
 // GET /usuarios — lista todos os usuários com liga (admin)
-usuariosRouter.get("/", authenticate, requireRole("admin"), async (_req, res, next) => {
+usuariosRouter.get("/", authenticate, requireRole("staff"), async (_req, res, next) => {
   try {
     const usuarios = await sql`
       SELECT
@@ -174,7 +175,7 @@ usuariosRouter.get("/", authenticate, requireRole("admin"), async (_req, res, ne
 });
 
 // POST /usuarios — cria usuário no Supabase Auth + tabela (admin)
-usuariosRouter.post("/", authenticate, requireRole("admin"), async (req, res, next) => {
+usuariosRouter.post("/", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const { nome, email, role, liga_id } = req.body as {
       nome: string;
@@ -183,9 +184,12 @@ usuariosRouter.post("/", authenticate, requireRole("admin"), async (req, res, ne
       liga_id?: string;
     };
 
+    // Password temporária aleatória — o utilizador deve alterá-la no primeiro login
+    const senhaTemporaria = process.env["DEFAULT_USER_PASSWORD"] ?? randomBytes(16).toString("hex");
+
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
-      password: "LinkLeagues2024!",
+      password: senhaTemporaria,
       email_confirm: true,
     });
 
@@ -218,8 +222,31 @@ usuariosRouter.post("/", authenticate, requireRole("admin"), async (req, res, ne
   }
 });
 
+// GET /usuarios/busca?email= — busca usuários por e-mail (autocomplete de diretores)
+// IMPORTANTE: deve estar antes de PATCH /:id e GET /:id para não ser capturado por esses padrões
+usuariosRouter.get("/busca", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
+  try {
+    const email = (req.query["email"] as string) ?? "";
+
+    if (email.length < 2) {
+      res.json([]);
+      return;
+    }
+
+    const usuarios = await sql`
+      SELECT id, nome, email FROM usuarios
+      WHERE email ILIKE ${"%" + email + "%"}
+      LIMIT 10
+    `;
+
+    res.json(usuarios);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // PATCH /usuarios/:id — atualiza nome e/ou role (admin)
-usuariosRouter.patch("/:id", authenticate, requireRole("admin"), async (req, res, next) => {
+usuariosRouter.patch("/:id", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
     const { nome, role } = req.body as { nome?: string; role?: string };
@@ -245,36 +272,24 @@ usuariosRouter.patch("/:id", authenticate, requireRole("admin"), async (req, res
 });
 
 // DELETE /usuarios/:id — remove do Supabase Auth + tabela (admin)
-usuariosRouter.delete("/:id", authenticate, requireRole("admin"), async (req, res, next) => {
+// Ordem: primeiro remove do Auth (irreversível), depois da tabela local com rollback se falhar
+usuariosRouter.delete("/:id", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
 
-    await sql`DELETE FROM usuarios WHERE id = ${id}`;
-    await supabaseAdmin.auth.admin.deleteUser(id);
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(id);
+    if (authError) throw authError;
 
-    res.status(204).send();
-  } catch (err) {
-    next(err);
-  }
-});
-
-// GET /usuarios/busca?email= — busca usuários por e-mail (autocomplete de diretores)
-usuariosRouter.get("/busca", authenticate, requireRole("admin", "diretor"), async (req, res, next) => {
-  try {
-    const email = (req.query["email"] as string) ?? "";
-
-    if (email.length < 2) {
-      res.json([]);
+    try {
+      await sql`DELETE FROM usuarios WHERE id = ${id}`;
+    } catch (dbErr) {
+      // A remoção do Auth já ocorreu; registar o erro mas não recriar o utilizador
+      // pois isso exigiria a password original que não temos
+      next(dbErr);
       return;
     }
 
-    const usuarios = await sql`
-      SELECT id, nome, email FROM usuarios
-      WHERE email ILIKE ${"%" + email + "%"}
-      LIMIT 10
-    `;
-
-    res.json(usuarios);
+    res.status(204).send();
   } catch (err) {
     next(err);
   }

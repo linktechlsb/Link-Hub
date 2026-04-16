@@ -453,6 +453,14 @@ const ABAS: { key: Aba; label: string; icon: React.ElementType }[] = [
   { key: "notificacoes",  label: "Notificações",      icon: Bell },
 ];
 
+const ROLE_LABEL: Record<string, string> = {
+  staff: "Staff",
+  diretor: "Diretor",
+  membro: "Membro",
+  estudante: "Estudante",
+  professor: "Professor",
+};
+
 const DADOS_INICIAIS: DadosUsuario = {
   nome: "",
   email: "",
@@ -461,7 +469,7 @@ const DADOS_INICIAIS: DadosUsuario = {
   linkedin: "",
   semestre: "1",
   liga: "",
-  cargo: "Membro",
+  cargo: "",
 };
 
 export function ContaMembroView() {
@@ -484,6 +492,7 @@ export function ContaMembroView() {
         instagram: usuario.instagram ?? "",
         linkedin: usuario.linkedin ?? "",
         semestre: usuario.semestre ?? "1",
+        cargo: ROLE_LABEL[usuario.role] ?? usuario.role,
       }));
     });
   }, []);

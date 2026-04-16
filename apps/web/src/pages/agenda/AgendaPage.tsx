@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Calendar, X } from "lucide-react";
-import type { Liga, Evento } from "@link-leagues/types";
+import { ChevronLeft, ChevronRight, Calendar, X, Plus, Pencil, Trash2 } from "lucide-react";
+import type { Liga, Evento, UserRole, Sala, CategoriaEvento } from "@link-leagues/types";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +56,21 @@ function formatTime(dateStr: string) {
   return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
 }
 
+interface EventoForm {
+  liga_id: string;
+  categoria: CategoriaEvento;
+  titulo: string;
+  descricao: string;
+  data: string;
+  sala_id: string;
+  hora_inicio: string;
+  hora_fim: string;
+}
+
+function formVazio(data: string): EventoForm {
+  return { liga_id: "", categoria: "encontro", titulo: "", descricao: "", data, sala_id: "", hora_inicio: "", hora_fim: "" };
+}
+
 export function AgendaPage() {
   const today = new Date();
   const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
@@ -63,10 +78,30 @@ export function AgendaPage() {
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [eventos, setEventos] = useState<EventoComLiga[]>([]);
   const [ligas, setLigas] = useState<Liga[]>([]);
+  const [salas, setSalas] = useState<Sala[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedEvento, setSelectedEvento] = useState<EventoComLiga | null>(null);
   const [filterLiga, setFilterLiga] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState<UserRole | null>(null);
+  const [usuarioId, setUsuarioId] = useState<string | null>(null);
+
+  // Criar evento
+  const [showCriarEvento, setShowCriarEvento] = useState(false);
+  const [novoEvento, setNovoEvento] = useState<EventoForm>(formVazio(todayStr));
+  const [salvando, setSalvando] = useState(false);
+  const [erroSalvar, setErroSalvar] = useState<string | null>(null);
+
+  // Editar evento
+  const [showEditarEvento, setShowEditarEvento] = useState(false);
+  const [eventoEditando, setEventoEditando] = useState<EventoComLiga | null>(null);
+  const [editarForm, setEditarForm] = useState<EventoForm>(formVazio(todayStr));
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
+  const [erroEdicao, setErroEdicao] = useState<string | null>(null);
+
+  // Excluir evento
+  const [confirmarDeletar, setConfirmarDeletar] = useState<EventoComLiga | null>(null);
+  const [deletando, setDeletando] = useState(false);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -78,6 +113,25 @@ export function AgendaPage() {
     });
     return map;
   }, [ligas]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      const session = data.session;
+      if (!session) return;
+      const token = session.access_token;
+
+      const [usuarioRes, meRes] = await Promise.all([
+        supabase.from("usuarios").select("role").eq("email", session.user.email).single(),
+        fetch("/api/usuarios/me", { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+
+      setRole((usuarioRes.data?.role as UserRole) ?? "membro");
+      if (meRes.ok) {
+        const me = await meRes.json() as { id: string };
+        setUsuarioId(me.id);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     async function carregar() {
@@ -103,6 +157,163 @@ export function AgendaPage() {
     carregar();
   }, [year, month, filterLiga]);
 
+  const podeGerenciar = role === "staff" || role === "diretor";
+
+  useEffect(() => {
+    if (!podeGerenciar) return;
+    async function carregarSalas() {
+      const token = await getToken();
+      const res = await fetch("/api/salas", { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) setSalas(await res.json());
+    }
+    carregarSalas();
+  }, [podeGerenciar]);
+
+  // Ligas disponíveis para criar eventos: staff vê todas, diretor vê só a sua
+  const ligasDisponiveis = useMemo(() =>
+    role === "diretor" && usuarioId
+      ? ligas.filter(l => l.lider_id === usuarioId)
+      : ligas,
+    [role, ligas, usuarioId],
+  );
+
+  function podeGerenciarEvento(evento: EventoComLiga): boolean {
+    if (role === "staff") return true;
+    if (role === "diretor") return ligasDisponiveis.some(l => l.id === evento.liga_id);
+    return false;
+  }
+
+  async function recarregarEventos(token: string) {
+    const inicio = toDateStr(year, month, 1);
+    const fim = toDateStr(year, month, getDaysInMonth(year, month));
+    const ligaParam = filterLiga ? `&liga_id=${filterLiga}` : "";
+    const res = await fetch(
+      `/api/eventos?inicio=${inicio}&fim=${fim}${ligaParam}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (res.ok) setEventos(await res.json());
+  }
+
+  async function handleCriarEvento(e: React.FormEvent) {
+    e.preventDefault();
+    setSalvando(true);
+    setErroSalvar(null);
+
+    const precisaSala = ["encontro", "aula", "evento", "hub"].includes(novoEvento.categoria);
+
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/eventos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          liga_id: novoEvento.liga_id,
+          titulo: novoEvento.titulo,
+          descricao: novoEvento.descricao || undefined,
+          data: novoEvento.data,
+          categoria: novoEvento.categoria,
+          sala_id: precisaSala && novoEvento.sala_id ? novoEvento.sala_id : undefined,
+          hora_inicio: precisaSala && novoEvento.hora_inicio ? novoEvento.hora_inicio : undefined,
+          hora_fim: precisaSala && novoEvento.hora_fim ? novoEvento.hora_fim : undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error ?? "Erro ao criar evento");
+      }
+
+      setShowCriarEvento(false);
+      setNovoEvento(formVazio(todayStr));
+      await recarregarEventos(token);
+    } catch (err) {
+      setErroSalvar(err instanceof Error ? err.message : "Erro desconhecido");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  function abrirEdicao(evento: EventoComLiga) {
+    setEventoEditando(evento);
+    setEditarForm({
+      liga_id: evento.liga_id,
+      categoria: evento.categoria,
+      titulo: evento.titulo,
+      descricao: evento.descricao ?? "",
+      data: evento.data.split("T")[0] ?? evento.data,
+      sala_id: evento.sala_id ?? "",
+      hora_inicio: evento.hora_inicio ?? "",
+      hora_fim: evento.hora_fim ?? "",
+    });
+    setErroEdicao(null);
+    setShowEditarEvento(true);
+  }
+
+  async function handleEditarEvento(e: React.FormEvent) {
+    e.preventDefault();
+    if (!eventoEditando) return;
+    setSalvandoEdicao(true);
+    setErroEdicao(null);
+
+    const precisaSala = ["encontro", "aula", "evento", "hub"].includes(editarForm.categoria);
+
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/eventos/${eventoEditando.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          titulo: editarForm.titulo,
+          descricao: editarForm.descricao,
+          data: editarForm.data,
+          categoria: editarForm.categoria,
+          sala_id: precisaSala && editarForm.sala_id ? editarForm.sala_id : "",
+          hora_inicio: precisaSala && editarForm.hora_inicio ? editarForm.hora_inicio : "",
+          hora_fim: precisaSala && editarForm.hora_fim ? editarForm.hora_fim : "",
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error ?? "Erro ao editar evento");
+      }
+
+      setShowEditarEvento(false);
+      setEventoEditando(null);
+      setSelectedEvento(null);
+      await recarregarEventos(token);
+    } catch (err) {
+      setErroEdicao(err instanceof Error ? err.message : "Erro desconhecido");
+    } finally {
+      setSalvandoEdicao(false);
+    }
+  }
+
+  async function handleDeletarEvento() {
+    if (!confirmarDeletar) return;
+    setDeletando(true);
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/eventos/${confirmarDeletar.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error ?? "Erro ao excluir evento");
+      }
+
+      setEventos(prev => prev.filter(e => e.id !== confirmarDeletar.id));
+      if (selectedEvento?.id === confirmarDeletar.id) setSelectedEvento(null);
+      setConfirmarDeletar(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Erro ao excluir evento");
+    } finally {
+      setDeletando(false);
+    }
+  }
+
   // Montar grade do calendário
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
@@ -110,8 +321,6 @@ export function AgendaPage() {
     ...Array.from({ length: firstDay }, () => null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
-
-  // Completar última linha com nulos para grid uniforme
   while (calendarDays.length % 7 !== 0) calendarDays.push(null);
 
   const eventosPorDia = useMemo(() => {
@@ -152,6 +361,357 @@ export function AgendaPage() {
 
   return (
     <div className="p-8">
+      {/* Dialog Criar Evento */}
+      {showCriarEvento && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-brand-gray">
+              <h2 className="font-display font-bold text-base text-navy">Criar Evento</h2>
+              <button
+                onClick={() => { setShowCriarEvento(false); setErroSalvar(null); }}
+                className="p-1 rounded-lg hover:bg-brand-gray text-muted-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCriarEvento} className="px-6 py-5 space-y-4 max-h-[80vh] overflow-y-auto">
+              {/* Liga */}
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1">Liga</label>
+                <select
+                  required
+                  value={novoEvento.liga_id}
+                  onChange={e => setNovoEvento(f => ({ ...f, liga_id: e.target.value }))}
+                  className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy bg-white focus:outline-none focus:ring-2 focus:ring-navy/20"
+                >
+                  <option value="">Selecionar liga...</option>
+                  {ligasDisponiveis.map(liga => (
+                    <option key={liga.id} value={liga.id}>{liga.nome}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Categoria */}
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1">Categoria</label>
+                <select
+                  required
+                  value={novoEvento.categoria}
+                  onChange={e => setNovoEvento(f => ({
+                    ...f, categoria: e.target.value as CategoriaEvento,
+                    sala_id: "", hora_inicio: "", hora_fim: "",
+                  }))}
+                  className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy bg-white focus:outline-none focus:ring-2 focus:ring-navy/20"
+                >
+                  <option value="encontro">Encontro</option>
+                  <option value="aula">Aula</option>
+                  <option value="cowork">Cowork</option>
+                  <option value="evento">Evento</option>
+                  <option value="hub">Hub</option>
+                </select>
+              </div>
+
+              {/* Título */}
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1">Título</label>
+                <input
+                  required
+                  type="text"
+                  value={novoEvento.titulo}
+                  onChange={e => setNovoEvento(f => ({ ...f, titulo: e.target.value }))}
+                  placeholder="Nome do evento"
+                  className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-navy/20"
+                />
+              </div>
+
+              {/* Data */}
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1">Data</label>
+                <input
+                  required
+                  type="date"
+                  value={novoEvento.data}
+                  onChange={e => setNovoEvento(f => ({ ...f, data: e.target.value }))}
+                  className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy focus:outline-none focus:ring-2 focus:ring-navy/20"
+                />
+              </div>
+
+              {/* Sala + Horário */}
+              {["encontro", "aula", "evento", "hub"].includes(novoEvento.categoria) && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-navy mb-1">Sala</label>
+                    <select
+                      value={novoEvento.sala_id}
+                      onChange={e => setNovoEvento(f => ({ ...f, sala_id: e.target.value }))}
+                      className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy bg-white focus:outline-none focus:ring-2 focus:ring-navy/20"
+                    >
+                      <option value="">Selecionar sala...</option>
+                      {salas.map(sala => (
+                        <option key={sala.id} value={sala.id}>{sala.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-navy mb-1">Horário início</label>
+                      <input
+                        type="time"
+                        value={novoEvento.hora_inicio}
+                        onChange={e => setNovoEvento(f => ({ ...f, hora_inicio: e.target.value }))}
+                        className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy focus:outline-none focus:ring-2 focus:ring-navy/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-navy mb-1">Horário fim</label>
+                      <input
+                        type="time"
+                        value={novoEvento.hora_fim}
+                        onChange={e => setNovoEvento(f => ({ ...f, hora_fim: e.target.value }))}
+                        className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy focus:outline-none focus:ring-2 focus:ring-navy/20"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Aviso de aprovação */}
+              {["evento", "hub"].includes(novoEvento.categoria) && (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-brand-yellow/15 border border-brand-yellow/40">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow flex-shrink-0" />
+                  <p className="text-xs text-navy/80 font-medium">
+                    Este evento requer aprovação do staff antes de ser publicado.
+                  </p>
+                </div>
+              )}
+
+              {/* Descrição */}
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1">Descrição (opcional)</label>
+                <textarea
+                  value={novoEvento.descricao}
+                  onChange={e => setNovoEvento(f => ({ ...f, descricao: e.target.value }))}
+                  placeholder="Detalhes do evento..."
+                  rows={3}
+                  className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-navy/20 resize-none"
+                />
+              </div>
+
+              {erroSalvar && (
+                <p className="text-xs text-rose-600 font-medium">{erroSalvar}</p>
+              )}
+
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => { setShowCriarEvento(false); setErroSalvar(null); }}
+                  className="text-sm px-4 py-2 rounded-lg border border-brand-gray text-navy hover:bg-brand-gray transition-colors font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={salvando}
+                  className="text-sm px-4 py-2 rounded-lg bg-navy text-white hover:bg-navy/90 transition-colors font-medium disabled:opacity-60"
+                >
+                  {salvando ? "Salvando..." : "Criar evento"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Dialog Editar Evento */}
+      {showEditarEvento && eventoEditando && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-brand-gray">
+              <h2 className="font-display font-bold text-base text-navy">Editar Evento</h2>
+              <button
+                onClick={() => { setShowEditarEvento(false); setErroEdicao(null); }}
+                className="p-1 rounded-lg hover:bg-brand-gray text-muted-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditarEvento} className="px-6 py-5 space-y-4 max-h-[80vh] overflow-y-auto">
+              {/* Categoria */}
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1">Categoria</label>
+                <select
+                  required
+                  value={editarForm.categoria}
+                  onChange={e => setEditarForm(f => ({
+                    ...f, categoria: e.target.value as CategoriaEvento,
+                    sala_id: "", hora_inicio: "", hora_fim: "",
+                  }))}
+                  className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy bg-white focus:outline-none focus:ring-2 focus:ring-navy/20"
+                >
+                  <option value="encontro">Encontro</option>
+                  <option value="aula">Aula</option>
+                  <option value="cowork">Cowork</option>
+                  <option value="evento">Evento</option>
+                  <option value="hub">Hub</option>
+                </select>
+              </div>
+
+              {/* Título */}
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1">Título</label>
+                <input
+                  required
+                  type="text"
+                  value={editarForm.titulo}
+                  onChange={e => setEditarForm(f => ({ ...f, titulo: e.target.value }))}
+                  placeholder="Nome do evento"
+                  className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-navy/20"
+                />
+              </div>
+
+              {/* Data */}
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1">Data</label>
+                <input
+                  required
+                  type="date"
+                  value={editarForm.data}
+                  onChange={e => setEditarForm(f => ({ ...f, data: e.target.value }))}
+                  className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy focus:outline-none focus:ring-2 focus:ring-navy/20"
+                />
+              </div>
+
+              {/* Sala + Horário */}
+              {["encontro", "aula", "evento", "hub"].includes(editarForm.categoria) && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-navy mb-1">Sala</label>
+                    <select
+                      value={editarForm.sala_id}
+                      onChange={e => setEditarForm(f => ({ ...f, sala_id: e.target.value }))}
+                      className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy bg-white focus:outline-none focus:ring-2 focus:ring-navy/20"
+                    >
+                      <option value="">Selecionar sala...</option>
+                      {salas.map(sala => (
+                        <option key={sala.id} value={sala.id}>{sala.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-navy mb-1">Horário início</label>
+                      <input
+                        type="time"
+                        value={editarForm.hora_inicio}
+                        onChange={e => setEditarForm(f => ({ ...f, hora_inicio: e.target.value }))}
+                        className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy focus:outline-none focus:ring-2 focus:ring-navy/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-navy mb-1">Horário fim</label>
+                      <input
+                        type="time"
+                        value={editarForm.hora_fim}
+                        onChange={e => setEditarForm(f => ({ ...f, hora_fim: e.target.value }))}
+                        className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy focus:outline-none focus:ring-2 focus:ring-navy/20"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Aviso de re-submissão para eventos já aprovados */}
+              {eventoEditando.status_aprovacao === "aprovado" &&
+                ["evento", "hub"].includes(editarForm.categoria) && (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-amber-50 border border-amber-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                  <p className="text-xs text-amber-800 font-medium">
+                    Esta edição irá resubmeter o evento para aprovação do staff.
+                  </p>
+                </div>
+              )}
+
+              {/* Aviso de aprovação */}
+              {["evento", "hub"].includes(editarForm.categoria) && (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-brand-yellow/15 border border-brand-yellow/40">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow flex-shrink-0" />
+                  <p className="text-xs text-navy/80 font-medium">
+                    Este evento requer aprovação do staff antes de ser publicado.
+                  </p>
+                </div>
+              )}
+
+              {/* Descrição */}
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1">Descrição (opcional)</label>
+                <textarea
+                  value={editarForm.descricao}
+                  onChange={e => setEditarForm(f => ({ ...f, descricao: e.target.value }))}
+                  placeholder="Detalhes do evento..."
+                  rows={3}
+                  className="w-full text-sm border border-brand-gray rounded-lg px-3 py-2 text-navy placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-navy/20 resize-none"
+                />
+              </div>
+
+              {erroEdicao && (
+                <p className="text-xs text-rose-600 font-medium">{erroEdicao}</p>
+              )}
+
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => { setShowEditarEvento(false); setErroEdicao(null); }}
+                  className="text-sm px-4 py-2 rounded-lg border border-brand-gray text-navy hover:bg-brand-gray transition-colors font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={salvandoEdicao}
+                  className="text-sm px-4 py-2 rounded-lg bg-navy text-white hover:bg-navy/90 transition-colors font-medium disabled:opacity-60"
+                >
+                  {salvandoEdicao ? "Salvando..." : "Salvar alterações"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Dialog Confirmar Exclusão */}
+      {confirmarDeletar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="px-6 py-5">
+              <h2 className="font-display font-bold text-base text-navy mb-1">Excluir evento</h2>
+              <p className="text-sm text-muted-foreground">
+                Tem certeza que deseja excluir{" "}
+                <span className="font-semibold text-navy">"{confirmarDeletar.titulo}"</span>?
+                Esta ação não pode ser desfeita.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 px-6 pb-5">
+              <button
+                onClick={() => setConfirmarDeletar(null)}
+                disabled={deletando}
+                className="text-sm px-4 py-2 rounded-lg border border-brand-gray text-navy hover:bg-brand-gray transition-colors font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeletarEvento}
+                disabled={deletando}
+                className="text-sm px-4 py-2 rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition-colors font-medium disabled:opacity-60"
+              >
+                {deletando ? "Excluindo..." : "Excluir"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Cabeçalho */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -162,6 +722,15 @@ export function AgendaPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {podeGerenciar && (
+            <button
+              onClick={() => setShowCriarEvento(true)}
+              className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-navy text-white hover:bg-navy/90 transition-colors font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              Criar evento
+            </button>
+          )}
           <button
             onClick={goToToday}
             className="text-sm px-3 py-1.5 rounded-lg border border-brand-gray text-navy hover:bg-brand-gray transition-colors font-medium"
@@ -271,12 +840,21 @@ export function AgendaPage() {
                             key={evento.id}
                             title={evento.titulo}
                             className={cn(
-                              "text-[11px] px-1.5 py-0.5 rounded-md truncate font-medium leading-snug",
+                              "relative text-[11px] px-1.5 py-0.5 rounded-md truncate font-medium leading-snug",
                               color?.bg ?? "bg-navy",
                               color?.text ?? "text-white",
                             )}
                           >
                             {evento.titulo}
+                            {evento.requer_aprovacao &&
+                              (evento.status_aprovacao === "pendente" || evento.status_aprovacao === "rejeitado") && (
+                              <span
+                                className={cn(
+                                  "absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full border border-white/40",
+                                  evento.status_aprovacao === "pendente" ? "bg-brand-yellow" : "bg-rose-400",
+                                )}
+                              />
+                            )}
                           </div>
                         );
                       })}
@@ -352,40 +930,74 @@ export function AgendaPage() {
                   selectedDayEventos.map(evento => {
                     const color = ligaColorMap[evento.liga_id];
                     const isOpen = selectedEvento?.id === evento.id;
+                    const podeGerir = podeGerenciarEvento(evento);
                     return (
-                      <button
-                        key={evento.id}
-                        onClick={() => setSelectedEvento(isOpen ? null : evento)}
-                        className={cn(
-                          "w-full px-5 py-3.5 text-left transition-colors",
-                          isOpen ? "bg-navy/[0.04]" : "hover:bg-brand-gray/30",
-                        )}
-                      >
-                        <div className="flex items-start gap-3">
-                          <span
-                            className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: color?.dot ?? "#10284E" }}
-                          />
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-navy truncate">
-                              {evento.titulo}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {evento.liga?.nome ?? "Liga"}
-                              {formatTime(evento.data) && (
-                                <span className="ml-2 font-medium text-link-blue">
-                                  {formatTime(evento.data)}
+                      <div key={evento.id}>
+                        <button
+                          onClick={() => setSelectedEvento(isOpen ? null : evento)}
+                          className={cn(
+                            "w-full px-5 py-3.5 text-left transition-colors",
+                            isOpen ? "bg-navy/[0.04]" : "hover:bg-brand-gray/30",
+                          )}
+                        >
+                          <div className="flex items-start gap-3">
+                            <span
+                              className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: color?.dot ?? "#10284E" }}
+                            />
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-navy truncate">
+                                {evento.titulo}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {evento.liga?.nome ?? "Liga"}
+                                {formatTime(evento.data) && (
+                                  <span className="ml-2 font-medium text-link-blue">
+                                    {formatTime(evento.data)}
+                                  </span>
+                                )}
+                              </p>
+                              {evento.requer_aprovacao &&
+                                (evento.status_aprovacao === "pendente" || evento.status_aprovacao === "rejeitado") && (
+                                <span className={cn(
+                                  "inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full mt-1",
+                                  evento.status_aprovacao === "pendente"
+                                    ? "bg-brand-yellow/20 text-amber-700"
+                                    : "bg-rose-100 text-rose-700",
+                                )}>
+                                  <span className="w-1 h-1 rounded-full bg-current" />
+                                  {evento.status_aprovacao === "pendente" ? "pendente" : "rejeitado"}
                                 </span>
                               )}
-                            </p>
-                            {isOpen && evento.descricao && (
-                              <p className="text-xs text-muted-foreground mt-2 leading-relaxed border-t border-brand-gray/60 pt-2">
-                                {evento.descricao}
-                              </p>
-                            )}
+                              {isOpen && evento.descricao && (
+                                <p className="text-xs text-muted-foreground mt-2 leading-relaxed border-t border-brand-gray/60 pt-2">
+                                  {evento.descricao}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </button>
+                        </button>
+
+                        {/* Ações de editar/excluir */}
+                        {podeGerir && (
+                          <div className="flex items-center gap-1 px-5 pb-2.5 -mt-1">
+                            <button
+                              onClick={() => abrirEdicao(evento)}
+                              className="flex items-center gap-1 text-xs text-link-blue hover:text-navy px-2 py-1 rounded-md hover:bg-brand-gray transition-colors font-medium"
+                            >
+                              <Pencil className="w-3 h-3" />
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => setConfirmarDeletar(evento)}
+                              className="flex items-center gap-1 text-xs text-rose-500 hover:text-rose-700 px-2 py-1 rounded-md hover:bg-rose-50 transition-colors font-medium"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              Excluir
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     );
                   })
                 )}
@@ -431,7 +1043,6 @@ export function AgendaPage() {
                         const dateKey = evento.data.split("T")[0]!;
                         setSelectedDate(dateKey);
                         setSelectedEvento(evento);
-                        // Navegar para o mês do evento se necessário
                         const eventMonth = d.getUTCMonth();
                         const eventYear = d.getUTCFullYear();
                         if (eventMonth !== month || eventYear !== year) {

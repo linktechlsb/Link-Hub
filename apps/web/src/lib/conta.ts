@@ -1,6 +1,13 @@
 import { supabase } from "./supabase";
 
-const API = () => (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:3001";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
+
+export class ApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
 
 async function getToken(): Promise<string | null> {
   const { data } = await supabase.auth.getSession();
@@ -22,10 +29,13 @@ export interface UsuarioMe {
 export async function carregarUsuarioMe(): Promise<UsuarioMe | null> {
   const token = await getToken();
   if (!token) return null;
-  const res = await fetch(`${API()}/usuarios/me`, {
+  const res = await fetch(`${API_URL}/usuarios/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) return null;
+  if (!res.ok) {
+    const body = await res.text().catch(() => "Erro desconhecido");
+    throw new ApiError(res.status, body);
+  }
   return res.json() as Promise<UsuarioMe>;
 }
 
@@ -38,7 +48,7 @@ export async function salvarPerfilMe(data: {
 }): Promise<UsuarioMe | null> {
   const token = await getToken();
   if (!token) return null;
-  const res = await fetch(`${API()}/usuarios/me`, {
+  const res = await fetch(`${API_URL}/usuarios/me`, {
     method: "PATCH",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -46,7 +56,10 @@ export async function salvarPerfilMe(data: {
     },
     body: JSON.stringify(data),
   });
-  if (!res.ok) return null;
+  if (!res.ok) {
+    const body = await res.text().catch(() => "Erro desconhecido");
+    throw new ApiError(res.status, body);
+  }
   return res.json() as Promise<UsuarioMe>;
 }
 
@@ -55,11 +68,14 @@ export async function uploadAvatarMe(file: File): Promise<UsuarioMe | null> {
   if (!token) return null;
   const formData = new FormData();
   formData.append("imagem", file);
-  const res = await fetch(`${API()}/usuarios/me/avatar`, {
+  const res = await fetch(`${API_URL}/usuarios/me/avatar`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
-  if (!res.ok) return null;
+  if (!res.ok) {
+    const body = await res.text().catch(() => "Erro desconhecido");
+    throw new ApiError(res.status, body);
+  }
   return res.json() as Promise<UsuarioMe>;
 }

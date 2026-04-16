@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import type { UserRole } from "@link-leagues/types";
+import { useUser } from "@/hooks/use-user";
 import {
   Sidebar,
   SidebarContent,
@@ -17,7 +17,6 @@ import {
   Users,
   FolderKanban,
   Calendar,
-  BookOpen,
   ShieldCheck,
   Settings,
   User,
@@ -29,7 +28,6 @@ const mainNavItems = [
   { to: "/ligas", label: "Ligas", icon: Users },
   { to: "/projetos", label: "Projetos", icon: FolderKanban },
   { to: "/agenda", label: "Agenda", icon: Calendar },
-  { to: "/conteudo", label: "Conteúdo", icon: BookOpen },
 ];
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -39,31 +37,21 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 
 export function AppLayout() {
   const navigate = useNavigate();
-  const [role, setRole] = useState<UserRole | null>(null);
+  const { role } = useUser();
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      const session = data.session;
-      if (!session) return;
-
-      const { data: usuario, error } = await supabase
-        .from("usuarios")
-        .select("role")
-        .eq("email", session.user.email)
-        .single();
-
-      console.log("usuario:", usuario, "error:", error, "email:", session.user.email);
-      setRole((usuario?.role as UserRole) ?? "membro");
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) navigate("/login");
     });
-  }, []);
+  }, [navigate]);
 
   async function handleLogout() {
     await supabase.auth.signOut();
     navigate("/login");
   }
 
-  const isStaff = role === "admin";
-  const canManage = role === "admin" || role === "diretor";
+  const isStaff = role === "staff";
+  const canManage = role === "staff" || role === "diretor";
 
   return (
     <SidebarProvider>

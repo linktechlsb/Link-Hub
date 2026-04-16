@@ -43,7 +43,7 @@ const ROLES: { value: UserRole; label: string }[] = [
   { value: "membro", label: "Membro" },
   { value: "diretor", label: "Diretor" },
   { value: "professor", label: "Professor" },
-  { value: "admin", label: "Admin" },
+  { value: "staff", label: "Staff" },
 ];
 
 export function UsuarioSheet({ open, onOpenChange, usuario, ligas, onSalvo }: UsuarioSheetProps) {

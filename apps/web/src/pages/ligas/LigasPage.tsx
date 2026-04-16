@@ -63,7 +63,7 @@ export function LigasPage() {
     setSheetOpen(true);
   }
 
-  const canManage = role === "admin" || role === "diretor";
+  const canManage = role === "staff" || role === "diretor";
 
   return (
     <div className="p-8">
@@ -71,7 +71,7 @@ export function LigasPage() {
         <div>
           <h1 className="font-display font-bold text-2xl text-navy">Ligas</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Ligas acadêmicas da Link Faculdade de Negócios
+            Ligas acadêmicas da Link School of Business
           </p>
         </div>
 
@@ -88,7 +88,7 @@ export function LigasPage() {
                   Editar liga
                 </DropdownMenuItem>
               )}
-              {role === "admin" && (
+              {role === "staff" && (
                 <DropdownMenuItem onClick={abrirAdicionar}>
                   Adicionar liga
                 </DropdownMenuItem>

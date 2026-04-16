@@ -28,7 +28,7 @@ receitasRouter.get("/", authenticate, async (req, res, next) => {
 });
 
 // POST /receitas — cria uma receita ou custo (lider ou admin)
-receitasRouter.post("/", authenticate, requireRole("admin", "diretor"), async (req, res, next) => {
+receitasRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
     const email = (req as AuthenticatedRequest).user!.email;
     const { liga_id, tipo, recorrencia, descricao, observacao, valor, data } = req.body as {
@@ -77,7 +77,7 @@ receitasRouter.post("/", authenticate, requireRole("admin", "diretor"), async (r
 });
 
 // DELETE /receitas/:id — remove um registro (lider ou admin)
-receitasRouter.delete("/:id", authenticate, requireRole("admin", "diretor"), async (req, res, next) => {
+receitasRouter.delete("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
 

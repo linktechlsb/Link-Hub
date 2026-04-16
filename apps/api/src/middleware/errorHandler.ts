@@ -7,8 +7,9 @@ export function errorHandler(
   _next: NextFunction
 ) {
   console.error(err.stack);
-  res.status(500).json({
-    error: "Erro interno do servidor.",
-    message: err.message,
-  });
+  const body: Record<string, string> = { error: "Erro interno do servidor." };
+  if (process.env["NODE_ENV"] !== "production") {
+    body["message"] = err.message;
+  }
+  res.status(500).json(body);
 }

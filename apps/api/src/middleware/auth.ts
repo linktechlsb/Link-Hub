@@ -19,6 +19,16 @@ interface CachedSession {
 
 const sessionCache = new Map<string, CachedSession>();
 
+// Limpar entradas expiradas a cada 15 minutos
+setInterval(() => {
+  const agora = Date.now();
+  for (const [token, cached] of sessionCache.entries()) {
+    if (cached.expiresAt <= agora) {
+      sessionCache.delete(token);
+    }
+  }
+}, 15 * 60 * 1000);
+
 export async function authenticate(
   req: AuthenticatedRequest,
   res: Response,
