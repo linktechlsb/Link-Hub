@@ -61,7 +61,7 @@ export function ProjetosTab({ ligaId }: Props) {
               className="bg-white border border-brand-gray rounded-lg px-4 py-3 flex items-center justify-between"
             >
               <div>
-                <div className="font-bold text-navy text-sm">{p.nome}</div>
+                <div className="font-bold text-navy text-sm">{p.titulo}</div>
                 <div className="text-xs text-muted-foreground mt-0.5">
                   Resp: {p.responsavel_nome ?? "—"}
                   {p.prazo

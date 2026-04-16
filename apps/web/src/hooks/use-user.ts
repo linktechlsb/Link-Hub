@@ -9,13 +9,13 @@ export function useUser() {
   useEffect(() => {
     // Timeout de segurança: se algo travar, não fica preso em loading
     const timeout = setTimeout(() => {
-      setRole((prev) => prev ?? "membro");
+      setRole((prev) => prev ?? null);
     }, 3000);
 
     supabase.auth.getSession().then(async ({ data }) => {
       const session = data.session;
       if (!session) {
-        setRole("membro");
+        setRole(null);
         clearTimeout(timeout);
         return;
       }
@@ -29,7 +29,7 @@ export function useUser() {
         if (error) throw error;
         setRole((usuario?.role as UserRole) ?? "membro");
       } catch {
-        setRole("membro");
+        setRole(null);
       } finally {
         clearTimeout(timeout);
       }

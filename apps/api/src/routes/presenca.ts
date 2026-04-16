@@ -30,8 +30,24 @@ presencaRouter.get("/", authenticate, async (req, res, next) => {
 // POST /presenca — registrar presença
 presencaRouter.post("/", authenticate, async (req, res, next) => {
   try {
+    const { evento_id, usuario_id, liga_id, status, justificativa, data } = req.body as {
+      evento_id?: string;
+      usuario_id?: string;
+      liga_id?: string;
+      status?: string;
+      justificativa?: string;
+      data?: string;
+    };
+    const campos: Record<string, unknown> = {};
+    if (evento_id !== undefined) campos["evento_id"] = evento_id;
+    if (usuario_id !== undefined) campos["usuario_id"] = usuario_id;
+    if (liga_id !== undefined) campos["liga_id"] = liga_id;
+    if (status !== undefined) campos["status"] = status;
+    if (justificativa !== undefined) campos["justificativa"] = justificativa;
+    if (data !== undefined) campos["data"] = data;
+
     const [presenca] = await sql`
-      INSERT INTO presencas ${sql(req.body)} RETURNING *
+      INSERT INTO presencas ${sql(campos)} RETURNING *
     `;
     res.status(201).json(presenca);
   } catch (err) {
@@ -43,8 +59,21 @@ presencaRouter.post("/", authenticate, async (req, res, next) => {
 presencaRouter.patch("/:id", authenticate, async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
+    const { status, justificativa } = req.body as {
+      status?: string;
+      justificativa?: string;
+    };
+    const campos: Record<string, unknown> = {};
+    if (status !== undefined) campos["status"] = status;
+    if (justificativa !== undefined) campos["justificativa"] = justificativa;
+
+    if (Object.keys(campos).length === 0) {
+      res.status(400).json({ error: "Nenhum campo permitido foi enviado." });
+      return;
+    }
+
     const [presenca] = await sql`
-      UPDATE presencas SET ${sql(req.body)} WHERE id = ${id} RETURNING *
+      UPDATE presencas SET ${sql(campos)} WHERE id = ${id} RETURNING *
     `;
     if (!presenca) { res.status(404).json({ error: "Registro não encontrado." }); return; }
     res.json(presenca);

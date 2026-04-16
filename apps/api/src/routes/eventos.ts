@@ -22,13 +22,13 @@ eventosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (re
 
     // Diretores só podem criar eventos para sua própria liga
     if (user.role === "diretor") {
-      const [liga] = await sql`
-        SELECT id FROM ligas
-        WHERE id = ${liga_id}
-          AND lider_id = (SELECT id FROM usuarios WHERE email = ${user.email})
+      const [membro] = await sql`
+        SELECT 1 FROM liga_membros lm
+        JOIN usuarios u ON u.id = lm.usuario_id
+        WHERE lm.liga_id = ${liga_id} AND u.email = ${user.email} AND lm.cargo = 'Diretor'
       `;
-      if (!liga) {
-        res.status(403).json({ error: "Você só pode criar eventos para sua própria liga." });
+      if (!membro) {
+        res.status(403).json({ error: "Você só pode criar/editar/excluir eventos da sua própria liga." });
         return;
       }
     }
@@ -93,13 +93,14 @@ eventosRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async
 
     // Diretores só podem editar eventos da sua própria liga
     if (user.role === "diretor") {
-      const [liga] = await sql`
-        SELECT id FROM ligas
-        WHERE id = ${eventoAtual.liga_id}
-          AND lider_id = (SELECT id FROM usuarios WHERE email = ${user.email})
+      const liga_id = eventoAtual.liga_id as string;
+      const [membro] = await sql`
+        SELECT 1 FROM liga_membros lm
+        JOIN usuarios u ON u.id = lm.usuario_id
+        WHERE lm.liga_id = ${liga_id} AND u.email = ${user.email} AND lm.cargo = 'Diretor'
       `;
-      if (!liga) {
-        res.status(403).json({ error: "Você só pode editar eventos da sua própria liga." });
+      if (!membro) {
+        res.status(403).json({ error: "Você só pode criar/editar/excluir eventos da sua própria liga." });
         return;
       }
     }
@@ -116,8 +117,16 @@ eventosRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async
 
     const cat = categoria ?? eventoAtual.categoria;
     const requer_aprovacao = cat === "evento" || cat === "hub";
+
+    const campoRelevanteMudou = (titulo !== undefined && titulo !== eventoAtual.titulo)
+      || (data !== undefined && data !== eventoAtual.data)
+      || (descricao !== undefined && descricao !== eventoAtual.descricao)
+      || (sala_id !== undefined && sala_id !== String(eventoAtual.sala_id ?? ""));
+
     const status_aprovacao = requer_aprovacao
-      ? (user.role === "staff" ? (eventoAtual.status_aprovacao ?? "pendente") : "pendente")
+      ? (user.role === "staff"
+          ? (eventoAtual.status_aprovacao ?? "pendente")
+          : campoRelevanteMudou ? "pendente" : (eventoAtual.status_aprovacao ?? "pendente"))
       : null;
 
     const [eventoAtualizado] = await sql`
@@ -155,13 +164,14 @@ eventosRouter.delete("/:id", authenticate, requireRole("staff", "diretor"), asyn
 
     // Diretores só podem excluir eventos da sua própria liga
     if (user.role === "diretor") {
-      const [liga] = await sql`
-        SELECT id FROM ligas
-        WHERE id = ${eventoAtual.liga_id}
-          AND lider_id = (SELECT id FROM usuarios WHERE email = ${user.email})
+      const liga_id = eventoAtual.liga_id as string;
+      const [membro] = await sql`
+        SELECT 1 FROM liga_membros lm
+        JOIN usuarios u ON u.id = lm.usuario_id
+        WHERE lm.liga_id = ${liga_id} AND u.email = ${user.email} AND lm.cargo = 'Diretor'
       `;
-      if (!liga) {
-        res.status(403).json({ error: "Você só pode excluir eventos da sua própria liga." });
+      if (!membro) {
+        res.status(403).json({ error: "Você só pode criar/editar/excluir eventos da sua própria liga." });
         return;
       }
     }
