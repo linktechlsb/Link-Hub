@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tom Visual — Mockups</title>
+<script src="http://localhost:56589/helper.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; padding: 28px 24px 80px; }
+
+  .page-title { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: #94a3b8; margin-bottom: 28px; }
+
+  .options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+
+  .option-card {
+    border: 2px solid #1e2535;
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    background: #141824;
+  }
+  .option-card:hover { border-color: #546484; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(84,100,132,0.2); }
+  .option-card.selected { border-color: #FEC641 !important; box-shadow: 0 0 0 3px rgba(254,198,65,0.15); }
+
+  .option-label {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px 10px;
+    border-bottom: 1px solid #1e2535;
+  }
+  .option-letter {
+    width: 26px; height: 26px; border-radius: 7px;
+    font-weight: 800; font-size: 12px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .option-title { font-size: 14px; font-weight: 700; color: #fff; }
+  .option-badge { margin-left: auto; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
+
+  .mockup-area { padding: 10px; }
+
+  .option-desc { padding: 10px 14px 12px; border-top: 1px solid #1e2535; }
+  .option-desc p { font-size: 11px; color: #94a3b8; line-height: 1.5; }
+  .option-desc strong { color: #cbd5e1; }
+  .feature-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+  .pill { font-size: 9px; padding: 2px 7px; border-radius: 99px; background: #1e2535; color: #94a3b8; }
+  .pill.hi { background: rgba(254,198,65,0.12); color: #FEC641; }
+
+  /* =========== OPTION A: Corporativo Premium =========== */
+  .tone-a {
+    background: #f8fafc;
+    border-radius: 8px;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+  }
+  .ta-header {
+    background: #10284E;
+    padding: 10px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .ta-greeting { }
+  .ta-hi { font-size: 11px; font-weight: 700; color: #fff; }
+  .ta-sub { font-size: 8px; color: rgba(255,255,255,0.5); margin-top: 1px; }
+  .ta-badge-row { display: flex; gap: 5px; }
+  .ta-badge { font-size: 8px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); }
+  .ta-body { padding: 10px 12px; }
+  .ta-kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 5px; margin-bottom: 8px; }
+  .ta-kpi {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 7px 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .ta-kpi-val { font-size: 17px; font-weight: 800; color: #10284E; line-height: 1; }
+  .ta-kpi-lbl { font-size: 7px; color: #94a3b8; margin-top: 2px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .ta-kpi-trend { font-size: 8px; color: #22c55e; margin-top: 2px; }
+  .ta-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+  .ta-section-title { font-size: 9px; font-weight: 700; color: #10284E; text-transform: uppercase; letter-spacing: 0.06em; }
+  .ta-filter { font-size: 8px; color: #64748b; border: 1px solid #e2e8f0; border-radius: 4px; padding: 2px 7px; background: #fff; display: flex; align-items: center; gap: 3px; }
+  .ta-filter::after { content: '▾'; font-size: 7px; }
+  .ta-table { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .ta-thead { display: grid; grid-template-columns: 2fr 1fr 1.2fr 0.8fr; padding: 5px 9px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; gap: 4px; }
+  .ta-thead span { font-size: 7px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+  .ta-trow { display: grid; grid-template-columns: 2fr 1fr 1.2fr 0.8fr; padding: 5px 9px; border-bottom: 1px solid #f1f5f9; gap: 4px; align-items: center; }
+  .ta-trow:last-of-type { border-bottom: none; }
+  .ta-trow span { font-size: 8px; color: #334155; }
+  .ta-badge-status { font-size: 7px; padding: 1px 6px; border-radius: 3px; font-weight: 600; display: inline-block; }
+  .ta-badge-status.green { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .ta-badge-status.yellow { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+  .ta-badge-status.blue { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+  .ta-progress { height: 3px; background: #f1f5f9; border-radius: 99px; overflow: hidden; }
+  .ta-progress-fill { height: 100%; background: #10284E; border-radius: 99px; }
+  .ta-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 3px; padding: 5px 9px; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+  .ta-pg { width: 17px; height: 17px; border-radius: 3px; border: 1px solid #e2e8f0; background: #fff; font-size: 8px; display: flex; align-items: center; justify-content: center; color: #64748b; }
+  .ta-pg.act { background: #10284E; color: #fff; border-color: #10284E; }
+  .ta-pginfo { font-size: 8px; color: #94a3b8; margin-right: 5px; }
+
+  /* skeleton */
+  .skel { background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200%; animation: shimmer 1.4s infinite; border-radius: 4px; }
+  @keyframes shimmer { 0%{background-position:200%} 100%{background-position:-200%} }
+
+  /* =========== OPTION B: Moderno Vibrante =========== */
+  .tone-b {
+    background: #0f1117;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .tb-header {
+    background: linear-gradient(135deg, #10284E 0%, #1a3a6b 50%, #546484 100%);
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .tb-header::before {
+    content: '';
+    position: absolute; top: -20px; right: -20px;
+    width: 80px; height: 80px;
+    background: rgba(254,198,65,0.12);
+    border-radius: 50%;
+  }
+  .tb-header::after {
+    content: '';
+    position: absolute; bottom: -15px; left: 30px;
+    width: 50px; height: 50px;
+    background: rgba(84,100,132,0.3);
+    border-radius: 50%;
+  }
+  .tb-hi { font-size: 12px; font-weight: 800; color: #fff; position: relative; z-index: 1; }
+  .tb-sub { font-size: 8px; color: rgba(255,255,255,0.6); margin-top: 1px; position: relative; z-index: 1; }
+  .tb-kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-top: 9px; position: relative; z-index: 1; }
+  .tb-kpi {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 7px 8px;
+  }
+  .tb-kpi-val { font-size: 16px; font-weight: 900; color: #FEC641; line-height: 1; }
+  .tb-kpi-lbl { font-size: 7px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+  .tb-body { padding: 9px; }
+  .tb-section-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .tb-section-title { font-size: 10px; font-weight: 700; color: #e2e8f0; }
+  .tb-filter {
+    margin-left: auto; font-size: 8px; color: #94a3b8;
+    border: 1px solid #1e2535; border-radius: 5px;
+    padding: 2px 7px; background: #141824;
+    display: flex; align-items: center; gap: 3px;
+  }
+  .tb-filter::after { content: '▾'; font-size: 7px; }
+  .tb-table { background: #141824; border: 1px solid #1e2535; border-radius: 8px; overflow: hidden; }
+  .tb-thead { display: grid; grid-template-columns: 2fr 1fr 1.2fr 0.8fr; padding: 5px 9px; background: #0f1117; border-bottom: 1px solid #1e2535; gap: 4px; }
+  .tb-thead span { font-size: 7px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; }
+  .tb-trow { display: grid; grid-template-columns: 2fr 1fr 1.2fr 0.8fr; padding: 6px 9px; border-bottom: 1px solid #1a2235; gap: 4px; align-items: center; transition: background 0.15s; }
+  .tb-trow:hover { background: #1e2535; }
+  .tb-trow:last-of-type { border-bottom: none; }
+  .tb-trow span { font-size: 8px; color: #cbd5e1; }
+  .tb-badge { font-size: 7px; padding: 2px 7px; border-radius: 99px; font-weight: 600; display: inline-block; }
+  .tb-badge.green { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .tb-badge.yellow { background: rgba(245,158,11,0.15); color: #fbbf24; }
+  .tb-badge.blue { background: rgba(59,130,246,0.15); color: #60a5fa; }
+  .tb-progress { height: 4px; background: #1e2535; border-radius: 99px; overflow: hidden; }
+  .tb-progress-fill { height: 100%; border-radius: 99px; }
+  .tb-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 3px; padding: 6px 9px; border-top: 1px solid #1e2535; }
+  .tb-pg { width: 18px; height: 18px; border-radius: 4px; border: 1px solid #1e2535; background: #141824; font-size: 8px; display: flex; align-items: center; justify-content: center; color: #64748b; }
+  .tb-pg.act { background: #FEC641; color: #10284E; border-color: #FEC641; font-weight: 700; }
+  .tb-pginfo { font-size: 8px; color: #475569; margin-right: 5px; }
+  .tb-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 3px; }
+
+  /* =========== OPTION C: Minimalista Limpo =========== */
+  .tone-c {
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #f1f5f9;
+  }
+  .tc-header {
+    background: #fff;
+    padding: 10px 12px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .tc-hi { font-size: 13px; font-weight: 800; color: #0f172a; }
+  .tc-sub { font-size: 8px; color: #94a3b8; margin-top: 1px; margin-bottom: 8px; }
+  .tc-tabs { display: flex; gap: 0; margin-top: 2px; }
+  .tc-tab { font-size: 9px; font-weight: 600; padding: 5px 10px; color: #94a3b8; border-bottom: 2px solid transparent; cursor: pointer; }
+  .tc-tab.active { color: #10284E; border-bottom-color: #10284E; }
+  .tc-body { padding: 10px 12px; background: #f8fafc; }
+  .tc-kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 5px; margin-bottom: 8px; }
+  .tc-kpi { background: #fff; border: 1px solid #f1f5f9; border-radius: 6px; padding: 7px 8px; }
+  .tc-kpi-val { font-size: 17px; font-weight: 800; color: #0f172a; line-height: 1; }
+  .tc-kpi-lbl { font-size: 7px; color: #94a3b8; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .tc-kpi-accent { width: 16px; height: 2px; background: #10284E; border-radius: 99px; margin-top: 4px; }
+  .tc-kpi-accent.yellow { background: #FEC641; }
+  .tc-kpi-accent.blue { background: #546484; }
+  .tc-kpi-accent.green { background: #22c55e; }
+  .tc-section-header { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+  .tc-section-title { font-size: 9px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.06em; }
+  .tc-filter { margin-left: auto; font-size: 8px; color: #64748b; border: 1px solid #e2e8f0; border-radius: 4px; padding: 2px 8px; background: #fff; display: flex; align-items: center; gap: 3px; }
+  .tc-filter::after { content: '▾'; font-size: 7px; color: #94a3b8; }
+  .tc-table { background: #fff; border: 1px solid #f1f5f9; border-radius: 6px; overflow: hidden; }
+  .tc-thead { display: grid; grid-template-columns: 2fr 1fr 1.2fr 0.8fr; padding: 5px 9px; border-bottom: 1px solid #f1f5f9; gap: 4px; }
+  .tc-thead span { font-size: 7px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; }
+  .tc-trow { display: grid; grid-template-columns: 2fr 1fr 1.2fr 0.8fr; padding: 6px 9px; border-bottom: 1px solid #f8fafc; gap: 4px; align-items: center; }
+  .tc-trow:last-of-type { border-bottom: none; }
+  .tc-trow span { font-size: 8px; color: #334155; }
+  .tc-dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; margin-right: 3px; }
+  .tc-progress { height: 2px; background: #f1f5f9; border-radius: 99px; overflow: hidden; margin-top: 3px; }
+  .tc-progress-fill { height: 100%; border-radius: 99px; }
+  .tc-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 3px; padding: 5px 9px; background: #fff; border-top: 1px solid #f1f5f9; }
+  .tc-pg { width: 17px; height: 17px; border-radius: 3px; border: 1px solid #f1f5f9; font-size: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8; }
+  .tc-pg.act { background: #10284E; color: #fff; border-color: #10284E; }
+  .tc-pginfo { font-size: 8px; color: #94a3b8; margin-right: 5px; }
+
+  /* Bottom bar */
+  .selection-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #141824; border-top: 1px solid #1e2535;
+    padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .sel-text { font-size: 13px; color: #94a3b8; }
+  .sel-text span { color: #FEC641; font-weight: 700; }
+  .sel-btn { background: #FEC641; color: #10284E; font-weight: 700; font-size: 13px; border: none; border-radius: 8px; padding: 8px 20px; cursor: pointer; opacity: 0; transition: opacity 0.2s; }
+  .sel-btn.visible { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="page-title">Qual tom visual você prefere?</div>
+<div class="page-sub">Todos os mockups mostram o mesmo layout (Dashboard Moderno) com os mesmos dados — só o estilo visual muda.</div>
+
+<div class="options-grid">
+
+  <!-- ===== A: Corporativo Premium ===== -->
+  <div class="option-card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="option-label">
+      <div class="option-letter" style="background:#10284E;color:#FEC641">A</div>
+      <div class="option-title">Corporativo Premium</div>
+      <div class="option-badge" style="background:#10284E;color:#FEC641">Linear / Notion</div>
+    </div>
+    <div class="mockup-area">
+      <div class="tone-a">
+        <div class="ta-header">
+          <div class="ta-greeting">
+            <div class="ta-hi">Olá, João Silva</div>
+            <div class="ta-sub">Quarta, 16 de Abril · Liga de Finanças</div>
+          </div>
+          <div class="ta-badge-row">
+            <div class="ta-badge">Diretor</div>
+            <div class="ta-badge">Staff ✓</div>
+          </div>
+        </div>
+        <div class="ta-body">
+          <div class="ta-kpi-row">
+            <div class="ta-kpi">
+              <div class="ta-kpi-val">12</div>
+              <div class="ta-kpi-lbl">Ligas Ativas</div>
+              <div class="ta-kpi-trend">↑ +2</div>
+            </div>
+            <div class="ta-kpi">
+              <!-- skeleton state -->
+              <div class="skel" style="height:17px;width:40px;margin-bottom:4px"></div>
+              <div class="skel" style="height:7px;width:55px"></div>
+            </div>
+            <div class="ta-kpi">
+              <div class="ta-kpi-val">34</div>
+              <div class="ta-kpi-lbl">Projetos</div>
+              <div class="ta-kpi-trend" style="color:#f59e0b">↔ estável</div>
+            </div>
+            <div class="ta-kpi">
+              <div class="ta-kpi-val">78%</div>
+              <div class="ta-kpi-lbl">Presença</div>
+              <div class="ta-kpi-trend">↑ +3%</div>
+            </div>
+          </div>
+          <div class="ta-section-header">
+            <div class="ta-section-title">Projetos</div>
+            <div class="ta-filter">Todas as Ligas</div>
+          </div>
+          <div class="ta-table">
+            <div class="ta-thead">
+              <span>Projeto</span><span>Status</span><span>Progresso</span><span>Prazo</span>
+            </div>
+            <div class="ta-trow">
+              <span>Pesquisa de Mercado</span>
+              <span><span class="ta-badge-status green">Aprovado</span></span>
+              <span><div class="ta-progress"><div class="ta-progress-fill" style="width:65%"></div></div></span>
+              <span style="font-size:7px;color:#64748b">15/05</span>
+            </div>
+            <div class="ta-trow">
+              <span>Plano de Marketing</span>
+              <span><span class="ta-badge-status yellow">Revisão</span></span>
+              <span><div class="ta-progress"><div class="ta-progress-fill" style="width:30%"></div></div></span>
+              <span style="font-size:7px;color:#64748b">20/05</span>
+            </div>
+            <div class="ta-trow">
+              <span>Análise Financeira</span>
+              <span><span class="ta-badge-status blue">Andamento</span></span>
+              <span><div class="ta-progress"><div class="ta-progress-fill" style="width:80%"></div></div></span>
+              <span style="font-size:7px;color:#64748b">30/05</span>
+            </div>
+            <div class="ta-pagination">
+              <span class="ta-pginfo">1–3 de 12</span>
+              <div class="ta-pg">‹</div>
+              <div class="ta-pg act">1</div>
+              <div class="ta-pg">2</div>
+              <div class="ta-pg">3</div>
+              <div class="ta-pg">›</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="option-desc">
+      <p><strong>Fundo branco, bordas finas, sombras sutis.</strong> Badges com borda colorida. Progress bar fina. Tipografia uppercase para labels. Skeleton loading nos cards. Tom sério e profissional.</p>
+      <div class="feature-pills">
+        <span class="pill hi">Sombras sutis</span>
+        <span class="pill hi">Badges com borda</span>
+        <span class="pill">Skeleton loading</span>
+        <span class="pill">Uppercase labels</span>
+        <span class="pill">Fundo #f8fafc</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== B: Moderno Vibrante ===== -->
+  <div class="option-card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="option-label">
+      <div class="option-letter" style="background:#546484;color:#fff">B</div>
+      <div class="option-title">Moderno Vibrante</div>
+      <div class="option-badge" style="background:#546484;color:#fff">Vercel / Stripe</div>
+    </div>
+    <div class="mockup-area">
+      <div class="tone-b">
+        <div class="tb-header">
+          <div class="tb-hi">Olá, João Silva</div>
+          <div class="tb-sub">Quarta, 16 de Abril · Liga de Finanças</div>
+          <div class="tb-kpi-row">
+            <div class="tb-kpi">
+              <div class="tb-kpi-val">12</div>
+              <div class="tb-kpi-lbl">Ligas</div>
+            </div>
+            <div class="tb-kpi">
+              <div class="tb-kpi-val">87</div>
+              <div class="tb-kpi-lbl">Membros</div>
+            </div>
+            <div class="tb-kpi">
+              <div class="tb-kpi-val">34</div>
+              <div class="tb-kpi-lbl">Projetos</div>
+            </div>
+            <div class="tb-kpi">
+              <div class="tb-kpi-val">78%</div>
+              <div class="tb-kpi-lbl">Presença</div>
+            </div>
+          </div>
+        </div>
+        <div class="tb-body">
+          <div class="tb-section-header">
+            <div class="tb-section-title">Projetos</div>
+            <div class="tb-filter">Todas as Ligas</div>
+          </div>
+          <div class="tb-table">
+            <div class="tb-thead">
+              <span>Projeto</span><span>Status</span><span>Progresso</span><span>Prazo</span>
+            </div>
+            <div class="tb-trow">
+              <span><span class="tb-dot" style="background:#4ade80"></span>Pesquisa de Mercado</span>
+              <span><span class="tb-badge green">Aprovado</span></span>
+              <span><div class="tb-progress"><div class="tb-progress-fill" style="width:65%;background:linear-gradient(90deg,#10284E,#546484)"></div></div></span>
+              <span style="font-size:7px;color:#475569">15/05</span>
+            </div>
+            <div class="tb-trow">
+              <span><span class="tb-dot" style="background:#fbbf24"></span>Plano de Marketing</span>
+              <span><span class="tb-badge yellow">Revisão</span></span>
+              <span><div class="tb-progress"><div class="tb-progress-fill" style="width:30%;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div></span>
+              <span style="font-size:7px;color:#475569">20/05</span>
+            </div>
+            <div class="tb-trow">
+              <span><span class="tb-dot" style="background:#60a5fa"></span>Análise Financeira</span>
+              <span><span class="tb-badge blue">Andamento</span></span>
+              <span><div class="tb-progress"><div class="tb-progress-fill" style="width:80%;background:linear-gradient(90deg,#3b82f6,#60a5fa)"></div></div></span>
+              <span style="font-size:7px;color:#475569">30/05</span>
+            </div>
+            <div class="tb-pagination">
+              <span class="tb-pginfo">1–3 de 12</span>
+              <div class="tb-pg">‹</div>
+              <div class="tb-pg act">1</div>
+              <div class="tb-pg">2</div>
+              <div class="tb-pg">3</div>
+              <div class="tb-pg">›</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="option-desc">
+      <p><strong>Fundo escuro (dark mode), gradiente no header.</strong> KPIs com glassmorphism. Progress bar com gradiente colorido. Badges pill coloridas sem borda. Hover nos rows da tabela.</p>
+      <div class="feature-pills">
+        <span class="pill hi">Dark mode</span>
+        <span class="pill hi">Glassmorphism</span>
+        <span class="pill">Gradiente header</span>
+        <span class="pill">Progress colorido</span>
+        <span class="pill">Row hover</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== C: Minimalista Limpo ===== -->
+  <div class="option-card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="option-label">
+      <div class="option-letter" style="background:#1e2535;color:#94a3b8">C</div>
+      <div class="option-title">Minimalista Limpo</div>
+      <div class="option-badge" style="background:#1e2535;color:#94a3b8">shadcn default</div>
+    </div>
+    <div class="mockup-area">
+      <div class="tone-c">
+        <div class="tc-header">
+          <div class="tc-hi">Olá, João Silva</div>
+          <div class="tc-sub">Quarta, 16 de Abril · Liga de Finanças</div>
+          <div class="tc-tabs">
+            <div class="tc-tab active">Visão Geral</div>
+            <div class="tc-tab">Projetos</div>
+            <div class="tc-tab">Ranking</div>
+          </div>
+        </div>
+        <div class="tc-body">
+          <div class="tc-kpi-row">
+            <div class="tc-kpi">
+              <div class="tc-kpi-val">12</div>
+              <div class="tc-kpi-lbl">Ligas</div>
+              <div class="tc-kpi-accent"></div>
+            </div>
+            <div class="tc-kpi">
+              <div class="tc-kpi-val">87</div>
+              <div class="tc-kpi-lbl">Membros</div>
+              <div class="tc-kpi-accent blue"></div>
+            </div>
+            <div class="tc-kpi">
+              <div class="tc-kpi-val">34</div>
+              <div class="tc-kpi-lbl">Projetos</div>
+              <div class="tc-kpi-accent yellow"></div>
+            </div>
+            <div class="tc-kpi">
+              <div class="tc-kpi-val">78%</div>
+              <div class="tc-kpi-lbl">Presença</div>
+              <div class="tc-kpi-accent green"></div>
+            </div>
+          </div>
+          <div class="tc-section-header">
+            <div class="tc-section-title">Projetos Recentes</div>
+            <div class="tc-filter">Filtrar</div>
+          </div>
+          <div class="tc-table">
+            <div class="tc-thead">
+              <span>Projeto</span><span>Status</span><span>Progresso</span><span>Prazo</span>
+            </div>
+            <div class="tc-trow">
+              <span>Pesquisa de Mercado</span>
+              <span><span class="tc-dot" style="background:#22c55e"></span><span style="font-size:8px;color:#166534">Aprovado</span></span>
+              <span><div class="tc-progress"><div class="tc-progress-fill" style="width:65%;background:#10284E"></div></div></span>
+              <span style="font-size:7px;color:#94a3b8">15/05</span>
+            </div>
+            <div class="tc-trow">
+              <span>Plano de Marketing</span>
+              <span><span class="tc-dot" style="background:#f59e0b"></span><span style="font-size:8px;color:#92400e">Revisão</span></span>
+              <span><div class="tc-progress"><div class="tc-progress-fill" style="width:30%;background:#FEC641"></div></div></span>
+              <span style="font-size:7px;color:#94a3b8">20/05</span>
+            </div>
+            <div class="tc-trow">
+              <span>Análise Financeira</span>
+              <span><span class="tc-dot" style="background:#3b82f6"></span><span style="font-size:8px;color:#1e40af">Andamento</span></span>
+              <span><div class="tc-progress"><div class="tc-progress-fill" style="width:80%;background:#546484"></div></div></span>
+              <span style="font-size:7px;color:#94a3b8">30/05</span>
+            </div>
+            <div class="tc-pagination">
+              <span class="tc-pginfo">1–3 de 12</span>
+              <div class="tc-pg">‹</div>
+              <div class="tc-pg act">1</div>
+              <div class="tc-pg">2</div>
+              <div class="tc-pg">3</div>
+              <div class="tc-pg">›</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="option-desc">
+      <p><strong>Fundo levemente cinza (#f8fafc), cards brancos sem sombra.</strong> Acento colorido embaixo de cada KPI. Status por ícone de ponto colorido. Sem gradientes, sem bordas pesadas.</p>
+      <div class="feature-pills">
+        <span class="pill hi">Máximo espaço branco</span>
+        <span class="pill hi">Acento por cor</span>
+        <span class="pill">Sem sombras</span>
+        <span class="pill">Status por ponto</span>
+        <span class="pill">Tabs no header</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="selection-bar">
+  <div class="sel-text" id="sel-text">Clique em um tom visual para selecionar</div>
+  <button class="sel-btn" id="sel-btn">Confirmar →</button>
+</div>
+
+<script>
+function toggleSelect(el) {
+  document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  const ch = el.getAttribute('data-choice').toUpperCase();
+  const names = { A: 'Corporativo Premium', B: 'Moderno Vibrante', C: 'Minimalista Limpo' };
+  document.getElementById('sel-text').innerHTML = `Selecionado: <span>${ch} — ${names[ch]}</span>`;
+  document.getElementById('sel-btn').classList.add('visible');
+  if (window.recordChoice) window.recordChoice(el);
+}
+</script>
+</body>
+</html>
