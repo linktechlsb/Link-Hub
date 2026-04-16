@@ -38,5 +38,5 @@ COPY apps/api/           ./apps/api/
 RUN pnpm --filter @link-leagues/api build
 COPY --from=web-builder /app/apps/web/dist ./apps/web/dist
 
-EXPOSE 3001
+EXPOSE ${PORT:-3001}
 CMD ["node", "apps/api/dist/index.js"]
