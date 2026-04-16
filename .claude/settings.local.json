@@ -48,7 +48,9 @@
       "Skill(update-config)",
       "Skill(update-config:*)",
       "Bash(bash /Users/diogochiapetagarcia/Cursor/Link-Hub/.claude/skills/brainstorming/scripts/start-server.sh --project-dir /Users/diogochiapetagarcia/Cursor/Link-Hub)",
-      "Bash(pnpm build:api)"
+      "Bash(pnpm build:api)",
+      "Bash(pnpm --filter @link-leagues/api build)",
+      "Bash(node apps/api/dist/index.js)"
     ],
     "deny": [
       "Bash(git commit *)",
