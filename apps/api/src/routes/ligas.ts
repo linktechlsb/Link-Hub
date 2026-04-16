@@ -356,7 +356,7 @@ ligasRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (
       const diretoresAtuais = await sql`
         SELECT usuario_id FROM liga_membros WHERE liga_id = ${id} AND cargo = 'Diretor'
       `;
-      const idsAtuais = diretoresAtuais.map((d: { usuario_id: string }) => d.usuario_id as string);
+      const idsAtuais = diretoresAtuais.map((d) => d["usuario_id"] as string);
       const idsNovos = new Set(diretores);
       const idsRemovidos = idsAtuais.filter((uid: string) => !idsNovos.has(uid));
       if (idsRemovidos.length > 0) {

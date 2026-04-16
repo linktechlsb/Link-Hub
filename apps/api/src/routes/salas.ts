@@ -54,8 +54,9 @@ salasRouter.post("/reservas", authenticate, async (req, res, next) => {
 
     // Verificar conflito e inserir atomicamente via transação com SELECT FOR UPDATE
     const reserva = await sql.begin(async (tx) => {
+      const t = tx as unknown as typeof sql;
       // Bloqueia linhas conflitantes para evitar inserções concorrentes
-      await tx`
+      await t`
         SELECT id FROM reservas_salas
         WHERE sala_id = ${sala_id}
           AND inicio < ${fim}
@@ -63,7 +64,7 @@ salasRouter.post("/reservas", authenticate, async (req, res, next) => {
         FOR UPDATE
       `;
 
-      const [conflito] = await tx`
+      const [conflito] = await t`
         SELECT id FROM reservas_salas
         WHERE sala_id = ${sala_id}
           AND inicio < ${fim}
@@ -73,7 +74,7 @@ salasRouter.post("/reservas", authenticate, async (req, res, next) => {
 
       if (conflito) return null;
 
-      const [nova] = await tx`INSERT INTO reservas_salas ${tx(campos)} RETURNING *`;
+      const [nova] = await t`INSERT INTO reservas_salas ${t(campos)} RETURNING *`;
       return nova;
     });
 

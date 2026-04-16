@@ -1,29 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "afplay /System/Library/Sounds/Glass.aiff 2>/dev/null || true",
-            "async": true
-          }
-        ]
-      }
-    ],
-    "PermissionRequest": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "afplay /System/Library/Sounds/Ping.aiff 2>/dev/null || true",
-            "async": true
-          }
-        ]
-      }
-    ]
-  },
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
@@ -71,7 +47,8 @@
       "Bash(pnpm dlx *)",
       "Skill(update-config)",
       "Skill(update-config:*)",
-      "Bash(bash /Users/diogochiapetagarcia/Cursor/Link-Hub/.claude/skills/brainstorming/scripts/start-server.sh --project-dir /Users/diogochiapetagarcia/Cursor/Link-Hub)"
+      "Bash(bash /Users/diogochiapetagarcia/Cursor/Link-Hub/.claude/skills/brainstorming/scripts/start-server.sh --project-dir /Users/diogochiapetagarcia/Cursor/Link-Hub)",
+      "Bash(pnpm build:api)"
     ],
     "deny": [
       "Bash(git commit *)",
@@ -79,6 +56,30 @@
       "Bash(rm -rf *)",
       "Read(./.env)",
       "Read(./.env.*)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "afplay /System/Library/Sounds/Glass.aiff 2>/dev/null || true",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "afplay /System/Library/Sounds/Ping.aiff 2>/dev/null || true",
+            "async": true
+          }
+        ]
+      }
     ]
   }
 }

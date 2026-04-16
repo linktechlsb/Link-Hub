@@ -97,20 +97,21 @@ projetosRouter.patch("/:id/aprovacao", authenticate, requireRole("professor", "s
 
     const id = req.params["id"] as string;
 
-    const resultado = await sql.begin(async tx => {
+    const resultado = await sql.begin(async (tx) => {
+      const t = tx as unknown as typeof sql;
       const atualizadoRows = papel === "professor"
-        ? await tx`UPDATE projetos SET aprovacao_professor = ${decisao} WHERE id = ${id} AND status = 'em_aprovacao' RETURNING *`
-        : await tx`UPDATE projetos SET aprovacao_staff = ${decisao} WHERE id = ${id} AND status = 'em_aprovacao' RETURNING *`;
+        ? await t`UPDATE projetos SET aprovacao_professor = ${decisao} WHERE id = ${id} AND status = 'em_aprovacao' RETURNING *`
+        : await t`UPDATE projetos SET aprovacao_staff = ${decisao} WHERE id = ${id} AND status = 'em_aprovacao' RETURNING *`;
 
       const atualizado = atualizadoRows[0];
       if (!atualizado) return null;
 
       if (atualizado["aprovacao_professor"] === "aprovado" && atualizado["aprovacao_staff"] === "aprovado") {
-        const rows = await tx`UPDATE projetos SET status = 'aprovado' WHERE id = ${id} RETURNING *`;
+        const rows = await t`UPDATE projetos SET status = 'aprovado' WHERE id = ${id} RETURNING *`;
         return rows[0];
       }
       if (atualizado["aprovacao_professor"] === "rejeitado" || atualizado["aprovacao_staff"] === "rejeitado") {
-        const rows = await tx`UPDATE projetos SET status = 'rejeitado' WHERE id = ${id} RETURNING *`;
+        const rows = await t`UPDATE projetos SET status = 'rejeitado' WHERE id = ${id} RETURNING *`;
         return rows[0];
       }
       return atualizado;
