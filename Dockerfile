@@ -17,4 +17,4 @@ RUN pnpm --filter @link-leagues/api build
 
 EXPOSE 3001
 
-CMD ["node", "apps/api/dist/index.js"]
+CMD ["pnpm", "dev"]
