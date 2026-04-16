@@ -1,10 +1,10 @@
 import { Router, type Router as IRouter } from "express";
-import { authenticate, requireRole } from "../middleware/auth.js";
+import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 import { sql } from "../config/db.js";
 
 export const eventosRouter: IRouter = Router();
 
-// POST /eventos — somente diretores e admin
+// POST /eventos — somente diretores e staff
 eventosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
     const { liga_id, titulo, descricao, data, categoria, sala_id, hora_inicio, hora_fim } = req.body as {
@@ -17,6 +17,21 @@ eventosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (re
       hora_inicio?: string;
       hora_fim?: string;
     };
+
+    const user = (req as AuthenticatedRequest).user!;
+
+    // Diretores só podem criar eventos para sua própria liga
+    if (user.role === "diretor") {
+      const [liga] = await sql`
+        SELECT id FROM ligas
+        WHERE id = ${liga_id}
+          AND lider_id = (SELECT id FROM usuarios WHERE email = ${user.email})
+      `;
+      if (!liga) {
+        res.status(403).json({ error: "Você só pode criar eventos para sua própria liga." });
+        return;
+      }
+    }
 
     const cat = categoria ?? "encontro";
     const requer_aprovacao = cat === "evento" || cat === "hub";
@@ -45,7 +60,7 @@ eventosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (re
   }
 });
 
-// PATCH /eventos/:id/status — aprovar ou rejeitar evento
+// PATCH /eventos/:id/status — aprovar ou rejeitar evento (rota específica antes da genérica)
 eventosRouter.patch("/:id/status", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const { status } = req.body as { status: string };
@@ -59,6 +74,100 @@ eventosRouter.patch("/:id/status", authenticate, requireRole("staff"), async (re
     `;
     if (!evento) { res.status(404).json({ error: "Evento não encontrado." }); return; }
     res.json(evento);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /eventos/:id — editar dados do evento
+eventosRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
+  try {
+    const id = req.params["id"] as string;
+    const user = (req as AuthenticatedRequest).user!;
+
+    const [eventoAtual] = await sql`SELECT * FROM eventos WHERE id = ${id}`;
+    if (!eventoAtual) {
+      res.status(404).json({ error: "Evento não encontrado." });
+      return;
+    }
+
+    // Diretores só podem editar eventos da sua própria liga
+    if (user.role === "diretor") {
+      const [liga] = await sql`
+        SELECT id FROM ligas
+        WHERE id = ${eventoAtual.liga_id}
+          AND lider_id = (SELECT id FROM usuarios WHERE email = ${user.email})
+      `;
+      if (!liga) {
+        res.status(403).json({ error: "Você só pode editar eventos da sua própria liga." });
+        return;
+      }
+    }
+
+    const { titulo, descricao, data, categoria, sala_id, hora_inicio, hora_fim } = req.body as {
+      titulo?: string;
+      descricao?: string;
+      data?: string;
+      categoria?: string;
+      sala_id?: string;
+      hora_inicio?: string;
+      hora_fim?: string;
+    };
+
+    const cat = categoria ?? eventoAtual.categoria;
+    const requer_aprovacao = cat === "evento" || cat === "hub";
+    const status_aprovacao = requer_aprovacao
+      ? (user.role === "staff" ? (eventoAtual.status_aprovacao ?? "pendente") : "pendente")
+      : null;
+
+    const [eventoAtualizado] = await sql`
+      UPDATE eventos SET
+        titulo            = COALESCE(${titulo ?? null}, titulo),
+        descricao         = ${descricao !== undefined ? (descricao || null) : eventoAtual.descricao},
+        data              = COALESCE(${data ?? null}, data),
+        categoria         = ${cat},
+        sala_id           = ${sala_id !== undefined ? (sala_id || null) : eventoAtual.sala_id},
+        hora_inicio       = ${hora_inicio !== undefined ? (hora_inicio || null) : eventoAtual.hora_inicio},
+        hora_fim          = ${hora_fim !== undefined ? (hora_fim || null) : eventoAtual.hora_fim},
+        requer_aprovacao  = ${requer_aprovacao},
+        status_aprovacao  = ${status_aprovacao}
+      WHERE id = ${id}
+      RETURNING *
+    `;
+
+    res.json(eventoAtualizado);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /eventos/:id — excluir evento
+eventosRouter.delete("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
+  try {
+    const id = req.params["id"] as string;
+    const user = (req as AuthenticatedRequest).user!;
+
+    const [eventoAtual] = await sql`SELECT * FROM eventos WHERE id = ${id}`;
+    if (!eventoAtual) {
+      res.status(404).json({ error: "Evento não encontrado." });
+      return;
+    }
+
+    // Diretores só podem excluir eventos da sua própria liga
+    if (user.role === "diretor") {
+      const [liga] = await sql`
+        SELECT id FROM ligas
+        WHERE id = ${eventoAtual.liga_id}
+          AND lider_id = (SELECT id FROM usuarios WHERE email = ${user.email})
+      `;
+      if (!liga) {
+        res.status(403).json({ error: "Você só pode excluir eventos da sua própria liga." });
+        return;
+      }
+    }
+
+    await sql`DELETE FROM eventos WHERE id = ${id}`;
+    res.status(204).send();
   } catch (err) {
     next(err);
   }

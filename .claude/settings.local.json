@@ -35,7 +35,16 @@
       "Bash(curl -s http://127.0.0.1:3001/health)",
       "Bash(curl -s http://127.0.0.1:3001/ligas)",
       "Bash(lsof -nP -iTCP:3001 -sTCP:LISTEN)",
-      "Bash(grep -r \"export interface\\\\|export type\" /Users/diogochiapetagarcia/Cursor/Link-Hub/packages/types/src/*.ts)"
+      "Bash(grep -r \"export interface\\\\|export type\" /Users/diogochiapetagarcia/Cursor/Link-Hub/packages/types/src/*.ts)",
+      "Skill(commit-commands:commit)",
+      "Skill(commit-commands:commit:*)",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub diff --stat 5f514a64952d37566b00063e1bea5bd75adcc3b6..HEAD)",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub diff 5f514a64952d37566b00063e1bea5bd75adcc3b6..HEAD)",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub status)",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub log --oneline -5)",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub diff --cached)",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub show HEAD:apps/api/src/routes/eventos.ts)",
+      "Bash(pnpm dlx *)"
     ],
     "deny": [
       "Bash(git commit *)",
