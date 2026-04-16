@@ -662,11 +662,27 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
     setUrl: (url: string) => void,
     setEnviando: (v: boolean) => void,
   ) {
+    // Validação no cliente antes do upload
+    const tiposPermitidos = [
+      "image/jpeg", "image/png", "image/gif",
+      "application/pdf", "text/plain", "application/zip",
+    ];
+    const tamanhoMaximoMB = 5;
+    if (!tiposPermitidos.includes(file.type)) {
+      setErro("Tipo de ficheiro não permitido. Use imagens, PDF, TXT ou ZIP.");
+      return;
+    }
+    if (file.size > tamanhoMaximoMB * 1024 * 1024) {
+      setErro(`O ficheiro não pode ter mais de ${tamanhoMaximoMB} MB.`);
+      return;
+    }
+
     setEnviando(true);
     const ext = file.name.split(".").pop() ?? "bin";
     const path = `${ligaId ?? "geral"}/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from("recursos").upload(path, file, { upsert: false });
     if (error) {
+      setErro("Falha ao enviar o ficheiro. Tente novamente.");
       setEnviando(false);
       return;
     }

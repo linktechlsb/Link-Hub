@@ -1,5 +1,5 @@
 import { Router, type Router as IRouter } from "express";
-import { authenticate } from "../middleware/auth.js";
+import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 import { sql } from "../config/db.js";
 
 export const salasRouter: IRouter = Router();
@@ -41,24 +41,46 @@ salasRouter.get("/reservas", authenticate, async (req, res, next) => {
 salasRouter.post("/reservas", authenticate, async (req, res, next) => {
   try {
     const { sala_id, inicio, fim } = req.body as { sala_id: string; inicio: string; fim: string };
+    const { liga_id, titulo, descricao } = req.body as {
+      liga_id?: string;
+      titulo?: string;
+      descricao?: string;
+    };
 
-    // Verificar conflito de horário
-    const [conflito] = await sql`
-      SELECT id FROM reservas_salas
-      WHERE sala_id = ${sala_id}
-        AND inicio < ${fim}
-        AND fim > ${inicio}
-      LIMIT 1
-    `;
+    const campos: Record<string, unknown> = { sala_id, inicio, fim };
+    if (liga_id !== undefined) campos["liga_id"] = liga_id;
+    if (titulo !== undefined) campos["titulo"] = titulo;
+    if (descricao !== undefined) campos["descricao"] = descricao;
 
-    if (conflito) {
+    // Verificar conflito e inserir atomicamente via transação com SELECT FOR UPDATE
+    const reserva = await sql.begin(async (tx) => {
+      // Bloqueia linhas conflitantes para evitar inserções concorrentes
+      await tx`
+        SELECT id FROM reservas_salas
+        WHERE sala_id = ${sala_id}
+          AND inicio < ${fim}
+          AND fim > ${inicio}
+        FOR UPDATE
+      `;
+
+      const [conflito] = await tx`
+        SELECT id FROM reservas_salas
+        WHERE sala_id = ${sala_id}
+          AND inicio < ${fim}
+          AND fim > ${inicio}
+        LIMIT 1
+      `;
+
+      if (conflito) return null;
+
+      const [nova] = await tx`INSERT INTO reservas_salas ${tx(campos)} RETURNING *`;
+      return nova;
+    });
+
+    if (!reserva) {
       res.status(409).json({ error: "Conflito de horário: a sala já está reservada neste período." });
       return;
     }
-
-    const [reserva] = await sql`
-      INSERT INTO reservas_salas ${sql(req.body)} RETURNING *
-    `;
 
     res.status(201).json(reserva);
   } catch (err) {
@@ -67,9 +89,32 @@ salasRouter.post("/reservas", authenticate, async (req, res, next) => {
 });
 
 // DELETE /salas/reservas/:id — cancelar reserva
-salasRouter.delete("/reservas/:id", authenticate, async (req, res, next) => {
+salasRouter.delete("/reservas/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
+    const user = (req as AuthenticatedRequest).user!;
+
+    if (user.role === "diretor") {
+      // Buscar reserva e verificar se pertence à liga do diretor
+      const [reserva] = await sql`SELECT liga_id FROM reservas_salas WHERE id = ${id}`;
+      if (!reserva) {
+        res.status(404).json({ error: "Reserva não encontrada." });
+        return;
+      }
+
+      const [membro] = await sql`
+        SELECT 1 FROM liga_membros lm
+        JOIN usuarios u ON u.id = lm.usuario_id
+        WHERE lm.liga_id = ${reserva.liga_id}
+          AND u.email = ${user.email}
+          AND lm.cargo = 'Diretor'
+      `;
+      if (!membro) {
+        res.status(403).json({ error: "Não autorizado a cancelar esta reserva." });
+        return;
+      }
+    }
+
     await sql`DELETE FROM reservas_salas WHERE id = ${id}`;
     res.status(204).send();
   } catch (err) {

@@ -32,9 +32,18 @@ projetosRouter.get("/", authenticate, async (req, res, next) => {
 });
 
 // POST /projetos
-projetosRouter.post("/", authenticate, async (req, res, next) => {
+projetosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
-    const body = { ...req.body, status: "rascunho" as StatusProjeto };
+    const { liga_id, titulo, descricao, responsavel_id, prazo } = req.body as {
+      liga_id: string;
+      titulo: string;
+      descricao?: string;
+      responsavel_id: string;
+      prazo?: string;
+    };
+    const body: Record<string, unknown> = { liga_id, titulo, status: "rascunho" as StatusProjeto, responsavel_id };
+    if (descricao !== undefined) body["descricao"] = descricao;
+    if (prazo !== undefined) body["prazo"] = prazo;
 
     const [projeto] = await sql`
       INSERT INTO projetos ${sql(body)} RETURNING *
@@ -88,39 +97,31 @@ projetosRouter.patch("/:id/aprovacao", authenticate, requireRole("professor", "s
 
     const id = req.params["id"] as string;
 
-    // Registra a decisão do papel usando dois blocos explícitos (evita interpolação de identificador)
-    const atualizadoRows = papel === "professor"
-      ? await sql`
-          UPDATE projetos SET aprovacao_professor = ${decisao}
-          WHERE id = ${id} AND status = 'em_aprovacao'
-          RETURNING *
-        `
-      : await sql`
-          UPDATE projetos SET aprovacao_staff = ${decisao}
-          WHERE id = ${id} AND status = 'em_aprovacao'
-          RETURNING *
-        `;
+    const resultado = await sql.begin(async tx => {
+      const atualizadoRows = papel === "professor"
+        ? await tx`UPDATE projetos SET aprovacao_professor = ${decisao} WHERE id = ${id} AND status = 'em_aprovacao' RETURNING *`
+        : await tx`UPDATE projetos SET aprovacao_staff = ${decisao} WHERE id = ${id} AND status = 'em_aprovacao' RETURNING *`;
 
-    const atualizado = atualizadoRows[0];
+      const atualizado = atualizadoRows[0];
+      if (!atualizado) return null;
 
-    if (!atualizado) {
+      if (atualizado["aprovacao_professor"] === "aprovado" && atualizado["aprovacao_staff"] === "aprovado") {
+        const rows = await tx`UPDATE projetos SET status = 'aprovado' WHERE id = ${id} RETURNING *`;
+        return rows[0];
+      }
+      if (atualizado["aprovacao_professor"] === "rejeitado" || atualizado["aprovacao_staff"] === "rejeitado") {
+        const rows = await tx`UPDATE projetos SET status = 'rejeitado' WHERE id = ${id} RETURNING *`;
+        return rows[0];
+      }
+      return atualizado;
+    });
+
+    if (!resultado) {
       res.status(404).json({ error: "Projeto não encontrado ou não está em aprovação." });
       return;
     }
 
-    // Transição automática de status
-    if (atualizado["aprovacao_professor"] === "aprovado" && atualizado["aprovacao_staff"] === "aprovado") {
-      const rows = await sql`UPDATE projetos SET status = 'aprovado' WHERE id = ${id} RETURNING *`;
-      res.json(rows[0]);
-      return;
-    }
-    if (atualizado["aprovacao_professor"] === "rejeitado" || atualizado["aprovacao_staff"] === "rejeitado") {
-      const rows = await sql`UPDATE projetos SET status = 'rejeitado' WHERE id = ${id} RETURNING *`;
-      res.json(rows[0]);
-      return;
-    }
-
-    res.json(atualizado);
+    res.json(resultado);
   } catch (err) {
     next(err);
   }

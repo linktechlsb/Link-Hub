@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import type { Liga } from "@link-leagues/types"
 import { supabase } from "@/lib/supabase"
+import { useUser } from "@/hooks/use-user"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { LigasCarousel } from "./LigasCarousel"
@@ -10,9 +11,11 @@ import { HomeDiretorView } from "./HomeDiretorView"
 import { HomeProfessorView } from "./HomeProfessorView"
 import { HomeMembroView } from "./HomeMembroView"
 
-async function getToken(): Promise<string> {
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001"
+
+async function getToken(): Promise<string | null> {
   const { data } = await supabase.auth.getSession()
-  return data.session?.access_token ?? ""
+  return data.session?.access_token ?? null
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -24,10 +27,10 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 export function HomePage() {
+  const { role } = useUser()
   const [ligas, setLigas]             = useState<Liga[]>([])
   const [minhaLiga, setMinhaLiga]     = useState<Liga | null>(null)
   const [nomeUsuario, setNomeUsuario] = useState<string>("")
-  const [role, setRole]               = useState<string | null>(null)
   const [loadingUser, setLoadingUser] = useState(true)
   const [pendentes, setPendentes]     = useState<{
     projetos: { id: string; titulo: string; liga?: { nome: string } }[]
@@ -36,38 +39,49 @@ export function HomePage() {
 
   useEffect(() => {
     async function carregar() {
-      const token = await getToken()
-      const headers = { Authorization: `Bearer ${token}` }
+      try {
+        const token = await getToken()
+        if (!token) { setLoadingUser(false); return; }
+        const headers = { Authorization: `Bearer ${token}` }
 
-      const { data: sessionData } = await supabase.auth.getSession()
-      const email = sessionData.session?.user.email ?? ""
+        const { data: sessionData } = await supabase.auth.getSession()
+        const email = sessionData.session?.user.email ?? ""
 
-      if (email) {
-        const { data: usuario } = await supabase
-          .from("usuarios")
-          .select("nome, role")
-          .eq("email", email)
-          .single()
-        if (usuario?.nome) setNomeUsuario(usuario.nome as string)
-        else setNomeUsuario(email.split("@")[0] ?? "Usuário")
-        if (usuario?.role) setRole(usuario.role as string)
-
-        if (usuario?.role === "staff") {
-          const res = await fetch("/api/pendentes", { headers })
-          if (res.ok) setPendentes(await res.json())
+        if (email) {
+          const { data: usuario } = await supabase
+            .from("usuarios")
+            .select("nome")
+            .eq("email", email)
+            .single()
+          if (usuario?.nome) setNomeUsuario(usuario.nome as string)
+          else setNomeUsuario(email.split("@")[0] ?? "Usuário")
         }
-      }
-      setLoadingUser(false)
 
-      const [ligasRes, minhaRes] = await Promise.all([
-        fetch("/api/ligas", { headers }),
-        fetch("/api/ligas/minha", { headers }),
-      ])
-      if (ligasRes.ok) setLigas(await ligasRes.json())
-      if (minhaRes.ok) setMinhaLiga(await minhaRes.json())
+        const [ligasRes, minhaRes] = await Promise.all([
+          fetch(`${API_URL}/ligas`, { headers }),
+          fetch(`${API_URL}/ligas/minha`, { headers }),
+        ])
+        if (ligasRes.ok) setLigas(await ligasRes.json())
+        if (minhaRes.ok) setMinhaLiga(await minhaRes.json())
+      } catch {
+        // Falha silenciosa — apenas para de carregar
+      } finally {
+        setLoadingUser(false)
+      }
     }
     carregar()
   }, [])
+
+  useEffect(() => {
+    if (role !== "staff") return;
+    async function carregarPendentes() {
+      const token = await getToken()
+      if (!token) return;
+      const res = await fetch(`${API_URL}/pendentes`, { headers: { Authorization: `Bearer ${token}` } })
+      if (res.ok) setPendentes(await res.json())
+    }
+    void carregarPendentes()
+  }, [role])
 
   const hoje = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",

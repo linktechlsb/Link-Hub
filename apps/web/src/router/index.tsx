@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate, type RouterProviderProps } from "react-r
 type BrowserRouter = RouterProviderProps["router"];
 import { AppLayout } from "@/layouts/AppLayout";
 import { AuthLayout } from "@/layouts/AuthLayout";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { HomePage } from "@/pages/home/HomePage";
 import { LigasPage } from "@/pages/ligas/LigasPage";
@@ -12,6 +13,7 @@ import { AgendaPage } from "@/pages/agenda/AgendaPage";
 import { SuperAdminPage } from "@/pages/super-admin/SuperAdminPage";
 import { GerenciamentoPage } from "@/pages/gerenciamento/GerenciamentoPage";
 import { ContaPage } from "@/pages/conta/ContaPage";
+import { PresencaPage } from "@/pages/presenca/PresencaPage";
 
 export const router: BrowserRouter = createBrowserRouter([
   {
@@ -27,16 +29,23 @@ export const router: BrowserRouter = createBrowserRouter([
   },
   {
     path: "/",
-    element: <AppLayout />,
+    element: <ProtectedRoute />,
     children: [
-      { path: "home", element: <HomePage /> },
-      { path: "ligas", element: <LigasPage /> },
-      { path: "ligas/:id", element: <LigaDetailPage /> },
-      { path: "projetos", element: <ProjetosPage /> },
-      { path: "agenda", element: <AgendaPage /> },
-      { path: "super-admin", element: <SuperAdminPage /> },
-      { path: "gerenciamento", element: <GerenciamentoPage /> },
-      { path: "conta", element: <ContaPage /> },
+      {
+        path: "/",
+        element: <AppLayout />,
+        children: [
+          { path: "home", element: <HomePage /> },
+          { path: "ligas", element: <LigasPage /> },
+          { path: "ligas/:id", element: <LigaDetailPage /> },
+          { path: "projetos", element: <ProjetosPage /> },
+          { path: "agenda", element: <AgendaPage /> },
+          { path: "super-admin", element: <SuperAdminPage /> },
+          { path: "gerenciamento", element: <GerenciamentoPage /> },
+          { path: "presenca", element: <PresencaPage /> },
+          { path: "conta", element: <ContaPage /> },
+        ],
+      },
     ],
   },
 ]);
