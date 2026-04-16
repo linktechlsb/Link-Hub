@@ -3,6 +3,8 @@ dotenv.config({ path: ".env" });
 
 import express, { type Express } from "express";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 const app: Express = express();
@@ -15,6 +17,14 @@ app.use(express.json());
 (async () => {
   const { router } = await import("./routes/index.js");
   app.use("/", router);
+
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const webDist = path.resolve(__dirname, "../../web/dist");
+  app.use(express.static(webDist));
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(webDist, "index.html"));
+  });
+
   app.use(errorHandler);
 
   app.listen(PORT, "0.0.0.0", () => {
