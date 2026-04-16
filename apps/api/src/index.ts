@@ -12,8 +12,8 @@ app.use(express.json());
 app.use("/", router);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`API rodando em http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`API rodando na porta ${PORT}`);
 });
 
 export default app;
