@@ -13,6 +13,7 @@ COPY tsconfig.base.json ./
 COPY packages/types/src ./packages/types/src
 COPY packages/utils/src ./packages/utils/src
 COPY apps/api/ ./apps/api/
+COPY apps/web/ ./apps/web/
 RUN pnpm --filter @link-leagues/api build
 
 EXPOSE 3001
