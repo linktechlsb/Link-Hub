@@ -1,0 +1,7 @@
+{
+  "env": {
+    "API_PORT": "3001",
+    "PORT": "3001",
+    "NODE_ENV": "production"
+  }
+}
