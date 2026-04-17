@@ -4,7 +4,7 @@
 
 Link Leagues Platform é um sistema centralizado de gestão das ligas acadêmicas da **Link — Faculdade de Negócios**. Cobre administração de ligas, acompanhamento de projetos, controle de presença, agendamento de salas e progressão de membros.
 
-O repositório é um **monorepo pnpm + Turborepo** com frontend React e API Express, ambos em TypeScript, compartilhando tipos e utilitários via pacotes locais do workspace.
+O repositório é um **monorepo npm workspaces** com frontend React e API Express, ambos em TypeScript, compartilhando tipos e utilitários via pacotes locais do workspace.
 
 ---
 
@@ -18,7 +18,7 @@ O repositório é um **monorepo pnpm + Turborepo** com frontend React e API Expr
 | Backend | Node.js + Express + TypeScript |
 | Banco de Dados | PostgreSQL via Supabase |
 | Autenticação | Supabase Auth + JWT |
-| Monorepo | pnpm workspaces + Turborepo |
+| Monorepo | npm workspaces |
 
 ---
 
@@ -51,15 +51,15 @@ link-leagues-platform/
 ## Comandos de Desenvolvimento
 
 ```bash
-pnpm dev          # Roda frontend + API simultaneamente
-pnpm dev:web      # Apenas frontend (porta 3000)
-pnpm dev:api      # Apenas API (porta 3001)
-pnpm build        # Build de todos os pacotes
-pnpm build:web    # Build apenas do frontend
-pnpm build:api    # Build apenas da API
-pnpm typecheck    # Type-check de todos os pacotes
-pnpm lint         # Lint de todos os pacotes
-pnpm clean        # Remove dist/ e node_modules
+npm run dev        # Roda frontend + API simultaneamente
+npm run dev:web    # Apenas frontend (porta 3000)
+npm run dev:api    # Apenas API (porta 3001)
+npm run build      # Build de todos os pacotes
+npm run build:web  # Build apenas do frontend
+npm run build:api  # Build apenas da API
+npm run typecheck  # Type-check de todos os pacotes
+npm run lint       # Lint de todos os pacotes
+npm run clean      # Remove dist/ e node_modules
 ```
 
 A API usa `tsx watch` em dev (hot reload). O frontend usa Vite com HMR.
@@ -107,7 +107,7 @@ Toda página dentro do `AppLayout` segue:
 
 ### Componentes
 
-- Todos os componentes shadcn/ui são instalados via `pnpm dlx shadcn@latest add <component>` dentro de `apps/web`
+- Todos os componentes shadcn/ui são instalados via `npm dlx shadcn@latest add <component>` dentro de `apps/web`
 - Quando um componente é usado em múltiplos apps, promova para `packages/ui/src/` e re-exporte de `packages/ui/src/index.ts`
 - Use o helper `cn()` de `@/lib/utils` (clsx + twMerge) para classes Tailwind condicionais
 - Ícones: **Lucide React** exclusivamente — nunca instale outras bibliotecas de ícones
@@ -235,4 +235,4 @@ O frontend **não** acessa o banco diretamente — todo fetch de dados vai pela 
 3. Verifique `packages/ui/src/` para componentes existentes antes de construir novos componentes base
 4. Verifique os arquivos de rota em `apps/api/src/routes/` para o padrão estabelecido
 5. Verifique as páginas em `apps/web/src/pages/` para o padrão de layout e componentes
-6. Execute `pnpm typecheck` após alterações para capturar problemas cedo
+6. Execute `npm run typecheck` após alterações para capturar problemas cedo
