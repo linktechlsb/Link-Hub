@@ -3,25 +3,27 @@
   "version": "1.0.0",
   "private": true,
   "description": "Plataforma centralizada para gerenciamento das ligas acadêmicas da Link — Faculdade de Negócios",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "clean": "turbo run clean && rm -rf node_modules",
-    "dev:web": "pnpm --filter @link-leagues/web dev",
-    "dev:api": "pnpm --filter @link-leagues/api dev",
-    "build:web": "pnpm --filter @link-leagues/web build",
-    "build:api": "pnpm --filter @link-leagues/api build"
+    "dev": "npm run dev --workspace=apps/web & npm run dev --workspace=apps/api",
+    "build": "npm run build --workspace=apps/api && npm run build --workspace=apps/web",
+    "lint": "npm run lint --workspace=apps/web",
+    "typecheck": "npm run typecheck --workspace=apps/api && npm run typecheck --workspace=apps/web",
+    "clean": "rm -rf apps/*/dist packages/*/dist && rm -rf node_modules",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:api": "npm run dev --workspace=apps/api",
+    "build:web": "npm run build --workspace=apps/web",
+    "build:api": "npm run build --workspace=apps/api"
   },
   "devDependencies": {
-    "turbo": "^2.3.3",
     "typescript": "^5.7.2",
     "@types/node": "^22.10.7"
   },
   "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=9.0.0"
+    "node": ">=20.0.0"
   },
-  "packageManager": "pnpm@9.15.4"
+  "packageManager": "npm@11.5.2"
 }

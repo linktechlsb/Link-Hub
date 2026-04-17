@@ -10,8 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@link-leagues/types": "workspace:*",
-    "@link-leagues/utils": "workspace:*",
+    "@link-leagues/types": "*",
+    "@link-leagues/utils": "*",
     "@supabase/supabase-js": "^2.47.10",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

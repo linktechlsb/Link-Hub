@@ -11,9 +11,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@link-leagues/types": "workspace:*",
-    "@link-leagues/ui": "workspace:*",
-    "@link-leagues/utils": "workspace:*",
+    "@link-leagues/types": "*",
+    "@link-leagues/ui": "*",
+    "@link-leagues/utils": "*",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",

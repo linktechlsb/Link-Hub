@@ -50,7 +50,12 @@
       "Bash(bash /Users/diogochiapetagarcia/Cursor/Link-Hub/.claude/skills/brainstorming/scripts/start-server.sh --project-dir /Users/diogochiapetagarcia/Cursor/Link-Hub)",
       "Bash(pnpm build:api)",
       "Bash(pnpm --filter @link-leagues/api build)",
-      "Bash(node apps/api/dist/index.js)"
+      "Bash(node apps/api/dist/index.js)",
+      "Bash(npm --version)",
+      "Bash(find . -type d -name node_modules -prune -exec rm -rf {} +)",
+      "Bash(pkill -f vite)",
+      "Bash(git checkout *)",
+      "Bash(pkill -f \"npm run dev\")"
     ],
     "deny": [
       "Bash(git commit *)",

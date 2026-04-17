@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "pnpm install --frozen-lockfile && pnpm --filter @link-leagues/web build"
+buildCommand = "npm install && npm run build --workspace=apps/web"
 
 [deploy]
 startCommand = "npx serve -s apps/web/dist -l $PORT"
