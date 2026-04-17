@@ -11,13 +11,15 @@ RUN npm install
 # Limpar cache do npm
 RUN npm cache clean --force
 
+# Variáveis de buildtime para Vite (web)
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+
 # Build de todos os pacotes
 RUN npm run build
 
-# Criar .env vazio para o tsx nao falhar ao iniciar
-# (env vars reais sao passadas via docker run --env-file ou -e)
-RUN touch .env
+EXPOSE 3001
 
-EXPOSE 3000 3001
-
-CMD ["npm", "run", "dev"]
+CMD ["node", "apps/api/dist/index.js"]
