@@ -10,6 +10,9 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  preview: {
+    allowedHosts: ["all"],
+  },
   server: {
     port: 3000,
     proxy: {

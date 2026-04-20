@@ -3,12 +3,11 @@
 ## Pré-requisitos
 
 - Node.js 18+
-- pnpm instalado (`npm install -g pnpm`)
 
 ## 1. Instalar dependências
 
 ```bash
-pnpm install
+npm install
 ```
 
 ## 2. Configurar variáveis de ambiente
@@ -42,7 +41,7 @@ VITE_SUPABASE_ANON_KEY=<painel Supabase → Settings → API → anon public>
 ## 3. Iniciar o projeto
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 Isso sobe frontend e API simultaneamente:
@@ -55,11 +54,11 @@ Isso sobe frontend e API simultaneamente:
 ## Comandos úteis
 
 ```bash
-pnpm dev:web      # Apenas frontend
-pnpm dev:api      # Apenas API
-pnpm typecheck    # Verificar tipos TypeScript
-pnpm build        # Build de produção
-pnpm lint         # Lint
+npm run dev:web      # Apenas frontend
+npm run dev:api      # Apenas API
+npm run typecheck    # Verificar tipos TypeScript
+npm run build        # Build de produção
+npm run lint         # Lint
 ```
 
 ## Papéis de usuário

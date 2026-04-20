@@ -55,7 +55,8 @@
       "Bash(find . -type d -name node_modules -prune -exec rm -rf {} +)",
       "Bash(pkill -f vite)",
       "Bash(git checkout *)",
-      "Bash(pkill -f \"npm run dev\")"
+      "Bash(pkill -f \"npm run dev\")",
+      "Bash(git config *)"
     ],
     "deny": [
       "Bash(git commit *)",
