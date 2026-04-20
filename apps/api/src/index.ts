@@ -16,7 +16,7 @@ app.use(express.json());
 // Dynamic import to ensure environment variables are loaded before routes initialize
 (async () => {
   const { router } = await import("./routes/index.js");
-  app.use("/", router);
+  app.use("/api", router);
 
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const webDist = path.resolve(__dirname, "../../web/dist");
