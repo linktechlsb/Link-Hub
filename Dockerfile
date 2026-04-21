@@ -12,6 +12,7 @@ COPY packages/types/package.json packages/types/package.json
 COPY packages/ui/package.json packages/ui/package.json
 COPY packages/utils/package.json packages/utils/package.json
 
+ENV HUSKY=0
 RUN npm ci --include=dev
 
 # Variáveis de buildtime para Vite (web)
@@ -36,6 +37,7 @@ COPY apps/web/package.json apps/web/package.json
 COPY packages/types/package.json packages/types/package.json
 COPY packages/ui/package.json packages/ui/package.json
 COPY packages/utils/package.json packages/utils/package.json
+ENV HUSKY=0
 RUN npm ci --omit=dev && npm cache clean --force
 
 # Copiar artefatos buildados
