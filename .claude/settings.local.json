@@ -61,7 +61,11 @@
       "mcp__plugin_context7_context7__resolve-library-id",
       "mcp__plugin_context7_context7__query-docs",
       "Bash(curl -fsSL https://raw.githubusercontent.com/Dchiapeta/council/main/install.sh)",
-      "Bash(sh)"
+      "Bash(sh)",
+      "Bash(npx husky *)",
+      "Bash(node -e \"const p = require\\('./node_modules/typescript/package.json'\\); console.log\\(p.version\\)\")",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub diff -- package-lock.json)",
+      "Bash(node -e \"const l = require\\('/Users/diogochiapetagarcia/Cursor/Link-Hub/package-lock.json'\\); console.log\\('lockfileVersion:', l.lockfileVersion\\); console.log\\('typescript:', l.packages['node_modules/typescript']?.version\\)\")"
     ],
     "deny": [
       "Bash(git commit *)",
