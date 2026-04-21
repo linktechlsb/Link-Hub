@@ -1,10 +1,19 @@
-import { useState, useEffect, useRef } from "react";
-import { cn } from "@/lib/utils";
 import {
-  Eye, EyeOff, Save, Bell, Lock, GraduationCap,
-  User, AlertTriangle, X, Camera,
+  Eye,
+  EyeOff,
+  Save,
+  Bell,
+  Lock,
+  GraduationCap,
+  User,
+  AlertTriangle,
+  X,
+  Camera,
 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+
 import { carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
+import { cn } from "@/lib/utils";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -103,7 +112,7 @@ function InputTexto({
     <div
       className={cn(
         "flex items-center border border-brand-gray rounded-md overflow-hidden",
-        readOnly && "bg-gray-50"
+        readOnly && "bg-gray-50",
       )}
     >
       {prefix && (
@@ -120,14 +129,20 @@ function InputTexto({
         onChange={(e) => onChange?.(e.target.value)}
         className={cn(
           "flex-1 px-3 py-2 text-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-navy/20",
-          readOnly && "text-muted-foreground cursor-default"
+          readOnly && "text-muted-foreground cursor-default",
         )}
       />
     </div>
   );
 }
 
-function BotaoSalvar({ onClick, label = "Salvar alterações" }: { onClick: () => void; label?: string }) {
+function BotaoSalvar({
+  onClick,
+  label = "Salvar alterações",
+}: {
+  onClick: () => void;
+  label?: string;
+}) {
   return (
     <button
       onClick={onClick}
@@ -158,13 +173,13 @@ function Toggle({ ativo, onToggle }: { ativo: boolean; onToggle: () => void }) {
       onClick={onToggle}
       className={cn(
         "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-navy/30",
-        ativo ? "bg-navy" : "bg-gray-200"
+        ativo ? "bg-navy" : "bg-gray-200",
       )}
     >
       <span
         className={cn(
           "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform",
-          ativo ? "translate-x-5" : "translate-x-0"
+          ativo ? "translate-x-5" : "translate-x-0",
         )}
       />
     </button>
@@ -199,11 +214,7 @@ function AbaPerfil({
           onClick={() => fileRef.current?.click()}
         >
           {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt="Avatar"
-              className="h-16 w-16 rounded-full object-cover"
-            />
+            <img src={avatarUrl} alt="Avatar" className="h-16 w-16 rounded-full object-cover" />
           ) : (
             <div className="h-16 w-16 rounded-full bg-navy text-white text-xl font-bold flex items-center justify-center">
               {iniciais}
@@ -236,14 +247,21 @@ function AbaPerfil({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Campo label="Nome completo">
-          <InputTexto value={dados.nome} onChange={(v) => onChange("nome", v)} placeholder="Seu nome completo" />
+          <InputTexto
+            value={dados.nome}
+            onChange={(v) => onChange("nome", v)}
+            placeholder="Seu nome completo"
+          />
         </Campo>
         <Campo label="E-mail institucional" dica="Somente leitura">
           <InputTexto value={dados.email} readOnly />
         </Campo>
       </div>
 
-      <Campo label={`Bio — ${dados.bio.length}/160 caracteres`} dica="Aparece no seu perfil da liga">
+      <Campo
+        label={`Bio — ${dados.bio.length}/160 caracteres`}
+        dica="Aparece no seu perfil da liga"
+      >
         <textarea
           value={dados.bio}
           onChange={(e) => onChange("bio", e.target.value)}
@@ -256,10 +274,20 @@ function AbaPerfil({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Campo label="Instagram" dica="Apenas o @usuario">
-          <InputTexto value={dados.instagram} onChange={(v) => onChange("instagram", v.replace(/^@+/, ""))} placeholder="usuario" prefix="@" />
+          <InputTexto
+            value={dados.instagram}
+            onChange={(v) => onChange("instagram", v.replace(/^@+/, ""))}
+            placeholder="usuario"
+            prefix="@"
+          />
         </Campo>
         <Campo label="LinkedIn" dica="Apenas o /in/usuario">
-          <InputTexto value={dados.linkedin} onChange={(v) => onChange("linkedin", v.replace(/^\/in\//, ""))} placeholder="usuario" prefix="/in/" />
+          <InputTexto
+            value={dados.linkedin}
+            onChange={(v) => onChange("linkedin", v.replace(/^\/in\//, ""))}
+            placeholder="usuario"
+            prefix="/in/"
+          />
         </Campo>
       </div>
 
@@ -300,7 +328,9 @@ function AbaDadosAcademicos({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Campo label="Liga" dica="Para trocar de liga, fale com o Staff">
           <div className="flex items-center gap-2 px-3 py-2 border border-brand-gray rounded-md bg-gray-50">
-            <span className={cn("text-xs font-bold px-2 py-0.5 rounded-md", ligaBadgeClass(dados.liga))}>
+            <span
+              className={cn("text-xs font-bold px-2 py-0.5 rounded-md", ligaBadgeClass(dados.liga))}
+            >
               {dados.liga}
             </span>
             <span className="text-xs text-muted-foreground">Liga {dados.liga}</span>
@@ -329,12 +359,15 @@ function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
   const senhasValidas = senhaAtual.length > 0 && novaSenha.length >= 6 && novaSenha === confirmar;
 
   function handleAtualizarSenha() {
-    setSenhaAtual(""); setNovaSenha(""); setConfirmar("");
+    setSenhaAtual("");
+    setNovaSenha("");
+    setConfirmar("");
     onToast("Senha atualizada com sucesso.");
   }
 
   function fecharModal() {
-    setModalDesativar(false); setTextoConfirmacao("");
+    setModalDesativar(false);
+    setTextoConfirmacao("");
   }
 
   return (
@@ -351,7 +384,11 @@ function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
                 placeholder="••••••••"
                 className="w-full px-3 py-2 pr-10 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-navy/20"
               />
-              <button type="button" onClick={() => setMostrar(!mostrar)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-navy transition-colors">
+              <button
+                type="button"
+                onClick={() => setMostrar(!mostrar)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-navy transition-colors"
+              >
                 {mostrar ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
@@ -359,7 +396,13 @@ function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Campo label="Nova senha" dica="Mínimo 6 caracteres">
-              <input type={mostrar ? "text" : "password"} value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} placeholder="••••••••" className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-navy/20" />
+              <input
+                type={mostrar ? "text" : "password"}
+                value={novaSenha}
+                onChange={(e) => setNovaSenha(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-navy/20"
+              />
             </Campo>
             <Campo label="Confirmar nova senha">
               <input
@@ -367,13 +410,24 @@ function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
                 value={confirmar}
                 onChange={(e) => setConfirmar(e.target.value)}
                 placeholder="••••••••"
-                className={cn("w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2", confirmar && novaSenha !== confirmar ? "border-red-400 focus:ring-red-200" : "border-brand-gray focus:ring-navy/20")}
+                className={cn(
+                  "w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2",
+                  confirmar && novaSenha !== confirmar
+                    ? "border-red-400 focus:ring-red-200"
+                    : "border-brand-gray focus:ring-navy/20",
+                )}
               />
-              {confirmar && novaSenha !== confirmar && <p className="text-xs text-red-500 mt-1">As senhas não coincidem</p>}
+              {confirmar && novaSenha !== confirmar && (
+                <p className="text-xs text-red-500 mt-1">As senhas não coincidem</p>
+              )}
             </Campo>
           </div>
 
-          <button onClick={handleAtualizarSenha} disabled={!senhasValidas} className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-md bg-navy text-white hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+          <button
+            onClick={handleAtualizarSenha}
+            disabled={!senhasValidas}
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-md bg-navy text-white hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
             <Lock className="h-4 w-4" />
             Atualizar senha
           </button>
@@ -388,7 +442,10 @@ function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
         <p className="text-sm text-muted-foreground mb-4">
           Desativar sua conta remove o acesso à plataforma. Esta ação pode ser revertida pelo Staff.
         </p>
-        <button onClick={() => setModalDesativar(true)} className="px-4 py-2 text-sm font-bold rounded-md border border-red-400 text-red-600 hover:bg-red-50 transition-colors">
+        <button
+          onClick={() => setModalDesativar(true)}
+          className="px-4 py-2 text-sm font-bold rounded-md border border-red-400 text-red-600 hover:bg-red-50 transition-colors"
+        >
           Desativar conta
         </button>
       </div>
@@ -398,13 +455,36 @@ function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
             <div className="flex items-start justify-between mb-4">
               <h3 className="font-display font-bold text-lg text-navy">Desativar conta</h3>
-              <button onClick={fecharModal} className="text-muted-foreground hover:text-navy transition-colors"><X className="h-4 w-4" /></button>
+              <button
+                onClick={fecharModal}
+                className="text-muted-foreground hover:text-navy transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <p className="text-sm text-muted-foreground mb-4">Digite <strong className="text-navy">DESATIVAR</strong> para confirmar.</p>
-            <input type="text" value={textoConfirmacao} onChange={(e) => setTextoConfirmacao(e.target.value)} placeholder="DESATIVAR" className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-red-200 mb-4" />
+            <p className="text-sm text-muted-foreground mb-4">
+              Digite <strong className="text-navy">DESATIVAR</strong> para confirmar.
+            </p>
+            <input
+              type="text"
+              value={textoConfirmacao}
+              onChange={(e) => setTextoConfirmacao(e.target.value)}
+              placeholder="DESATIVAR"
+              className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-red-200 mb-4"
+            />
             <div className="flex gap-3">
-              <button onClick={fecharModal} className="flex-1 px-4 py-2 text-sm font-medium rounded-md border border-brand-gray text-navy hover:bg-gray-50 transition-colors">Cancelar</button>
-              <button disabled={textoConfirmacao !== "DESATIVAR"} className="flex-1 px-4 py-2 text-sm font-bold rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Confirmar desativação</button>
+              <button
+                onClick={fecharModal}
+                className="flex-1 px-4 py-2 text-sm font-medium rounded-md border border-brand-gray text-navy hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                disabled={textoConfirmacao !== "DESATIVAR"}
+                className="flex-1 px-4 py-2 text-sm font-bold rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Confirmar desativação
+              </button>
             </div>
           </div>
         </div>
@@ -420,12 +500,38 @@ type ChaveNotif = keyof Notificacoes;
 type OpcaoNotif = { chave: ChaveNotif; label: string; descricao: string; exclusivoLider?: true };
 
 const OPCOES_NOTIF: OpcaoNotif[] = [
-  { chave: "eventos",            label: "Novos eventos da liga",          descricao: "Seja notificado quando novos eventos forem criados na sua liga" },
-  { chave: "projetos",           label: "Atualizações de projetos",       descricao: "Receba alertas sobre mudanças de status nos projetos" },
-  { chave: "ranking",            label: "Ranking da liga",                descricao: "Atualizações semanais sobre a posição da liga no ranking" },
-  { chave: "presenca",           label: "Lembretes de presença",          descricao: "Lembretes antes de eventos para registrar presença" },
-  { chave: "novosMembros",       label: "Novos membros na liga",          descricao: "Notificação quando um novo membro entrar na sua liga", exclusivoLider: true },
-  { chave: "projetosAguardando", label: "Projetos aguardando submissão",  descricao: "Alertas sobre projetos prontos para submeter ao professor", exclusivoLider: true },
+  {
+    chave: "eventos",
+    label: "Novos eventos da liga",
+    descricao: "Seja notificado quando novos eventos forem criados na sua liga",
+  },
+  {
+    chave: "projetos",
+    label: "Atualizações de projetos",
+    descricao: "Receba alertas sobre mudanças de status nos projetos",
+  },
+  {
+    chave: "ranking",
+    label: "Ranking da liga",
+    descricao: "Atualizações semanais sobre a posição da liga no ranking",
+  },
+  {
+    chave: "presenca",
+    label: "Lembretes de presença",
+    descricao: "Lembretes antes de eventos para registrar presença",
+  },
+  {
+    chave: "novosMembros",
+    label: "Novos membros na liga",
+    descricao: "Notificação quando um novo membro entrar na sua liga",
+    exclusivoLider: true,
+  },
+  {
+    chave: "projetosAguardando",
+    label: "Projetos aguardando submissão",
+    descricao: "Alertas sobre projetos prontos para submeter ao professor",
+    exclusivoLider: true,
+  },
 ];
 
 function AbaNotificacoes({
@@ -442,7 +548,10 @@ function AbaNotificacoes({
 
   function renderOpcao({ chave, label, descricao }: OpcaoNotif) {
     return (
-      <div key={chave} className="flex items-center justify-between py-4 border-b border-brand-gray last:border-0">
+      <div
+        key={chave}
+        className="flex items-center justify-between py-4 border-b border-brand-gray last:border-0"
+      >
         <div>
           <p className="text-sm font-medium text-navy">{label}</p>
           <p className="text-xs text-muted-foreground mt-0.5">{descricao}</p>
@@ -471,10 +580,10 @@ function AbaNotificacoes({
 // ─── View principal ───────────────────────────────────────────────────────────
 
 const ABAS: { key: Aba; label: string; icon: React.ElementType }[] = [
-  { key: "perfil",        label: "Perfil",            icon: User },
-  { key: "academico",     label: "Dados acadêmicos",  icon: GraduationCap },
-  { key: "seguranca",     label: "Segurança",         icon: Lock },
-  { key: "notificacoes",  label: "Notificações",      icon: Bell },
+  { key: "perfil", label: "Perfil", icon: User },
+  { key: "academico", label: "Dados acadêmicos", icon: GraduationCap },
+  { key: "seguranca", label: "Segurança", icon: Lock },
+  { key: "notificacoes", label: "Notificações", icon: Bell },
 ];
 
 const ROLE_LABEL: Record<string, string> = {
@@ -583,7 +692,9 @@ export function ContaLiderView() {
     <div className="p-8 max-w-3xl">
       <div className="mb-6">
         <h1 className="font-display font-bold text-2xl text-navy">Minha conta</h1>
-        <p className="text-muted-foreground text-sm mt-1">Gerencie suas informações e preferências</p>
+        <p className="text-muted-foreground text-sm mt-1">
+          Gerencie suas informações e preferências
+        </p>
       </div>
 
       <div className="flex gap-1 border-b border-brand-gray mb-6 overflow-x-auto">
@@ -593,7 +704,9 @@ export function ContaLiderView() {
             onClick={() => setAbaAtiva(key)}
             className={cn(
               "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-colors",
-              abaAtiva === key ? "border-navy text-navy" : "border-transparent text-muted-foreground hover:text-navy"
+              abaAtiva === key
+                ? "border-navy text-navy"
+                : "border-transparent text-muted-foreground hover:text-navy",
             )}
           >
             <Icon className="h-3.5 w-3.5" />
@@ -603,10 +716,31 @@ export function ContaLiderView() {
       </div>
 
       <div className="bg-white border border-brand-gray rounded-lg p-6">
-        {abaAtiva === "perfil"       && <AbaPerfil dados={dados} avatarUrl={avatarUrl} uploadandoAvatar={uploadandoAvatar} onChange={alterarDado} onSalvar={salvarPerfil} onAvatarChange={handleAvatarChange} />}
-        {abaAtiva === "academico"    && <AbaDadosAcademicos dados={dados} onChange={alterarDado} onSalvar={salvarDadosAcademicos} />}
-        {abaAtiva === "seguranca"    && <AbaSeguranca onToast={exibirToast} />}
-        {abaAtiva === "notificacoes" && <AbaNotificacoes notif={notif} onChange={(k, v) => setNotif((p) => ({ ...p, [k]: v }))} onSalvar={() => exibirToast("Preferências salvas.")} />}
+        {abaAtiva === "perfil" && (
+          <AbaPerfil
+            dados={dados}
+            avatarUrl={avatarUrl}
+            uploadandoAvatar={uploadandoAvatar}
+            onChange={alterarDado}
+            onSalvar={salvarPerfil}
+            onAvatarChange={handleAvatarChange}
+          />
+        )}
+        {abaAtiva === "academico" && (
+          <AbaDadosAcademicos
+            dados={dados}
+            onChange={alterarDado}
+            onSalvar={salvarDadosAcademicos}
+          />
+        )}
+        {abaAtiva === "seguranca" && <AbaSeguranca onToast={exibirToast} />}
+        {abaAtiva === "notificacoes" && (
+          <AbaNotificacoes
+            notif={notif}
+            onChange={(k, v) => setNotif((p) => ({ ...p, [k]: v }))}
+            onSalvar={() => exibirToast("Preferências salvas.")}
+          />
+        )}
       </div>
 
       {toast && <Toast mensagem={toast} onFechar={() => setToast(null)} />}

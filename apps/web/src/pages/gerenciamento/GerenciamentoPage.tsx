@@ -1,7 +1,3 @@
-import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
-import { GerenciamentoStaffPage } from "./GerenciamentoStaffPage";
 import {
   Check,
   X,
@@ -22,6 +18,12 @@ import {
   Loader2,
   type LucideIcon,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
+import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
+
+import { GerenciamentoStaffPage } from "./GerenciamentoStaffPage";
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
@@ -56,16 +58,16 @@ interface Recurso {
 // ─── picker de ícone/cor ──────────────────────────────────────────────────────
 
 const ICONES: { id: string; componente: LucideIcon }[] = [
-  { id: "link",      componente: Link },
+  { id: "link", componente: Link },
   { id: "file-text", componente: FileText },
-  { id: "image",     componente: Image },
-  { id: "globe",     componente: Globe },
-  { id: "folder",    componente: Folder },
+  { id: "image", componente: Image },
+  { id: "globe", componente: Globe },
+  { id: "folder", componente: Folder },
   { id: "book-open", componente: BookOpen },
-  { id: "code2",     componente: Code2 },
-  { id: "video",     componente: Video },
-  { id: "music",     componente: Music },
-  { id: "star",      componente: Star },
+  { id: "code2", componente: Code2 },
+  { id: "video", componente: Video },
+  { id: "music", componente: Music },
+  { id: "star", componente: Star },
 ];
 
 const CORES_PICKER = [
@@ -122,7 +124,9 @@ function IconeCor({
 
       {aberto && (
         <div className="absolute left-0 top-11 z-50 bg-white border border-brand-gray rounded-xl shadow-lg p-3 w-56">
-          <p className="text-[10px] font-bold text-link-blue uppercase tracking-wider mb-2">Ícone</p>
+          <p className="text-[10px] font-bold text-link-blue uppercase tracking-wider mb-2">
+            Ícone
+          </p>
           <div className="grid grid-cols-5 gap-1.5 mb-3">
             {ICONES.map((ic) => {
               const Comp = ic.componente;
@@ -135,7 +139,7 @@ function IconeCor({
                     "h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
                     icone === ic.id
                       ? "bg-navy text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200",
                   )}
                 >
                   <Comp className="h-4 w-4" />
@@ -152,7 +156,7 @@ function IconeCor({
                 onClick={() => onChange(icone, c)}
                 className={cn(
                   "h-6 w-6 rounded-full border-2 transition-colors",
-                  cor === c ? "border-navy scale-110" : "border-transparent"
+                  cor === c ? "border-navy scale-110" : "border-transparent",
                 )}
                 style={{ backgroundColor: c }}
               />
@@ -178,8 +182,14 @@ interface InfoLiga {
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 const INFO_VAZIO: InfoLiga = {
-  nome: "", area: "", descricao: "", semestre: "",
-  emailContato: "", instagram: "", linkedin: "", bannerUrl: "",
+  nome: "",
+  area: "",
+  descricao: "",
+  semestre: "",
+  emailContato: "",
+  instagram: "",
+  linkedin: "",
+  bannerUrl: "",
 };
 
 const CORES = ["#10284E", "#546484", "#FEC641", "#6366f1", "#14b8a6", "#f97316"];
@@ -209,16 +219,19 @@ function apiParaMembro(m: MembroAPI): MembroAtivo {
     cargo = "Membro";
   }
   const nome = m.nome ?? m.email;
-  const iniciais = nome.split(" ").slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("");
+  const iniciais = nome
+    .split(" ")
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
   return { id: m.usuario_id, nome, email: m.email, cargo, iniciais, cor: corPorNome(nome) };
 }
 
 function cargoBadgeClass(cargo: Cargo) {
   if (cargo === "Diretor") return "bg-purple-100 text-purple-700";
-if (cargo === "Admin") return "bg-red-100 text-red-700";
+  if (cargo === "Admin") return "bg-red-100 text-red-700";
   return "bg-gray-100 text-gray-600";
 }
-
 
 async function getToken() {
   const { data } = await supabase.auth.getSession();
@@ -239,7 +252,10 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    if (!ligaId) { setCarregando(false); return; }
+    if (!ligaId) {
+      setCarregando(false);
+      return;
+    }
     async function carregar() {
       try {
         const token = await getToken();
@@ -247,7 +263,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const data = await res.json() as MembroAPI[];
+          const data = (await res.json()) as MembroAPI[];
           setMembros(data.map(apiParaMembro));
         }
       } finally {
@@ -281,9 +297,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
   }
 
   function salvarEdicao(id: string) {
-    setMembros((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, cargo: novoCargoEdit } : m))
-    );
+    setMembros((prev) => prev.map((m) => (m.id === id ? { ...m, cargo: novoCargoEdit } : m)));
     setEditandoId(null);
   }
 
@@ -343,12 +357,19 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
                   <div>
                     <p className="text-sm font-medium text-navy">{c.email}</p>
                     <p className="text-xs text-muted-foreground">
-                      {c.diasAtras === 0 ? "Enviado agora" : `Enviado há ${c.diasAtras} dia${c.diasAtras > 1 ? "s" : ""}`}
+                      {c.diasAtras === 0
+                        ? "Enviado agora"
+                        : `Enviado há ${c.diasAtras} dia${c.diasAtras > 1 ? "s" : ""}`}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", cargoBadgeClass(c.cargo))}>
+                  <span
+                    className={cn(
+                      "text-xs font-semibold px-2.5 py-1 rounded-full",
+                      cargoBadgeClass(c.cargo),
+                    )}
+                  >
                     {c.cargo}
                   </span>
                   <button
@@ -418,7 +439,12 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
                   </>
                 ) : (
                   <>
-                    <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", cargoBadgeClass(m.cargo))}>
+                    <span
+                      className={cn(
+                        "text-xs font-semibold px-2.5 py-1 rounded-full",
+                        cargoBadgeClass(m.cargo),
+                      )}
+                    >
                       {m.cargo}
                     </span>
                     <button
@@ -427,8 +453,8 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
                     >
                       Editar cargo
                     </button>
-                    {m.id !== diretor?.id && (
-                      confirmandoRemoverId === m.id ? (
+                    {m.id !== diretor?.id &&
+                      (confirmandoRemoverId === m.id ? (
                         <div className="flex items-center gap-1">
                           <span className="text-xs text-red-500">Confirmar?</span>
                           <button
@@ -451,8 +477,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
                         >
                           Remover
                         </button>
-                      )
-                    )}
+                      ))}
                   </>
                 )}
               </div>
@@ -489,7 +514,10 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           headers: { Authorization: `Bearer ${token}` },
           body: fd,
         });
-        if (!imgRes.ok) { setErro("Erro ao enviar imagem."); return; }
+        if (!imgRes.ok) {
+          setErro("Erro ao enviar imagem.");
+          return;
+        }
         setBannerFile(null);
       }
       const res = await fetch(`/api/ligas/${ligaId}`, {
@@ -505,7 +533,10 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           linkedin: form.linkedin,
         }),
       });
-      if (!res.ok) { setErro("Erro ao salvar informações."); return; }
+      if (!res.ok) {
+        setErro("Erro ao salvar informações.");
+        return;
+      }
       setSalvo(true);
       setTimeout(() => setSalvo(false), 2000);
     } finally {
@@ -520,22 +551,29 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
     setBannerPreview(URL.createObjectURL(file));
   }
 
-  const inputClass = "w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20";
+  const inputClass =
+    "w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20";
 
   return (
     <div className="space-y-4">
       {/* Dados gerais */}
       <div className="bg-white border border-brand-gray rounded-xl p-5 space-y-4">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">
-          Dados Gerais
-        </p>
+        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">Dados Gerais</p>
         <div>
           <label className="text-xs font-semibold text-navy mb-1 block">Nome da liga</label>
-          <input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className={inputClass} />
+          <input
+            value={form.nome}
+            onChange={(e) => setForm({ ...form, nome: e.target.value })}
+            className={inputClass}
+          />
         </div>
         <div>
           <label className="text-xs font-semibold text-navy mb-1 block">Área de atuação</label>
-          <input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} className={inputClass} />
+          <input
+            value={form.area}
+            onChange={(e) => setForm({ ...form, area: e.target.value })}
+            className={inputClass}
+          />
         </div>
         <div>
           <label className="text-xs font-semibold text-navy mb-1 block">Descrição</label>
@@ -548,7 +586,12 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
         </div>
         <div>
           <label className="text-xs font-semibold text-navy mb-1 block">Semestre de fundação</label>
-          <input value={form.semestre} onChange={(e) => setForm({ ...form, semestre: e.target.value })} placeholder="ex: 2023.1" className={inputClass} />
+          <input
+            value={form.semestre}
+            onChange={(e) => setForm({ ...form, semestre: e.target.value })}
+            placeholder="ex: 2023.1"
+            className={inputClass}
+          />
         </div>
       </div>
 
@@ -561,7 +604,10 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           <div className="relative rounded-lg overflow-hidden border border-brand-gray h-36">
             <img src={bannerPreview} alt="Banner da liga" className="w-full h-full object-cover" />
             <button
-              onClick={() => { setBannerPreview(""); setForm((prev) => ({ ...prev, bannerUrl: "" })); }}
+              onClick={() => {
+                setBannerPreview("");
+                setForm((prev) => ({ ...prev, bannerUrl: "" }));
+              }}
               className="absolute top-2 right-2 bg-white/80 hover:bg-white text-red-500 rounded-full p-1 transition-colors"
               title="Remover imagem"
             >
@@ -637,10 +683,24 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
 // ── Recursos ──
 const TIPOS_COM_ARQUIVO = ["Apresentação", "Vídeo", "Documento"] as const;
 
-type RecursoAPI = { id: string; titulo: string; tipo: string; url: string; icone: string; cor: string };
+type RecursoAPI = {
+  id: string;
+  titulo: string;
+  tipo: string;
+  url: string;
+  icone: string;
+  cor: string;
+};
 
 function apiParaRecurso(r: RecursoAPI): Recurso {
-  return { id: r.id, nome: r.titulo, tipo: r.tipo, url: r.url, icone: r.icone ?? "link", cor: r.cor ?? "#546484" };
+  return {
+    id: r.id,
+    nome: r.titulo,
+    tipo: r.tipo,
+    url: r.url,
+    icone: r.icone ?? "link",
+    cor: r.cor ?? "#546484",
+  };
 }
 
 function AbaRecursos({ ligaId }: { ligaId: string | null }) {
@@ -664,8 +724,12 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
   ) {
     // Validação no cliente antes do upload
     const tiposPermitidos = [
-      "image/jpeg", "image/png", "image/gif",
-      "application/pdf", "text/plain", "application/zip",
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "application/pdf",
+      "text/plain",
+      "application/zip",
     ];
     const tamanhoMaximoMB = 5;
     if (!tiposPermitidos.includes(file.type)) {
@@ -703,7 +767,7 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const data = await res.json() as RecursoAPI[];
+          const data = (await res.json()) as RecursoAPI[];
           setRecursos(data.map(apiParaRecurso));
         }
       } finally {
@@ -715,24 +779,40 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
 
   async function adicionar() {
     setErro(null);
-    if (!novoNome.trim()) { setErro("Informe o nome do recurso."); return; }
-    if (!novoUrl.trim())  { setErro("Informe a URL."); return; }
-    if (!ligaId)          { setErro("Liga não identificada. Recarregue a página."); return; }
+    if (!novoNome.trim()) {
+      setErro("Informe o nome do recurso.");
+      return;
+    }
+    if (!novoUrl.trim()) {
+      setErro("Informe a URL.");
+      return;
+    }
+    if (!ligaId) {
+      setErro("Liga não identificada. Recarregue a página.");
+      return;
+    }
     const token = await getToken();
     const res = await fetch("/api/recursos", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ liga_id: ligaId, titulo: novoNome.trim(), tipo: novoTipo, url: novoUrl.trim(), icone: novoIcone, cor: novoCor }),
+      body: JSON.stringify({
+        liga_id: ligaId,
+        titulo: novoNome.trim(),
+        tipo: novoTipo,
+        url: novoUrl.trim(),
+        icone: novoIcone,
+        cor: novoCor,
+      }),
     });
     if (res.ok) {
-      const criado = await res.json() as RecursoAPI;
+      const criado = (await res.json()) as RecursoAPI;
       setRecursos((prev) => [apiParaRecurso(criado), ...prev]);
       setNovoNome("");
       setNovoUrl("");
       setNovoIcone("link");
       setNovoCor("#546484");
     } else {
-      const body = await res.json().catch(() => ({})) as { error?: string };
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
       setErro(body.error ?? `Erro ${res.status} ao salvar.`);
     }
   }
@@ -758,10 +838,16 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
     const res = await fetch(`/api/recursos/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ titulo: editForm.nome, tipo: editForm.tipo, url: editForm.url, icone: editForm.icone, cor: editForm.cor }),
+      body: JSON.stringify({
+        titulo: editForm.nome,
+        tipo: editForm.tipo,
+        url: editForm.url,
+        icone: editForm.icone,
+        cor: editForm.cor,
+      }),
     });
     if (res.ok) {
-      const atualizado = await res.json() as RecursoAPI;
+      const atualizado = (await res.json()) as RecursoAPI;
       setRecursos((prev) => prev.map((r) => (r.id === id ? apiParaRecurso(atualizado) : r)));
     }
     setEditandoId(null);
@@ -816,21 +902,25 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                     </div>
                     {(TIPOS_COM_ARQUIVO as readonly string[]).includes(editForm.tipo ?? "") ? (
                       <div>
-                        <label className={cn(
-                          "flex items-center gap-2 w-full border-2 border-dashed rounded-lg px-3 py-2 cursor-pointer transition-colors text-sm",
-                          editEnviando
-                            ? "border-navy/30 bg-navy/5 text-navy/60 cursor-not-allowed"
-                            : "border-brand-gray hover:border-navy/30 text-muted-foreground hover:text-navy",
-                        )}>
-                          {editEnviando
-                            ? <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                            : <Upload className="h-4 w-4 shrink-0" />}
+                        <label
+                          className={cn(
+                            "flex items-center gap-2 w-full border-2 border-dashed rounded-lg px-3 py-2 cursor-pointer transition-colors text-sm",
+                            editEnviando
+                              ? "border-navy/30 bg-navy/5 text-navy/60 cursor-not-allowed"
+                              : "border-brand-gray hover:border-navy/30 text-muted-foreground hover:text-navy",
+                          )}
+                        >
+                          {editEnviando ? (
+                            <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                          ) : (
+                            <Upload className="h-4 w-4 shrink-0" />
+                          )}
                           <span className="truncate text-xs">
                             {editEnviando
                               ? "Enviando…"
                               : editForm.url
-                              ? "Arquivo enviado — clique para substituir"
-                              : "Clique para enviar arquivo"}
+                                ? "Arquivo enviado — clique para substituir"
+                                : "Clique para enviar arquivo"}
                           </span>
                           <input
                             type="file"
@@ -838,11 +928,12 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                             disabled={editEnviando}
                             onChange={(e) => {
                               const file = e.target.files?.[0];
-                              if (file) void uploadArquivo(
-                                file,
-                                (url) => setEditForm((f) => ({ ...f, url })),
-                                setEditEnviando,
-                              );
+                              if (file)
+                                void uploadArquivo(
+                                  file,
+                                  (url) => setEditForm((f) => ({ ...f, url })),
+                                  setEditEnviando,
+                                );
                               e.target.value = "";
                             }}
                           />
@@ -922,7 +1013,10 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
           <IconeCor
             icone={novoIcone}
             cor={novoCor}
-            onChange={(ic, c) => { setNovoIcone(ic); setNovoCor(c); }}
+            onChange={(ic, c) => {
+              setNovoIcone(ic);
+              setNovoCor(c);
+            }}
           />
           <input
             value={novoNome}
@@ -954,21 +1048,25 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
         </div>
         <div className="mt-3">
           {(TIPOS_COM_ARQUIVO as readonly string[]).includes(novoTipo) ? (
-            <label className={cn(
-              "flex items-center gap-2 w-full border-2 border-dashed rounded-lg px-4 py-3 cursor-pointer transition-colors text-sm",
-              novoEnviando
-                ? "border-navy/30 bg-navy/5 text-navy/60 cursor-not-allowed"
-                : "border-brand-gray hover:border-navy/30 text-muted-foreground hover:text-navy",
-            )}>
-              {novoEnviando
-                ? <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                : <Upload className="h-4 w-4 shrink-0" />}
+            <label
+              className={cn(
+                "flex items-center gap-2 w-full border-2 border-dashed rounded-lg px-4 py-3 cursor-pointer transition-colors text-sm",
+                novoEnviando
+                  ? "border-navy/30 bg-navy/5 text-navy/60 cursor-not-allowed"
+                  : "border-brand-gray hover:border-navy/30 text-muted-foreground hover:text-navy",
+              )}
+            >
+              {novoEnviando ? (
+                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+              ) : (
+                <Upload className="h-4 w-4 shrink-0" />
+              )}
               <span className="truncate">
                 {novoEnviando
                   ? "Enviando arquivo…"
                   : novoUrl
-                  ? "Arquivo enviado — clique para substituir"
-                  : "Clique para selecionar arquivo"}
+                    ? "Arquivo enviado — clique para substituir"
+                    : "Clique para selecionar arquivo"}
               </span>
               <input
                 type="file"
@@ -1049,7 +1147,10 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
-    if (!ligaId) { setCarregando(false); return; }
+    if (!ligaId) {
+      setCarregando(false);
+      return;
+    }
     async function carregar() {
       try {
         const token = await getToken();
@@ -1057,7 +1158,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const data = await res.json() as RegistroFinanceiroAPI[];
+          const data = (await res.json()) as RegistroFinanceiroAPI[];
           setRegistros(data.map(apiParaRegistro));
         }
       } finally {
@@ -1069,10 +1170,19 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
 
   async function adicionar() {
     setErro(null);
-    if (!novaDescricao.trim()) { setErro("Informe a descrição."); return; }
+    if (!novaDescricao.trim()) {
+      setErro("Informe a descrição.");
+      return;
+    }
     const valorNum = parseFloat(novoValor.replace(",", "."));
-    if (isNaN(valorNum) || valorNum < 0) { setErro("Informe um valor válido."); return; }
-    if (!ligaId) { setErro("Liga não identificada. Recarregue a página."); return; }
+    if (isNaN(valorNum) || valorNum < 0) {
+      setErro("Informe um valor válido.");
+      return;
+    }
+    if (!ligaId) {
+      setErro("Liga não identificada. Recarregue a página.");
+      return;
+    }
     setEnviando(true);
     try {
       const token = await getToken();
@@ -1090,7 +1200,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
         }),
       });
       if (res.ok) {
-        const criado = await res.json() as RegistroFinanceiroAPI;
+        const criado = (await res.json()) as RegistroFinanceiroAPI;
         setRegistros((prev) => [apiParaRegistro(criado), ...prev]);
         setNovaDescricao("");
         setNovaObs("");
@@ -1098,7 +1208,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
         setNovaRecorrencia("unico");
         setNovaData(new Date().toISOString().slice(0, 10));
       } else {
-        const body = await res.json().catch(() => ({})) as { error?: string };
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
         setErro(body.error ?? `Erro ${res.status} ao salvar.`);
       }
     } finally {
@@ -1117,7 +1227,9 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
     }
   }
 
-  const totalReceitas = registros.filter((r) => r.tipo === "receita").reduce((s, r) => s + r.valor, 0);
+  const totalReceitas = registros
+    .filter((r) => r.tipo === "receita")
+    .reduce((s, r) => s + r.valor, 0);
   const totalCustos = registros.filter((r) => r.tipo === "custo").reduce((s, r) => s + r.valor, 0);
   const saldo = totalReceitas - totalCustos;
 
@@ -1131,15 +1243,24 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white border border-brand-gray rounded-xl p-4">
           <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-1">Receitas</p>
-          <p className="font-display font-bold text-xl text-green-600">{formatarMoeda(totalReceitas)}</p>
+          <p className="font-display font-bold text-xl text-green-600">
+            {formatarMoeda(totalReceitas)}
+          </p>
         </div>
         <div className="bg-white border border-brand-gray rounded-xl p-4">
           <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-1">Custos</p>
-          <p className="font-display font-bold text-xl text-red-500">{formatarMoeda(totalCustos)}</p>
+          <p className="font-display font-bold text-xl text-red-500">
+            {formatarMoeda(totalCustos)}
+          </p>
         </div>
         <div className="bg-white border border-brand-gray rounded-xl p-4">
           <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-1">Saldo</p>
-          <p className={cn("font-display font-bold text-xl", saldo >= 0 ? "text-navy" : "text-red-500")}>
+          <p
+            className={cn(
+              "font-display font-bold text-xl",
+              saldo >= 0 ? "text-navy" : "text-red-500",
+            )}
+          >
             {formatarMoeda(saldo)}
           </p>
         </div>
@@ -1160,7 +1281,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                   <div
                     className={cn(
                       "h-8 w-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 text-white text-xs font-bold",
-                      r.tipo === "receita" ? "bg-green-500" : "bg-red-400"
+                      r.tipo === "receita" ? "bg-green-500" : "bg-red-400",
                     )}
                   >
                     {r.tipo === "receita" ? "+" : "−"}
@@ -1179,7 +1300,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                           "text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
                           r.recorrencia === "recorrente"
                             ? "bg-blue-100 text-blue-600"
-                            : "bg-gray-100 text-gray-500"
+                            : "bg-gray-100 text-gray-500",
                         )}
                       >
                         {r.recorrencia === "recorrente" ? "Recorrente" : "Único"}
@@ -1191,10 +1312,11 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                   <span
                     className={cn(
                       "text-sm font-bold",
-                      r.tipo === "receita" ? "text-green-600" : "text-red-500"
+                      r.tipo === "receita" ? "text-green-600" : "text-red-500",
                     )}
                   >
-                    {r.tipo === "receita" ? "+" : "−"}{formatarMoeda(r.valor)}
+                    {r.tipo === "receita" ? "+" : "−"}
+                    {formatarMoeda(r.valor)}
                   </span>
                   <button
                     onClick={() => void remover(r.id)}
@@ -1225,7 +1347,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                 "flex-1 py-2 text-sm font-semibold rounded-lg border-2 transition-colors",
                 novoTipo === "receita"
                   ? "border-green-500 bg-green-50 text-green-700"
-                  : "border-brand-gray text-muted-foreground hover:border-green-300"
+                  : "border-brand-gray text-muted-foreground hover:border-green-300",
               )}
             >
               + Receita
@@ -1237,7 +1359,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                 "flex-1 py-2 text-sm font-semibold rounded-lg border-2 transition-colors",
                 novoTipo === "custo"
                   ? "border-red-400 bg-red-50 text-red-600"
-                  : "border-brand-gray text-muted-foreground hover:border-red-300"
+                  : "border-brand-gray text-muted-foreground hover:border-red-300",
               )}
             >
               − Custo
@@ -1273,7 +1395,9 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
           {/* Valor + Data */}
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">R$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                R$
+              </span>
               <input
                 type="text"
                 inputMode="decimal"
@@ -1368,9 +1492,7 @@ function AbaDesempenho() {
 
       {/* Resumo */}
       <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
-          Resumo
-        </p>
+        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">Resumo</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {resumo.map((r) => (
             <div key={r.label} className="bg-gray-50 rounded-lg p-3">
@@ -1416,7 +1538,16 @@ type Aba = "Membros" | "Informações" | "Recursos" | "Receita" | "Desempenho";
 
 const ABAS: Aba[] = ["Membros", "Informações", "Recursos", "Receita", "Desempenho"];
 
-const INFO_VAZIA: InfoLiga = { nome: "", area: "", descricao: "", semestre: "", emailContato: "", instagram: "", linkedin: "", bannerUrl: "" };
+const INFO_VAZIA: InfoLiga = {
+  nome: "",
+  area: "",
+  descricao: "",
+  semestre: "",
+  emailContato: "",
+  instagram: "",
+  linkedin: "",
+  bannerUrl: "",
+};
 
 export function GerenciamentoPage() {
   const [abaAtiva, setAbaAtiva] = useState<Aba>("Membros");
@@ -1446,7 +1577,7 @@ export function GerenciamentoPage() {
 
         const res = await fetch("/api/ligas/minha", { headers });
         if (res.ok) {
-          const l = await res.json() as Record<string, unknown>;
+          const l = (await res.json()) as Record<string, unknown>;
           if (l.id) setLigaId(l.id as string);
           if (l.nome) setLigaNome(l.nome as string);
           setDiretorNome((l.lider_email as string) ?? "");
@@ -1477,7 +1608,8 @@ export function GerenciamentoPage() {
       <div className="mb-6">
         <h1 className="font-display font-bold text-2xl text-navy">Gerenciamento</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {ligaNome || "Carregando…"}{diretorNome ? ` · ${diretorNome}` : ""}
+          {ligaNome || "Carregando…"}
+          {diretorNome ? ` · ${diretorNome}` : ""}
         </p>
       </div>
 
@@ -1492,7 +1624,7 @@ export function GerenciamentoPage() {
                 "px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px",
                 abaAtiva === aba
                   ? "border-[#7C3AED] text-[#7C3AED]"
-                  : "border-transparent text-muted-foreground hover:text-navy"
+                  : "border-transparent text-muted-foreground hover:text-navy",
               )}
             >
               {aba}

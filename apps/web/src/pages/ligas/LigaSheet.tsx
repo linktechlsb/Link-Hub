@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import type { Liga } from "@link-leagues/types";
-import { supabase } from "@/lib/supabase";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -8,9 +10,9 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabase";
+
+import type { Liga } from "@link-leagues/types";
 
 interface DiretorBusca {
   id: string;
@@ -43,9 +45,7 @@ export function LigaSheet({ open, onOpenChange, liga, onSalvo }: LigaSheetProps)
   useEffect(() => {
     if (open) {
       setNome(liga?.nome ?? "");
-      setDiretores(
-        (liga?.diretores ?? []).map((d) => ({ id: d.id, nome: d.nome, email: "" }))
-      );
+      setDiretores((liga?.diretores ?? []).map((d) => ({ id: d.id, nome: d.nome, email: "" })));
       setImagePreview(liga?.imagem_url ?? null);
       setImageFile(null);
       setBusca("");
@@ -54,7 +54,10 @@ export function LigaSheet({ open, onOpenChange, liga, onSalvo }: LigaSheetProps)
   }, [open, liga]);
 
   useEffect(() => {
-    if (busca.length < 2) { setResultados([]); return; }
+    if (busca.length < 2) {
+      setResultados([]);
+      return;
+    }
     const timer = setTimeout(async () => {
       const token = await getToken();
       const res = await fetch(`/api/usuarios/busca?email=${encodeURIComponent(busca)}`, {
@@ -183,7 +186,9 @@ export function LigaSheet({ open, onOpenChange, liga, onSalvo }: LigaSheetProps)
 
           {/* Nome */}
           <div className="space-y-2">
-            <Label htmlFor="nome" className="text-navy font-semibold">Nome da liga</Label>
+            <Label htmlFor="nome" className="text-navy font-semibold">
+              Nome da liga
+            </Label>
             <Input
               id="nome"
               value={nome}

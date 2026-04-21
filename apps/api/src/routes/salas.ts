@@ -1,6 +1,7 @@
 import { Router, type Router as IRouter } from "express";
-import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
+
 import { sql } from "../config/db.js";
+import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 
 export const salasRouter: IRouter = Router();
 
@@ -79,7 +80,9 @@ salasRouter.post("/reservas", authenticate, async (req, res, next) => {
     });
 
     if (!reserva) {
-      res.status(409).json({ error: "Conflito de horário: a sala já está reservada neste período." });
+      res
+        .status(409)
+        .json({ error: "Conflito de horário: a sala já está reservada neste período." });
       return;
     }
 
@@ -90,35 +93,40 @@ salasRouter.post("/reservas", authenticate, async (req, res, next) => {
 });
 
 // DELETE /salas/reservas/:id — cancelar reserva
-salasRouter.delete("/reservas/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
-  try {
-    const id = req.params["id"] as string;
-    const user = (req as AuthenticatedRequest).user!;
+salasRouter.delete(
+  "/reservas/:id",
+  authenticate,
+  requireRole("staff", "diretor"),
+  async (req, res, next) => {
+    try {
+      const id = req.params["id"] as string;
+      const user = (req as AuthenticatedRequest).user!;
 
-    if (user.role === "diretor") {
-      // Buscar reserva e verificar se pertence à liga do diretor
-      const [reserva] = await sql`SELECT liga_id FROM reservas_salas WHERE id = ${id}`;
-      if (!reserva) {
-        res.status(404).json({ error: "Reserva não encontrada." });
-        return;
-      }
+      if (user.role === "diretor") {
+        // Buscar reserva e verificar se pertence à liga do diretor
+        const [reserva] = await sql`SELECT liga_id FROM reservas_salas WHERE id = ${id}`;
+        if (!reserva) {
+          res.status(404).json({ error: "Reserva não encontrada." });
+          return;
+        }
 
-      const [membro] = await sql`
+        const [membro] = await sql`
         SELECT 1 FROM liga_membros lm
         JOIN usuarios u ON u.id = lm.usuario_id
         WHERE lm.liga_id = ${reserva.liga_id}
           AND u.email = ${user.email}
           AND lm.cargo = 'Diretor'
       `;
-      if (!membro) {
-        res.status(403).json({ error: "Não autorizado a cancelar esta reserva." });
-        return;
+        if (!membro) {
+          res.status(403).json({ error: "Não autorizado a cancelar esta reserva." });
+          return;
+        }
       }
-    }
 
-    await sql`DELETE FROM reservas_salas WHERE id = ${id}`;
-    res.status(204).send();
-  } catch (err) {
-    next(err);
-  }
-});
+      await sql`DELETE FROM reservas_salas WHERE id = ${id}`;
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  },
+);

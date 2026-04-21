@@ -1,6 +1,17 @@
+import {
+  Search,
+  Plus,
+  X,
+  LayoutGrid,
+  List,
+  ChevronRight,
+  FolderOpen,
+  Clock,
+  AlertCircle,
+} from "lucide-react";
 import { useState } from "react";
+
 import { cn } from "@/lib/utils";
-import { Search, Plus, X, LayoutGrid, List, ChevronRight, FolderOpen, Clock, AlertCircle } from "lucide-react";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -125,10 +136,10 @@ const MOCK_PROJETOS_LIDER: ProjetoLider[] = [
 // ─── Configuração de status ───────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<StatusLider, { label: string; badge: string }> = {
-  rascunho:     { label: "Rascunho",      badge: "bg-gray-100 text-gray-600" },
-  em_aprovacao: { label: "Em Aprovação",  badge: "bg-yellow-100 text-yellow-700" },
-  rejeitado:    { label: "Recusado",      badge: "bg-red-100 text-red-700" },
-  aprovado:     { label: "Aprovado",      badge: "bg-green-100 text-green-700" },
+  rascunho: { label: "Rascunho", badge: "bg-gray-100 text-gray-600" },
+  em_aprovacao: { label: "Em Aprovação", badge: "bg-yellow-100 text-yellow-700" },
+  rejeitado: { label: "Recusado", badge: "bg-red-100 text-red-700" },
+  aprovado: { label: "Aprovado", badge: "bg-green-100 text-green-700" },
 };
 
 const COLUNAS: StatusLider[] = ["rascunho", "em_aprovacao", "rejeitado", "aprovado"];
@@ -161,7 +172,7 @@ function Avatar({ iniciais, size = "sm" }: { iniciais: string; size?: "sm" | "md
     <div
       className={cn(
         "rounded-full bg-navy text-white font-bold flex items-center justify-center shrink-0",
-        size === "sm" ? "h-7 w-7 text-[10px]" : "h-9 w-9 text-xs"
+        size === "sm" ? "h-7 w-7 text-[10px]" : "h-9 w-9 text-xs",
       )}
     >
       {iniciais}
@@ -174,18 +185,16 @@ function Avatar({ iniciais, size = "sm" }: { iniciais: string; size?: "sm" | "md
 function StatusBadge({ status }: { status: StatusLider }) {
   const s = STATUS_CONFIG[status];
   return (
-    <span className={cn("text-[11px] font-bold px-2 py-0.5 rounded-md", s.badge)}>
-      {s.label}
-    </span>
+    <span className={cn("text-[11px] font-bold px-2 py-0.5 rounded-md", s.badge)}>{s.label}</span>
   );
 }
 
 // ─── Indicador de aprovação ───────────────────────────────────────────────────
 
 const APROVACAO_STYLE: Record<StatusAprovacao, { text: string; classe: string }> = {
-  pendente:  { text: "Pendente",  classe: "text-yellow-600" },
-  aprovado:  { text: "Aprovado",  classe: "text-green-600" },
-  rejeitado: { text: "Recusado",  classe: "text-red-600" },
+  pendente: { text: "Pendente", classe: "text-yellow-600" },
+  aprovado: { text: "Aprovado", classe: "text-green-600" },
+  rejeitado: { text: "Recusado", classe: "text-red-600" },
 };
 
 function AprovacaoIndicador({ label, status }: { label: string; status: StatusAprovacao }) {
@@ -246,8 +255,15 @@ function KanbanCard({
       {/* Prazo */}
       {projeto.prazo && (
         <div className="flex items-center gap-1.5 mb-3">
-          <Clock className={cn("h-3 w-3 shrink-0", vencido ? "text-red-500" : "text-muted-foreground")} />
-          <span className={cn("text-xs", vencido ? "text-red-600 font-medium" : "text-muted-foreground")}>
+          <Clock
+            className={cn("h-3 w-3 shrink-0", vencido ? "text-red-500" : "text-muted-foreground")}
+          />
+          <span
+            className={cn(
+              "text-xs",
+              vencido ? "text-red-600 font-medium" : "text-muted-foreground",
+            )}
+          >
             {formatarData(projeto.prazo)}
           </span>
           {vencido && (
@@ -283,7 +299,10 @@ function KanbanCard({
       {/* Ações */}
       {projeto.status === "rascunho" && (
         <button
-          onClick={(e) => { e.stopPropagation(); onSubmeter(projeto.id); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSubmeter(projeto.id);
+          }}
           className="mt-3 w-full text-xs font-medium py-1.5 px-3 rounded-md border border-navy text-navy hover:bg-navy hover:text-white transition-colors"
         >
           Submeter ao professor
@@ -291,7 +310,10 @@ function KanbanCard({
       )}
       {projeto.status === "rejeitado" && (
         <button
-          onClick={(e) => { e.stopPropagation(); onRevisar(projeto.id); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRevisar(projeto.id);
+          }}
           className="mt-3 w-full text-xs font-medium py-1.5 px-3 rounded-md border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-colors"
         >
           Revisar e resubmeter
@@ -308,7 +330,9 @@ function ColunaVazia() {
     <div className="flex flex-col items-center justify-center gap-2 py-8 border border-dashed border-brand-gray rounded-lg text-center">
       <FolderOpen className="h-6 w-6 text-brand-gray" strokeWidth={1.5} />
       <p className="text-xs text-muted-foreground/70 leading-snug">
-        Nenhum projeto<br />aqui ainda
+        Nenhum projeto
+        <br />
+        aqui ainda
       </p>
     </div>
   );
@@ -398,7 +422,10 @@ function PainelDetalhes({
               type="date"
               value={prazo}
               onChange={(e) => setPrazo(e.target.value)}
-              className={cn(inputClass, vencido && "border-red-300 focus:ring-red-200 focus:border-red-400")}
+              className={cn(
+                inputClass,
+                vencido && "border-red-300 focus:ring-red-200 focus:border-red-400",
+              )}
             />
             {vencido && (
               <p className="text-xs text-red-600 mt-1">Prazo vencido em {formatarData(prazo)}</p>
@@ -432,7 +459,10 @@ function PainelDetalhes({
           <span className={labelClass}>Membros</span>
           <div className="flex gap-2 mt-2 flex-wrap">
             {projeto.membros.map((m) => (
-              <div key={m.id} className="flex items-center gap-1.5 bg-navy/5 border border-navy/10 rounded-full pl-1 pr-2 py-1">
+              <div
+                key={m.id}
+                className="flex items-center gap-1.5 bg-navy/5 border border-navy/10 rounded-full pl-1 pr-2 py-1"
+              >
                 <div className="h-5 w-5 rounded-full bg-navy text-white text-[9px] font-bold flex items-center justify-center shrink-0">
                   {m.iniciais}
                 </div>
@@ -495,14 +525,14 @@ function ModalNovoProjeto({
   const membrosFiltrados = MOCK_MEMBROS_LIGA.filter(
     (m) =>
       m.nome.toLowerCase().includes(buscaMembro.toLowerCase()) &&
-      !selecionados.some((s) => s.id === m.id)
+      !selecionados.some((s) => s.id === m.id),
   );
 
   function toggleMembro(membro: MembroLiga) {
     setSelecionados((prev) =>
       prev.some((s) => s.id === membro.id)
         ? prev.filter((s) => s.id !== membro.id)
-        : [...prev, membro]
+        : [...prev, membro],
     );
     setBuscaMembro("");
     setDropdownAberto(false);
@@ -537,7 +567,10 @@ function ModalNovoProjeto({
       <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-display font-bold text-lg text-navy">Novo projeto</h2>
-          <button onClick={onFechar} className="text-muted-foreground hover:text-navy transition-colors">
+          <button
+            onClick={onFechar}
+            className="text-muted-foreground hover:text-navy transition-colors"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -590,7 +623,10 @@ function ModalNovoProjeto({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
               <input
                 value={buscaMembro}
-                onChange={(e) => { setBuscaMembro(e.target.value); setDropdownAberto(true); }}
+                onChange={(e) => {
+                  setBuscaMembro(e.target.value);
+                  setDropdownAberto(true);
+                }}
                 onFocus={() => setDropdownAberto(true)}
                 placeholder="Buscar membro da liga..."
                 className={cn(inputClass, "pl-8")}
@@ -673,15 +709,17 @@ export function ProjetosLiderView() {
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [modalAberto, setModalAberto] = useState(false);
 
-  const projetosFiltrados = projetos.filter((p) => {
-    const passaStatus = filtroStatus === "todos" || p.status === filtroStatus;
-    const passaBusca = p.nome.toLowerCase().includes(busca.toLowerCase());
-    return passaStatus && passaBusca;
-  }).sort((a, b) => {
-    const da = a.prazo ?? "9999-99-99";
-    const db = b.prazo ?? "9999-99-99";
-    return da.localeCompare(db);
-  });
+  const projetosFiltrados = projetos
+    .filter((p) => {
+      const passaStatus = filtroStatus === "todos" || p.status === filtroStatus;
+      const passaBusca = p.nome.toLowerCase().includes(busca.toLowerCase());
+      return passaStatus && passaBusca;
+    })
+    .sort((a, b) => {
+      const da = a.prazo ?? "9999-99-99";
+      const db = b.prazo ?? "9999-99-99";
+      return da.localeCompare(db);
+    });
 
   function toggleSelecionado(id: string) {
     setSelecionado((prev) => (prev === id ? null : id));
@@ -691,9 +729,13 @@ export function ProjetosLiderView() {
     setProjetos((prev) =>
       prev.map((p) =>
         p.id === id
-          ? { ...p, status: "em_aprovacao" as StatusLider, submissaoEm: new Date().toISOString().split("T")[0] }
-          : p
-      )
+          ? {
+              ...p,
+              status: "em_aprovacao" as StatusLider,
+              submissaoEm: new Date().toISOString().split("T")[0],
+            }
+          : p,
+      ),
     );
     if (selecionado === id) setSelecionado(null);
   }
@@ -701,8 +743,8 @@ export function ProjetosLiderView() {
   function revisarEResubmeter(id: string) {
     setProjetos((prev) =>
       prev.map((p) =>
-        p.id === id ? { ...p, status: "rascunho" as StatusLider, motivoRecusa: undefined } : p
-      )
+        p.id === id ? { ...p, status: "rascunho" as StatusLider, motivoRecusa: undefined } : p,
+      ),
     );
     if (selecionado === id) setSelecionado(null);
   }
@@ -719,11 +761,11 @@ export function ProjetosLiderView() {
   const projetoSelecionado = projetos.find((p) => p.id === selecionado);
 
   const PILLS: { value: StatusLider | "todos"; label: string }[] = [
-    { value: "todos",        label: "Todos" },
-    { value: "rascunho",     label: "Rascunho" },
+    { value: "todos", label: "Todos" },
+    { value: "rascunho", label: "Rascunho" },
     { value: "em_aprovacao", label: "Em Aprovação" },
-    { value: "rejeitado",    label: "Recusado" },
-    { value: "aprovado",     label: "Aprovado" },
+    { value: "rejeitado", label: "Recusado" },
+    { value: "aprovado", label: "Aprovado" },
   ];
 
   return (
@@ -733,7 +775,8 @@ export function ProjetosLiderView() {
         <div>
           <h1 className="font-display font-bold text-2xl text-navy">Projetos</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {projetos.length} {projetos.length === 1 ? "projeto em andamento" : "projetos em andamento"}
+            {projetos.length}{" "}
+            {projetos.length === 1 ? "projeto em andamento" : "projetos em andamento"}
           </p>
         </div>
         <button
@@ -767,7 +810,7 @@ export function ProjetosLiderView() {
                 "px-3 py-1.5 text-xs font-medium rounded-full border transition-colors",
                 filtroStatus === pill.value
                   ? "bg-navy text-white border-navy"
-                  : "bg-white text-link-blue border-brand-gray hover:border-navy/40"
+                  : "bg-white text-link-blue border-brand-gray hover:border-navy/40",
               )}
             >
               {pill.label}
@@ -778,14 +821,24 @@ export function ProjetosLiderView() {
         <div className="ml-auto flex items-center border border-brand-gray rounded-md overflow-hidden">
           <button
             onClick={() => setVisualizacao("kanban")}
-            className={cn("p-2 transition-colors", visualizacao === "kanban" ? "bg-navy text-white" : "bg-white text-link-blue hover:bg-gray-50")}
+            className={cn(
+              "p-2 transition-colors",
+              visualizacao === "kanban"
+                ? "bg-navy text-white"
+                : "bg-white text-link-blue hover:bg-gray-50",
+            )}
             title="Kanban"
           >
             <LayoutGrid className="h-4 w-4" />
           </button>
           <button
             onClick={() => setVisualizacao("lista")}
-            className={cn("p-2 transition-colors", visualizacao === "lista" ? "bg-navy text-white" : "bg-white text-link-blue hover:bg-gray-50")}
+            className={cn(
+              "p-2 transition-colors",
+              visualizacao === "lista"
+                ? "bg-navy text-white"
+                : "bg-white text-link-blue hover:bg-gray-50",
+            )}
             title="Lista"
           >
             <List className="h-4 w-4" />
@@ -845,10 +898,18 @@ export function ProjetosLiderView() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-brand-gray">
-                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">Projeto</th>
-                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">Status</th>
-                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">Responsável</th>
-                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">Receita</th>
+                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">
+                  Projeto
+                </th>
+                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">
+                  Responsável
+                </th>
+                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">
+                  Receita
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -872,16 +933,28 @@ export function ProjetosLiderView() {
                         onClick={() => toggleSelecionado(p.id)}
                         className={cn(
                           "border-b border-brand-gray cursor-pointer transition-colors hover:bg-gray-50",
-                          isAberta && "bg-gray-50"
+                          isAberta && "bg-gray-50",
                         )}
                       >
                         <td className="px-6 py-4">
                           <div className="font-bold text-navy">{p.nome}</div>
-                          <div className="text-xs text-muted-foreground mt-0.5 max-w-sm truncate">{p.descricao}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5 max-w-sm truncate">
+                            {p.descricao}
+                          </div>
                           {p.prazo && (
                             <div className="flex items-center gap-1.5 mt-1">
-                              <Clock className={cn("h-3 w-3", vencido ? "text-red-500" : "text-muted-foreground")} />
-                              <span className={cn("text-xs", vencido ? "text-red-600 font-medium" : "text-muted-foreground")}>
+                              <Clock
+                                className={cn(
+                                  "h-3 w-3",
+                                  vencido ? "text-red-500" : "text-muted-foreground",
+                                )}
+                              />
+                              <span
+                                className={cn(
+                                  "text-xs",
+                                  vencido ? "text-red-600 font-medium" : "text-muted-foreground",
+                                )}
+                              >
                                 {formatarData(p.prazo)}
                               </span>
                               {vencido && (
@@ -926,10 +999,7 @@ export function ProjetosLiderView() {
       )}
 
       {modalAberto && (
-        <ModalNovoProjeto
-          onFechar={() => setModalAberto(false)}
-          onCriar={criarProjeto}
-        />
+        <ModalNovoProjeto onFechar={() => setModalAberto(false)} onCriar={criarProjeto} />
       )}
     </div>
   );

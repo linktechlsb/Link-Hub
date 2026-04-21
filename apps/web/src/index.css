@@ -6,7 +6,7 @@
   :root {
     /* Link brand: Azul Marinho como primary */
     --background: 0 0% 100%;
-    --foreground: 215 65% 18%;       /* #10284E */
+    --foreground: 215 65% 18%; /* #10284E */
 
     --card: 0 0% 100%;
     --card-foreground: 215 65% 18%;
@@ -14,28 +14,28 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 65% 18%;
 
-    --primary: 215 65% 18%;          /* #10284E - Azul Marinho */
+    --primary: 215 65% 18%; /* #10284E - Azul Marinho */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 22% 40%;        /* #546484 - Azul Link */
+    --secondary: 215 22% 40%; /* #546484 - Azul Link */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 92%;               /* #EAEAEA */
+    --muted: 0 0% 92%; /* #EAEAEA */
     --muted-foreground: 215 22% 40%;
 
-    --accent: 43 99% 63%;            /* #FEC641 - Amarelo */
+    --accent: 43 99% 63%; /* #FEC641 - Amarelo */
     --accent-foreground: 215 65% 18%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 92%;              /* #EAEAEA */
+    --border: 0 0% 92%; /* #EAEAEA */
     --input: 0 0% 92%;
     --ring: 215 65% 18%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 214 68% 19%;  /* #10284F */
+    --sidebar-background: 214 68% 19%; /* #10284F */
 
     --sidebar-foreground: 0 0% 100%;
 
@@ -60,7 +60,12 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-display;
   }
   .dark {

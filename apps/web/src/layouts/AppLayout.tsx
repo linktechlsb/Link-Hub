@@ -1,17 +1,3 @@
-import { useEffect } from "react";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
-import { useUser } from "@/hooks/use-user";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
 import {
   Home,
   Users,
@@ -22,6 +8,21 @@ import {
   User,
   LogOut,
 } from "lucide-react";
+import { useEffect } from "react";
+import { Outlet, NavLink, useNavigate } from "react-router-dom";
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { useUser } from "@/hooks/use-user";
+import { supabase } from "@/lib/supabase";
 
 const mainNavItems = [
   { to: "/home", label: "Home", icon: Home },
@@ -58,9 +59,7 @@ export function AppLayout() {
       <div className="flex h-screen w-full bg-[#EAEAEA]">
         <Sidebar className="border-r-0 bg-[#10284F] text-white">
           <SidebarHeader className="px-6 py-5 border-b border-white/10">
-            <h1 className="font-display font-bold text-xl tracking-tight text-white">
-              Link
-            </h1>
+            <h1 className="font-display font-bold text-xl tracking-tight text-white">Link</h1>
             <p className="text-xs text-white/50 mt-0.5">Faculdade de Negócios</p>
           </SidebarHeader>
 

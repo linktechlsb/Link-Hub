@@ -1,16 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabase";
 
 export function RedefinirSenhaPage() {
   const navigate = useNavigate();
@@ -33,9 +28,14 @@ export function RedefinirSenhaPage() {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session && !sessionEstabelecida.current &&
-        (event === "SIGNED_IN" || event === "PASSWORD_RECOVERY" || event === "INITIAL_SESSION")) {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (
+        session &&
+        !sessionEstabelecida.current &&
+        (event === "SIGNED_IN" || event === "PASSWORD_RECOVERY" || event === "INITIAL_SESSION")
+      ) {
         sessionEstabelecida.current = true;
         setEmail(session.user.email ?? "");
         setVerificando(false);
@@ -107,7 +107,8 @@ export function RedefinirSenhaPage() {
               Link expirado
             </CardTitle>
             <CardDescription className="text-muted-foreground text-sm">
-              Este link de acesso expirou ou já foi utilizado. Solicite um novo convite ao administrador.
+              Este link de acesso expirou ou já foi utilizado. Solicite um novo convite ao
+              administrador.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -128,12 +129,12 @@ export function RedefinirSenhaPage() {
     <div className="flex flex-col gap-6">
       <Card className="border-0 shadow-2xl">
         <CardHeader className="pb-2">
-          <CardTitle className="font-display font-bold text-2xl text-navy">
-            Criar senha
-          </CardTitle>
+          <CardTitle className="font-display font-bold text-2xl text-navy">Criar senha</CardTitle>
           <CardDescription className="text-muted-foreground text-sm">
             {email ? (
-              <>Definindo senha para <span className="font-medium text-navy/70">{email}</span></>
+              <>
+                Definindo senha para <span className="font-medium text-navy/70">{email}</span>
+              </>
             ) : (
               "Defina uma senha para acessar a plataforma"
             )}
@@ -171,9 +172,7 @@ export function RedefinirSenhaPage() {
                 />
               </div>
 
-              {erro && (
-                <p className="text-sm text-destructive">{erro}</p>
-              )}
+              {erro && <p className="text-sm text-destructive">{erro}</p>}
 
               <Button
                 type="submit"

@@ -1,6 +1,3 @@
-import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
 import {
   X,
   Pencil,
@@ -20,6 +17,10 @@ import {
   AlertTriangle,
   type LucideIcon,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
+import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
@@ -60,7 +61,14 @@ interface Liga {
   metricas: MetricasLiga;
 }
 
-type RecursoAPI = { id: string; titulo: string; tipo: string; url: string; icone: string; cor: string };
+type RecursoAPI = {
+  id: string;
+  titulo: string;
+  tipo: string;
+  url: string;
+  icone: string;
+  cor: string;
+};
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -84,12 +92,26 @@ function apiParaLiga(l: Record<string, unknown>): Liga {
       bannerUrl: (l.imagem_url as string) ?? "",
       professorMentor: (l.professor_mentor as string) ?? "",
     },
-    metricas: { score: 0, projetosConcluidos: 0, projetosAndamento: 0, receita: 0, frequencia: 0, membrosAtivos: 0 },
+    metricas: {
+      score: 0,
+      projetosConcluidos: 0,
+      projetosAndamento: 0,
+      receita: 0,
+      frequencia: 0,
+      membrosAtivos: 0,
+    },
   };
 }
 
 function apiParaRecurso(r: RecursoAPI): Recurso {
-  return { id: r.id, nome: r.titulo, tipo: r.tipo, url: r.url, icone: r.icone ?? "link", cor: r.cor ?? "#546484" };
+  return {
+    id: r.id,
+    nome: r.titulo,
+    tipo: r.tipo,
+    url: r.url,
+    icone: r.icone ?? "link",
+    cor: r.cor ?? "#546484",
+  };
 }
 
 const inputClass =
@@ -98,19 +120,28 @@ const inputClass =
 // ─── picker de ícone/cor ──────────────────────────────────────────────────────
 
 const ICONES: { id: string; componente: LucideIcon }[] = [
-  { id: "link",      componente: Link },
+  { id: "link", componente: Link },
   { id: "file-text", componente: FileText },
-  { id: "image",     componente: Image },
-  { id: "globe",     componente: Globe },
-  { id: "folder",    componente: Folder },
+  { id: "image", componente: Image },
+  { id: "globe", componente: Globe },
+  { id: "folder", componente: Folder },
   { id: "book-open", componente: BookOpen },
-  { id: "code2",     componente: Code2 },
-  { id: "video",     componente: Video },
-  { id: "music",     componente: Music },
-  { id: "star",      componente: Star },
+  { id: "code2", componente: Code2 },
+  { id: "video", componente: Video },
+  { id: "music", componente: Music },
+  { id: "star", componente: Star },
 ];
 
-const CORES_PICKER = ["#10284E","#546484","#7C3AED","#16A34A","#D97706","#DC2626","#DB2777","#0D9488"];
+const CORES_PICKER = [
+  "#10284E",
+  "#546484",
+  "#7C3AED",
+  "#16A34A",
+  "#D97706",
+  "#DC2626",
+  "#DB2777",
+  "#0D9488",
+];
 
 function iconeComponente(id: string): LucideIcon {
   return ICONES.find((i) => i.id === id)?.componente ?? Link;
@@ -121,7 +152,15 @@ function RecursoIcone({ id, className }: { id: string; className?: string }) {
   return <Comp className={className ?? "h-4 w-4 text-white"} />;
 }
 
-function IconeCor({ icone, cor, onChange }: { icone: string; cor: string; onChange: (i: string, c: string) => void }) {
+function IconeCor({
+  icone,
+  cor,
+  onChange,
+}: {
+  icone: string;
+  cor: string;
+  onChange: (i: string, c: string) => void;
+}) {
   const [aberto, setAberto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -146,7 +185,9 @@ function IconeCor({ icone, cor, onChange }: { icone: string; cor: string; onChan
       </button>
       {aberto && (
         <div className="absolute left-0 top-11 z-50 bg-white border border-brand-gray rounded-xl shadow-lg p-3 w-56">
-          <p className="text-[10px] font-bold text-link-blue uppercase tracking-wider mb-2">Ícone</p>
+          <p className="text-[10px] font-bold text-link-blue uppercase tracking-wider mb-2">
+            Ícone
+          </p>
           <div className="grid grid-cols-5 gap-1.5 mb-3">
             {ICONES.map((ic) => {
               const Comp = ic.componente;
@@ -157,7 +198,9 @@ function IconeCor({ icone, cor, onChange }: { icone: string; cor: string; onChan
                   onClick={() => onChange(ic.id, cor)}
                   className={cn(
                     "h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
-                    icone === ic.id ? "bg-navy text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    icone === ic.id
+                      ? "bg-navy text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200",
                   )}
                 >
                   <Comp className="h-4 w-4" />
@@ -172,7 +215,10 @@ function IconeCor({ icone, cor, onChange }: { icone: string; cor: string; onChan
                 key={c}
                 type="button"
                 onClick={() => onChange(icone, c)}
-                className={cn("h-6 w-6 rounded-full border-2 transition-colors", cor === c ? "border-navy scale-110" : "border-transparent")}
+                className={cn(
+                  "h-6 w-6 rounded-full border-2 transition-colors",
+                  cor === c ? "border-navy scale-110" : "border-transparent",
+                )}
                 style={{ backgroundColor: c }}
               />
             ))}
@@ -229,7 +275,10 @@ function AbaInformacoes({
           headers: { Authorization: `Bearer ${token}` },
           body: fd,
         });
-        if (!imgRes.ok) { setErro("Erro ao enviar imagem."); return; }
+        if (!imgRes.ok) {
+          setErro("Erro ao enviar imagem.");
+          return;
+        }
         setBannerFile(null);
       }
       const res = await fetch(`/api/ligas/${ligaId}`, {
@@ -246,7 +295,10 @@ function AbaInformacoes({
           professor_mentor: form.professorMentor,
         }),
       });
-      if (!res.ok) { setErro("Erro ao salvar informações."); return; }
+      if (!res.ok) {
+        setErro("Erro ao salvar informações.");
+        return;
+      }
       setSalvo(true);
       setTimeout(() => setSalvo(false), 2000);
     } finally {
@@ -278,11 +330,19 @@ function AbaInformacoes({
         <p className="text-xs font-bold text-link-blue uppercase tracking-wider">Dados Gerais</p>
         <div>
           <label className="text-xs font-semibold text-navy mb-1 block">Nome da liga</label>
-          <input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className={inputClass} />
+          <input
+            value={form.nome}
+            onChange={(e) => setForm({ ...form, nome: e.target.value })}
+            className={inputClass}
+          />
         </div>
         <div>
           <label className="text-xs font-semibold text-navy mb-1 block">Área de atuação</label>
-          <input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} className={inputClass} />
+          <input
+            value={form.area}
+            onChange={(e) => setForm({ ...form, area: e.target.value })}
+            className={inputClass}
+          />
         </div>
         <div>
           <label className="text-xs font-semibold text-navy mb-1 block">Descrição</label>
@@ -306,12 +366,18 @@ function AbaInformacoes({
 
       {/* Foto / Banner */}
       <div className="bg-white border border-brand-gray rounded-xl p-5 space-y-3">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">Foto / Banner da Liga</p>
+        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">
+          Foto / Banner da Liga
+        </p>
         {bannerPreview ? (
           <div className="relative rounded-lg overflow-hidden border border-brand-gray h-36">
             <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
             <button
-              onClick={() => { setBannerPreview(""); setBannerFile(null); setForm((prev) => ({ ...prev, bannerUrl: "" })); }}
+              onClick={() => {
+                setBannerPreview("");
+                setBannerFile(null);
+                setForm((prev) => ({ ...prev, bannerUrl: "" }));
+              }}
               className="absolute top-2 right-2 bg-white/80 hover:bg-white text-red-500 rounded-full p-1 transition-colors"
             >
               <X className="h-3.5 w-3.5" />
@@ -332,7 +398,9 @@ function AbaInformacoes({
 
       {/* Contatos */}
       <div className="bg-white border border-brand-gray rounded-xl p-5 space-y-4">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">Contatos da Liga</p>
+        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">
+          Contatos da Liga
+        </p>
         <div>
           <label className="text-xs font-semibold text-navy mb-1 block">E-mail de contato</label>
           <input
@@ -365,7 +433,9 @@ function AbaInformacoes({
 
       {/* Professor mentor */}
       <div className="bg-white border border-brand-gray rounded-xl p-5 space-y-3">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">Professor Mentor</p>
+        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">
+          Professor Mentor
+        </p>
         <input
           value={form.professorMentor}
           onChange={(e) => setForm({ ...form, professorMentor: e.target.value })}
@@ -396,11 +466,14 @@ function AbaInformacoes({
           Zona de Perigo
         </p>
         <p className="text-sm text-muted-foreground">
-          Arquivar a liga a tornará inativa e ela não aparecerá mais para os membros. Esta ação pode ser revertida pelo Super Admin.
+          Arquivar a liga a tornará inativa e ela não aparecerá mais para os membros. Esta ação pode
+          ser revertida pelo Super Admin.
         </p>
         {confirmandoArquivar ? (
           <div className="flex items-center gap-3">
-            <span className="text-sm text-red-600 font-medium">Confirmar arquivamento de "{form.nome}"?</span>
+            <span className="text-sm text-red-600 font-medium">
+              Confirmar arquivamento de &quot;{form.nome}&quot;?
+            </span>
             <button
               onClick={() => void arquivar()}
               className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors"
@@ -457,7 +530,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const data = await res.json() as RecursoAPI[];
+          const data = (await res.json()) as RecursoAPI[];
           setRecursos(data.map(apiParaRecurso));
         }
       } finally {
@@ -469,26 +542,42 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
 
   async function adicionar() {
     setErro(null);
-    if (!novoNome.trim() || !novoUrl.trim()) { setErro("Informe o nome e a URL."); return; }
+    if (!novoNome.trim() || !novoUrl.trim()) {
+      setErro("Informe o nome e a URL.");
+      return;
+    }
     const token = await getToken();
     const res = await fetch("/api/recursos", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ liga_id: ligaId, titulo: novoNome.trim(), tipo: novoTipo, url: novoUrl.trim(), icone: novoIcone, cor: novoCor }),
+      body: JSON.stringify({
+        liga_id: ligaId,
+        titulo: novoNome.trim(),
+        tipo: novoTipo,
+        url: novoUrl.trim(),
+        icone: novoIcone,
+        cor: novoCor,
+      }),
     });
     if (res.ok) {
-      const criado = await res.json() as RecursoAPI;
+      const criado = (await res.json()) as RecursoAPI;
       setRecursos((prev) => [apiParaRecurso(criado), ...prev]);
-      setNovoNome(""); setNovoUrl(""); setNovoIcone("link"); setNovoCor("#546484");
+      setNovoNome("");
+      setNovoUrl("");
+      setNovoIcone("link");
+      setNovoCor("#546484");
     } else {
-      const body = await res.json().catch(() => ({})) as { error?: string };
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
       setErro(body.error ?? `Erro ${res.status}.`);
     }
   }
 
   async function remover(id: string) {
     const token = await getToken();
-    const res = await fetch(`/api/recursos/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`/api/recursos/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
     if (res.ok) setRecursos((prev) => prev.filter((r) => r.id !== id));
   }
 
@@ -502,10 +591,16 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
     const res = await fetch(`/api/recursos/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ titulo: editForm.nome, tipo: editForm.tipo, url: editForm.url, icone: editForm.icone, cor: editForm.cor }),
+      body: JSON.stringify({
+        titulo: editForm.nome,
+        tipo: editForm.tipo,
+        url: editForm.url,
+        icone: editForm.icone,
+        cor: editForm.cor,
+      }),
     });
     if (res.ok) {
-      const atualizado = await res.json() as RecursoAPI;
+      const atualizado = (await res.json()) as RecursoAPI;
       setRecursos((prev) => prev.map((r) => (r.id === id ? apiParaRecurso(atualizado) : r)));
     }
     setEditandoId(null);
@@ -555,14 +650,27 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                       />
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => void salvarEdicao(r.id)} className="bg-navy text-white text-xs px-3 py-1.5 rounded-lg hover:bg-navy/90 transition-colors">Salvar</button>
-                      <button onClick={() => setEditandoId(null)} className="border border-brand-gray text-xs px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+                      <button
+                        onClick={() => void salvarEdicao(r.id)}
+                        className="bg-navy text-white text-xs px-3 py-1.5 rounded-lg hover:bg-navy/90 transition-colors"
+                      >
+                        Salvar
+                      </button>
+                      <button
+                        onClick={() => setEditandoId(null)}
+                        className="border border-brand-gray text-xs px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        Cancelar
+                      </button>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: r.cor }}>
+                      <div
+                        className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: r.cor }}
+                      >
                         <RecursoIcone id={r.icone} />
                       </div>
                       <div>
@@ -571,8 +679,20 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => iniciarEdicao(r)} className="text-link-blue hover:bg-gray-50 p-1.5 rounded-md transition-colors" title="Editar"><Pencil className="h-4 w-4" /></button>
-                      <button onClick={() => void remover(r.id)} className="text-red-400 hover:bg-red-50 p-1.5 rounded-md transition-colors" title="Remover"><Trash2 className="h-4 w-4" /></button>
+                      <button
+                        onClick={() => iniciarEdicao(r)}
+                        className="text-link-blue hover:bg-gray-50 p-1.5 rounded-md transition-colors"
+                        title="Editar"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => void remover(r.id)}
+                        className="text-red-400 hover:bg-red-50 p-1.5 rounded-md transition-colors"
+                        title="Remover"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -584,9 +704,18 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
 
       {/* Adicionar */}
       <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">Adicionar Recurso</p>
+        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+          Adicionar Recurso
+        </p>
         <div className="flex gap-2 flex-wrap items-center">
-          <IconeCor icone={novoIcone} cor={novoCor} onChange={(ic, c) => { setNovoIcone(ic); setNovoCor(c); }} />
+          <IconeCor
+            icone={novoIcone}
+            cor={novoCor}
+            onChange={(ic, c) => {
+              setNovoIcone(ic);
+              setNovoCor(c);
+            }}
+          />
           <input
             value={novoNome}
             onChange={(e) => setNovoNome(e.target.value)}
@@ -626,10 +755,34 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
   const porcentagem = Math.round((m.score / scoreMax) * 100);
 
   const composicao = [
-    { label: "Projetos", formula: `${m.projetosConcluidos} proj. × 50 pts`, valor: m.projetosConcluidos * 50, cor: "bg-green-500" },
-    { label: "Presenças", formula: `${Math.round(m.frequencia * 0.5)} pres. × 10 pts`, valor: Math.round(m.frequencia * 0.5) * 10, cor: "bg-blue-500" },
-    { label: "Receita", formula: `R$ ${m.receita.toLocaleString("pt-BR")} × 0,015`, valor: Math.round(m.receita * 0.015), cor: "bg-amber-500" },
-    { label: "Feed", formula: `publicações × 5 pts`, valor: m.score - (m.projetosConcluidos * 50 + Math.round(m.frequencia * 0.5) * 10 + Math.round(m.receita * 0.015)), cor: "bg-purple-500" },
+    {
+      label: "Projetos",
+      formula: `${m.projetosConcluidos} proj. × 50 pts`,
+      valor: m.projetosConcluidos * 50,
+      cor: "bg-green-500",
+    },
+    {
+      label: "Presenças",
+      formula: `${Math.round(m.frequencia * 0.5)} pres. × 10 pts`,
+      valor: Math.round(m.frequencia * 0.5) * 10,
+      cor: "bg-blue-500",
+    },
+    {
+      label: "Receita",
+      formula: `R$ ${m.receita.toLocaleString("pt-BR")} × 0,015`,
+      valor: Math.round(m.receita * 0.015),
+      cor: "bg-amber-500",
+    },
+    {
+      label: "Feed",
+      formula: `publicações × 5 pts`,
+      valor:
+        m.score -
+        (m.projetosConcluidos * 50 +
+          Math.round(m.frequencia * 0.5) * 10 +
+          Math.round(m.receita * 0.015)),
+      cor: "bg-purple-500",
+    },
   ];
 
   const rankingOrdenado = [...todasLigas].sort((a, b) => b.metricas.score - a.metricas.score);
@@ -638,7 +791,9 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
   return (
     <div className="space-y-4">
       <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-4">Score Atual</p>
+        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-4">
+          Score Atual
+        </p>
         <div className="flex items-end justify-between mb-3">
           <div>
             <span className="font-display font-bold text-4xl text-navy">{m.score}</span>
@@ -649,7 +804,13 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
           </span>
         </div>
         <div className="w-full bg-brand-gray rounded-full h-3 overflow-hidden">
-          <div className="h-3 rounded-full transition-all duration-500" style={{ width: `${porcentagem}%`, background: "linear-gradient(90deg, #10284E, #546484)" }} />
+          <div
+            className="h-3 rounded-full transition-all duration-500"
+            style={{
+              width: `${porcentagem}%`,
+              background: "linear-gradient(90deg, #10284E, #546484)",
+            }}
+          />
         </div>
         <div className="flex justify-between mt-1.5 text-xs text-muted-foreground">
           <span>0 pts</span>
@@ -662,9 +823,17 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
         <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">Resumo</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
-            { label: "Projetos concluídos", valor: String(m.projetosConcluidos), cor: "text-green-600" },
+            {
+              label: "Projetos concluídos",
+              valor: String(m.projetosConcluidos),
+              cor: "text-green-600",
+            },
             { label: "Em andamento", valor: String(m.projetosAndamento), cor: "text-blue-600" },
-            { label: "Receita total", valor: `R$ ${m.receita.toLocaleString("pt-BR")}`, cor: "text-amber-600" },
+            {
+              label: "Receita total",
+              valor: `R$ ${m.receita.toLocaleString("pt-BR")}`,
+              cor: "text-amber-600",
+            },
             { label: "Frequência média", valor: `${m.frequencia}%`, cor: "text-purple-600" },
             { label: "Membros ativos", valor: String(m.membrosAtivos), cor: "text-navy" },
           ].map((r) => (
@@ -677,7 +846,9 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
       </div>
 
       <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">Composição do Score</p>
+        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+          Composição do Score
+        </p>
         <div className="space-y-3">
           {composicao.map((c) => (
             <div key={c.label}>
@@ -691,7 +862,9 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
               <div className="w-full bg-brand-gray rounded-full h-2 overflow-hidden">
                 <div
                   className={cn("h-2 rounded-full", c.cor)}
-                  style={{ width: `${Math.min(100, Math.round((Math.max(0, c.valor) / (m.score || 1)) * 100))}%` }}
+                  style={{
+                    width: `${Math.min(100, Math.round((Math.max(0, c.valor) / (m.score || 1)) * 100))}%`,
+                  }}
                 />
               </div>
             </div>
@@ -708,18 +881,55 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
             const isAtual = l.id === liga.id;
             const pct = Math.round((l.metricas.score / scoreMax) * 100);
             return (
-              <div key={l.id} className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors", isAtual ? "bg-navy/5 ring-1 ring-navy/20" : "hover:bg-gray-50")}>
-                <span className={cn("text-xs font-bold w-5 text-center", isAtual ? "text-navy" : "text-muted-foreground")}>{i + 1}º</span>
+              <div
+                key={l.id}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors",
+                  isAtual ? "bg-navy/5 ring-1 ring-navy/20" : "hover:bg-gray-50",
+                )}
+              >
+                <span
+                  className={cn(
+                    "text-xs font-bold w-5 text-center",
+                    isAtual ? "text-navy" : "text-muted-foreground",
+                  )}
+                >
+                  {i + 1}º
+                </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <span className={cn("text-sm font-semibold truncate", isAtual ? "text-navy" : "text-gray-700")}>
+                    <span
+                      className={cn(
+                        "text-sm font-semibold truncate",
+                        isAtual ? "text-navy" : "text-gray-700",
+                      )}
+                    >
                       {l.nome}
-                      {isAtual && <span className="ml-2 text-[10px] font-bold bg-navy text-white px-1.5 py-0.5 rounded-full align-middle">atual</span>}
+                      {isAtual && (
+                        <span className="ml-2 text-[10px] font-bold bg-navy text-white px-1.5 py-0.5 rounded-full align-middle">
+                          atual
+                        </span>
+                      )}
                     </span>
-                    <span className={cn("text-xs font-bold ml-3 shrink-0", isAtual ? "text-navy" : "text-gray-500")}>{l.metricas.score} pts</span>
+                    <span
+                      className={cn(
+                        "text-xs font-bold ml-3 shrink-0",
+                        isAtual ? "text-navy" : "text-gray-500",
+                      )}
+                    >
+                      {l.metricas.score} pts
+                    </span>
                   </div>
                   <div className="w-full bg-brand-gray rounded-full h-1.5 overflow-hidden">
-                    <div className="h-1.5 rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: isAtual ? "linear-gradient(90deg, #10284E, #546484)" : "#CBCBCB" }} />
+                    <div
+                      className="h-1.5 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${pct}%`,
+                        background: isAtual
+                          ? "linear-gradient(90deg, #10284E, #546484)"
+                          : "#CBCBCB",
+                      }}
+                    />
                   </div>
                 </div>
               </div>
@@ -749,7 +959,7 @@ export function GerenciamentoStaffPage() {
         const token = await getToken();
         const res = await fetch("/api/ligas", { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) {
-          const data = await res.json() as Record<string, unknown>[];
+          const data = (await res.json()) as Record<string, unknown>[];
           const mapped = data.map(apiParaLiga);
           setLigas(mapped);
           if (mapped.length > 0) setLigaSelecionadaId(mapped[0]!.id);
@@ -808,14 +1018,22 @@ export function GerenciamentoStaffPage() {
           onClick={() => setSeletorAberto((v) => !v)}
           className="flex items-center gap-3 bg-white border border-brand-gray rounded-xl px-4 py-3 hover:border-navy/30 transition-colors w-full sm:w-auto"
         >
-          <div className="h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ background: "linear-gradient(135deg, #10284E, #546484)" }}>
+          <div
+            className="h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
+            style={{ background: "linear-gradient(135deg, #10284E, #546484)" }}
+          >
             {liga.nome.charAt(0)}
           </div>
           <div className="text-left">
             <p className="text-sm font-semibold text-navy">{liga.nome}</p>
             <p className="text-xs text-muted-foreground">{liga.info.area || "Sem área definida"}</p>
           </div>
-          <ChevronDown className={cn("h-4 w-4 text-muted-foreground ml-auto transition-transform", seletorAberto && "rotate-180")} />
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 text-muted-foreground ml-auto transition-transform",
+              seletorAberto && "rotate-180",
+            )}
+          />
         </button>
 
         {seletorAberto && (
@@ -824,21 +1042,38 @@ export function GerenciamentoStaffPage() {
               <button
                 key={l.id}
                 onClick={() => selecionarLiga(l.id)}
-                className={cn("flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-50 transition-colors text-left", l.id === ligaSelecionadaId && "bg-navy/5")}
+                className={cn(
+                  "flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-50 transition-colors text-left",
+                  l.id === ligaSelecionadaId && "bg-navy/5",
+                )}
               >
-                <div className="h-7 w-7 rounded-md flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ background: "linear-gradient(135deg, #10284E, #546484)" }}>
+                <div
+                  className="h-7 w-7 rounded-md flex items-center justify-center text-white text-xs font-bold shrink-0"
+                  style={{ background: "linear-gradient(135deg, #10284E, #546484)" }}
+                >
                   {l.nome.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={cn("text-sm font-semibold truncate", l.id === ligaSelecionadaId ? "text-navy" : "text-gray-700")}>{l.nome}</p>
-                  <p className="text-xs text-muted-foreground truncate">{l.info.area || "Sem área"}</p>
+                  <p
+                    className={cn(
+                      "text-sm font-semibold truncate",
+                      l.id === ligaSelecionadaId ? "text-navy" : "text-gray-700",
+                    )}
+                  >
+                    {l.nome}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {l.info.area || "Sem área"}
+                  </p>
                 </div>
               </button>
             ))}
           </div>
         )}
 
-        {seletorAberto && <div className="fixed inset-0 z-10" onClick={() => setSeletorAberto(false)} />}
+        {seletorAberto && (
+          <div className="fixed inset-0 z-10" onClick={() => setSeletorAberto(false)} />
+        )}
       </div>
 
       {/* Abas */}
@@ -850,7 +1085,9 @@ export function GerenciamentoStaffPage() {
               onClick={() => setAbaAtiva(aba)}
               className={cn(
                 "px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px",
-                abaAtiva === aba ? "border-[#7C3AED] text-[#7C3AED]" : "border-transparent text-muted-foreground hover:text-navy"
+                abaAtiva === aba
+                  ? "border-[#7C3AED] text-[#7C3AED]"
+                  : "border-transparent text-muted-foreground hover:text-navy",
               )}
             >
               {aba}
@@ -861,14 +1098,15 @@ export function GerenciamentoStaffPage() {
 
       {/* Conteúdo */}
       {abaAtiva === "Informações" && (
-        <AbaInformacoes key={liga.id} ligaId={liga.id} initialInfo={liga.info} onArquivar={arquivarLiga} />
+        <AbaInformacoes
+          key={liga.id}
+          ligaId={liga.id}
+          initialInfo={liga.info}
+          onArquivar={arquivarLiga}
+        />
       )}
-      {abaAtiva === "Recursos" && (
-        <AbaRecursos key={liga.id} ligaId={liga.id} />
-      )}
-      {abaAtiva === "Desempenho" && (
-        <AbaDesempenho liga={liga} todasLigas={ligas} />
-      )}
+      {abaAtiva === "Recursos" && <AbaRecursos key={liga.id} ligaId={liga.id} />}
+      {abaAtiva === "Desempenho" && <AbaDesempenho liga={liga} todasLigas={ligas} />}
     </div>
   );
 }

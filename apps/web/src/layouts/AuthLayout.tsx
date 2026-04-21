@@ -8,9 +8,7 @@ export function AuthLayout() {
           <h1 className="font-display font-bold text-3xl text-white tracking-tight">
             Link Leagues
           </h1>
-          <p className="text-white/60 text-sm mt-2">
-            Faculdade de Negócios
-          </p>
+          <p className="text-white/60 text-sm mt-2">Faculdade de Negócios</p>
         </div>
         <Outlet />
       </div>

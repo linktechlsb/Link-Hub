@@ -1,8 +1,9 @@
 import { Router, type Router as IRouter } from "express";
-import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
+import multer from "multer";
+
 import { sql } from "../config/db.js";
 import { supabaseAdmin } from "../config/supabase.js";
-import multer from "multer";
+import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 
 export const ligasRouter: IRouter = Router();
 
@@ -79,7 +80,10 @@ ligasRouter.get("/minha", authenticate, async (req, res, next) => {
       GROUP BY l.id, lu.email
       LIMIT 1
     `;
-    if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
+    if (!liga) {
+      res.status(404).json({ error: "Liga não encontrada." });
+      return;
+    }
     res.json(liga);
   } catch (err) {
     next(err);
@@ -117,7 +121,10 @@ ligasRouter.get("/:id", authenticate, async (req, res, next) => {
       GROUP BY l.id
     `;
 
-    if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
+    if (!liga) {
+      res.status(404).json({ error: "Liga não encontrada." });
+      return;
+    }
     res.json(liga);
   } catch (err) {
     next(err);
@@ -196,7 +203,10 @@ ligasRouter.get("/:id/eventos/proximo", authenticate, async (req, res, next) => 
       ORDER BY data ASC
       LIMIT 1
     `;
-    if (!evento) { res.status(404).json({ error: "Nenhum evento futuro." }); return; }
+    if (!evento) {
+      res.status(404).json({ error: "Nenhum evento futuro." });
+      return;
+    }
     res.json(evento);
   } catch (err) {
     next(err);
@@ -243,9 +253,7 @@ ligasRouter.post(
 
       if (storageError) throw storageError;
 
-      const { data: urlData } = supabaseAdmin.storage
-        .from("ligas-imagens")
-        .getPublicUrl(filename);
+      const { data: urlData } = supabaseAdmin.storage.from("ligas-imagens").getPublicUrl(filename);
 
       const imagem_url = urlData.publicUrl;
 
@@ -255,12 +263,15 @@ ligasRouter.post(
         RETURNING *
       `;
 
-      if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
+      if (!liga) {
+        res.status(404).json({ error: "Liga não encontrada." });
+        return;
+      }
       res.json(liga);
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /ligas — criar liga (staff)
@@ -281,7 +292,10 @@ ligasRouter.post("/", authenticate, requireRole("staff"), async (req, res, next)
     const [adminUsuario] = await sql`
       SELECT id FROM usuarios WHERE email = ${(req as AuthenticatedRequest).user!.email}
     `;
-    if (!adminUsuario) { res.status(404).json({ error: "Usuário não encontrado." }); return; }
+    if (!adminUsuario) {
+      res.status(404).json({ error: "Usuário não encontrado." });
+      return;
+    }
     const lider_id = adminUsuario.id as string;
 
     const [liga] = await sql`
@@ -349,7 +363,10 @@ ligasRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (
       liga = existing;
     }
 
-    if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
+    if (!liga) {
+      res.status(404).json({ error: "Liga não encontrada." });
+      return;
+    }
 
     if (diretores !== undefined) {
       // Get current directors and revoke role for those being removed
@@ -408,21 +425,26 @@ ligasRouter.post("/:id/membros", authenticate, requireRole("staff"), async (req,
 });
 
 // DELETE /ligas/:id/membros/:userId — remove membro da liga (staff)
-ligasRouter.delete("/:id/membros/:userId", authenticate, requireRole("staff"), async (req, res, next) => {
-  try {
-    const liga_id = req.params["id"] as string;
-    const usuario_id = req.params["userId"] as string;
+ligasRouter.delete(
+  "/:id/membros/:userId",
+  authenticate,
+  requireRole("staff"),
+  async (req, res, next) => {
+    try {
+      const liga_id = req.params["id"] as string;
+      const usuario_id = req.params["userId"] as string;
 
-    await sql`
+      await sql`
       DELETE FROM liga_membros
       WHERE liga_id = ${liga_id} AND usuario_id = ${usuario_id}
     `;
 
-    res.status(204).send();
-  } catch (err) {
-    next(err);
-  }
-});
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // DELETE /ligas/:id — arquivar liga (staff)
 ligasRouter.delete("/:id", authenticate, requireRole("staff"), async (req, res, next) => {

@@ -1,13 +1,14 @@
 import { Router, type Router as IRouter } from "express";
+
+import { eventosRouter } from "./eventos.js";
 import { ligasRouter } from "./ligas.js";
-import { projetosRouter } from "./projetos.js";
+import { pendentesRouter } from "./pendentes.js";
 import { presencaRouter } from "./presenca.js";
+import { projetosRouter } from "./projetos.js";
+import { receitasRouter } from "./receitas.js";
+import { recursosRouter } from "./recursos.js";
 import { salasRouter } from "./salas.js";
 import { usuariosRouter } from "./usuarios.js";
-import { eventosRouter } from "./eventos.js";
-import { recursosRouter } from "./recursos.js";
-import { receitasRouter } from "./receitas.js";
-import { pendentesRouter } from "./pendentes.js";
 
 export const router: IRouter = Router();
 

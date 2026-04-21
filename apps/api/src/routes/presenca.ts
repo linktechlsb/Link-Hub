@@ -1,13 +1,17 @@
 import { Router, type Router as IRouter } from "express";
-import { authenticate } from "../middleware/auth.js";
+
 import { sql } from "../config/db.js";
+import { authenticate } from "../middleware/auth.js";
 
 export const presencaRouter: IRouter = Router();
 
 // GET /presenca?liga_id=&usuario_id=&periodo_inicio=&periodo_fim=
 presencaRouter.get("/", authenticate, async (req, res, next) => {
   try {
-    const { liga_id, usuario_id, periodo_inicio, periodo_fim } = req.query as Record<string, string>;
+    const { liga_id, usuario_id, periodo_inicio, periodo_fim } = req.query as Record<
+      string,
+      string
+    >;
 
     const presencas = await sql`
       SELECT p.*, row_to_json(e.*) AS evento
@@ -75,7 +79,10 @@ presencaRouter.patch("/:id", authenticate, async (req, res, next) => {
     const [presenca] = await sql`
       UPDATE presencas SET ${sql(campos)} WHERE id = ${id} RETURNING *
     `;
-    if (!presenca) { res.status(404).json({ error: "Registro não encontrado." }); return; }
+    if (!presenca) {
+      res.status(404).json({ error: "Registro não encontrado." });
+      return;
+    }
     res.json(presenca);
   } catch (err) {
     next(err);

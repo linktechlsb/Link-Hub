@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
-import { cn } from "@/lib/utils";
 import { Eye, EyeOff, Save, Lock, Briefcase, User, X, Camera } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+
 import { carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
+import { cn } from "@/lib/utils";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -90,7 +91,7 @@ function InputTexto({
     <div
       className={cn(
         "flex items-center border border-brand-gray rounded-md overflow-hidden",
-        readOnly && "bg-gray-50"
+        readOnly && "bg-gray-50",
       )}
     >
       {prefix && (
@@ -107,7 +108,7 @@ function InputTexto({
         onChange={(e) => onChange?.(e.target.value)}
         className={cn(
           "flex-1 px-3 py-2 text-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-navy/20",
-          readOnly && "text-muted-foreground cursor-default"
+          readOnly && "text-muted-foreground cursor-default",
         )}
       />
     </div>
@@ -165,11 +166,7 @@ function AbaPerfil({
           onClick={() => fileRef.current?.click()}
         >
           {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt="Avatar"
-              className="h-16 w-16 rounded-full object-cover"
-            />
+            <img src={avatarUrl} alt="Avatar" className="h-16 w-16 rounded-full object-cover" />
           ) : (
             <div className="h-16 w-16 rounded-full bg-navy text-white text-xl font-bold flex items-center justify-center">
               {iniciais}
@@ -213,7 +210,10 @@ function AbaPerfil({
         </Campo>
       </div>
 
-      <Campo label={`Bio — ${dados.bio.length}/160 caracteres`} dica="Aparece no seu perfil da plataforma">
+      <Campo
+        label={`Bio — ${dados.bio.length}/160 caracteres`}
+        dica="Aparece no seu perfil da plataforma"
+      >
         <textarea
           value={dados.bio}
           onChange={(e) => onChange("bio", e.target.value)}
@@ -271,7 +271,9 @@ function AbaDadosProfissionais({
 
       <Campo label="Liga que mentora" dica="Para alterar, entre em contato com o Staff">
         <div className="flex items-center gap-2 px-3 py-2 border border-brand-gray rounded-md bg-gray-50">
-          <span className={cn("text-xs font-bold px-2 py-0.5 rounded-md", ligaBadgeClass(dados.liga))}>
+          <span
+            className={cn("text-xs font-bold px-2 py-0.5 rounded-md", ligaBadgeClass(dados.liga))}
+          >
             {dados.liga}
           </span>
           <span className="text-xs text-muted-foreground">Liga {dados.liga}</span>
@@ -291,11 +293,12 @@ function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
   const [confirmar, setConfirmar] = useState("");
   const [mostrar, setMostrar] = useState(false);
 
-  const senhasValidas =
-    senhaAtual.length > 0 && novaSenha.length >= 6 && novaSenha === confirmar;
+  const senhasValidas = senhaAtual.length > 0 && novaSenha.length >= 6 && novaSenha === confirmar;
 
   function handleAtualizarSenha() {
-    setSenhaAtual(""); setNovaSenha(""); setConfirmar("");
+    setSenhaAtual("");
+    setNovaSenha("");
+    setConfirmar("");
     onToast("Senha atualizada com sucesso.");
   }
 
@@ -342,7 +345,7 @@ function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
                 "w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2",
                 confirmar && novaSenha !== confirmar
                   ? "border-red-400 focus:ring-red-200"
-                  : "border-brand-gray focus:ring-navy/20"
+                  : "border-brand-gray focus:ring-navy/20",
               )}
             />
             {confirmar && novaSenha !== confirmar && (
@@ -367,9 +370,9 @@ function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
 // ─── View principal ───────────────────────────────────────────────────────────
 
 const ABAS: { key: Aba; label: string; icon: React.ElementType }[] = [
-  { key: "perfil",       label: "Perfil",               icon: User },
-  { key: "profissional", label: "Dados profissionais",   icon: Briefcase },
-  { key: "seguranca",    label: "Segurança",             icon: Lock },
+  { key: "perfil", label: "Perfil", icon: User },
+  { key: "profissional", label: "Dados profissionais", icon: Briefcase },
+  { key: "seguranca", label: "Segurança", icon: Lock },
 ];
 
 const DADOS_INICIAIS: DadosUsuario = {
@@ -450,7 +453,9 @@ export function ContaProfessorView() {
     <div className="p-8 max-w-3xl">
       <div className="mb-6">
         <h1 className="font-display font-bold text-2xl text-navy">Minha conta</h1>
-        <p className="text-muted-foreground text-sm mt-1">Gerencie suas informações e preferências</p>
+        <p className="text-muted-foreground text-sm mt-1">
+          Gerencie suas informações e preferências
+        </p>
       </div>
 
       <div className="flex gap-1 border-b border-brand-gray mb-6 overflow-x-auto">
@@ -462,7 +467,7 @@ export function ContaProfessorView() {
               "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-colors",
               abaAtiva === key
                 ? "border-navy text-navy"
-                : "border-transparent text-muted-foreground hover:text-navy"
+                : "border-transparent text-muted-foreground hover:text-navy",
             )}
           >
             <Icon className="h-3.5 w-3.5" />
@@ -472,9 +477,24 @@ export function ContaProfessorView() {
       </div>
 
       <div className="bg-white border border-brand-gray rounded-lg p-6">
-        {abaAtiva === "perfil"       && <AbaPerfil dados={dados} avatarUrl={avatarUrl} uploadandoAvatar={uploadandoAvatar} onChange={alterarDado} onSalvar={salvarPerfil} onAvatarChange={handleAvatarChange} />}
-        {abaAtiva === "profissional" && <AbaDadosProfissionais dados={dados} onChange={alterarDado} onSalvar={() => exibirToast("Alterações salvas com sucesso.")} />}
-        {abaAtiva === "seguranca"    && <AbaSeguranca onToast={exibirToast} />}
+        {abaAtiva === "perfil" && (
+          <AbaPerfil
+            dados={dados}
+            avatarUrl={avatarUrl}
+            uploadandoAvatar={uploadandoAvatar}
+            onChange={alterarDado}
+            onSalvar={salvarPerfil}
+            onAvatarChange={handleAvatarChange}
+          />
+        )}
+        {abaAtiva === "profissional" && (
+          <AbaDadosProfissionais
+            dados={dados}
+            onChange={alterarDado}
+            onSalvar={() => exibirToast("Alterações salvas com sucesso.")}
+          />
+        )}
+        {abaAtiva === "seguranca" && <AbaSeguranca onToast={exibirToast} />}
       </div>
 
       {toast && <Toast mensagem={toast} onFechar={() => setToast(null)} />}

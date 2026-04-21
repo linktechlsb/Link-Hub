@@ -1,6 +1,9 @@
+import { X, UserPlus } from "lucide-react";
 import { useState, useEffect } from "react";
-import type { Liga } from "@link-leagues/types";
-import { supabase } from "@/lib/supabase";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -8,10 +11,9 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { X, UserPlus } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+
+import type { Liga } from "@link-leagues/types";
 
 interface MembroResumo {
   id: string;
@@ -59,7 +61,10 @@ export function LigaMembrosSheet({ open, onOpenChange, liga, onSalvo }: LigaMemb
   }, [open, liga]);
 
   useEffect(() => {
-    if (busca.length < 2) { setResultados([]); return; }
+    if (busca.length < 2) {
+      setResultados([]);
+      return;
+    }
     const timer = setTimeout(async () => {
       const token = await getToken();
       const res = await fetch(`/api/usuarios/busca?email=${encodeURIComponent(busca)}`, {

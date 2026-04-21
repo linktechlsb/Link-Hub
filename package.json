@@ -10,8 +10,13 @@
   "scripts": {
     "dev": "npm run dev --workspace=apps/web & npm run dev --workspace=apps/api",
     "build": "npm run build --workspace=apps/api && npm run build --workspace=apps/web",
-    "lint": "npm run lint --workspace=apps/web",
     "typecheck": "npm run typecheck --workspace=apps/api && npm run typecheck --workspace=apps/web",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "npm run test --workspaces --if-present",
+    "prepare": "husky",
     "clean": "rm -rf apps/*/dist packages/*/dist && rm -rf node_modules",
     "dev:web": "npm run dev --workspace=apps/web",
     "dev:api": "npm run dev --workspace=apps/api",
@@ -19,11 +24,35 @@
     "build:api": "npm run build --workspace=apps/api"
   },
   "devDependencies": {
+    "@eslint/js": "9.28.0",
+    "@types/node": "^22.10.7",
+    "@vitest/coverage-v8": "3.2.2",
+    "eslint": "9.28.0",
+    "eslint-config-prettier": "10.1.5",
+    "eslint-import-resolver-typescript": "3.10.1",
+    "eslint-plugin-import": "2.31.0",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "eslint-plugin-react-refresh": "0.4.20",
+    "globals": "16.2.0",
+    "husky": "9.1.7",
+    "lint-staged": "16.1.0",
+    "prettier": "3.5.3",
     "typescript": "^5.7.2",
-    "@types/node": "^22.10.7"
+    "typescript-eslint": "8.33.0",
+    "vitest": "3.2.2"
   },
   "engines": {
     "node": ">=20.0.0"
   },
-  "packageManager": "npm@11.5.2"
+  "packageManager": "npm@11.5.2",
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml,css}": [
+      "prettier --write"
+    ]
+  }
 }

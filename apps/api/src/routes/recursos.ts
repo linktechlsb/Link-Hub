@@ -1,6 +1,7 @@
 import { Router, type Router as IRouter } from "express";
-import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
+
 import { sql } from "../config/db.js";
+import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 
 export const recursosRouter: IRouter = Router();
 
@@ -68,18 +69,22 @@ recursosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (r
 });
 
 // PATCH /recursos/:id — atualiza um recurso (lider ou staff)
-recursosRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
-  try {
-    const id = req.params["id"] as string;
-    const { titulo, tipo, url, icone, cor } = req.body as {
-      titulo?: string;
-      tipo?: string;
-      url?: string;
-      icone?: string;
-      cor?: string;
-    };
+recursosRouter.patch(
+  "/:id",
+  authenticate,
+  requireRole("staff", "diretor"),
+  async (req, res, next) => {
+    try {
+      const id = req.params["id"] as string;
+      const { titulo, tipo, url, icone, cor } = req.body as {
+        titulo?: string;
+        tipo?: string;
+        url?: string;
+        icone?: string;
+        cor?: string;
+      };
 
-    const [recurso] = await sql`
+      const [recurso] = await sql`
       UPDATE recursos
       SET
         titulo = COALESCE(${titulo ?? null}, titulo),
@@ -91,26 +96,32 @@ recursosRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), asyn
       RETURNING id, liga_id, titulo, tipo, url, icone, cor, criado_por, criado_em
     `;
 
-    if (!recurso) {
-      res.status(404).json({ error: "Recurso não encontrado." });
-      return;
-    }
+      if (!recurso) {
+        res.status(404).json({ error: "Recurso não encontrado." });
+        return;
+      }
 
-    res.json(recurso);
-  } catch (err) {
-    next(err);
-  }
-});
+      res.json(recurso);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // DELETE /recursos/:id — remove um recurso (lider ou staff)
-recursosRouter.delete("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
-  try {
-    const id = req.params["id"] as string;
+recursosRouter.delete(
+  "/:id",
+  authenticate,
+  requireRole("staff", "diretor"),
+  async (req, res, next) => {
+    try {
+      const id = req.params["id"] as string;
 
-    await sql`DELETE FROM recursos WHERE id = ${id}`;
+      await sql`DELETE FROM recursos WHERE id = ${id}`;
 
-    res.status(204).send();
-  } catch (err) {
-    next(err);
-  }
-});
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  },
+);

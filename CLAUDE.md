@@ -10,15 +10,15 @@ O repositório é um **monorepo npm workspaces** com frontend React e API Expres
 
 ## Stack
 
-| Camada | Tecnologia |
-|--------|-----------|
-| Frontend | React 18.3 + TypeScript + Vite |
-| Estilização | Tailwind CSS v3 + shadcn/ui |
-| Roteamento | React Router v6 |
-| Backend | Node.js + Express + TypeScript |
-| Banco de Dados | PostgreSQL via Supabase |
-| Autenticação | Supabase Auth + JWT |
-| Monorepo | npm workspaces |
+| Camada         | Tecnologia                     |
+| -------------- | ------------------------------ |
+| Frontend       | React 18.3 + TypeScript + Vite |
+| Estilização    | Tailwind CSS v3 + shadcn/ui    |
+| Roteamento     | React Router v6                |
+| Backend        | Node.js + Express + TypeScript |
+| Banco de Dados | PostgreSQL via Supabase        |
+| Autenticação   | Supabase Auth + JWT            |
+| Monorepo       | npm workspaces                 |
 
 ---
 
@@ -70,16 +70,17 @@ A API usa `tsx watch` em dev (hot reload). O frontend usa Vite com HMR.
 
 ### Cores da Marca
 
-| Token | Hex | Classe Tailwind | Uso |
-|-------|-----|-----------------|-----|
-| Navy | `#10284E` | `bg-navy` / `text-navy` | Principal — sidebar, botões primários, headings |
-| Link Blue | `#546484` | `bg-link-blue` / `text-link-blue` | Secundário — elementos de suporte |
-| Amarelo | `#FEC641` | `bg-brand-yellow` | Apoio — destaques, alertas, badges |
-| Cinza | `#EAEAEA` | `bg-brand-gray` / `border-brand-gray` | Neutro — bordas, fundos suaves |
+| Token     | Hex       | Classe Tailwind                       | Uso                                             |
+| --------- | --------- | ------------------------------------- | ----------------------------------------------- |
+| Navy      | `#10284E` | `bg-navy` / `text-navy`               | Principal — sidebar, botões primários, headings |
+| Link Blue | `#546484` | `bg-link-blue` / `text-link-blue`     | Secundário — elementos de suporte               |
+| Amarelo   | `#FEC641` | `bg-brand-yellow`                     | Apoio — destaques, alertas, badges              |
+| Cinza     | `#EAEAEA` | `bg-brand-gray` / `border-brand-gray` | Neutro — bordas, fundos suaves                  |
 
 Navy tem escala completa (`navy-50` a `navy-900`). Link Blue tem variantes `link-blue-light` e `link-blue-dark`.
 
 Os tokens semânticos do shadcn/ui mapeiam para a marca:
+
 - `primary` → navy (`#10284E`)
 - `secondary` → link-blue (`#546484`)
 - `accent` → brand-yellow (`#FEC641`)
@@ -95,6 +96,7 @@ Sempre use `font-display font-bold` para títulos de página. Nunca hardcode nom
 ### Padrão de Layout de Página
 
 Toda página dentro do `AppLayout` segue:
+
 ```tsx
 <div className="p-8">
   <div className="mb-6">
@@ -116,15 +118,16 @@ Toda página dentro do `AppLayout` segue:
 
 ## Papéis e Permissões
 
-| Papel | Permissões |
-|-------|-----------|
-| `admin` | Acesso total — ligas, projetos, presença, salas e usuários |
-| `lider` | Liga própria — gerenciar projetos, presença e reservas de salas |
-| `membro` | Leitura — projetos e presença da própria liga |
+| Papel    | Permissões                                                      |
+| -------- | --------------------------------------------------------------- |
+| `admin`  | Acesso total — ligas, projetos, presença, salas e usuários      |
+| `lider`  | Liga própria — gerenciar projetos, presença e reservas de salas |
+| `membro` | Leitura — projetos e presença da própria liga                   |
 
 Papéis ficam em `user_metadata.role` no Supabase e são expostos via middleware `authenticate` como `req.user.role`.
 
 Aplicação de papéis na API usa dois middlewares de `src/middleware/auth.ts`:
+
 - `authenticate` — valida o Bearer token, popula `req.user`
 - `requireRole(...roles)` — bloqueia a rota para papéis específicos
 
@@ -134,18 +137,18 @@ Aplicação de papéis na API usa dois middlewares de `src/middleware/auth.ts`:
 
 ### Onde Colocar Cada Coisa
 
-| O quê | Onde |
-|-------|------|
+| O quê                                        | Onde                                           |
+| -------------------------------------------- | ---------------------------------------------- |
 | Tipos e interfaces TypeScript compartilhados | `packages/types/src/` — um arquivo por domínio |
-| Funções utilitárias puras (sem UI) | `packages/utils/src/index.ts` |
-| Componentes base de UI compartilhados | `packages/ui/src/` |
-| Componentes de página do frontend | `apps/web/src/pages/<modulo>/` |
-| Layouts do frontend | `apps/web/src/layouts/` |
-| Roteamento do frontend | `apps/web/src/router/index.tsx` |
-| Cliente Supabase do frontend (anon) | `apps/web/src/lib/supabase.ts` |
-| Handlers de rota da API | `apps/api/src/routes/<modulo>.ts` |
-| Middleware da API | `apps/api/src/middleware/` |
-| Clientes Supabase da API | `apps/api/src/config/supabase.ts` |
+| Funções utilitárias puras (sem UI)           | `packages/utils/src/index.ts`                  |
+| Componentes base de UI compartilhados        | `packages/ui/src/`                             |
+| Componentes de página do frontend            | `apps/web/src/pages/<modulo>/`                 |
+| Layouts do frontend                          | `apps/web/src/layouts/`                        |
+| Roteamento do frontend                       | `apps/web/src/router/index.tsx`                |
+| Cliente Supabase do frontend (anon)          | `apps/web/src/lib/supabase.ts`                 |
+| Handlers de rota da API                      | `apps/api/src/routes/<modulo>.ts`              |
+| Middleware da API                            | `apps/api/src/middleware/`                     |
+| Clientes Supabase da API                     | `apps/api/src/config/supabase.ts`              |
 
 ### Adicionando um Novo Módulo
 
@@ -178,6 +181,7 @@ router.get("/<path>", authenticate, requireRole("admin"), async (req, res, next)
 ### Frontend (client anon)
 
 `apps/web/src/lib/supabase.ts` exporta um único client `supabase` inicializado com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. Use para:
+
 - `supabase.auth.signInWithPassword()` — login
 - `supabase.auth.signOut()` — logout
 - `supabase.auth.onAuthStateChange()` — gerenciamento de sessão
@@ -187,20 +191,21 @@ O frontend **não** acessa o banco diretamente — todo fetch de dados vai pela 
 ### API (service role + anon)
 
 `apps/api/src/config/supabase.ts` exporta dois clients:
+
 - `supabaseAdmin` — service role key, bypassa Row Level Security. Use para **todas** as operações de banco nos handlers.
 - `supabaseAnon` — usado **somente** em `middleware/auth.ts` para chamar `supabaseAnon.auth.getUser(token)`. Nunca use para queries de banco.
 
 ### Variáveis de Ambiente
 
-| Variável | Localização | Descrição |
-|----------|------------|-----------|
-| `VITE_SUPABASE_URL` | `apps/web/.env.local` | URL do projeto Supabase |
-| `VITE_SUPABASE_ANON_KEY` | `apps/web/.env.local` | Chave anon pública |
-| `SUPABASE_URL` | `apps/api/.env` | URL do projeto Supabase |
-| `SUPABASE_ANON_KEY` | `apps/api/.env` | Chave anon (somente validação de token) |
-| `SUPABASE_SERVICE_ROLE_KEY` | `apps/api/.env` | Service role key (nunca expor ao frontend) |
-| `API_PORT` | `apps/api/.env` | Porta da API (padrão: 3001) |
-| `CORS_ORIGIN` | `apps/api/.env` | Origem permitida (padrão: http://localhost:3000) |
+| Variável                    | Localização           | Descrição                                        |
+| --------------------------- | --------------------- | ------------------------------------------------ |
+| `VITE_SUPABASE_URL`         | `apps/web/.env.local` | URL do projeto Supabase                          |
+| `VITE_SUPABASE_ANON_KEY`    | `apps/web/.env.local` | Chave anon pública                               |
+| `SUPABASE_URL`              | `apps/api/.env`       | URL do projeto Supabase                          |
+| `SUPABASE_ANON_KEY`         | `apps/api/.env`       | Chave anon (somente validação de token)          |
+| `SUPABASE_SERVICE_ROLE_KEY` | `apps/api/.env`       | Service role key (nunca expor ao frontend)       |
+| `API_PORT`                  | `apps/api/.env`       | Porta da API (padrão: 3001)                      |
+| `CORS_ORIGIN`               | `apps/api/.env`       | Origem permitida (padrão: http://localhost:3000) |
 
 ---
 
@@ -218,13 +223,13 @@ O frontend **não** acessa o banco diretamente — todo fetch de dados vai pela 
 
 ## Módulos
 
-| Módulo | Rota Frontend | Endpoint API | Descrição |
-|--------|--------------|--------------|-----------|
-| Ligas | `/ligas` | `/ligas` | Gestão de ligas acadêmicas |
-| Projetos | `/projetos` | `/projetos` | Acompanhamento de projetos por liga |
-| Presença | `/presenca` | `/presenca` | Controle de presença por evento |
-| Progressão | `/dashboard` | — | Visão geral do progresso dos projetos |
-| Salas | `/salas` | `/salas` | Agendamento e reservas de salas |
+| Módulo     | Rota Frontend | Endpoint API | Descrição                             |
+| ---------- | ------------- | ------------ | ------------------------------------- |
+| Ligas      | `/ligas`      | `/ligas`     | Gestão de ligas acadêmicas            |
+| Projetos   | `/projetos`   | `/projetos`  | Acompanhamento de projetos por liga   |
+| Presença   | `/presenca`   | `/presenca`  | Controle de presença por evento       |
+| Progressão | `/dashboard`  | —            | Visão geral do progresso dos projetos |
+| Salas      | `/salas`      | `/salas`     | Agendamento e reservas de salas       |
 
 ---
 

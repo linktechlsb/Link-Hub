@@ -1,13 +1,16 @@
+import { Camera } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { Liga } from "@link-leagues/types";
+
 import { supabase } from "@/lib/supabase";
-import { Camera } from "lucide-react";
-import { VisaoGeralTab } from "./tabs/VisaoGeralTab";
+
 import { MembrosTab } from "./tabs/MembrosTab";
 import { PresencaTab } from "./tabs/PresencaTab";
 import { ProjetosTab } from "./tabs/ProjetosTab";
 import { RecursosTab } from "./tabs/RecursosTab";
+import { VisaoGeralTab } from "./tabs/VisaoGeralTab";
+
+import type { Liga } from "@link-leagues/types";
 
 type AbaId = "visao-geral" | "membros" | "presenca" | "projetos" | "recursos";
 
@@ -54,7 +57,7 @@ export function LigaDetailPage() {
 
       if (ligaRes.ok) setLiga(await ligaRes.json());
       if (minhaRes.ok) {
-        const minha = await minhaRes.json() as Liga;
+        const minha = (await minhaRes.json()) as Liga;
         setMinhaLigaId(minha.id);
       }
 
@@ -86,8 +89,8 @@ export function LigaDetailPage() {
         body: formData,
       });
       if (res.ok) {
-        const ligaAtualizada = await res.json() as Liga;
-        setLiga((prev) => prev ? { ...prev, imagem_url: ligaAtualizada.imagem_url } : prev);
+        const ligaAtualizada = (await res.json()) as Liga;
+        setLiga((prev) => (prev ? { ...prev, imagem_url: ligaAtualizada.imagem_url } : prev));
       }
     } finally {
       setUploadandoImagem(false);
@@ -161,7 +164,11 @@ export function LigaDetailPage() {
           <div>
             <h1 className="font-display font-bold text-lg text-white leading-tight">{liga.nome}</h1>
             <p className="text-xs text-white/70 mt-0.5">
-              Diretor: {liga.diretores && liga.diretores.length > 0 ? liga.diretores.map((d) => primeiroUltimoNome(d.nome)).join(", ") : "—"} · {membros.length} membros
+              Diretor:{" "}
+              {liga.diretores && liga.diretores.length > 0
+                ? liga.diretores.map((d) => primeiroUltimoNome(d.nome)).join(", ")
+                : "—"}{" "}
+              · {membros.length} membros
             </p>
           </div>
           {ehMinhaLiga && (
@@ -191,7 +198,9 @@ export function LigaDetailPage() {
 
       {/* Conteúdo da aba */}
       <div className="flex-1 overflow-y-auto p-6">
-        {abaAtiva === "visao-geral" && <VisaoGeralTab ligaId={liga.id} diretores={liga.diretores ?? []} />}
+        {abaAtiva === "visao-geral" && (
+          <VisaoGeralTab ligaId={liga.id} diretores={liga.diretores ?? []} />
+        )}
         {abaAtiva === "membros" && <MembrosTab ligaId={liga.id} />}
         {abaAtiva === "presenca" && <PresencaTab ligaId={liga.id} />}
         {abaAtiva === "projetos" && <ProjetosTab ligaId={liga.id} />}

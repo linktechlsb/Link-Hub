@@ -41,8 +41,8 @@ export function Button({
           "disabled:opacity-50 disabled:cursor-not-allowed",
           variantClasses[variant],
           sizeClasses[size],
-          className
-        )
+          className,
+        ),
       )}
     >
       {children}

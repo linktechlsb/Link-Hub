@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
 import * as Icons from "lucide-react";
-import type { LucideProps } from "lucide-react";
-import type { Recurso } from "@link-leagues/types";
+import { useEffect, useState } from "react";
+
 import { supabase } from "@/lib/supabase";
+
+import type { Recurso } from "@link-leagues/types";
+import type { LucideProps } from "lucide-react";
 
 async function getToken(): Promise<string> {
   const { data } = await supabase.auth.getSession();
@@ -17,7 +19,9 @@ function toPascalCase(str: string): string {
 }
 
 function DynamicIcon({ name, ...props }: { name: string } & LucideProps) {
-  const Icon = (Icons as unknown as Record<string, React.ComponentType<LucideProps>>)[toPascalCase(name)];
+  const Icon = (Icons as unknown as Record<string, React.ComponentType<LucideProps>>)[
+    toPascalCase(name)
+  ];
   if (!Icon) {
     const Fallback = Icons.Link;
     return <Fallback {...props} />;

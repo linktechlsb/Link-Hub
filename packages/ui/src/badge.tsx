@@ -24,8 +24,8 @@ export function Badge({ variant = "default", children, className }: BadgeProps) 
         clsx(
           "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
           variantClasses[variant],
-          className
-        )
+          className,
+        ),
       )}
     >
       {children}

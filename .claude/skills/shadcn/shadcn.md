@@ -14,6 +14,7 @@ cd apps/web && npx shadcn@latest add <componente>
 ```
 
 Exemplos:
+
 ```bash
 npx shadcn@latest add dialog
 npx shadcn@latest add table
@@ -42,12 +43,12 @@ Use a flag `--yes` para aceitar automaticamente sem prompts interativos.
 
 Ao usar componentes shadcn, aplique sempre os tokens de marca do projeto:
 
-| Token semântico | Mapeamento | Classe Tailwind direta |
-|-----------------|------------|------------------------|
-| `primary` | Navy `#10284E` | `bg-navy` / `text-navy` |
-| `secondary` | Link Blue `#546484` | `bg-link-blue` / `text-link-blue` |
-| `accent` | Amarelo `#FEC641` | `bg-brand-yellow` |
-| `muted` / `border` | Cinza `#EAEAEA` | `bg-brand-gray` / `border-brand-gray` |
+| Token semântico    | Mapeamento          | Classe Tailwind direta                |
+| ------------------ | ------------------- | ------------------------------------- |
+| `primary`          | Navy `#10284E`      | `bg-navy` / `text-navy`               |
+| `secondary`        | Link Blue `#546484` | `bg-link-blue` / `text-link-blue`     |
+| `accent`           | Amarelo `#FEC641`   | `bg-brand-yellow`                     |
+| `muted` / `border` | Cinza `#EAEAEA`     | `bg-brand-gray` / `border-brand-gray` |
 
 ## Ícones
 
@@ -58,6 +59,7 @@ Use **somente Lucide React** (`lucide-react`) — nunca instale outras bibliotec
 O componente `Sidebar` do shadcn já está instalado em `apps/web/src/components/ui/sidebar.tsx`.
 
 Imports disponíveis:
+
 ```tsx
 import {
   Sidebar,
@@ -72,7 +74,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 ```
 
 O layout atual da aplicação usa `apps/web/src/layouts/AppLayout.tsx` — integre o `SidebarProvider` nele se for migrar para o sidebar shadcn.

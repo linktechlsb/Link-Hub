@@ -1,9 +1,17 @@
-import { useState } from "react";
-import { cn } from "@/lib/utils";
 import {
-  List, LayoutGrid, X, Clock, AlertTriangle,
-  CheckCircle, XCircle, FolderOpen, ChevronRight,
+  List,
+  LayoutGrid,
+  X,
+  Clock,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  FolderOpen,
+  ChevronRight,
 } from "lucide-react";
+import { useState } from "react";
+
+import { cn } from "@/lib/utils";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -102,9 +110,7 @@ const MOCK_PROJETOS_PROFESSOR: ProjetoProfessor[] = [
     receita: 1800,
     prazo: "2026-04-10", // prazo vencido!
     submissaoEm: "2026-04-13", // 1 dia atrás
-    membros: [
-      { id: "m3", nome: "Ana Lima", iniciais: "AL" },
-    ],
+    membros: [{ id: "m3", nome: "Ana Lima", iniciais: "AL" }],
     historico: [
       { etapa: "Criação", acao: "submetido", por: "Ana Lima", em: "2026-04-11" },
       { etapa: "Professor", acao: "submetido", por: "Ana Lima", em: "2026-04-13" },
@@ -147,13 +153,17 @@ const MOCK_PROJETOS_PROFESSOR: ProjetoProfessor[] = [
     prazo: "2026-06-01",
     motivoRecusa: "Escopo fora do prazo do semestre.",
     submissaoEm: "2026-03-15",
-    membros: [
-      { id: "m2", nome: "João Rocha", iniciais: "JR" },
-    ],
+    membros: [{ id: "m2", nome: "João Rocha", iniciais: "JR" }],
     historico: [
       { etapa: "Criação", acao: "submetido", por: "João Rocha", em: "2026-03-10" },
       { etapa: "Professor", acao: "submetido", por: "João Rocha", em: "2026-03-15" },
-      { etapa: "Professor", acao: "recusado", por: "Prof. Responsável", em: "2026-03-20", motivo: "Escopo fora do prazo do semestre." },
+      {
+        etapa: "Professor",
+        acao: "recusado",
+        por: "Prof. Responsável",
+        em: "2026-03-20",
+        motivo: "Escopo fora do prazo do semestre.",
+      },
     ],
   },
 ];
@@ -193,24 +203,50 @@ function Avatar({ iniciais, title }: { iniciais: string; title?: string }) {
   );
 }
 
-function StatusBadge({ statusGlobal, aprovacaoProfessor }: { statusGlobal: ProjetoStatusGlobal; aprovacaoProfessor: StatusAprovacao }) {
+function StatusBadge({
+  statusGlobal,
+  aprovacaoProfessor,
+}: {
+  statusGlobal: ProjetoStatusGlobal;
+  aprovacaoProfessor: StatusAprovacao;
+}) {
   if (statusGlobal === "aprovado") {
-    return <span className={cn("text-xs font-bold px-2 py-0.5 rounded-md", "bg-green-100 text-green-700")}>Aprovado</span>;
+    return (
+      <span
+        className={cn("text-xs font-bold px-2 py-0.5 rounded-md", "bg-green-100 text-green-700")}
+      >
+        Aprovado
+      </span>
+    );
   }
   if (statusGlobal === "rejeitado") {
-    return <span className={cn("text-xs font-bold px-2 py-0.5 rounded-md", "bg-red-100 text-red-700")}>Recusado por mim</span>;
+    return (
+      <span className={cn("text-xs font-bold px-2 py-0.5 rounded-md", "bg-red-100 text-red-700")}>
+        Recusado por mim
+      </span>
+    );
   }
   // em_aprovacao
   if (aprovacaoProfessor === "aprovado") {
-    return <span className={cn("text-xs font-bold px-2 py-0.5 rounded-md", "bg-blue-100 text-blue-700")}>Aprovado por mim</span>;
+    return (
+      <span className={cn("text-xs font-bold px-2 py-0.5 rounded-md", "bg-blue-100 text-blue-700")}>
+        Aprovado por mim
+      </span>
+    );
   }
-  return <span className={cn("text-xs font-bold px-2 py-0.5 rounded-md", "bg-yellow-100 text-yellow-700")}>Ag. Professor</span>;
+  return (
+    <span
+      className={cn("text-xs font-bold px-2 py-0.5 rounded-md", "bg-yellow-100 text-yellow-700")}
+    >
+      Ag. Professor
+    </span>
+  );
 }
 
 const APROVACAO_STYLE: Record<StatusAprovacao, { text: string; classe: string }> = {
-  pendente:  { text: "Pendente",  classe: "text-yellow-600" },
-  aprovado:  { text: "Aprovado",  classe: "text-green-600" },
-  rejeitado: { text: "Recusado",  classe: "text-red-600" },
+  pendente: { text: "Pendente", classe: "text-yellow-600" },
+  aprovado: { text: "Aprovado", classe: "text-green-600" },
+  rejeitado: { text: "Recusado", classe: "text-red-600" },
 };
 
 function AprovacaoIndicador({ label, status }: { label: string; status: StatusAprovacao }) {
@@ -260,7 +296,10 @@ function PainelDetalhes({
   onFechar: () => void;
 }) {
   const dias = diasAguardando(projeto.submissaoEm);
-  const urgente = projeto.aprovacaoProfessor === "pendente" && projeto.statusGlobal === "em_aprovacao" && dias > 7;
+  const urgente =
+    projeto.aprovacaoProfessor === "pendente" &&
+    projeto.statusGlobal === "em_aprovacao" &&
+    dias > 7;
 
   return (
     <div className="bg-white border border-brand-gray rounded-lg p-6 mx-1">
@@ -284,19 +323,28 @@ function PainelDetalhes({
           <p className="text-navy mt-0.5">{projeto.liga}</p>
         </div>
         <div>
-          <span className="text-xs font-bold text-link-blue uppercase tracking-wider">Submetido por</span>
+          <span className="text-xs font-bold text-link-blue uppercase tracking-wider">
+            Submetido por
+          </span>
           <p className="text-navy mt-0.5">{projeto.submetidoPor}</p>
         </div>
         {projeto.receita !== undefined && (
           <div>
-            <span className="text-xs font-bold text-link-blue uppercase tracking-wider">Receita estimada</span>
+            <span className="text-xs font-bold text-link-blue uppercase tracking-wider">
+              Receita estimada
+            </span>
             <p className="text-navy mt-0.5">{formatarReceita(projeto.receita)}</p>
           </div>
         )}
         {projeto.prazo && (
           <div>
             <span className="text-xs font-bold text-link-blue uppercase tracking-wider">Prazo</span>
-            <p className={cn("mt-0.5 font-medium", prazoVencido(projeto.prazo) ? "text-red-600" : "text-navy")}>
+            <p
+              className={cn(
+                "mt-0.5 font-medium",
+                prazoVencido(projeto.prazo) ? "text-red-600" : "text-navy",
+              )}
+            >
               {formatarData(projeto.prazo)}
               {prazoVencido(projeto.prazo) && " — vencido"}
             </p>
@@ -305,7 +353,10 @@ function PainelDetalhes({
         <div>
           <span className="text-xs font-bold text-link-blue uppercase tracking-wider">Status</span>
           <p className="mt-0.5">
-            <StatusBadge statusGlobal={projeto.statusGlobal} aprovacaoProfessor={projeto.aprovacaoProfessor} />
+            <StatusBadge
+              statusGlobal={projeto.statusGlobal}
+              aprovacaoProfessor={projeto.aprovacaoProfessor}
+            />
           </p>
         </div>
         <div>
@@ -323,14 +374,18 @@ function PainelDetalhes({
 
       {projeto.observacao && (
         <div className="mb-4">
-          <span className="text-xs font-bold text-link-blue uppercase tracking-wider">Observação</span>
+          <span className="text-xs font-bold text-link-blue uppercase tracking-wider">
+            Observação
+          </span>
           <p className="text-sm text-muted-foreground mt-0.5">{projeto.observacao}</p>
         </div>
       )}
 
       {projeto.motivoRecusa && (
         <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-3">
-          <span className="text-xs font-bold text-red-700 uppercase tracking-wider">Motivo da recusa</span>
+          <span className="text-xs font-bold text-red-700 uppercase tracking-wider">
+            Motivo da recusa
+          </span>
           <p className="text-sm text-red-700 mt-0.5">{projeto.motivoRecusa}</p>
         </div>
       )}
@@ -341,7 +396,10 @@ function PainelDetalhes({
           <div className="flex gap-2 mt-2 flex-wrap">
             {projeto.membros.map((m) => (
               <div key={m.id} className="flex items-center gap-1.5">
-                <div className="h-7 w-7 rounded-full bg-navy text-white text-[10px] font-bold flex items-center justify-center" title={m.nome}>
+                <div
+                  className="h-7 w-7 rounded-full bg-navy text-white text-[10px] font-bold flex items-center justify-center"
+                  title={m.nome}
+                >
                   {m.iniciais}
                 </div>
                 <span className="text-xs text-navy">{m.nome}</span>
@@ -353,16 +411,21 @@ function PainelDetalhes({
 
       {projeto.historico && projeto.historico.length > 0 && (
         <div>
-          <span className="text-xs font-bold text-link-blue uppercase tracking-wider">Histórico de aprovações</span>
+          <span className="text-xs font-bold text-link-blue uppercase tracking-wider">
+            Histórico de aprovações
+          </span>
           <div className="mt-2 space-y-2">
             {projeto.historico.map((h, i) => (
               <div key={i} className="flex items-start gap-2 text-sm">
                 <ChevronRight className="h-3.5 w-3.5 mt-0.5 text-link-blue shrink-0" />
                 <div>
                   <span className="font-medium text-navy">{h.etapa}</span>
-                  <span className="text-muted-foreground"> · {h.acao} por {h.por} em {formatarData(h.em)}</span>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    · {h.acao} por {h.por} em {formatarData(h.em)}
+                  </span>
                   {h.motivo && (
-                    <p className="text-xs text-red-600 mt-0.5">"{h.motivo}"</p>
+                    <p className="text-xs text-red-600 mt-0.5">&quot;{h.motivo}&quot;</p>
                   )}
                 </div>
               </div>
@@ -441,14 +504,20 @@ type FiltroAbaProfessor = "aguardando" | "aprovados" | "recusados";
 
 const COLUNAS_PROFESSOR: { id: FiltroAbaProfessor; label: string; borderClass: string }[] = [
   { id: "aguardando", label: "Aguardando minha decisão", borderClass: "border-yellow-400" },
-  { id: "aprovados",  label: "Aprovados por mim",        borderClass: "border-blue-400" },
-  { id: "recusados",  label: "Recusados por mim",        borderClass: "border-red-400" },
+  { id: "aprovados", label: "Aprovados por mim", borderClass: "border-blue-400" },
+  { id: "recusados", label: "Recusados por mim", borderClass: "border-red-400" },
 ];
 
-function filtrarProjetos(projetos: ProjetoProfessor[], filtro: FiltroAbaProfessor): ProjetoProfessor[] {
-  if (filtro === "aguardando") return projetos.filter((p) => p.aprovacaoProfessor === "pendente" && p.statusGlobal === "em_aprovacao");
-  if (filtro === "aprovados")  return projetos.filter((p) => p.aprovacaoProfessor === "aprovado");
-  if (filtro === "recusados")  return projetos.filter((p) => p.aprovacaoProfessor === "rejeitado");
+function filtrarProjetos(
+  projetos: ProjetoProfessor[],
+  filtro: FiltroAbaProfessor,
+): ProjetoProfessor[] {
+  if (filtro === "aguardando")
+    return projetos.filter(
+      (p) => p.aprovacaoProfessor === "pendente" && p.statusGlobal === "em_aprovacao",
+    );
+  if (filtro === "aprovados") return projetos.filter((p) => p.aprovacaoProfessor === "aprovado");
+  if (filtro === "recusados") return projetos.filter((p) => p.aprovacaoProfessor === "rejeitado");
   return projetos;
 }
 
@@ -460,7 +529,7 @@ export function ProjetosProfessorView() {
       const da = a.prazo ?? "9999-99-99";
       const db = b.prazo ?? "9999-99-99";
       return da.localeCompare(db);
-    })
+    }),
   );
   const [filtroAtivo, setFiltroAtivo] = useState<FiltroAbaProfessor>("aguardando");
   const [visualizacao, setVisualizacao] = useState<"lista" | "kanban">("kanban");
@@ -469,9 +538,11 @@ export function ProjetosProfessorView() {
 
   // ── Contadores para os pills
   const contadores = {
-    aguardando: projetos.filter((p) => p.aprovacaoProfessor === "pendente" && p.statusGlobal === "em_aprovacao").length,
-    aprovados:  projetos.filter((p) => p.aprovacaoProfessor === "aprovado").length,
-    recusados:  projetos.filter((p) => p.aprovacaoProfessor === "rejeitado").length,
+    aguardando: projetos.filter(
+      (p) => p.aprovacaoProfessor === "pendente" && p.statusGlobal === "em_aprovacao",
+    ).length,
+    aprovados: projetos.filter((p) => p.aprovacaoProfessor === "aprovado").length,
+    recusados: projetos.filter((p) => p.aprovacaoProfessor === "rejeitado").length,
   };
 
   // ── Ações
@@ -481,8 +552,12 @@ export function ProjetosProfessorView() {
         if (p.id !== id) return p;
         const novoStatus: ProjetoStatusGlobal =
           p.aprovacaoStaff === "aprovado" ? "aprovado" : "em_aprovacao";
-        return { ...p, aprovacaoProfessor: "aprovado" as StatusAprovacao, statusGlobal: novoStatus };
-      })
+        return {
+          ...p,
+          aprovacaoProfessor: "aprovado" as StatusAprovacao,
+          statusGlobal: novoStatus,
+        };
+      }),
     );
     setSelecionado(null);
   }
@@ -490,13 +565,15 @@ export function ProjetosProfessorView() {
   function recusar(id: string, motivo: string) {
     setProjetos((prev) =>
       prev.map((p) =>
-        p.id !== id ? p : {
-          ...p,
-          aprovacaoProfessor: "rejeitado" as StatusAprovacao,
-          statusGlobal: "rejeitado" as ProjetoStatusGlobal,
-          motivoRecusa: motivo,
-        }
-      )
+        p.id !== id
+          ? p
+          : {
+              ...p,
+              aprovacaoProfessor: "rejeitado" as StatusAprovacao,
+              statusGlobal: "rejeitado" as ProjetoStatusGlobal,
+              motivoRecusa: motivo,
+            },
+      ),
     );
     setRecusandoId(null);
     setSelecionado(null);
@@ -505,9 +582,7 @@ export function ProjetosProfessorView() {
   // ── Projetos filtrados
   const projetosFiltrados = filtrarProjetos(projetos, filtroAtivo);
 
-  const projetoRecusando = recusandoId
-    ? projetos.find((p) => p.id === recusandoId)
-    : null;
+  const projetoRecusando = recusandoId ? projetos.find((p) => p.id === recusandoId) : null;
 
   // ── Subtítulo dinâmico
   const qtdAguardando = contadores.aguardando;
@@ -533,7 +608,7 @@ export function ProjetosProfessorView() {
               "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded transition-colors",
               visualizacao === "kanban"
                 ? "bg-white text-navy shadow-sm"
-                : "text-link-blue hover:text-navy"
+                : "text-link-blue hover:text-navy",
             )}
           >
             <LayoutGrid className="h-3.5 w-3.5" />
@@ -545,7 +620,7 @@ export function ProjetosProfessorView() {
               "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded transition-colors",
               visualizacao === "lista"
                 ? "bg-white text-navy shadow-sm"
-                : "text-link-blue hover:text-navy"
+                : "text-link-blue hover:text-navy",
             )}
           >
             <List className="h-3.5 w-3.5" />
@@ -559,12 +634,15 @@ export function ProjetosProfessorView() {
         {COLUNAS_PROFESSOR.map(({ id, label }) => (
           <button
             key={id}
-            onClick={() => { setFiltroAtivo(id); setSelecionado(null); }}
+            onClick={() => {
+              setFiltroAtivo(id);
+              setSelecionado(null);
+            }}
             className={cn(
               "flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full border transition-colors",
               filtroAtivo === id
                 ? "bg-navy text-white border-navy"
-                : "bg-white text-navy border-brand-gray hover:border-navy/40"
+                : "bg-white text-navy border-brand-gray hover:border-navy/40",
             )}
           >
             {label}
@@ -575,8 +653,8 @@ export function ProjetosProfessorView() {
                   filtroAtivo === id
                     ? "bg-white/20 text-white"
                     : id === "aguardando"
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-gray-100 text-gray-600"
+                      ? "bg-yellow-100 text-yellow-700"
+                      : "bg-gray-100 text-gray-600",
                 )}
               >
                 {contadores[id]}
@@ -606,14 +684,16 @@ export function ProjetosProfessorView() {
       )}
 
       {/* Painel de detalhes — fora do fluxo da tabela */}
-      {selecionado && visualizacao === "kanban" && (() => {
-        const p = projetos.find((x) => x.id === selecionado);
-        return p ? (
-          <div className="mt-4">
-            <PainelDetalhes projeto={p} onFechar={() => setSelecionado(null)} />
-          </div>
-        ) : null;
-      })()}
+      {selecionado &&
+        visualizacao === "kanban" &&
+        (() => {
+          const p = projetos.find((x) => x.id === selecionado);
+          return p ? (
+            <div className="mt-4">
+              <PainelDetalhes projeto={p} onFechar={() => setSelecionado(null)} />
+            </div>
+          ) : null;
+        })()}
 
       {/* Modal de recusa */}
       {projetoRecusando && (
@@ -676,7 +756,8 @@ function ListaView({
           {projetos.map((p) => {
             const isAberto = selecionado === p.id;
             const dias = diasAguardando(p.submissaoEm);
-            const urgente = p.aprovacaoProfessor === "pendente" && p.statusGlobal === "em_aprovacao" && dias > 7;
+            const urgente =
+              p.aprovacaoProfessor === "pendente" && p.statusGlobal === "em_aprovacao" && dias > 7;
             const vencido = prazoVencido(p.prazo);
 
             return (
@@ -686,7 +767,7 @@ function ListaView({
                   onClick={() => onSelecionar(p.id)}
                   className={cn(
                     "border-b border-brand-gray cursor-pointer transition-colors",
-                    isAberto ? "bg-navy/5" : "hover:bg-gray-50"
+                    isAberto ? "bg-navy/5" : "hover:bg-gray-50",
                   )}
                 >
                   {/* Projeto */}
@@ -718,7 +799,11 @@ function ListaView({
                     {p.prazo ? (
                       <span className={cn("font-medium", vencido ? "text-red-600" : "text-navy")}>
                         {formatarData(p.prazo)}
-                        {vencido && <span className="ml-1 text-[10px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded">vencido</span>}
+                        {vencido && (
+                          <span className="ml-1 text-[10px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded">
+                            vencido
+                          </span>
+                        )}
                       </span>
                     ) : (
                       <span className="text-muted-foreground">—</span>
@@ -727,9 +812,15 @@ function ListaView({
 
                   {/* Status */}
                   <td className="px-6 py-4">
-                    <StatusBadge statusGlobal={p.statusGlobal} aprovacaoProfessor={p.aprovacaoProfessor} />
+                    <StatusBadge
+                      statusGlobal={p.statusGlobal}
+                      aprovacaoProfessor={p.aprovacaoProfessor}
+                    />
                     {p.motivoRecusa && (
-                      <p className="text-[10px] text-red-600 mt-1 max-w-[180px] truncate" title={p.motivoRecusa}>
+                      <p
+                        className="text-[10px] text-red-600 mt-1 max-w-[180px] truncate"
+                        title={p.motivoRecusa}
+                      >
                         {p.motivoRecusa}
                       </p>
                     )}
@@ -795,12 +886,11 @@ function KanbanView({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
       {COLUNAS_PROFESSOR.map((col) => {
-        const cards = filtrarProjetos(projetos, col.id)
-          .sort((a, b) => {
-            const da = a.prazo ?? "9999-99-99";
-            const db = b.prazo ?? "9999-99-99";
-            return da.localeCompare(db);
-          });
+        const cards = filtrarProjetos(projetos, col.id).sort((a, b) => {
+          const da = a.prazo ?? "9999-99-99";
+          const db = b.prazo ?? "9999-99-99";
+          return da.localeCompare(db);
+        });
 
         return (
           <div key={col.id} className="flex flex-col gap-2">
@@ -818,7 +908,7 @@ function KanbanView({
             <div
               className={cn(
                 "bg-white border border-brand-gray rounded-lg border-t-2 overflow-hidden",
-                col.borderClass
+                col.borderClass,
               )}
             >
               {cards.length === 0 ? (
@@ -859,7 +949,10 @@ function KanbanCard({
   onRecusar: (id: string) => void;
 }) {
   const dias = diasAguardando(projeto.submissaoEm);
-  const urgente = projeto.aprovacaoProfessor === "pendente" && projeto.statusGlobal === "em_aprovacao" && dias > 7;
+  const urgente =
+    projeto.aprovacaoProfessor === "pendente" &&
+    projeto.statusGlobal === "em_aprovacao" &&
+    dias > 7;
   const vencido = prazoVencido(projeto.prazo);
 
   return (
@@ -867,7 +960,7 @@ function KanbanCard({
       onClick={() => onSelecionar(projeto.id)}
       className={cn(
         "p-4 cursor-pointer transition-colors",
-        selecionado ? "bg-navy/5" : "hover:bg-gray-50"
+        selecionado ? "bg-navy/5" : "hover:bg-gray-50",
       )}
     >
       {/* Nome + urgente */}
@@ -889,7 +982,8 @@ function KanbanCard({
       <div className="flex items-center gap-3 text-[11px] mb-2">
         {projeto.prazo && (
           <span className={cn("font-medium", vencido ? "text-red-600" : "text-muted-foreground")}>
-            {formatarData(projeto.prazo)}{vencido && " ⚠"}
+            {formatarData(projeto.prazo)}
+            {vencido && " ⚠"}
           </span>
         )}
         {dias === 0 ? (

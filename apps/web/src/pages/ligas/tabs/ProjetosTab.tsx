@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+
 import { supabase } from "@/lib/supabase";
+
 import type { Projeto, StatusProjeto } from "@link-leagues/types";
 
 interface ProjetoRow extends Projeto {
@@ -47,9 +49,7 @@ export function ProjetosTab({ ligaId }: Props) {
 
   return (
     <div className="space-y-3">
-      <p className="text-xs font-bold text-link-blue uppercase tracking-wider">
-        Projetos da Liga
-      </p>
+      <p className="text-xs font-bold text-link-blue uppercase tracking-wider">Projetos da Liga</p>
       {projetos.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nenhum projeto cadastrado.</p>
       ) : (
@@ -64,9 +64,7 @@ export function ProjetosTab({ ligaId }: Props) {
                 <div className="font-bold text-navy text-sm">{p.titulo}</div>
                 <div className="text-xs text-muted-foreground mt-0.5">
                   Resp: {p.responsavel_nome ?? "—"}
-                  {p.prazo
-                    ? ` · Prazo: ${new Date(p.prazo).toLocaleDateString("pt-BR")}`
-                    : ""}
+                  {p.prazo ? ` · Prazo: ${new Date(p.prazo).toLocaleDateString("pt-BR")}` : ""}
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1">

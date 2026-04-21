@@ -1,6 +1,7 @@
+import { resolve } from "path";
+
 import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
-import { resolve } from "path";
 
 dotenv.config({ path: resolve(__dirname, "../apps/api/.env") });
 

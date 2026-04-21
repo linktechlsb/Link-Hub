@@ -1,48 +1,50 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { AlertTriangle, MapPin } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { KpiCard } from "./KpiCard"
-import { RankingLigas, type RankingItem } from "./RankingLigas"
+import { AlertTriangle, MapPin } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { KpiCard } from "./KpiCard";
+import { RankingLigas, type RankingItem } from "./RankingLigas";
 
 // ─── mock data ────────────────────────────────────────────────────────────────
 
 const METRICAS_MINHA_LIGA = [
   { label: "Projetos ativos", valor: "3", trend: "↑ +1", trendType: "up" as const },
-  { label: "Receita",         valor: "R$ 2.000", trend: "↑ este mês", trendType: "up" as const },
-  { label: "Membros",         valor: "24", trend: "↔ estável", trendType: "neutral" as const },
-  { label: "Score",           valor: "840 pts", trend: "↑ +12pts", trendType: "up" as const },
-]
+  { label: "Receita", valor: "R$ 2.000", trend: "↑ este mês", trendType: "up" as const },
+  { label: "Membros", valor: "24", trend: "↔ estável", trendType: "neutral" as const },
+  { label: "Score", valor: "840 pts", trend: "↑ +12pts", trendType: "up" as const },
+];
 
 const METRICAS_GLOBAL = [
   { label: "Projetos ativos", valor: "12", trend: "↑ +3", trendType: "up" as const },
-  { label: "Receita total",   valor: "R$ 8.700", trend: "↑ este mês", trendType: "up" as const },
-  { label: "Membros",         valor: "94", trend: "↑ +5", trendType: "up" as const },
-  { label: "Score médio",     valor: "663 pts", trend: "↔ estável", trendType: "neutral" as const },
-]
+  { label: "Receita total", valor: "R$ 8.700", trend: "↑ este mês", trendType: "up" as const },
+  { label: "Membros", valor: "94", trend: "↑ +5", trendType: "up" as const },
+  { label: "Score médio", valor: "663 pts", trend: "↔ estável", trendType: "neutral" as const },
+];
 
 const ALERTAS_MOCK = [
-  { id: "a1", projeto: "App de presenças",      motivo: "recusado pelo professor" },
-  { id: "a2", projeto: "Dashboard financeiro",  motivo: "aguardando Staff há 3 dias" },
-]
+  { id: "a1", projeto: "App de presenças", motivo: "recusado pelo professor" },
+  { id: "a2", projeto: "Dashboard financeiro", motivo: "aguardando Staff há 3 dias" },
+];
 
-const SALA_MOCK = { sala: "Sala 204", data: "Sex 18/04", horario: "19h" }
+const SALA_MOCK = { sala: "Sala 204", data: "Sex 18/04", horario: "19h" };
 
 const RANKING_MOCK: RankingItem[] = [
-  { id: "r1", nome: "Liga Tech",    score: 840, minhaLiga: true },
+  { id: "r1", nome: "Liga Tech", score: 840, minhaLiga: true },
   { id: "r2", nome: "Link Finance", score: 710, minhaLiga: false },
-  { id: "r3", nome: "Marketing",    score: 620, minhaLiga: false },
-  { id: "r4", nome: "RH",           score: 480, minhaLiga: false },
-]
+  { id: "r3", nome: "Marketing", score: 620, minhaLiga: false },
+  { id: "r4", nome: "RH", score: 480, minhaLiga: false },
+];
 
 // ─── component ────────────────────────────────────────────────────────────────
 
 export function HomeDiretorView() {
-  const navigate = useNavigate()
-  const [visao, setVisao] = useState<"minha" | "global">("minha")
+  const navigate = useNavigate();
+  const [visao, setVisao] = useState<"minha" | "global">("minha");
 
-  const metricas = visao === "minha" ? METRICAS_MINHA_LIGA : METRICAS_GLOBAL
+  const metricas = visao === "minha" ? METRICAS_MINHA_LIGA : METRICAS_GLOBAL;
 
   return (
     <div className="space-y-6">
@@ -95,9 +97,7 @@ export function HomeDiretorView() {
                 <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
                 <div>
                   <p className="text-sm font-semibold text-navy">{a.projeto}</p>
-                  <p className="text-xs text-amber-700 mt-0.5 first-letter:uppercase">
-                    {a.motivo}
-                  </p>
+                  <p className="text-xs text-amber-700 mt-0.5 first-letter:uppercase">{a.motivo}</p>
                 </div>
               </button>
             ))}
@@ -138,5 +138,5 @@ export function HomeDiretorView() {
         <RankingLigas ranking={RANKING_MOCK} />
       </div>
     </div>
-  )
+  );
 }

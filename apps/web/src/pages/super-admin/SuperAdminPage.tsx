@@ -1,13 +1,26 @@
+import {
+  Search,
+  Users,
+  Building2,
+  FolderOpen,
+  BarChart2,
+  X,
+  CheckCircle2,
+  XCircle,
+  CalendarDays,
+} from "lucide-react";
 import { useEffect, useState } from "react";
-import type { Liga, UserRole } from "@link-leagues/types";
-import { supabase } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
-import { Search, Users, Building2, FolderOpen, BarChart2, X, CheckCircle2, XCircle, CalendarDays } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 import { LigaSheet } from "@/pages/ligas/LigaSheet";
-import { UsuarioSheet } from "./UsuarioSheet";
+
 import { LigaMembrosSheet } from "./LigaMembrosSheet";
+import { UsuarioSheet } from "./UsuarioSheet";
+
+import type { Liga, UserRole } from "@link-leagues/types";
 
 // ─── Tipos locais ──────────────────────────────────────────────────────────────
 
@@ -48,7 +61,7 @@ function RoleBadge({ role }: { role: UserRole }) {
     <span
       className={cn(
         "inline-block text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide",
-        ROLE_BADGE[role]
+        ROLE_BADGE[role],
       )}
     >
       {ROLE_LABEL[role]}
@@ -79,7 +92,13 @@ export function SuperAdminPage() {
 
   const [pendentes, setPendentes] = useState<{
     projetos: { id: string; titulo: string; liga?: { nome: string }; criado_em: string }[];
-    eventos: { id: string; titulo: string; liga?: { nome: string }; criado_em: string; categoria: string }[];
+    eventos: {
+      id: string;
+      titulo: string;
+      liga?: { nome: string };
+      criado_em: string;
+      categoria: string;
+    }[];
   }>({ projetos: [], eventos: [] });
   const [aprovando, setAprovando] = useState<string | null>(null);
 
@@ -104,8 +123,10 @@ export function SuperAdminPage() {
         const comPresenca = visao.filter((u) => u.presenca_pct != null);
         setPresencaMedia(
           comPresenca.length > 0
-            ? Math.round(comPresenca.reduce((acc, u) => acc + (u.presenca_pct ?? 0), 0) / comPresenca.length)
-            : null
+            ? Math.round(
+                comPresenca.reduce((acc, u) => acc + (u.presenca_pct ?? 0), 0) / comPresenca.length,
+              )
+            : null,
         );
       }
     } finally {
@@ -194,7 +215,7 @@ export function SuperAdminPage() {
   const usuariosFiltrados = usuarios.filter(
     (u) =>
       u.nome.toLowerCase().includes(busca.toLowerCase()) ||
-      u.email.toLowerCase().includes(busca.toLowerCase())
+      u.email.toLowerCase().includes(busca.toLowerCase()),
   );
 
   // ─── Render ────────────────────────────────────────────────────────────────
@@ -215,7 +236,11 @@ export function SuperAdminPage() {
           { label: "Usuários", value: carregando ? "—" : usuarios.length, icon: Users },
           { label: "Ligas Ativas", value: carregando ? "—" : ligas.length, icon: Building2 },
           { label: "Projetos Ativos", value: carregando ? "—" : totalProjetos, icon: FolderOpen },
-          { label: "Presença Geral", value: carregando ? "—" : presencaMedia != null ? `${presencaMedia}%` : "—", icon: BarChart2 },
+          {
+            label: "Presença Geral",
+            value: carregando ? "—" : presencaMedia != null ? `${presencaMedia}%` : "—",
+            icon: BarChart2,
+          },
         ].map(({ label, value, icon: Icon }) => (
           <div key={label} className="bg-white border border-brand-gray rounded-xl p-5">
             <div className="flex items-center gap-2 mb-2">
@@ -232,18 +257,27 @@ export function SuperAdminPage() {
       {/* ── Tabs de gestão ──────────────────────────────────────────────────── */}
       <Tabs defaultValue="ligas" className="space-y-4">
         <TabsList className="bg-brand-gray/60 border border-brand-gray">
-          <TabsTrigger value="ligas" className="data-[state=active]:bg-white data-[state=active]:text-navy font-semibold">
+          <TabsTrigger
+            value="ligas"
+            className="data-[state=active]:bg-white data-[state=active]:text-navy font-semibold"
+          >
             Ligas
           </TabsTrigger>
-          <TabsTrigger value="aprovacoes" className="data-[state=active]:bg-white data-[state=active]:text-navy font-semibold">
+          <TabsTrigger
+            value="aprovacoes"
+            className="data-[state=active]:bg-white data-[state=active]:text-navy font-semibold"
+          >
             Aprovações
-            {(pendentes.projetos.length + pendentes.eventos.length) > 0 && (
+            {pendentes.projetos.length + pendentes.eventos.length > 0 && (
               <span className="ml-1.5 text-[10px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
                 {pendentes.projetos.length + pendentes.eventos.length}
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="usuarios" className="data-[state=active]:bg-white data-[state=active]:text-navy font-semibold">
+          <TabsTrigger
+            value="usuarios"
+            className="data-[state=active]:bg-white data-[state=active]:text-navy font-semibold"
+          >
             Usuários
           </TabsTrigger>
         </TabsList>
@@ -254,7 +288,9 @@ export function SuperAdminPage() {
             <div className="p-6 border-b border-brand-gray flex items-center justify-between gap-4">
               <div>
                 <h2 className="font-display font-bold text-lg text-navy">Gestão de Ligas</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">Criar, editar, arquivar ligas e gerenciar membros</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Criar, editar, arquivar ligas e gerenciar membros
+                </p>
               </div>
               <Button
                 className="bg-navy hover:bg-navy/90 text-white font-semibold flex-shrink-0"
@@ -275,19 +311,36 @@ export function SuperAdminPage() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-brand-gray/40 border-b border-brand-gray">
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Liga</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Líder</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Projetos</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Status</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Ações</th>
+                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                      Liga
+                    </th>
+                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                      Líder
+                    </th>
+                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                      Projetos
+                    </th>
+                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                      Status
+                    </th>
+                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                      Ações
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {ligas.map((l) => (
-                    <tr key={l.id} className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors">
+                    <tr
+                      key={l.id}
+                      className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors"
+                    >
                       <td className="px-6 py-3 text-sm font-semibold text-navy">{l.nome}</td>
-                      <td className="px-6 py-3 text-sm text-muted-foreground">{l.lider_email ?? "—"}</td>
-                      <td className="px-6 py-3 text-sm text-muted-foreground">{l.projetos_ativos ?? 0}</td>
+                      <td className="px-6 py-3 text-sm text-muted-foreground">
+                        {l.lider_email ?? "—"}
+                      </td>
+                      <td className="px-6 py-3 text-sm text-muted-foreground">
+                        {l.projetos_ativos ?? 0}
+                      </td>
                       <td className="px-6 py-3">
                         <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide bg-navy/10 text-navy">
                           ativa
@@ -353,13 +406,15 @@ export function SuperAdminPage() {
             <div className="p-6 border-b border-brand-gray">
               <h2 className="font-display font-bold text-lg text-navy flex items-center gap-2">
                 Aprovações Pendentes
-                {(pendentes.projetos.length + pendentes.eventos.length) > 0 && (
+                {pendentes.projetos.length + pendentes.eventos.length > 0 && (
                   <span className="text-sm font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
                     {pendentes.projetos.length + pendentes.eventos.length}
                   </span>
                 )}
               </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Projetos e eventos que aguardam aprovação do staff</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Projetos e eventos que aguardam aprovação do staff
+              </p>
             </div>
 
             {pendentes.projetos.length === 0 && pendentes.eventos.length === 0 ? (
@@ -372,16 +427,29 @@ export function SuperAdminPage() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-brand-gray/40 border-b border-brand-gray">
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Tipo</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Nome</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Liga</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Enviado em</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Ações</th>
+                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                      Tipo
+                    </th>
+                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                      Nome
+                    </th>
+                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                      Liga
+                    </th>
+                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                      Enviado em
+                    </th>
+                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                      Ações
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {pendentes.projetos.map((p) => (
-                    <tr key={`proj-${p.id}`} className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors">
+                    <tr
+                      key={`proj-${p.id}`}
+                      className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors"
+                    >
                       <td className="px-6 py-3">
                         <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-navy/10 text-navy uppercase tracking-wide">
                           <FolderOpen className="h-3 w-3" />
@@ -389,7 +457,9 @@ export function SuperAdminPage() {
                         </span>
                       </td>
                       <td className="px-6 py-3 text-sm font-semibold text-navy">{p.titulo}</td>
-                      <td className="px-6 py-3 text-sm text-muted-foreground">{p.liga?.nome ?? "—"}</td>
+                      <td className="px-6 py-3 text-sm text-muted-foreground">
+                        {p.liga?.nome ?? "—"}
+                      </td>
                       <td className="px-6 py-3 text-sm text-muted-foreground">
                         {new Date(p.criado_em).toLocaleDateString("pt-BR")}
                       </td>
@@ -416,7 +486,10 @@ export function SuperAdminPage() {
                     </tr>
                   ))}
                   {pendentes.eventos.map((e) => (
-                    <tr key={`evt-${e.id}`} className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors">
+                    <tr
+                      key={`evt-${e.id}`}
+                      className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors"
+                    >
                       <td className="px-6 py-3">
                         <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-link-blue/10 text-link-blue uppercase tracking-wide">
                           <CalendarDays className="h-3 w-3" />
@@ -424,7 +497,9 @@ export function SuperAdminPage() {
                         </span>
                       </td>
                       <td className="px-6 py-3 text-sm font-semibold text-navy">{e.titulo}</td>
-                      <td className="px-6 py-3 text-sm text-muted-foreground">{e.liga?.nome ?? "—"}</td>
+                      <td className="px-6 py-3 text-sm text-muted-foreground">
+                        {e.liga?.nome ?? "—"}
+                      </td>
                       <td className="px-6 py-3 text-sm text-muted-foreground">
                         {new Date(e.criado_em).toLocaleDateString("pt-BR")}
                       </td>
@@ -462,7 +537,9 @@ export function SuperAdminPage() {
             <div className="p-6 border-b border-brand-gray flex items-center justify-between gap-4">
               <div>
                 <h2 className="font-display font-bold text-lg text-navy">Gestão de Usuários</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">Criar, editar e remover usuários da plataforma</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Criar, editar e remover usuários da plataforma
+                </p>
               </div>
               <Button
                 className="bg-navy hover:bg-navy/90 text-white font-semibold flex-shrink-0"
@@ -496,20 +573,37 @@ export function SuperAdminPage() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-brand-gray/40 border-b border-brand-gray">
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Nome</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Email</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Role</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Liga</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Ações</th>
+                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                      Nome
+                    </th>
+                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                      Email
+                    </th>
+                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                      Role
+                    </th>
+                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                      Liga
+                    </th>
+                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                      Ações
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {usuariosFiltrados.map((u) => (
-                    <tr key={u.id} className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors">
+                    <tr
+                      key={u.id}
+                      className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors"
+                    >
                       <td className="px-6 py-3 text-sm font-semibold text-navy">{u.nome}</td>
                       <td className="px-6 py-3 text-sm text-link-blue">{u.email}</td>
-                      <td className="px-6 py-3"><RoleBadge role={u.role} /></td>
-                      <td className="px-6 py-3 text-sm text-muted-foreground">{u.liga_nome ?? "—"}</td>
+                      <td className="px-6 py-3">
+                        <RoleBadge role={u.role} />
+                      </td>
+                      <td className="px-6 py-3 text-sm text-muted-foreground">
+                        {u.liga_nome ?? "—"}
+                      </td>
                       <td className="px-6 py-3">
                         {confirmarRemocaoId === u.id ? (
                           <div className="flex items-center gap-2">

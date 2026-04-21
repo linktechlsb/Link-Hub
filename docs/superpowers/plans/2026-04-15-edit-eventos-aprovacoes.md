@@ -12,18 +12,19 @@
 
 ## File Map
 
-| Arquivo | Ação | Responsabilidade |
-|---------|------|-----------------|
-| `apps/api/src/routes/eventos.ts` | Modificar linha ~100 | Lógica de `status_aprovacao` no PATCH |
-| `apps/web/src/components/ui/tabs.tsx` | Criar (shadcn) | Componente de tabs gerado automaticamente |
-| `apps/web/src/pages/agenda/AgendaPage.tsx` | Modificar | Aviso de re-submissão + badges de status |
-| `apps/web/src/pages/super-admin/SuperAdminPage.tsx` | Modificar | Refatorar layout para tabs |
+| Arquivo                                             | Ação                 | Responsabilidade                          |
+| --------------------------------------------------- | -------------------- | ----------------------------------------- |
+| `apps/api/src/routes/eventos.ts`                    | Modificar linha ~100 | Lógica de `status_aprovacao` no PATCH     |
+| `apps/web/src/components/ui/tabs.tsx`               | Criar (shadcn)       | Componente de tabs gerado automaticamente |
+| `apps/web/src/pages/agenda/AgendaPage.tsx`          | Modificar            | Aviso de re-submissão + badges de status  |
+| `apps/web/src/pages/super-admin/SuperAdminPage.tsx` | Modificar            | Refatorar layout para tabs                |
 
 ---
 
 ## Task 1: Fix backend — resetar status_aprovacao ao editar (diretor)
 
 **Files:**
+
 - Modify: `apps/api/src/routes/eventos.ts:98-100`
 
 Hoje a linha `status_aprovacao = requer_aprovacao ? (eventoAtual.status_aprovacao ?? "pendente") : null` preserva o status existente para qualquer role. Precisa resetar para `"pendente"` quando o editor for diretor.
@@ -33,6 +34,7 @@ Hoje a linha `status_aprovacao = requer_aprovacao ? (eventoAtual.status_aprovaca
 Arquivo: `apps/api/src/routes/eventos.ts`, função `PATCH /:id`, aproximadamente linha 98.
 
 Trecho atual:
+
 ```ts
 const cat = categoria ?? eventoAtual.categoria;
 const requer_aprovacao = cat === "evento" || cat === "hub";
@@ -47,7 +49,9 @@ Substituir as 3 linhas acima por:
 const cat = categoria ?? eventoAtual.categoria;
 const requer_aprovacao = cat === "evento" || cat === "hub";
 const status_aprovacao = requer_aprovacao
-  ? (user.role === "staff" ? (eventoAtual.status_aprovacao ?? "pendente") : "pendente")
+  ? user.role === "staff"
+    ? (eventoAtual.status_aprovacao ?? "pendente")
+    : "pendente"
   : null;
 ```
 
@@ -74,6 +78,7 @@ git commit -m "fix(eventos): resetar status_aprovacao para pendente quando diret
 ## Task 2: Instalar shadcn/ui Tabs
 
 **Files:**
+
 - Create: `apps/web/src/components/ui/tabs.tsx` (gerado pelo shadcn CLI)
 
 - [ ] **Step 1: Instalar o componente**
@@ -105,6 +110,7 @@ git commit -m "chore(web): adicionar componente Tabs do shadcn/ui"
 ## Task 3: AgendaPage — aviso de re-submissão no modal de edição
 
 **Files:**
+
 - Modify: `apps/web/src/pages/agenda/AgendaPage.tsx`
 
 No modal de edição, quando o evento original já estava aprovado e a categoria ainda requer aprovação, mostrar aviso de que a edição vai resubmeter o evento.
@@ -114,15 +120,19 @@ No modal de edição, quando o evento original já estava aprovado e a categoria
 No arquivo `apps/web/src/pages/agenda/AgendaPage.tsx`, dentro do `{showEditarEvento && eventoEditando && (...)}`, há um bloco de aviso:
 
 ```tsx
-{/* Aviso de aprovação */}
-{["evento", "hub"].includes(editarForm.categoria) && (
-  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-brand-yellow/15 border border-brand-yellow/40">
-    <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow flex-shrink-0" />
-    <p className="text-xs text-navy/80 font-medium">
-      Este evento requer aprovação do staff antes de ser publicado.
-    </p>
-  </div>
-)}
+{
+  /* Aviso de aprovação */
+}
+{
+  ["evento", "hub"].includes(editarForm.categoria) && (
+    <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-brand-yellow/15 border border-brand-yellow/40">
+      <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow flex-shrink-0" />
+      <p className="text-xs text-navy/80 font-medium">
+        Este evento requer aprovação do staff antes de ser publicado.
+      </p>
+    </div>
+  );
+}
 ```
 
 - [ ] **Step 2: Adicionar aviso de re-submissão ANTES do aviso existente**
@@ -130,16 +140,20 @@ No arquivo `apps/web/src/pages/agenda/AgendaPage.tsx`, dentro do `{showEditarEve
 Inserir o seguinte bloco IMEDIATAMENTE ANTES do bloco `{/* Aviso de aprovação */}` encontrado no step 1:
 
 ```tsx
-{/* Aviso de re-submissão para eventos já aprovados */}
-{eventoEditando.status_aprovacao === "aprovado" &&
-  ["evento", "hub"].includes(editarForm.categoria) && (
-  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-amber-50 border border-amber-200">
-    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
-    <p className="text-xs text-amber-800 font-medium">
-      Esta edição irá resubmeter o evento para aprovação do staff.
-    </p>
-  </div>
-)}
+{
+  /* Aviso de re-submissão para eventos já aprovados */
+}
+{
+  eventoEditando.status_aprovacao === "aprovado" &&
+    ["evento", "hub"].includes(editarForm.categoria) && (
+      <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-amber-50 border border-amber-200">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+        <p className="text-xs text-amber-800 font-medium">
+          Esta edição irá resubmeter o evento para aprovação do staff.
+        </p>
+      </div>
+    );
+}
 ```
 
 - [ ] **Step 3: Verificar typecheck**
@@ -163,6 +177,7 @@ git commit -m "feat(agenda): aviso de re-submissão no modal de edição de even
 ## Task 4: AgendaPage — badges de status nos eventos
 
 **Files:**
+
 - Modify: `apps/web/src/pages/agenda/AgendaPage.tsx`
 
 Duas adições: (a) dot colorido nos pills da grade do calendário; (b) badge de texto no painel lateral.
@@ -204,13 +219,13 @@ Substituir o bloco acima por:
   {evento.titulo}
   {evento.requer_aprovacao &&
     (evento.status_aprovacao === "pendente" || evento.status_aprovacao === "rejeitado") && (
-    <span
-      className={cn(
-        "absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full border border-white/40",
-        evento.status_aprovacao === "pendente" ? "bg-brand-yellow" : "bg-rose-400",
-      )}
-    />
-  )}
+      <span
+        className={cn(
+          "absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full border border-white/40",
+          evento.status_aprovacao === "pendente" ? "bg-brand-yellow" : "bg-rose-400",
+        )}
+      />
+    )}
 </div>
 ```
 
@@ -222,15 +237,11 @@ Dentro de `selectedDayEventos.map(evento => ...)`, há o bloco:
 
 ```tsx
 <div className="min-w-0">
-  <p className="text-sm font-semibold text-navy truncate">
-    {evento.titulo}
-  </p>
+  <p className="text-sm font-semibold text-navy truncate">{evento.titulo}</p>
   <p className="text-xs text-muted-foreground mt-0.5">
     {evento.liga?.nome ?? "Liga"}
     {formatTime(evento.data) && (
-      <span className="ml-2 font-medium text-link-blue">
-        {formatTime(evento.data)}
-      </span>
+      <span className="ml-2 font-medium text-link-blue">{formatTime(evento.data)}</span>
     )}
   </p>
   {isOpen && evento.descricao && (
@@ -246,18 +257,22 @@ Dentro de `selectedDayEventos.map(evento => ...)`, há o bloco:
 Inserir o seguinte bloco IMEDIATAMENTE APÓS o `</p>` do nome da liga/hora (antes do bloco `{isOpen && evento.descricao && ...}`):
 
 ```tsx
-{evento.requer_aprovacao &&
-  (evento.status_aprovacao === "pendente" || evento.status_aprovacao === "rejeitado") && (
-  <span className={cn(
-    "inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full mt-1",
-    evento.status_aprovacao === "pendente"
-      ? "bg-brand-yellow/20 text-amber-700"
-      : "bg-rose-100 text-rose-700",
-  )}>
-    <span className="w-1 h-1 rounded-full bg-current" />
-    {evento.status_aprovacao === "pendente" ? "pendente" : "rejeitado"}
-  </span>
-)}
+{
+  evento.requer_aprovacao &&
+    (evento.status_aprovacao === "pendente" || evento.status_aprovacao === "rejeitado") && (
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full mt-1",
+          evento.status_aprovacao === "pendente"
+            ? "bg-brand-yellow/20 text-amber-700"
+            : "bg-rose-100 text-rose-700",
+        )}
+      >
+        <span className="w-1 h-1 rounded-full bg-current" />
+        {evento.status_aprovacao === "pendente" ? "pendente" : "rejeitado"}
+      </span>
+    );
+}
 ```
 
 - [ ] **Step 5: Verificar typecheck**
@@ -281,6 +296,7 @@ git commit -m "feat(agenda): badges de status pendente/rejeitado nos eventos"
 ## Task 5: SuperAdminPage — refatorar para tabs
 
 **Files:**
+
 - Modify: `apps/web/src/pages/super-admin/SuperAdminPage.tsx`
 
 Adicionar import de `Tabs`, e refatorar o JSX para 3 abas: Ligas, Aprovações, Usuários. Stats ficam fora das tabs.
@@ -296,6 +312,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 - [ ] **Step 2: Localizar o início das seções no return()**
 
 No `return(...)`, após o bloco de Stats (`</div>` do grid de 4 cards), há dois blocos principais:
+
 - `{/* ── Gestão de Ligas ─── */}`
 - `{(pendentes...) && ...}` (aprovações condicionais)
 - `{/* ── Gestão de Usuários ─── */}`
@@ -305,21 +322,32 @@ No `return(...)`, após o bloco de Stats (`</div>` do grid de 4 cards), há dois
 Remover os 3 blocos existentes (Ligas, Aprovações condicional, Usuários) e substituir por:
 
 ```tsx
-{/* ── Tabs de gestão ──────────────────────────────────────────────── */}
+{
+  /* ── Tabs de gestão ──────────────────────────────────────────────── */
+}
 <Tabs defaultValue="ligas" className="space-y-4">
   <TabsList className="bg-brand-gray/60 border border-brand-gray">
-    <TabsTrigger value="ligas" className="data-[state=active]:bg-white data-[state=active]:text-navy font-semibold">
+    <TabsTrigger
+      value="ligas"
+      className="data-[state=active]:bg-white data-[state=active]:text-navy font-semibold"
+    >
       Ligas
     </TabsTrigger>
-    <TabsTrigger value="aprovacoes" className="data-[state=active]:bg-white data-[state=active]:text-navy font-semibold">
+    <TabsTrigger
+      value="aprovacoes"
+      className="data-[state=active]:bg-white data-[state=active]:text-navy font-semibold"
+    >
       Aprovações
-      {(pendentes.projetos.length + pendentes.eventos.length) > 0 && (
+      {pendentes.projetos.length + pendentes.eventos.length > 0 && (
         <span className="ml-1.5 text-[10px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
           {pendentes.projetos.length + pendentes.eventos.length}
         </span>
       )}
     </TabsTrigger>
-    <TabsTrigger value="usuarios" className="data-[state=active]:bg-white data-[state=active]:text-navy font-semibold">
+    <TabsTrigger
+      value="usuarios"
+      className="data-[state=active]:bg-white data-[state=active]:text-navy font-semibold"
+    >
       Usuários
     </TabsTrigger>
   </TabsList>
@@ -330,7 +358,9 @@ Remover os 3 blocos existentes (Ligas, Aprovações condicional, Usuários) e su
       <div className="p-6 border-b border-brand-gray flex items-center justify-between gap-4">
         <div>
           <h2 className="font-display font-bold text-lg text-navy">Gestão de Ligas</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Criar, editar, arquivar ligas e gerenciar membros</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Criar, editar, arquivar ligas e gerenciar membros
+          </p>
         </div>
         <Button
           className="bg-navy hover:bg-navy/90 text-white font-semibold flex-shrink-0"
@@ -351,19 +381,34 @@ Remover os 3 blocos existentes (Ligas, Aprovações condicional, Usuários) e su
         <table className="w-full">
           <thead>
             <tr className="bg-brand-gray/40 border-b border-brand-gray">
-              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Liga</th>
-              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Líder</th>
-              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Projetos</th>
-              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Status</th>
-              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Ações</th>
+              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                Liga
+              </th>
+              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                Líder
+              </th>
+              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                Projetos
+              </th>
+              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                Status
+              </th>
+              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                Ações
+              </th>
             </tr>
           </thead>
           <tbody>
             {ligas.map((l) => (
-              <tr key={l.id} className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors">
+              <tr
+                key={l.id}
+                className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors"
+              >
                 <td className="px-6 py-3 text-sm font-semibold text-navy">{l.nome}</td>
                 <td className="px-6 py-3 text-sm text-muted-foreground">{l.lider_email ?? "—"}</td>
-                <td className="px-6 py-3 text-sm text-muted-foreground">{l.projetos_ativos ?? 0}</td>
+                <td className="px-6 py-3 text-sm text-muted-foreground">
+                  {l.projetos_ativos ?? 0}
+                </td>
                 <td className="px-6 py-3">
                   <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide bg-navy/10 text-navy">
                     ativa
@@ -429,13 +474,15 @@ Remover os 3 blocos existentes (Ligas, Aprovações condicional, Usuários) e su
       <div className="p-6 border-b border-brand-gray">
         <h2 className="font-display font-bold text-lg text-navy flex items-center gap-2">
           Aprovações Pendentes
-          {(pendentes.projetos.length + pendentes.eventos.length) > 0 && (
+          {pendentes.projetos.length + pendentes.eventos.length > 0 && (
             <span className="text-sm font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
               {pendentes.projetos.length + pendentes.eventos.length}
             </span>
           )}
         </h2>
-        <p className="text-xs text-muted-foreground mt-0.5">Projetos e eventos que aguardam aprovação do staff</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Projetos e eventos que aguardam aprovação do staff
+        </p>
       </div>
 
       {pendentes.projetos.length === 0 && pendentes.eventos.length === 0 ? (
@@ -448,16 +495,29 @@ Remover os 3 blocos existentes (Ligas, Aprovações condicional, Usuários) e su
         <table className="w-full">
           <thead>
             <tr className="bg-brand-gray/40 border-b border-brand-gray">
-              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Tipo</th>
-              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Nome</th>
-              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Liga</th>
-              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Enviado em</th>
-              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Ações</th>
+              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                Tipo
+              </th>
+              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                Nome
+              </th>
+              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                Liga
+              </th>
+              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                Enviado em
+              </th>
+              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                Ações
+              </th>
             </tr>
           </thead>
           <tbody>
             {pendentes.projetos.map((p) => (
-              <tr key={`proj-${p.id}`} className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors">
+              <tr
+                key={`proj-${p.id}`}
+                className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors"
+              >
                 <td className="px-6 py-3">
                   <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-navy/10 text-navy uppercase tracking-wide">
                     <FolderOpen className="h-3 w-3" />
@@ -492,7 +552,10 @@ Remover os 3 blocos existentes (Ligas, Aprovações condicional, Usuários) e su
               </tr>
             ))}
             {pendentes.eventos.map((e) => (
-              <tr key={`evt-${e.id}`} className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors">
+              <tr
+                key={`evt-${e.id}`}
+                className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors"
+              >
                 <td className="px-6 py-3">
                   <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-link-blue/10 text-link-blue uppercase tracking-wide">
                     <CalendarDays className="h-3 w-3" />
@@ -538,7 +601,9 @@ Remover os 3 blocos existentes (Ligas, Aprovações condicional, Usuários) e su
       <div className="p-6 border-b border-brand-gray flex items-center justify-between gap-4">
         <div>
           <h2 className="font-display font-bold text-lg text-navy">Gestão de Usuários</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Criar, editar e remover usuários da plataforma</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Criar, editar e remover usuários da plataforma
+          </p>
         </div>
         <Button
           className="bg-navy hover:bg-navy/90 text-white font-semibold flex-shrink-0"
@@ -572,19 +637,34 @@ Remover os 3 blocos existentes (Ligas, Aprovações condicional, Usuários) e su
         <table className="w-full">
           <thead>
             <tr className="bg-brand-gray/40 border-b border-brand-gray">
-              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Nome</th>
-              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Email</th>
-              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Role</th>
-              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Liga</th>
-              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Ações</th>
+              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                Nome
+              </th>
+              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                Email
+              </th>
+              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                Role
+              </th>
+              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                Liga
+              </th>
+              <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">
+                Ações
+              </th>
             </tr>
           </thead>
           <tbody>
             {usuariosFiltrados.map((u) => (
-              <tr key={u.id} className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors">
+              <tr
+                key={u.id}
+                className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors"
+              >
                 <td className="px-6 py-3 text-sm font-semibold text-navy">{u.nome}</td>
                 <td className="px-6 py-3 text-sm text-link-blue">{u.email}</td>
-                <td className="px-6 py-3"><RoleBadge role={u.role} /></td>
+                <td className="px-6 py-3">
+                  <RoleBadge role={u.role} />
+                </td>
                 <td className="px-6 py-3 text-sm text-muted-foreground">{u.liga_nome ?? "—"}</td>
                 <td className="px-6 py-3">
                   {confirmarRemocaoId === u.id ? (
@@ -630,7 +710,7 @@ Remover os 3 blocos existentes (Ligas, Aprovações condicional, Usuários) e su
       )}
     </div>
   </TabsContent>
-</Tabs>
+</Tabs>;
 ```
 
 - [ ] **Step 4: Verificar typecheck**

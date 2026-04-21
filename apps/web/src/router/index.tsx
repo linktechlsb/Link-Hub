@@ -1,20 +1,20 @@
 import { createBrowserRouter, Navigate, type RouterProviderProps } from "react-router-dom";
 
 type BrowserRouter = RouterProviderProps["router"];
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/layouts/AppLayout";
 import { AuthLayout } from "@/layouts/AuthLayout";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AgendaPage } from "@/pages/agenda/AgendaPage";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RedefinirSenhaPage } from "@/pages/auth/RedefinirSenhaPage";
-import { HomePage } from "@/pages/home/HomePage";
-import { LigasPage } from "@/pages/ligas/LigasPage";
-import { LigaDetailPage } from "@/pages/ligas/LigaDetailPage";
-import { ProjetosPage } from "@/pages/projetos/ProjetosPage";
-import { AgendaPage } from "@/pages/agenda/AgendaPage";
-import { SuperAdminPage } from "@/pages/super-admin/SuperAdminPage";
-import { GerenciamentoPage } from "@/pages/gerenciamento/GerenciamentoPage";
 import { ContaPage } from "@/pages/conta/ContaPage";
+import { GerenciamentoPage } from "@/pages/gerenciamento/GerenciamentoPage";
+import { HomePage } from "@/pages/home/HomePage";
+import { LigaDetailPage } from "@/pages/ligas/LigaDetailPage";
+import { LigasPage } from "@/pages/ligas/LigasPage";
 import { PresencaPage } from "@/pages/presenca/PresencaPage";
+import { ProjetosPage } from "@/pages/projetos/ProjetosPage";
+import { SuperAdminPage } from "@/pages/super-admin/SuperAdminPage";
 
 export const router: BrowserRouter = createBrowserRouter([
   {

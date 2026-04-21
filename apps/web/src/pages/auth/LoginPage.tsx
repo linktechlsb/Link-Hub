@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+
 import { LoginForm } from "@/components/login-form";
+import { supabase } from "@/lib/supabase";
 
 export function LoginPage() {
   const navigate = useNavigate();

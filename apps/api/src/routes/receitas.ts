@@ -1,6 +1,7 @@
 import { Router, type Router as IRouter } from "express";
-import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
+
 import { sql } from "../config/db.js";
+import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 
 export const receitasRouter: IRouter = Router();
 
@@ -77,14 +78,19 @@ receitasRouter.post("/", authenticate, requireRole("staff", "diretor"), async (r
 });
 
 // DELETE /receitas/:id — remove um registro (lider ou admin)
-receitasRouter.delete("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
-  try {
-    const id = req.params["id"] as string;
+receitasRouter.delete(
+  "/:id",
+  authenticate,
+  requireRole("staff", "diretor"),
+  async (req, res, next) => {
+    try {
+      const id = req.params["id"] as string;
 
-    await sql`DELETE FROM receitas WHERE id = ${id}`;
+      await sql`DELETE FROM receitas WHERE id = ${id}`;
 
-    res.status(204).send();
-  } catch (err) {
-    next(err);
-  }
-});
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  },
+);

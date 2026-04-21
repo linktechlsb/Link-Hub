@@ -1,6 +1,7 @@
 import { useUser } from "@/hooks/use-user";
-import { ContaMembroView } from "./ContaMembroView";
+
 import { ContaLiderView } from "./ContaLiderView";
+import { ContaMembroView } from "./ContaMembroView";
 import { ContaProfessorView } from "./ContaProfessorView";
 import { ContaStaffView } from "./ContaStaffView";
 
@@ -36,7 +37,9 @@ export function ContaPage() {
     <div className="p-8">
       <div className="mb-6">
         <h1 className="font-display font-bold text-2xl text-navy">Minha conta</h1>
-        <p className="text-muted-foreground text-sm mt-1">Módulo em desenvolvimento para este perfil.</p>
+        <p className="text-muted-foreground text-sm mt-1">
+          Módulo em desenvolvimento para este perfil.
+        </p>
       </div>
     </div>
   );

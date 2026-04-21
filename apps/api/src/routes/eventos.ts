@@ -1,22 +1,24 @@
 import { Router, type Router as IRouter } from "express";
-import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
+
 import { sql } from "../config/db.js";
+import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 
 export const eventosRouter: IRouter = Router();
 
 // POST /eventos — somente diretores e staff
 eventosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
-    const { liga_id, titulo, descricao, data, categoria, sala_id, hora_inicio, hora_fim } = req.body as {
-      liga_id: string;
-      titulo: string;
-      descricao?: string;
-      data: string;
-      categoria?: string;
-      sala_id?: string;
-      hora_inicio?: string;
-      hora_fim?: string;
-    };
+    const { liga_id, titulo, descricao, data, categoria, sala_id, hora_inicio, hora_fim } =
+      req.body as {
+        liga_id: string;
+        titulo: string;
+        descricao?: string;
+        data: string;
+        categoria?: string;
+        sala_id?: string;
+        hora_inicio?: string;
+        hora_fim?: string;
+      };
 
     const user = (req as AuthenticatedRequest).user!;
 
@@ -28,7 +30,9 @@ eventosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (re
         WHERE lm.liga_id = ${liga_id} AND u.email = ${user.email} AND lm.cargo = 'Diretor'
       `;
       if (!membro) {
-        res.status(403).json({ error: "Você só pode criar/editar/excluir eventos da sua própria liga." });
+        res
+          .status(403)
+          .json({ error: "Você só pode criar/editar/excluir eventos da sua própria liga." });
         return;
       }
     }
@@ -72,7 +76,10 @@ eventosRouter.patch("/:id/status", authenticate, requireRole("staff"), async (re
     const [evento] = await sql`
       UPDATE eventos SET status_aprovacao = ${status} WHERE id = ${id} RETURNING *
     `;
-    if (!evento) { res.status(404).json({ error: "Evento não encontrado." }); return; }
+    if (!evento) {
+      res.status(404).json({ error: "Evento não encontrado." });
+      return;
+    }
     res.json(evento);
   } catch (err) {
     next(err);
@@ -80,108 +87,125 @@ eventosRouter.patch("/:id/status", authenticate, requireRole("staff"), async (re
 });
 
 // PATCH /eventos/:id — editar dados do evento
-eventosRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
-  try {
-    const id = req.params["id"] as string;
-    const user = (req as AuthenticatedRequest).user!;
+eventosRouter.patch(
+  "/:id",
+  authenticate,
+  requireRole("staff", "diretor"),
+  async (req, res, next) => {
+    try {
+      const id = req.params["id"] as string;
+      const user = (req as AuthenticatedRequest).user!;
 
-    const [eventoAtual] = await sql`SELECT * FROM eventos WHERE id = ${id}`;
-    if (!eventoAtual) {
-      res.status(404).json({ error: "Evento não encontrado." });
-      return;
-    }
+      const [eventoAtual] = await sql`SELECT * FROM eventos WHERE id = ${id}`;
+      if (!eventoAtual) {
+        res.status(404).json({ error: "Evento não encontrado." });
+        return;
+      }
 
-    // Diretores só podem editar eventos da sua própria liga
-    if (user.role === "diretor") {
-      const liga_id = eventoAtual.liga_id as string;
-      const [membro] = await sql`
+      // Diretores só podem editar eventos da sua própria liga
+      if (user.role === "diretor") {
+        const liga_id = eventoAtual.liga_id as string;
+        const [membro] = await sql`
         SELECT 1 FROM liga_membros lm
         JOIN usuarios u ON u.id = lm.usuario_id
         WHERE lm.liga_id = ${liga_id} AND u.email = ${user.email} AND lm.cargo = 'Diretor'
       `;
-      if (!membro) {
-        res.status(403).json({ error: "Você só pode criar/editar/excluir eventos da sua própria liga." });
-        return;
+        if (!membro) {
+          res
+            .status(403)
+            .json({ error: "Você só pode criar/editar/excluir eventos da sua própria liga." });
+          return;
+        }
       }
-    }
 
-    const { titulo, descricao, data, categoria, sala_id, hora_inicio, hora_fim } = req.body as {
-      titulo?: string;
-      descricao?: string;
-      data?: string;
-      categoria?: string;
-      sala_id?: string;
-      hora_inicio?: string;
-      hora_fim?: string;
-    };
+      const { titulo, descricao, data, categoria, sala_id, hora_inicio, hora_fim } = req.body as {
+        titulo?: string;
+        descricao?: string;
+        data?: string;
+        categoria?: string;
+        sala_id?: string;
+        hora_inicio?: string;
+        hora_fim?: string;
+      };
 
-    const cat = categoria ?? eventoAtual.categoria;
-    const requer_aprovacao = cat === "evento" || cat === "hub";
+      const cat = categoria ?? eventoAtual.categoria;
+      const requer_aprovacao = cat === "evento" || cat === "hub";
 
-    const campoRelevanteMudou = (titulo !== undefined && titulo !== eventoAtual.titulo)
-      || (data !== undefined && data !== eventoAtual.data)
-      || (descricao !== undefined && descricao !== eventoAtual.descricao)
-      || (sala_id !== undefined && sala_id !== String(eventoAtual.sala_id ?? ""));
+      const campoRelevanteMudou =
+        (titulo !== undefined && titulo !== eventoAtual.titulo) ||
+        (data !== undefined && data !== eventoAtual.data) ||
+        (descricao !== undefined && descricao !== eventoAtual.descricao) ||
+        (sala_id !== undefined && sala_id !== String(eventoAtual.sala_id ?? ""));
 
-    const status_aprovacao = requer_aprovacao
-      ? (user.role === "staff"
+      const status_aprovacao = requer_aprovacao
+        ? user.role === "staff"
           ? (eventoAtual.status_aprovacao ?? "pendente")
-          : campoRelevanteMudou ? "pendente" : (eventoAtual.status_aprovacao ?? "pendente"))
-      : null;
+          : campoRelevanteMudou
+            ? "pendente"
+            : (eventoAtual.status_aprovacao ?? "pendente")
+        : null;
 
-    const [eventoAtualizado] = await sql`
+      const [eventoAtualizado] = await sql`
       UPDATE eventos SET
         titulo            = COALESCE(${titulo ?? null}, titulo),
-        descricao         = ${descricao !== undefined ? (descricao || null) : eventoAtual.descricao},
+        descricao         = ${descricao !== undefined ? descricao || null : eventoAtual.descricao},
         data              = COALESCE(${data ?? null}, data),
         categoria         = ${cat},
-        sala_id           = ${sala_id !== undefined ? (sala_id || null) : eventoAtual.sala_id},
-        hora_inicio       = ${hora_inicio !== undefined ? (hora_inicio || null) : eventoAtual.hora_inicio},
-        hora_fim          = ${hora_fim !== undefined ? (hora_fim || null) : eventoAtual.hora_fim},
+        sala_id           = ${sala_id !== undefined ? sala_id || null : eventoAtual.sala_id},
+        hora_inicio       = ${hora_inicio !== undefined ? hora_inicio || null : eventoAtual.hora_inicio},
+        hora_fim          = ${hora_fim !== undefined ? hora_fim || null : eventoAtual.hora_fim},
         requer_aprovacao  = ${requer_aprovacao},
         status_aprovacao  = ${status_aprovacao}
       WHERE id = ${id}
       RETURNING *
     `;
 
-    res.json(eventoAtualizado);
-  } catch (err) {
-    next(err);
-  }
-});
+      res.json(eventoAtualizado);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // DELETE /eventos/:id — excluir evento
-eventosRouter.delete("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
-  try {
-    const id = req.params["id"] as string;
-    const user = (req as AuthenticatedRequest).user!;
+eventosRouter.delete(
+  "/:id",
+  authenticate,
+  requireRole("staff", "diretor"),
+  async (req, res, next) => {
+    try {
+      const id = req.params["id"] as string;
+      const user = (req as AuthenticatedRequest).user!;
 
-    const [eventoAtual] = await sql`SELECT * FROM eventos WHERE id = ${id}`;
-    if (!eventoAtual) {
-      res.status(404).json({ error: "Evento não encontrado." });
-      return;
-    }
+      const [eventoAtual] = await sql`SELECT * FROM eventos WHERE id = ${id}`;
+      if (!eventoAtual) {
+        res.status(404).json({ error: "Evento não encontrado." });
+        return;
+      }
 
-    // Diretores só podem excluir eventos da sua própria liga
-    if (user.role === "diretor") {
-      const liga_id = eventoAtual.liga_id as string;
-      const [membro] = await sql`
+      // Diretores só podem excluir eventos da sua própria liga
+      if (user.role === "diretor") {
+        const liga_id = eventoAtual.liga_id as string;
+        const [membro] = await sql`
         SELECT 1 FROM liga_membros lm
         JOIN usuarios u ON u.id = lm.usuario_id
         WHERE lm.liga_id = ${liga_id} AND u.email = ${user.email} AND lm.cargo = 'Diretor'
       `;
-      if (!membro) {
-        res.status(403).json({ error: "Você só pode criar/editar/excluir eventos da sua própria liga." });
-        return;
+        if (!membro) {
+          res
+            .status(403)
+            .json({ error: "Você só pode criar/editar/excluir eventos da sua própria liga." });
+          return;
+        }
       }
-    }
 
-    await sql`DELETE FROM eventos WHERE id = ${id}`;
-    res.status(204).send();
-  } catch (err) {
-    next(err);
-  }
-});
+      await sql`DELETE FROM eventos WHERE id = ${id}`;
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // GET /eventos?inicio=&fim=&liga_id=
 eventosRouter.get("/", authenticate, async (req, res, next) => {

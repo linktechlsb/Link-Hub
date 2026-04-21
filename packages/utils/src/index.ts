@@ -5,7 +5,9 @@ export function formatDate(iso: string, opts?: Intl.DateTimeFormatOptions): stri
 
 /** Formata data e hora ISO para exibição em pt-BR */
 export function formatDateTime(iso: string): string {
-  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(iso));
+  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(
+    new Date(iso),
+  );
 }
 
 /** Retorna as iniciais de um nome (até 2 letras) */

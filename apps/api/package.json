@@ -7,18 +7,20 @@
     "dev": "tsx watch --env-file=../../.env src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@link-leagues/types": "*",
     "@link-leagues/utils": "*",
     "@supabase/supabase-js": "^2.47.10",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.1.1",
-    "postgres": "^3.4.8"
+    "postgres": "^3.4.8",
+    "zod": "3.25.42"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

@@ -1,9 +1,18 @@
-import { useState } from "react";
-import { cn } from "@/lib/utils";
 import {
-  Search, LayoutGrid, List, X, ChevronRight,
-  FolderOpen, Clock, Pencil, CheckCircle, XCircle,
+  Search,
+  LayoutGrid,
+  List,
+  X,
+  ChevronRight,
+  FolderOpen,
+  Clock,
+  Pencil,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
+import { useState } from "react";
+
+import { cn } from "@/lib/utils";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -42,10 +51,10 @@ type ProjetoStaff = {
 // ─── Configuração de status ───────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<StatusStaff, { label: string; badge: string }> = {
-  rascunho:     { label: "Rascunho",       badge: "bg-gray-100 text-gray-600" },
-  em_aprovacao: { label: "Em Aprovação",   badge: "bg-yellow-100 text-yellow-700" },
-  rejeitado:    { label: "Recusado",       badge: "bg-red-100 text-red-700" },
-  aprovado:     { label: "Aprovado",       badge: "bg-green-100 text-green-700" },
+  rascunho: { label: "Rascunho", badge: "bg-gray-100 text-gray-600" },
+  em_aprovacao: { label: "Em Aprovação", badge: "bg-yellow-100 text-yellow-700" },
+  rejeitado: { label: "Recusado", badge: "bg-red-100 text-red-700" },
+  aprovado: { label: "Aprovado", badge: "bg-green-100 text-green-700" },
 };
 
 // Colunas do kanban
@@ -65,9 +74,7 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     iniciais: "PA",
     status: "rascunho",
     prazo: "2026-05-10",
-    historico: [
-      { etapa: "Criação", acao: "submetido", por: "Pedro Alves", em: "2026-03-20" },
-    ],
+    historico: [{ etapa: "Criação", acao: "submetido", por: "Pedro Alves", em: "2026-03-20" }],
   },
   {
     id: "s2",
@@ -81,8 +88,8 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     aprovacaoStaff: "pendente",
     prazo: "2026-03-01",
     historico: [
-      { etapa: "Criação",   acao: "submetido", por: "Marina Silva",  em: "2026-02-10" },
-      { etapa: "Professor", acao: "submetido", por: "Marina Silva",  em: "2026-02-15" },
+      { etapa: "Criação", acao: "submetido", por: "Marina Silva", em: "2026-02-10" },
+      { etapa: "Professor", acao: "submetido", por: "Marina Silva", em: "2026-02-15" },
     ],
   },
   {
@@ -96,7 +103,7 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     aprovacaoProfessor: "pendente",
     aprovacaoStaff: "pendente",
     historico: [
-      { etapa: "Criação",   acao: "submetido", por: "Carla Nunes", em: "2026-03-01" },
+      { etapa: "Criação", acao: "submetido", por: "Carla Nunes", em: "2026-03-01" },
       { etapa: "Professor", acao: "submetido", por: "Carla Nunes", em: "2026-03-05" },
     ],
   },
@@ -111,7 +118,7 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     aprovacaoProfessor: "pendente",
     aprovacaoStaff: "pendente",
     historico: [
-      { etapa: "Criação",   acao: "submetido", por: "Ana Lima", em: "2026-03-10" },
+      { etapa: "Criação", acao: "submetido", por: "Ana Lima", em: "2026-03-10" },
       { etapa: "Professor", acao: "submetido", por: "Ana Lima", em: "2026-04-11" },
     ],
   },
@@ -129,10 +136,10 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     receita: 4500,
     prazo: "2026-08-15",
     historico: [
-      { etapa: "Criação",   acao: "submetido", por: "Lucas Ferreira", em: "2026-02-01" },
+      { etapa: "Criação", acao: "submetido", por: "Lucas Ferreira", em: "2026-02-01" },
       { etapa: "Professor", acao: "submetido", por: "Lucas Ferreira", em: "2026-02-10" },
-      { etapa: "Professor", acao: "aprovado",  por: "Prof. Roberto",  em: "2026-02-20" },
-      { etapa: "Staff",     acao: "submetido", por: "Lucas Ferreira", em: "2026-03-01" },
+      { etapa: "Professor", acao: "aprovado", por: "Prof. Roberto", em: "2026-02-20" },
+      { etapa: "Staff", acao: "submetido", por: "Lucas Ferreira", em: "2026-03-01" },
     ],
   },
   {
@@ -148,10 +155,10 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     submissaoEm: "2026-04-11",
     prazo: "2026-06-01",
     historico: [
-      { etapa: "Criação",   acao: "submetido", por: "Renata Barros", em: "2026-03-15" },
+      { etapa: "Criação", acao: "submetido", por: "Renata Barros", em: "2026-03-15" },
       { etapa: "Professor", acao: "submetido", por: "Renata Barros", em: "2026-03-20" },
-      { etapa: "Professor", acao: "aprovado",  por: "Prof. Cláudia", em: "2026-03-28" },
-      { etapa: "Staff",     acao: "submetido", por: "Renata Barros", em: "2026-04-08" },
+      { etapa: "Professor", acao: "aprovado", por: "Prof. Cláudia", em: "2026-03-28" },
+      { etapa: "Staff", acao: "submetido", por: "Renata Barros", em: "2026-04-08" },
     ],
   },
   {
@@ -167,9 +174,9 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     receita: 2500,
     prazo: "2025-06-30",
     historico: [
-      { etapa: "Criação",   acao: "submetido", por: "Ana Lima",      em: "2025-03-01" },
-      { etapa: "Professor", acao: "aprovado",  por: "Prof. Roberto", em: "2025-03-15" },
-      { etapa: "Staff",     acao: "aprovado",  por: "Staff",         em: "2025-04-01" },
+      { etapa: "Criação", acao: "submetido", por: "Ana Lima", em: "2025-03-01" },
+      { etapa: "Professor", acao: "aprovado", por: "Prof. Roberto", em: "2025-03-15" },
+      { etapa: "Staff", acao: "aprovado", por: "Staff", em: "2025-04-01" },
     ],
   },
   {
@@ -185,9 +192,9 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     receita: 3200,
     prazo: "2026-07-01",
     historico: [
-      { etapa: "Criação",   acao: "submetido", por: "Rafael Costa",  em: "2026-01-10" },
-      { etapa: "Professor", acao: "aprovado",  por: "Prof. Fátima",  em: "2026-01-20" },
-      { etapa: "Staff",     acao: "aprovado",  por: "Staff",         em: "2026-02-01" },
+      { etapa: "Criação", acao: "submetido", por: "Rafael Costa", em: "2026-01-10" },
+      { etapa: "Professor", acao: "aprovado", por: "Prof. Fátima", em: "2026-01-20" },
+      { etapa: "Staff", acao: "aprovado", por: "Staff", em: "2026-02-01" },
     ],
   },
   {
@@ -202,10 +209,15 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     aprovacaoStaff: "rejeitado",
     motivoRecusa: "Orçamento acima do permitido para o semestre.",
     historico: [
-      { etapa: "Criação",   acao: "submetido", por: "Beatriz Costa", em: "2026-02-05" },
-      { etapa: "Professor", acao: "aprovado",  por: "Prof. Cláudia", em: "2026-02-12" },
-      { etapa: "Staff",     acao: "recusado",  por: "Staff",         em: "2026-02-20",
-        motivo: "Orçamento acima do permitido para o semestre." },
+      { etapa: "Criação", acao: "submetido", por: "Beatriz Costa", em: "2026-02-05" },
+      { etapa: "Professor", acao: "aprovado", por: "Prof. Cláudia", em: "2026-02-12" },
+      {
+        etapa: "Staff",
+        acao: "recusado",
+        por: "Staff",
+        em: "2026-02-20",
+        motivo: "Orçamento acima do permitido para o semestre.",
+      },
     ],
   },
   {
@@ -217,9 +229,7 @@ const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
     iniciais: "CN",
     status: "rascunho",
     prazo: "2026-09-01",
-    historico: [
-      { etapa: "Criação", acao: "submetido", por: "Carla Nunes", em: "2026-04-01" },
-    ],
+    historico: [{ etapa: "Criação", acao: "submetido", por: "Carla Nunes", em: "2026-04-01" }],
   },
 ];
 
@@ -248,10 +258,12 @@ function estaVencido(prazo?: string) {
 
 function Avatar({ iniciais, size = "sm" }: { iniciais: string; size?: "sm" | "md" }) {
   return (
-    <div className={cn(
-      "rounded-full bg-navy text-white font-bold flex items-center justify-center shrink-0",
-      size === "sm" ? "h-7 w-7 text-[10px]" : "h-9 w-9 text-xs"
-    )}>
+    <div
+      className={cn(
+        "rounded-full bg-navy text-white font-bold flex items-center justify-center shrink-0",
+        size === "sm" ? "h-7 w-7 text-[10px]" : "h-9 w-9 text-xs",
+      )}
+    >
       {iniciais}
     </div>
   );
@@ -268,13 +280,18 @@ function StatusBadge({ status }: { status: StatusStaff }) {
 
 function LigaBadge({ liga }: { liga: string }) {
   const cor: Record<string, string> = {
-    "Liga Tech":     "bg-blue-100 text-blue-700",
+    "Liga Tech": "bg-blue-100 text-blue-700",
     "Liga Finanças": "bg-emerald-100 text-emerald-700",
-    "Liga Marketing":"bg-pink-100 text-pink-700",
-    "Liga RH":       "bg-violet-100 text-violet-700",
+    "Liga Marketing": "bg-pink-100 text-pink-700",
+    "Liga RH": "bg-violet-100 text-violet-700",
   };
   return (
-    <span className={cn("text-[11px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap", cor[liga] ?? "bg-gray-100 text-gray-600")}>
+    <span
+      className={cn(
+        "text-[11px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap",
+        cor[liga] ?? "bg-gray-100 text-gray-600",
+      )}
+    >
       {liga.replace("Liga ", "")}
     </span>
   );
@@ -285,7 +302,9 @@ function ColunaVazia() {
     <div className="flex flex-col items-center justify-center gap-2 py-8 border border-dashed border-brand-gray rounded-lg">
       <FolderOpen className="h-6 w-6 text-brand-gray" strokeWidth={1.5} />
       <p className="text-xs text-muted-foreground/70 text-center leading-snug">
-        Nenhum projeto<br />aqui ainda
+        Nenhum projeto
+        <br />
+        aqui ainda
       </p>
     </div>
   );
@@ -310,12 +329,16 @@ function ModalRecusar({
       <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display font-bold text-lg text-navy">Recusar projeto</h2>
-          <button onClick={onFechar} className="text-muted-foreground hover:text-navy transition-colors">
+          <button
+            onClick={onFechar}
+            className="text-muted-foreground hover:text-navy transition-colors"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
-          Informe o motivo da recusa de <span className="font-medium text-navy">"{nomeProjeto}"</span>.
+          Informe o motivo da recusa de{" "}
+          <span className="font-medium text-navy">&quot;{nomeProjeto}&quot;</span>.
         </p>
         <textarea
           value={motivo}
@@ -364,14 +387,15 @@ function PainelDetalhes({
 
   const vencido = estaVencido(prazo);
 
-  const inputClass = "w-full text-sm border border-brand-gray rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40";
+  const inputClass =
+    "w-full text-sm border border-brand-gray rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40";
   const labelClass = "text-xs font-bold text-link-blue uppercase tracking-wider block mb-1";
 
   const ACAO_CONFIG: Record<HistoricoEntry["acao"], { label: string; cls: string }> = {
-    submetido: { label: "Submetido",  cls: "bg-gray-100 text-gray-600" },
-    aprovado:  { label: "Aprovado",   cls: "bg-green-100 text-green-700" },
-    recusado:  { label: "Recusado",   cls: "bg-red-100 text-red-700" },
-    revisado:  { label: "Revisado",   cls: "bg-blue-100 text-blue-700" },
+    submetido: { label: "Submetido", cls: "bg-gray-100 text-gray-600" },
+    aprovado: { label: "Aprovado", cls: "bg-green-100 text-green-700" },
+    recusado: { label: "Recusado", cls: "bg-red-100 text-red-700" },
+    revisado: { label: "Revisado", cls: "bg-blue-100 text-blue-700" },
   };
 
   return (
@@ -387,7 +411,11 @@ function PainelDetalhes({
             </span>
           )}
         </div>
-        <button onClick={onFechar} className="text-muted-foreground hover:text-navy transition-colors ml-4 shrink-0" aria-label="Fechar">
+        <button
+          onClick={onFechar}
+          className="text-muted-foreground hover:text-navy transition-colors ml-4 shrink-0"
+          aria-label="Fechar"
+        >
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -400,7 +428,12 @@ function PainelDetalhes({
         </div>
         <div>
           <label className={labelClass}>Descrição</label>
-          <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} className={cn(inputClass, "resize-none")} />
+          <textarea
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+            rows={3}
+            className={cn(inputClass, "resize-none")}
+          />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -415,7 +448,13 @@ function PainelDetalhes({
           </div>
           <div>
             <label className={labelClass}>Receita (R$)</label>
-            <input type="number" value={receita} onChange={(e) => setReceita(e.target.value)} placeholder="0" className={inputClass} />
+            <input
+              type="number"
+              value={receita}
+              onChange={(e) => setReceita(e.target.value)}
+              placeholder="0"
+              className={inputClass}
+            />
           </div>
         </div>
       </div>
@@ -435,7 +474,10 @@ function PainelDetalhes({
           <span className={labelClass}>Membros</span>
           <div className="flex gap-2 mt-2 flex-wrap">
             {projeto.membros.map((m) => (
-              <div key={m.id} className="flex items-center gap-1.5 bg-navy/5 border border-navy/10 rounded-full pl-1 pr-2 py-1">
+              <div
+                key={m.id}
+                className="flex items-center gap-1.5 bg-navy/5 border border-navy/10 rounded-full pl-1 pr-2 py-1"
+              >
                 <div className="h-5 w-5 rounded-full bg-navy text-white text-[9px] font-bold flex items-center justify-center shrink-0">
                   {m.iniciais}
                 </div>
@@ -460,7 +502,13 @@ function PainelDetalhes({
       {/* Observação */}
       <div className="mb-5">
         <label className={labelClass}>Observação</label>
-        <textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} placeholder="Informações adicionais..." rows={3} className={cn(inputClass, "resize-none")} />
+        <textarea
+          value={observacao}
+          onChange={(e) => setObservacao(e.target.value)}
+          placeholder="Informações adicionais..."
+          rows={3}
+          className={cn(inputClass, "resize-none")}
+        />
       </div>
 
       {/* Histórico de aprovações */}
@@ -472,13 +520,20 @@ function PainelDetalhes({
               const ac = ACAO_CONFIG[h.acao];
               return (
                 <div key={i} className="flex items-start gap-3 text-sm">
-                  <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 shrink-0", ac.cls)}>
+                  <span
+                    className={cn(
+                      "text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 shrink-0",
+                      ac.cls,
+                    )}
+                  >
                     {ac.label}
                   </span>
                   <div className="flex-1 min-w-0">
                     <span className="text-navy font-medium">{h.etapa}</span>
                     <span className="text-muted-foreground"> · {h.por}</span>
-                    <span className="text-muted-foreground text-xs ml-1">— {formatarData(h.em)}</span>
+                    <span className="text-muted-foreground text-xs ml-1">
+                      — {formatarData(h.em)}
+                    </span>
                     {h.motivo && <p className="text-xs text-red-600 mt-0.5">{h.motivo}</p>}
                   </div>
                 </div>
@@ -490,7 +545,16 @@ function PainelDetalhes({
 
       <div className="flex justify-end">
         <button
-          onClick={() => onSalvar({ ...projeto, nome, descricao, prazo: prazo || undefined, receita: receita ? Number(receita) : undefined, observacao: observacao || undefined })}
+          onClick={() =>
+            onSalvar({
+              ...projeto,
+              nome,
+              descricao,
+              prazo: prazo || undefined,
+              receita: receita ? Number(receita) : undefined,
+              observacao: observacao || undefined,
+            })
+          }
           className="px-4 py-2 text-sm font-medium bg-navy text-white rounded-md hover:bg-navy/90 transition-colors"
         >
           Salvar alterações
@@ -503,9 +567,9 @@ function PainelDetalhes({
 // ─── Indicador de aprovação ───────────────────────────────────────────────────
 
 const APROVACAO_STYLE: Record<StatusAprovacao, { text: string; classe: string }> = {
-  pendente:  { text: "Pendente",  classe: "text-yellow-600" },
-  aprovado:  { text: "Aprovado",  classe: "text-green-600" },
-  rejeitado: { text: "Recusado",  classe: "text-red-600" },
+  pendente: { text: "Pendente", classe: "text-yellow-600" },
+  aprovado: { text: "Aprovado", classe: "text-green-600" },
+  rejeitado: { text: "Recusado", classe: "text-red-600" },
 };
 
 function AprovacaoIndicador({ label, status }: { label: string; status: StatusAprovacao }) {
@@ -547,7 +611,10 @@ function KanbanCard({
           <LigaBadge liga={projeto.liga} />
         </div>
         <button
-          onClick={(e) => { e.stopPropagation(); onEditar(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditar();
+          }}
           className="text-muted-foreground hover:text-navy transition-colors shrink-0 p-0.5"
           title="Editar"
         >
@@ -566,14 +633,23 @@ function KanbanCard({
 
       {/* Receita */}
       {projeto.receita && (
-        <p className="text-xs text-link-blue font-medium mb-2">{formatarReceita(projeto.receita)}</p>
+        <p className="text-xs text-link-blue font-medium mb-2">
+          {formatarReceita(projeto.receita)}
+        </p>
       )}
 
       {/* Prazo */}
       {projeto.prazo && (
         <div className="flex items-center gap-1.5 mb-3">
-          <Clock className={cn("h-3 w-3 shrink-0", vencido ? "text-red-500" : "text-muted-foreground")} />
-          <span className={cn("text-xs", vencido ? "text-red-600 font-medium" : "text-muted-foreground")}>
+          <Clock
+            className={cn("h-3 w-3 shrink-0", vencido ? "text-red-500" : "text-muted-foreground")}
+          />
+          <span
+            className={cn(
+              "text-xs",
+              vencido ? "text-red-600 font-medium" : "text-muted-foreground",
+            )}
+          >
             {formatarData(projeto.prazo)}
           </span>
           {vencido && (
@@ -610,14 +686,20 @@ function KanbanCard({
       {projeto.status === "em_aprovacao" && (
         <div className="flex gap-2">
           <button
-            onClick={(e) => { e.stopPropagation(); onAprovar(projeto.id); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onAprovar(projeto.id);
+            }}
             className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
           >
             <CheckCircle className="h-3.5 w-3.5" />
             Aprovar
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); onRecusar(projeto.id); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRecusar(projeto.id);
+            }}
             className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-2 rounded-md border border-red-500 text-red-600 hover:bg-red-50 transition-colors"
           >
             <XCircle className="h-3.5 w-3.5" />
@@ -642,23 +724,26 @@ export function ProjetosStaffView() {
 
   // ── Filtros ────────────────────────────────────────────────────────────────
 
-  const projetosFiltrados = projetos.filter((p) => {
-    const passaLiga   = filtroLiga === "Todas as ligas" || p.liga === filtroLiga;
-    const passaStatus = filtroStatus === "todos" || p.status === filtroStatus;
-    const passaBusca  = p.nome.toLowerCase().includes(busca.toLowerCase());
-    return passaLiga && passaStatus && passaBusca;
-  }).sort((a, b) => {
-    const da = a.prazo ?? "9999-99-99";
-    const db = b.prazo ?? "9999-99-99";
-    return da.localeCompare(db);
-  });
+  const projetosFiltrados = projetos
+    .filter((p) => {
+      const passaLiga = filtroLiga === "Todas as ligas" || p.liga === filtroLiga;
+      const passaStatus = filtroStatus === "todos" || p.status === filtroStatus;
+      const passaBusca = p.nome.toLowerCase().includes(busca.toLowerCase());
+      return passaLiga && passaStatus && passaBusca;
+    })
+    .sort((a, b) => {
+      const da = a.prazo ?? "9999-99-99";
+      const db = b.prazo ?? "9999-99-99";
+      return da.localeCompare(db);
+    });
 
   // ── Subtítulo dinâmico ────────────────────────────────────────────────────
 
   const aguardandoAprovacao = projetos.filter((p) => p.status === "em_aprovacao").length;
-  const subtitulo = aguardandoAprovacao > 0
-    ? `${aguardandoAprovacao} ${aguardandoAprovacao === 1 ? "projeto aguardando aprovação" : "projetos aguardando aprovação"}`
-    : `${projetos.length} projetos no total`;
+  const subtitulo =
+    aguardandoAprovacao > 0
+      ? `${aguardandoAprovacao} ${aguardandoAprovacao === 1 ? "projeto aguardando aprovação" : "projetos aguardando aprovação"}`
+      : `${projetos.length} projetos no total`;
 
   // ── Ações ─────────────────────────────────────────────────────────────────
 
@@ -667,10 +752,9 @@ export function ProjetosStaffView() {
       prev.map((p) => {
         if (p.id !== id) return p;
         const novaProfessor = p.aprovacaoProfessor ?? "pendente";
-        const novoStatus: StatusStaff =
-          novaProfessor === "aprovado" ? "aprovado" : p.status;
+        const novoStatus: StatusStaff = novaProfessor === "aprovado" ? "aprovado" : p.status;
         return { ...p, aprovacaoStaff: "aprovado" as StatusAprovacao, status: novoStatus };
-      })
+      }),
     );
     setSelecionado(null);
   }
@@ -678,13 +762,15 @@ export function ProjetosStaffView() {
   function recusar(id: string, motivo: string) {
     setProjetos((prev) =>
       prev.map((p) =>
-        p.id !== id ? p : {
-          ...p,
-          aprovacaoStaff: "rejeitado" as StatusAprovacao,
-          status: "rejeitado" as StatusStaff,
-          motivoRecusa: motivo,
-        }
-      )
+        p.id !== id
+          ? p
+          : {
+              ...p,
+              aprovacaoStaff: "rejeitado" as StatusAprovacao,
+              status: "rejeitado" as StatusStaff,
+              motivoRecusa: motivo,
+            },
+      ),
     );
     setRecusarId(null);
     setSelecionado(null);
@@ -703,10 +789,10 @@ export function ProjetosStaffView() {
   const projetoParaRecusar = projetos.find((p) => p.id === recusarId);
 
   const STATUS_OPTIONS: { value: StatusStaff | "todos"; label: string }[] = [
-    { value: "todos",        label: "Todos" },
+    { value: "todos", label: "Todos" },
     { value: "em_aprovacao", label: "Em Aprovação" },
-    { value: "aprovado",     label: "Aprovado" },
-    { value: "rejeitado",    label: "Recusado" },
+    { value: "aprovado", label: "Aprovado" },
+    { value: "rejeitado", label: "Recusado" },
   ];
 
   return (
@@ -729,7 +815,7 @@ export function ProjetosStaffView() {
               "px-4 py-1.5 text-sm font-medium rounded-full border transition-colors",
               filtroLiga === liga
                 ? "bg-navy text-white border-navy"
-                : "bg-white text-link-blue border-brand-gray hover:border-navy/40"
+                : "bg-white text-link-blue border-brand-gray hover:border-navy/40",
             )}
           >
             {liga}
@@ -746,7 +832,9 @@ export function ProjetosStaffView() {
           className="text-sm border border-brand-gray rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40 text-link-blue"
         >
           {STATUS_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
           ))}
         </select>
 
@@ -766,14 +854,24 @@ export function ProjetosStaffView() {
         <div className="ml-auto flex items-center border border-brand-gray rounded-md overflow-hidden">
           <button
             onClick={() => setVisualizacao("kanban")}
-            className={cn("p-2 transition-colors", visualizacao === "kanban" ? "bg-navy text-white" : "bg-white text-link-blue hover:bg-gray-50")}
+            className={cn(
+              "p-2 transition-colors",
+              visualizacao === "kanban"
+                ? "bg-navy text-white"
+                : "bg-white text-link-blue hover:bg-gray-50",
+            )}
             title="Kanban"
           >
             <LayoutGrid className="h-4 w-4" />
           </button>
           <button
             onClick={() => setVisualizacao("lista")}
-            className={cn("p-2 transition-colors", visualizacao === "lista" ? "bg-navy text-white" : "bg-white text-link-blue hover:bg-gray-50")}
+            className={cn(
+              "p-2 transition-colors",
+              visualizacao === "lista"
+                ? "bg-navy text-white"
+                : "bg-white text-link-blue hover:bg-gray-50",
+            )}
             title="Lista"
           >
             <List className="h-4 w-4" />
@@ -834,11 +932,21 @@ export function ProjetosStaffView() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-brand-gray">
-                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">Projeto</th>
-                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">Liga</th>
-                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">Status</th>
-                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">Receita</th>
-                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">Ações</th>
+                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">
+                  Projeto
+                </th>
+                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">
+                  Liga
+                </th>
+                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">
+                  Receita
+                </th>
+                <th className="text-left px-6 py-3 text-xs font-bold text-link-blue uppercase tracking-wider">
+                  Ações
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -854,7 +962,7 @@ export function ProjetosStaffView() {
               ) : (
                 projetosFiltrados.map((p) => {
                   const isAberto = selecionado === p.id;
-                  const vencido  = estaVencido(p.prazo);
+                  const vencido = estaVencido(p.prazo);
                   return (
                     <>
                       <tr
@@ -862,16 +970,28 @@ export function ProjetosStaffView() {
                         onClick={() => toggleSelecionado(p.id)}
                         className={cn(
                           "border-b border-brand-gray cursor-pointer transition-colors hover:bg-gray-50",
-                          isAberto && "bg-gray-50"
+                          isAberto && "bg-gray-50",
                         )}
                       >
                         <td className="px-6 py-4">
                           <div className="font-bold text-navy">{p.nome}</div>
-                          <div className="text-xs text-muted-foreground mt-0.5 max-w-xs truncate">{p.descricao}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5 max-w-xs truncate">
+                            {p.descricao}
+                          </div>
                           {p.prazo && (
                             <div className="flex items-center gap-1.5 mt-1">
-                              <Clock className={cn("h-3 w-3", vencido ? "text-red-500" : "text-muted-foreground")} />
-                              <span className={cn("text-xs", vencido ? "text-red-600 font-medium" : "text-muted-foreground")}>
+                              <Clock
+                                className={cn(
+                                  "h-3 w-3",
+                                  vencido ? "text-red-500" : "text-muted-foreground",
+                                )}
+                              />
+                              <span
+                                className={cn(
+                                  "text-xs",
+                                  vencido ? "text-red-600 font-medium" : "text-muted-foreground",
+                                )}
+                              >
                                 {formatarData(p.prazo)}
                               </span>
                               {vencido && (
@@ -882,14 +1002,21 @@ export function ProjetosStaffView() {
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4"><LigaBadge liga={p.liga} /></td>
-                        <td className="px-6 py-4"><StatusBadge status={p.status} /></td>
+                        <td className="px-6 py-4">
+                          <LigaBadge liga={p.liga} />
+                        </td>
+                        <td className="px-6 py-4">
+                          <StatusBadge status={p.status} />
+                        </td>
                         <td className="px-6 py-4 font-medium text-navy">
                           {p.receita ? formatarReceita(p.receita) : "—"}
                         </td>
                         <td className="px-6 py-4">
                           {p.status === "em_aprovacao" ? (
-                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <div
+                              className="flex items-center gap-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <button
                                 onClick={() => aprovar(p.id)}
                                 className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
@@ -907,7 +1034,10 @@ export function ProjetosStaffView() {
                             </div>
                           ) : (
                             <button
-                              onClick={(e) => { e.stopPropagation(); toggleSelecionado(p.id); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleSelecionado(p.id);
+                              }}
                               className="text-muted-foreground hover:text-navy transition-colors p-1"
                               title="Editar"
                             >

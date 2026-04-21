@@ -1,16 +1,19 @@
-import { useEffect, useState } from "react";
-import type { Liga, UserRole } from "@link-leagues/types";
-import { supabase } from "@/lib/supabase";
 import { MoreHorizontal } from "lucide-react";
+import { useEffect, useState } from "react";
+
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
+
 import { LigaCard } from "./LigaCard";
 import { LigaSheet } from "./LigaSheet";
+
+import type { Liga, UserRole } from "@link-leagues/types";
 
 async function getToken(): Promise<string> {
   const { data } = await supabase.auth.getSession();
@@ -84,14 +87,10 @@ export function LigasPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {role === "diretor" && (
-                <DropdownMenuItem onClick={abrirEditar}>
-                  Editar liga
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={abrirEditar}>Editar liga</DropdownMenuItem>
               )}
               {role === "staff" && (
-                <DropdownMenuItem onClick={abrirAdicionar}>
-                  Adicionar liga
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={abrirAdicionar}>Adicionar liga</DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>

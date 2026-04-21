@@ -1,8 +1,10 @@
 import { Router, type Router as IRouter } from "express";
-import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
-import { sql } from "../config/db.js";
-import { supabaseAdmin } from "../config/supabase.js";
 import multer from "multer";
+
+import { sql } from "../config/db.js";
+import { env } from "../config/env.js";
+import { supabaseAdmin } from "../config/supabase.js";
+import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 
 export const usuariosRouter: IRouter = Router();
 
@@ -73,58 +75,51 @@ usuariosRouter.patch("/me", authenticate, async (req, res, next) => {
 });
 
 // POST /usuarios/me/avatar — upload de foto de perfil do usuário autenticado
-usuariosRouter.post(
-  "/me/avatar",
-  authenticate,
-  upload.single("imagem"),
-  async (req, res, next) => {
-    try {
-      const userEmail = (req as AuthenticatedRequest).user!.email;
+usuariosRouter.post("/me/avatar", authenticate, upload.single("imagem"), async (req, res, next) => {
+  try {
+    const userEmail = (req as AuthenticatedRequest).user!.email;
 
-      if (!req.file) {
-        res.status(400).json({ error: "Arquivo de imagem obrigatório." });
-        return;
-      }
+    if (!req.file) {
+      res.status(400).json({ error: "Arquivo de imagem obrigatório." });
+      return;
+    }
 
-      const [usuarioAtual] = await sql`
+    const [usuarioAtual] = await sql`
         SELECT id FROM usuarios WHERE email = ${userEmail} LIMIT 1
       `;
 
-      if (!usuarioAtual) {
-        res.status(404).json({ error: "Usuário não encontrado." });
-        return;
-      }
+    if (!usuarioAtual) {
+      res.status(404).json({ error: "Usuário não encontrado." });
+      return;
+    }
 
-      const ext = req.file.mimetype === "image/png" ? "png" : "jpg";
-      const filename = `${usuarioAtual.id}-${Date.now()}.${ext}`;
+    const ext = req.file.mimetype === "image/png" ? "png" : "jpg";
+    const filename = `${usuarioAtual.id}-${Date.now()}.${ext}`;
 
-      const { error: storageError } = await supabaseAdmin.storage
-        .from("avatares")
-        .upload(filename, req.file.buffer, {
-          contentType: req.file.mimetype,
-          upsert: true,
-        });
+    const { error: storageError } = await supabaseAdmin.storage
+      .from("avatares")
+      .upload(filename, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: true,
+      });
 
-      if (storageError) throw storageError;
+    if (storageError) throw storageError;
 
-      const { data: urlData } = supabaseAdmin.storage
-        .from("avatares")
-        .getPublicUrl(filename);
+    const { data: urlData } = supabaseAdmin.storage.from("avatares").getPublicUrl(filename);
 
-      const avatar_url = urlData.publicUrl;
+    const avatar_url = urlData.publicUrl;
 
-      const [usuario] = await sql`
+    const [usuario] = await sql`
         UPDATE usuarios SET avatar_url = ${avatar_url}
         WHERE id = ${usuarioAtual.id}
         RETURNING id, nome, email, role, avatar_url, biografia, instagram, linkedin, semestre
       `;
 
-      res.json(usuario);
-    } catch (err) {
-      next(err);
-    }
+    res.json(usuario);
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 // GET /usuarios/visao-geral — usuários (lider/membro) com liga e % de presença (admin)
 usuariosRouter.get("/visao-geral", authenticate, requireRole("staff"), async (_req, res, next) => {
@@ -183,14 +178,12 @@ usuariosRouter.post("/", authenticate, requireRole("staff"), async (req, res, ne
       liga_id?: string;
     };
 
-    const appUrl = process.env["APP_URL"] ?? "http://localhost:3000";
-
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       email,
       {
-        redirectTo: `${appUrl}/redefinir-senha`,
+        redirectTo: `${env.APP_URL}/redefinir-senha`,
         data: { nome, role },
-      }
+      },
     );
 
     if (authError || !authData.user) {
@@ -224,26 +217,31 @@ usuariosRouter.post("/", authenticate, requireRole("staff"), async (req, res, ne
 
 // GET /usuarios/busca?email= — busca usuários por e-mail (autocomplete de diretores)
 // IMPORTANTE: deve estar antes de PATCH /:id e GET /:id para não ser capturado por esses padrões
-usuariosRouter.get("/busca", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
-  try {
-    const email = (req.query["email"] as string) ?? "";
+usuariosRouter.get(
+  "/busca",
+  authenticate,
+  requireRole("staff", "diretor"),
+  async (req, res, next) => {
+    try {
+      const email = (req.query["email"] as string) ?? "";
 
-    if (email.length < 2) {
-      res.json([]);
-      return;
-    }
+      if (email.length < 2) {
+        res.json([]);
+        return;
+      }
 
-    const usuarios = await sql`
+      const usuarios = await sql`
       SELECT id, nome, email FROM usuarios
       WHERE email ILIKE ${"%" + email + "%"}
       LIMIT 10
     `;
 
-    res.json(usuarios);
-  } catch (err) {
-    next(err);
-  }
-});
+      res.json(usuarios);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // PATCH /usuarios/:id — atualiza nome e/ou role (admin)
 usuariosRouter.patch("/:id", authenticate, requireRole("staff"), async (req, res, next) => {

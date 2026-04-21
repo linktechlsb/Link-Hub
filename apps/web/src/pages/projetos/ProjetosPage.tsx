@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
 import { Search, X } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
+
 import { useUser } from "@/hooks/use-user";
+import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
+
 import { ProjetosLiderView } from "./ProjetosLiderView";
-import { ProjetosStaffView } from "./ProjetosStaffView";
 import { ProjetosProfessorView } from "./ProjetosProfessorView";
+import { ProjetosStaffView } from "./ProjetosStaffView";
 
 type ProjetoAPI = {
   id: string;
@@ -26,13 +28,7 @@ function formatarData(data: string) {
   return new Date(data + "T00:00:00").toLocaleDateString("pt-BR");
 }
 
-function PainelDetalhes({
-  projeto,
-  onFechar,
-}: {
-  projeto: ProjetoAPI;
-  onFechar: () => void;
-}) {
+function PainelDetalhes({ projeto, onFechar }: { projeto: ProjetoAPI; onFechar: () => void }) {
   return (
     <div className="bg-white border border-brand-gray rounded-lg p-6 mx-1">
       <div className="flex items-start justify-between mb-4">
@@ -65,13 +61,17 @@ function PainelDetalhes({
           </p>
         </div>
         <div>
-          <span className="text-xs font-bold text-link-blue uppercase tracking-wider">Progresso</span>
+          <span className="text-xs font-bold text-link-blue uppercase tracking-wider">
+            Progresso
+          </span>
           <p className="text-navy mt-0.5">{projeto.percentual_concluido}%</p>
         </div>
       </div>
       {projeto.descricao && (
         <div>
-          <span className="text-xs font-bold text-link-blue uppercase tracking-wider">Descrição</span>
+          <span className="text-xs font-bold text-link-blue uppercase tracking-wider">
+            Descrição
+          </span>
           <p className="text-sm text-muted-foreground mt-0.5">{projeto.descricao}</p>
         </div>
       )}
@@ -96,7 +96,7 @@ export function ProjetosPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          setProjetos(await res.json() as ProjetoAPI[]);
+          setProjetos((await res.json()) as ProjetoAPI[]);
         }
       } finally {
         setLoadingProjetos(false);
@@ -223,7 +223,7 @@ export function ProjetosPage() {
                       key={p.id}
                       onClick={() => toggleSelecionado(p.id)}
                       className={cn(
-                        "border-b border-brand-gray cursor-pointer transition-colors hover:bg-gray-50"
+                        "border-b border-brand-gray cursor-pointer transition-colors hover:bg-gray-50",
                       )}
                     >
                       <td className="px-6 py-4">
@@ -242,17 +242,12 @@ export function ProjetosPage() {
                           {p.status.replace("_", " ")}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-medium text-navy">
-                        {p.percentual_concluido}%
-                      </td>
+                      <td className="px-6 py-4 font-medium text-navy">{p.percentual_concluido}%</td>
                     </tr>
                     {isAberto && (
                       <tr key={`${p.id}-detalhe`} className="bg-white">
                         <td colSpan={4} className="px-4 pb-4 pt-0">
-                          <PainelDetalhes
-                            projeto={p}
-                            onFechar={() => setSelecionado(null)}
-                          />
+                          <PainelDetalhes projeto={p} onFechar={() => setSelecionado(null)} />
                         </td>
                       </tr>
                     )}

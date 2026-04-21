@@ -1,21 +1,26 @@
-import { KpiCard } from "./KpiCard"
-import { RankingLigas, type RankingItem } from "./RankingLigas"
+import { KpiCard } from "./KpiCard";
+import { RankingLigas, type RankingItem } from "./RankingLigas";
 
 // ─── mock data ────────────────────────────────────────────────────────────────
 
 const METRICAS_MEMBRO = [
-  { label: "Meu score",              valor: "72 pts",    trend: "↑ +5pts",   trendType: "up"      as const },
-  { label: "Minha frequência",       valor: "87%",       trend: "↑ +2%",     trendType: "up"      as const },
-  { label: "Projetos que participo", valor: "2",         trend: "↔ estável", trendType: "neutral" as const },
-  { label: "Próxima reunião",        valor: "Sex 18/04", trend: "às 19h",    trendType: "neutral" as const },
-]
+  { label: "Meu score", valor: "72 pts", trend: "↑ +5pts", trendType: "up" as const },
+  { label: "Minha frequência", valor: "87%", trend: "↑ +2%", trendType: "up" as const },
+  {
+    label: "Projetos que participo",
+    valor: "2",
+    trend: "↔ estável",
+    trendType: "neutral" as const,
+  },
+  { label: "Próxima reunião", valor: "Sex 18/04", trend: "às 19h", trendType: "neutral" as const },
+];
 
 const RANKING_MEMBRO: RankingItem[] = [
-  { id: "r1", nome: "Liga Tech",    score: 840, minhaLiga: true  },
+  { id: "r1", nome: "Liga Tech", score: 840, minhaLiga: true },
   { id: "r2", nome: "Link Finance", score: 710, minhaLiga: false },
-  { id: "r3", nome: "Marketing",    score: 620, minhaLiga: false },
-  { id: "r4", nome: "RH",           score: 480, minhaLiga: false },
-]
+  { id: "r3", nome: "Marketing", score: 620, minhaLiga: false },
+  { id: "r4", nome: "RH", score: 480, minhaLiga: false },
+];
 
 // ─── component ────────────────────────────────────────────────────────────────
 
@@ -48,5 +53,5 @@ export function HomeMembroView() {
         <RankingLigas ranking={RANKING_MEMBRO} />
       </div>
     </div>
-  )
+  );
 }

@@ -1,23 +1,17 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface LoginFormProps extends React.ComponentPropsWithoutRef<"div"> {
-  onSubmit: (e: React.FormEvent) => void
-  email: string
-  onEmailChange: (v: string) => void
-  password: string
-  onPasswordChange: (v: string) => void
-  loading: boolean
-  error: string | null
+  onSubmit: (e: React.FormEvent) => void;
+  email: string;
+  onEmailChange: (v: string) => void;
+  password: string;
+  onPasswordChange: (v: string) => void;
+  loading: boolean;
+  error: string | null;
 }
 
 export function LoginForm({
@@ -74,9 +68,7 @@ export function LoginForm({
                 />
               </div>
 
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
+              {error && <p className="text-sm text-destructive">{error}</p>}
 
               <Button
                 type="submit"
@@ -90,5 +82,5 @@ export function LoginForm({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

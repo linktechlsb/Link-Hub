@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+
 import type { Liga } from "@link-leagues/types";
 
 function primeiroUltimoNome(nome: string): string {
@@ -26,31 +27,21 @@ export function LigaCard({ liga }: LigaCardProps) {
       {/* Área da imagem */}
       <div className="relative h-32 w-full">
         {temImagem ? (
-          <img
-            src={liga.imagem_url!}
-            alt={liga.nome}
-            className="h-full w-full object-cover"
-          />
+          <img src={liga.imagem_url!} alt={liga.nome} className="h-full w-full object-cover" />
         ) : (
           <div className="h-full w-full bg-brand-yellow flex items-center justify-center">
-            <span className="font-display font-bold text-5xl text-navy">
-              {inicial}
-            </span>
+            <span className="font-display font-bold text-5xl text-navy">{inicial}</span>
           </div>
         )}
       </div>
 
       {/* Conteúdo */}
       <div className="p-4 space-y-2">
-        <h3 className="font-display font-bold text-base text-navy leading-tight">
-          {liga.nome}
-        </h3>
+        <h3 className="font-display font-bold text-base text-navy leading-tight">{liga.nome}</h3>
 
         <p className="text-xs text-link-blue">
           <span className="font-semibold">Diretores:</span>{" "}
-          {diretores.length > 0
-            ? diretores.map((d) => primeiroUltimoNome(d.nome)).join(", ")
-            : "—"}
+          {diretores.length > 0 ? diretores.map((d) => primeiroUltimoNome(d.nome)).join(", ") : "—"}
         </p>
 
         {projetosAtivos > 0 ? (

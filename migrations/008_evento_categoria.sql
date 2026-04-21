@@ -1,4 +1,4 @@
--- Migration 007: Adiciona categoria, sala, horário e aprovação aos eventos
+-- Migration 008: Adiciona categoria, sala, horário e aprovação aos eventos
 
 ALTER TABLE eventos
   ADD COLUMN IF NOT EXISTS categoria        TEXT    NOT NULL DEFAULT 'encontro',

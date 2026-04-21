@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import type { Projeto, Evento } from "@link-leagues/types";
+
 import { supabase } from "@/lib/supabase";
+
+import type { Projeto, Evento } from "@link-leagues/types";
 
 async function getToken(): Promise<string> {
   const { data } = await supabase.auth.getSession();
@@ -78,9 +80,7 @@ export function VisaoGeralTab({ ligaId, diretores }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
-          Diretores
-        </p>
+        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">Diretores</p>
         {diretores.length > 0 ? (
           <div className="flex flex-col gap-2">
             {diretores.map((d) => (
@@ -105,25 +105,21 @@ export function VisaoGeralTab({ ligaId, diretores }: Props) {
           Métricas da Liga
         </p>
         <div className="grid grid-cols-4 gap-3">
+          <MetricCard value={String(projetosAtivos)} label="Proj. Ativos" sub="em andamento" />
           <MetricCard
-value={String(projetosAtivos)}
-            label="Proj. Ativos"
-            sub="em andamento"
-          />
-          <MetricCard
-value={String(score)}
+            value={String(score)}
             label="Score"
             sub="valor fictício"
             valueClass="text-amber-500"
           />
           <MetricCard
-value={presencaPercent !== null ? `${presencaPercent}%` : "—"}
+            value={presencaPercent !== null ? `${presencaPercent}%` : "—"}
             label="Presença"
             sub="média da liga"
             valueClass="text-green-600"
           />
           <MetricCard
-value={faturamentoPorMembro}
+            value={faturamentoPorMembro}
             label="Fat./Membro"
             sub="valor fictício"
             valueClass="text-link-blue"

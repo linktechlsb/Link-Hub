@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import type { UserRole } from "@link-leagues/types";
-import { supabase } from "@/lib/supabase";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -8,9 +10,9 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabase";
+
+import type { UserRole } from "@link-leagues/types";
 
 interface UsuarioResumo {
   id: string;
@@ -122,7 +124,9 @@ export function UsuarioSheet({ open, onOpenChange, usuario, ligas, onSalvo }: Us
         <SheetHeader className="p-6 pb-4 border-b border-brand-gray">
           <SheetTitle className="font-display font-bold text-navy">{titulo}</SheetTitle>
           <SheetDescription className="text-sm text-muted-foreground">
-            {usuario ? "Atualize os dados do usuário" : "Preencha os dados para criar um novo usuário"}
+            {usuario
+              ? "Atualize os dados do usuário"
+              : "Preencha os dados para criar um novo usuário"}
           </SheetDescription>
         </SheetHeader>
 

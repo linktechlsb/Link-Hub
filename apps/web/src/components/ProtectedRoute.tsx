@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
+
 import { supabase } from "@/lib/supabase";
+
 import type { UserRole } from "@link-leagues/types";
 
 interface ProtectedRouteProps {
@@ -27,7 +29,7 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
         if (res.ok) {
-          const usuario = await res.json() as { role: UserRole };
+          const usuario = (await res.json()) as { role: UserRole };
           setRole(usuario.role);
         }
       } catch {

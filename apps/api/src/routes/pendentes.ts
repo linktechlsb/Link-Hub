@@ -1,6 +1,7 @@
 import { Router, type Router as IRouter } from "express";
-import { authenticate, requireRole } from "../middleware/auth.js";
+
 import { sql } from "../config/db.js";
+import { authenticate, requireRole } from "../middleware/auth.js";
 
 export const pendentesRouter: IRouter = Router();
 

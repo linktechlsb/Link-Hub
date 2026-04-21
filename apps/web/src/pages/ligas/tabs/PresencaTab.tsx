@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+
 import { supabase } from "@/lib/supabase";
+
 import type { StatusPresenca } from "@link-leagues/types";
 
 interface PresencaRow {

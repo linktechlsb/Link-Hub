@@ -1,9 +1,12 @@
 import postgres from "postgres";
 
-const connectionString = process.env["DATABASE_URL"];
+import { env } from "./env.js";
 
-if (!connectionString) {
-  throw new Error("DATABASE_URL é obrigatório.");
+if (!env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL é obrigatório para operações diretas no Postgres. " +
+      "Configure a variável no .env.",
+  );
 }
 
-export const sql = postgres(connectionString);
+export const sql = postgres(env.DATABASE_URL);

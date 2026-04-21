@@ -1,5 +1,5 @@
-import type { Usuario } from "./user.js";
 import type { Liga } from "./liga.js";
+import type { Usuario } from "./user.js";
 
 export type StatusProjeto =
   | "rascunho"

@@ -1,64 +1,115 @@
-import { useNavigate } from "react-router-dom"
 import {
-  Users, UserCheck, FolderKanban, Activity,
-  AlertTriangle, CalendarX, Clock,
-  TrendingUp, CheckCircle2, Medal,
-} from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+  Users,
+  UserCheck,
+  FolderKanban,
+  Activity,
+  AlertTriangle,
+  CalendarX,
+  Clock,
+  TrendingUp,
+  CheckCircle2,
+  Medal,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import {
-  Table, TableBody, TableCell, TableHead,
-  TableHeader, TableRow,
-} from "@/components/ui/table"
-import { Progress } from "@/components/ui/progress"
-import { KpiCard } from "./KpiCard"
-import { cn } from "@/lib/utils"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+
+import { KpiCard } from "./KpiCard";
 
 // ─── mock data ────────────────────────────────────────────────────────────────
 
 const METRICAS_STAFF = [
-  { label: "Ligas ativas",      valor: "4",   Icon: Users,         trend: "↑ +1 este mês",  trendType: "up"      },
-  { label: "Membros",           valor: "96",  Icon: UserCheck,     trend: "↑ +5 este mês",  trendType: "up"      },
-  { label: "Projetos ativos",   valor: "8",   Icon: FolderKanban,  trend: "↔ estável",       trendType: "neutral" },
-  { label: "Engajamento geral", valor: "78%", Icon: Activity,      trend: "↑ +3%",           trendType: "up"      },
-] as const
+  { label: "Ligas ativas", valor: "4", Icon: Users, trend: "↑ +1 este mês", trendType: "up" },
+  { label: "Membros", valor: "96", Icon: UserCheck, trend: "↑ +5 este mês", trendType: "up" },
+  {
+    label: "Projetos ativos",
+    valor: "8",
+    Icon: FolderKanban,
+    trend: "↔ estável",
+    trendType: "neutral",
+  },
+  { label: "Engajamento geral", valor: "78%", Icon: Activity, trend: "↑ +3%", trendType: "up" },
+] as const;
 
 const METRICAS_ENGAJAMENTO = [
-  { label: "Média de presença", valor: "71%",       trendType: "neutral" as const },
-  { label: "Reuniões no mês",   valor: "14",         trendType: "up"      as const },
-  { label: "Eventos ativos",    valor: "3",          trendType: "up"      as const },
-  { label: "Receita total",     valor: "R$ 8.700",   trendType: "up"      as const },
-]
+  { label: "Média de presença", valor: "71%", trendType: "neutral" as const },
+  { label: "Reuniões no mês", valor: "14", trendType: "up" as const },
+  { label: "Eventos ativos", valor: "3", trendType: "up" as const },
+  { label: "Receita total", valor: "R$ 8.700", trendType: "up" as const },
+];
 
 const ALERTAS_STAFF = [
-  { id: "s1", titulo: "Liga RH",       descricao: "Engajamento em 32% — abaixo do mínimo",  rota: "/gerenciamento", Icon: Activity,  tipo: "urgente" },
-  { id: "s3", titulo: "Liga Marketing", descricao: "Sem reunião registrada há 2 semanas",   rota: "/gerenciamento", Icon: CalendarX, tipo: "atencao" },
-]
+  {
+    id: "s1",
+    titulo: "Liga RH",
+    descricao: "Engajamento em 32% — abaixo do mínimo",
+    rota: "/gerenciamento",
+    Icon: Activity,
+    tipo: "urgente",
+  },
+  {
+    id: "s3",
+    titulo: "Liga Marketing",
+    descricao: "Sem reunião registrada há 2 semanas",
+    rota: "/gerenciamento",
+    Icon: CalendarX,
+    tipo: "atencao",
+  },
+];
 
 const RANKING_PRESENCA = [
-  { id: "p1", nome: "Liga Tech",    presenca: 94 },
+  { id: "p1", nome: "Liga Tech", presenca: 94 },
   { id: "p2", nome: "Link Finance", presenca: 87 },
-  { id: "p3", nome: "Marketing",    presenca: 72 },
-  { id: "p4", nome: "RH",           presenca: 32 },
-]
+  { id: "p3", nome: "Marketing", presenca: 72 },
+  { id: "p4", nome: "RH", presenca: 32 },
+];
 
 const DESTAQUES_MOCK = [
-  { id: "1", Icon: TrendingUp,   label: "SCORE",   titulo: "Liga de Marketing", sub: "+12pts essa semana" },
-  { id: "2", Icon: CheckCircle2, label: "PROJETO", titulo: "Análise de Mercado", sub: "Concluído ontem" },
-  { id: "3", Icon: Medal,        label: "RANKING", titulo: "#1 Liga de Finanças", sub: "Lidera a temporada" },
-]
+  {
+    id: "1",
+    Icon: TrendingUp,
+    label: "SCORE",
+    titulo: "Liga de Marketing",
+    sub: "+12pts essa semana",
+  },
+  {
+    id: "2",
+    Icon: CheckCircle2,
+    label: "PROJETO",
+    titulo: "Análise de Mercado",
+    sub: "Concluído ontem",
+  },
+  {
+    id: "3",
+    Icon: Medal,
+    label: "RANKING",
+    titulo: "#1 Liga de Finanças",
+    sub: "Lidera a temporada",
+  },
+];
 
 // ─── component ────────────────────────────────────────────────────────────────
 
 interface HomeStaffViewProps {
   pendentes: {
-    projetos: { id: string; titulo: string; liga?: { nome: string } }[]
-    eventos:  { id: string; titulo: string; liga?: { nome: string } }[]
-  }
+    projetos: { id: string; titulo: string; liga?: { nome: string } }[];
+    eventos: { id: string; titulo: string; liga?: { nome: string } }[];
+  };
 }
 
 export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-6">
@@ -139,7 +190,8 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
               <Clock className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-navy">
-                  {pendentes.projetos.length} projeto{pendentes.projetos.length > 1 ? "s" : ""} aguardando aprovação
+                  {pendentes.projetos.length} projeto{pendentes.projetos.length > 1 ? "s" : ""}{" "}
+                  aguardando aprovação
                 </p>
                 <p className="text-xs text-amber-700 mt-0.5">Clique para revisar e aprovar</p>
               </div>
@@ -153,7 +205,8 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
               <CalendarX className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-navy">
-                  {pendentes.eventos.length} evento{pendentes.eventos.length > 1 ? "s" : ""} aguardando aprovação
+                  {pendentes.eventos.length} evento{pendentes.eventos.length > 1 ? "s" : ""}{" "}
+                  aguardando aprovação
                 </p>
                 <p className="text-xs text-amber-700 mt-0.5">Clique para revisar e aprovar</p>
               </div>
@@ -184,13 +237,13 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
             </TableHeader>
             <TableBody>
               {RANKING_PRESENCA.map((r, i) => {
-                const baixa = r.presenca < 50
-                const media = r.presenca < 70
+                const baixa = r.presenca < 50;
+                const media = r.presenca < 70;
                 const barClass = baixa
                   ? "[&>div]:bg-red-500"
                   : media
-                  ? "[&>div]:bg-amber-500"
-                  : "[&>div]:bg-green-500"
+                    ? "[&>div]:bg-amber-500"
+                    : "[&>div]:bg-green-500";
                 return (
                   <TableRow key={r.id} className={baixa ? "bg-red-50" : undefined}>
                     <TableCell>
@@ -198,7 +251,7 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
                         <span
                           className={cn(
                             "text-xs font-bold w-5 text-center",
-                            baixa ? "text-red-500" : "text-muted-foreground"
+                            baixa ? "text-red-500" : "text-muted-foreground",
                           )}
                         >
                           {i + 1}º
@@ -206,7 +259,7 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
                         <span
                           className={cn(
                             "text-sm font-semibold",
-                            baixa ? "text-red-600" : "text-slate-700"
+                            baixa ? "text-red-600" : "text-slate-700",
                           )}
                         >
                           {r.nome}
@@ -225,7 +278,7 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
                       <span
                         className={cn(
                           "text-sm font-bold",
-                          baixa ? "text-red-600" : media ? "text-amber-600" : "text-green-600"
+                          baixa ? "text-red-600" : media ? "text-amber-600" : "text-green-600",
                         )}
                       >
                         {r.presenca}%
@@ -235,7 +288,7 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
                       <Progress value={r.presenca} className={cn("h-1.5 w-28", barClass)} />
                     </TableCell>
                   </TableRow>
-                )
+                );
               })}
             </TableBody>
           </Table>
@@ -249,15 +302,10 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
         </p>
         <div className="grid grid-cols-4 gap-3">
           {METRICAS_ENGAJAMENTO.map((m) => (
-            <KpiCard
-              key={m.label}
-              label={m.label}
-              value={m.valor}
-              trendType={m.trendType}
-            />
+            <KpiCard key={m.label} label={m.label} value={m.valor} trendType={m.trendType} />
           ))}
         </div>
       </div>
     </div>
-  )
+  );
 }

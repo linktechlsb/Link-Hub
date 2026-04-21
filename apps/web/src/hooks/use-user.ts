@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+
 import { supabase } from "@/lib/supabase";
+
 import type { UserRole } from "@link-leagues/types";
 
 export function useUser() {

@@ -1,49 +1,59 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { Clock, CalendarDays } from "lucide-react"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Clock, CalendarDays } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
-  Table, TableBody, TableCell, TableHead,
-  TableHeader, TableRow,
-} from "@/components/ui/table"
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
-  Pagination, PaginationContent, PaginationItem,
-  PaginationLink, PaginationNext, PaginationPrevious,
-} from "@/components/ui/pagination"
-import { KpiCard } from "./KpiCard"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+import { KpiCard } from "./KpiCard";
 
 // ─── mock data ────────────────────────────────────────────────────────────────
 
 const METRICAS_PROFESSOR = [
-  { label: "Score",           valor: "840 pts", trend: "↑ +12pts", trendType: "up"      as const },
-  { label: "Projetos ativos", valor: "5",        trend: "↔ estável", trendType: "neutral" as const },
-  { label: "Membros",         valor: "24",       trend: "↑ +2",      trendType: "up"      as const },
-  { label: "Frequência",      valor: "87%",      trend: "↑ +3%",     trendType: "up"      as const },
-]
+  { label: "Score", valor: "840 pts", trend: "↑ +12pts", trendType: "up" as const },
+  { label: "Projetos ativos", valor: "5", trend: "↔ estável", trendType: "neutral" as const },
+  { label: "Membros", valor: "24", trend: "↑ +2", trendType: "up" as const },
+  { label: "Frequência", valor: "87%", trend: "↑ +3%", trendType: "up" as const },
+];
 
 const FILA_PROFESSOR = [
-  { id: "f1", nome: "App de presenças",     diasAguardando: 9 },
-  { id: "f2", nome: "API de integração",    diasAguardando: 2 },
-  { id: "f3", nome: "Sistema de feedback",  diasAguardando: 1 },
-]
+  { id: "f1", nome: "App de presenças", diasAguardando: 9 },
+  { id: "f2", nome: "API de integração", diasAguardando: 2 },
+  { id: "f3", nome: "Sistema de feedback", diasAguardando: 1 },
+];
 
 const EVENTOS_PROFESSOR = [
-  { id: "e1", nome: "Reunião semanal",      data: "Sex 18/04", hora: "19h" },
-  { id: "e2", nome: "Workshop de produto",  data: "Ter 22/04", hora: "18h" },
-]
+  { id: "e1", nome: "Reunião semanal", data: "Sex 18/04", hora: "19h" },
+  { id: "e2", nome: "Workshop de produto", data: "Ter 22/04", hora: "18h" },
+];
 
-const PER_PAGE = 5
+const PER_PAGE = 5;
 
 // ─── component ────────────────────────────────────────────────────────────────
 
 export function HomeProfessorView() {
-  const navigate = useNavigate()
-  const [page, setPage] = useState(1)
+  const navigate = useNavigate();
+  const [page, setPage] = useState(1);
 
-  const totalPages = Math.ceil(FILA_PROFESSOR.length / PER_PAGE)
-  const filaPaginada = FILA_PROFESSOR.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const totalPages = Math.ceil(FILA_PROFESSOR.length / PER_PAGE);
+  const filaPaginada = FILA_PROFESSOR.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
     <div className="space-y-6">
@@ -95,8 +105,8 @@ export function HomeProfessorView() {
             </TableHeader>
             <TableBody>
               {filaPaginada.map((p) => {
-                const urgente = p.diasAguardando > 7
-                const medio   = p.diasAguardando >= 4
+                const urgente = p.diasAguardando > 7;
+                const medio = p.diasAguardando >= 4;
                 return (
                   <TableRow key={p.id}>
                     <TableCell>
@@ -116,8 +126,8 @@ export function HomeProfessorView() {
                             urgente
                               ? "border-red-300 text-red-600 bg-red-50 text-[10px]"
                               : medio
-                              ? "border-amber-300 text-amber-700 bg-amber-50 text-[10px]"
-                              : "border-slate-300 text-slate-500 bg-slate-50 text-[10px]"
+                                ? "border-amber-300 text-amber-700 bg-amber-50 text-[10px]"
+                                : "border-slate-300 text-slate-500 bg-slate-50 text-[10px]"
                           }
                         >
                           {urgente ? "Urgente" : medio ? "Atenção" : "Aguardando"}
@@ -135,7 +145,7 @@ export function HomeProfessorView() {
                       </Button>
                     </TableCell>
                   </TableRow>
-                )
+                );
               })}
             </TableBody>
           </Table>
@@ -163,7 +173,9 @@ export function HomeProfessorView() {
                   <PaginationItem>
                     <PaginationNext
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      className={
+                        page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"
+                      }
                     />
                   </PaginationItem>
                 </PaginationContent>
@@ -198,5 +210,5 @@ export function HomeProfessorView() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

@@ -1,5 +1,5 @@
 -- ============================================================
--- Link Leagues Platform — Migration 008: Aprovação Dupla de Projetos
+-- Link Leagues Platform — Migration 009: Aprovação Dupla de Projetos
 -- ============================================================
 -- Adiciona colunas de aprovação individual (professor e staff)
 -- à tabela projetos e role professor ao enum user_role.
