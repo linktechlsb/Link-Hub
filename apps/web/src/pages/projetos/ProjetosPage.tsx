@@ -7,8 +7,6 @@ import { ProjetosLiderView } from "./ProjetosLiderView";
 import { ProjetosStaffView } from "./ProjetosStaffView";
 import { ProjetosProfessorView } from "./ProjetosProfessorView";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
-
 type ProjetoAPI = {
   id: string;
   liga_id: string;
@@ -94,7 +92,7 @@ export function ProjetosPage() {
         const { data } = await supabase.auth.getSession();
         const token = data.session?.access_token;
         if (!token) return;
-        const res = await fetch(`${API_URL}/projetos`, {
+        const res = await fetch(`/api/projetos`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {

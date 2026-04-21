@@ -23,7 +23,7 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
       setAuthenticated(true);
 
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL ?? "http://localhost:3001"}/usuarios/me`, {
+        const res = await fetch(`/api/usuarios/me`, {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
         if (res.ok) {

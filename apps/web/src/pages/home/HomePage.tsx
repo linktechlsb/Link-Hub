@@ -11,8 +11,6 @@ import { HomeDiretorView } from "./HomeDiretorView"
 import { HomeProfessorView } from "./HomeProfessorView"
 import { HomeMembroView } from "./HomeMembroView"
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001"
-
 async function getToken(): Promise<string | null> {
   const { data } = await supabase.auth.getSession()
   return data.session?.access_token ?? null
@@ -58,8 +56,8 @@ export function HomePage() {
         }
 
         const [ligasRes, minhaRes] = await Promise.all([
-          fetch(`${API_URL}/ligas`, { headers }),
-          fetch(`${API_URL}/ligas/minha`, { headers }),
+          fetch(`/api/ligas`, { headers }),
+          fetch(`/api/ligas/minha`, { headers }),
         ])
         if (ligasRes.ok) setLigas(await ligasRes.json())
         if (minhaRes.ok) setMinhaLiga(await minhaRes.json())
@@ -77,7 +75,7 @@ export function HomePage() {
     async function carregarPendentes() {
       const token = await getToken()
       if (!token) return;
-      const res = await fetch(`${API_URL}/pendentes`, { headers: { Authorization: `Bearer ${token}` } })
+      const res = await fetch(`/api/pendentes`, { headers: { Authorization: `Bearer ${token}` } })
       if (res.ok) setPendentes(await res.json())
     }
     void carregarPendentes()
