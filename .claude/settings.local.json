@@ -71,7 +71,11 @@
       "Bash(node -e \"const l = require\\('./package-lock.json'\\); console.log\\('lockfileVersion:', l.lockfileVersion\\); console.log\\('npm version that created it:', l.packages['node_modules/npm']?.version || 'N/A'\\)\")",
       "Bash(node -e \"const l = require\\('./package-lock.json'\\); const pm = Object.entries\\(l.packages\\).filter\\(\\([k]\\) => k.includes\\('picomatch'\\)\\); pm.forEach\\(\\([k,v]\\) => console.log\\(k, v.version\\)\\)\")",
       "Bash(node -e \"const l = require\\('./package-lock.json'\\); const ts = Object.entries\\(l.packages\\).filter\\(\\([k]\\) => k.includes\\('typescript'\\)\\); ts.forEach\\(\\([k,v]\\) => console.log\\(k, v.version, 'dev:', v.dev\\)\\)\")",
-      "Bash(node -e \"const l = require\\('./package-lock.json'\\); const pm = l.packages['node_modules/picomatch']; console.log\\('picomatch entry:', JSON.stringify\\(pm, null, 2\\)\\)\")"
+      "Bash(node -e \"const l = require\\('./package-lock.json'\\); const pm = l.packages['node_modules/picomatch']; console.log\\('picomatch entry:', JSON.stringify\\(pm, null, 2\\)\\)\")",
+      "Bash(node -e \"const l = require\\('./package-lock.json'\\); console.log\\('TS:', l.packages['node_modules/typescript']?.version\\); console.log\\('picomatch:', l.packages['node_modules/picomatch']?.version\\)\")",
+      "Bash(node -e \"const l = require\\('./package-lock.json'\\); console.log\\('lockfileVersion:', l.lockfileVersion\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); pkg=d.get\\('packages',{}\\).get\\('node_modules/prettier'\\); print\\(pkg\\)\")",
+      "Bash(node -e \"const p = require\\('./node_modules/prettier/package.json'\\); console.log\\(p.version\\)\")"
     ],
     "deny": [
       "Bash(git commit *)",
