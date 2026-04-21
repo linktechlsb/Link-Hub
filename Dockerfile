@@ -4,6 +4,9 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# Alinhar npm com o packageManager field do package.json (evita divergência npm 10 vs 11)
+RUN corepack enable && corepack prepare npm@11.5.2 --activate
+
 # Copiar manifestos primeiro para aproveitar cache de layer do npm install
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
@@ -29,6 +32,9 @@ RUN npm run build
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+
+# Alinhar npm com o packageManager field do package.json (evita divergência npm 10 vs 11)
+RUN corepack enable && corepack prepare npm@11.5.2 --activate
 
 # Copiar manifestos e instalar apenas deps de produção
 COPY package.json package-lock.json ./
