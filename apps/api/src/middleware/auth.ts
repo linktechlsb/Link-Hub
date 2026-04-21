@@ -31,16 +31,18 @@ setInterval(() => {
 async function resolveSession(token: string): Promise<CachedSession | null> {
   const { data, error } = await supabaseAnon.auth.getUser(token);
 
-  if (error || !data.user) return null;
+  if (error || !data.user?.email) return null;
+
+  const email = data.user.email;
 
   const [usuario] = await sql`
-    SELECT role FROM usuarios WHERE email = ${data.user.email} LIMIT 1
+    SELECT role FROM usuarios WHERE email = ${email} LIMIT 1
   `;
 
   const session: CachedSession = {
     user: {
       id: data.user.id,
-      email: data.user.email ?? "",
+      email,
       role: (usuario?.role as UserRole) ?? "membro",
     },
     expiresAt: Date.now() + SESSION_TTL_MS,
