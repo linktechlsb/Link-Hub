@@ -1,5 +1,4 @@
 import { Router, type Router as IRouter } from "express";
-import { randomBytes } from "crypto";
 import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 import { sql } from "../config/db.js";
 import { supabaseAdmin } from "../config/supabase.js";
@@ -184,14 +183,15 @@ usuariosRouter.post("/", authenticate, requireRole("staff"), async (req, res, ne
       liga_id?: string;
     };
 
-    // Password temporária aleatória — o utilizador deve alterá-la no primeiro login
-    const senhaTemporaria = process.env["DEFAULT_USER_PASSWORD"] ?? randomBytes(16).toString("hex");
+    const appUrl = process.env["APP_URL"] ?? "http://localhost:3000";
 
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       email,
-      password: senhaTemporaria,
-      email_confirm: true,
-    });
+      {
+        redirectTo: `${appUrl}/redefinir-senha`,
+        data: { nome, role },
+      }
+    );
 
     if (authError || !authData.user) {
       let mensagemErro = authError?.message ?? "Erro ao criar usuário no Auth.";

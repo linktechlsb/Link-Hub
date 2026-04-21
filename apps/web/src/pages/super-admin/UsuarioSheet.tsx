@@ -154,7 +154,7 @@ export function UsuarioSheet({ open, onOpenChange, usuario, ligas, onSalvo }: Us
             />
             {!usuario && (
               <p className="text-xs text-muted-foreground">
-                Senha temporária: <span className="font-mono font-semibold">LinkLeagues2024!</span>
+                O usuário receberá um acesso para criar sua senha.
               </p>
             )}
           </div>

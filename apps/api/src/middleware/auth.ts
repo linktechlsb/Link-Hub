@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { supabaseAnon, supabaseAdmin } from "../config/supabase.js";
+import { supabaseAnon } from "../config/supabase.js";
+import { sql } from "../config/db.js";
 import type { UserRole } from "@link-leagues/types";
 
 export interface AuthenticatedRequest extends Request {
@@ -18,16 +19,36 @@ interface CachedSession {
 }
 
 const sessionCache = new Map<string, CachedSession>();
+const pendingAuth = new Map<string, Promise<CachedSession | null>>();
 
-// Limpar entradas expiradas a cada 15 minutos
 setInterval(() => {
   const agora = Date.now();
   for (const [token, cached] of sessionCache.entries()) {
-    if (cached.expiresAt <= agora) {
-      sessionCache.delete(token);
-    }
+    if (cached.expiresAt <= agora) sessionCache.delete(token);
   }
 }, 15 * 60 * 1000);
+
+async function resolveSession(token: string): Promise<CachedSession | null> {
+  const { data, error } = await supabaseAnon.auth.getUser(token);
+
+  if (error || !data.user) return null;
+
+  const [usuario] = await sql`
+    SELECT role FROM usuarios WHERE email = ${data.user.email} LIMIT 1
+  `;
+
+  const session: CachedSession = {
+    user: {
+      id: data.user.id,
+      email: data.user.email ?? "",
+      role: (usuario?.role as UserRole) ?? "membro",
+    },
+    expiresAt: Date.now() + SESSION_TTL_MS,
+  };
+
+  sessionCache.set(token, session);
+  return session;
+}
 
 export async function authenticate(
   req: AuthenticatedRequest,
@@ -50,29 +71,22 @@ export async function authenticate(
     return;
   }
 
-  const { data, error } = await supabaseAnon.auth.getUser(token);
+  // Deduplica chamadas simultâneas com o mesmo token
+  let pending = pendingAuth.get(token);
+  if (!pending) {
+    pending = resolveSession(token).finally(() => pendingAuth.delete(token));
+    pendingAuth.set(token, pending);
+  }
 
-  if (error || !data.user) {
+  const session = await pending;
+
+  if (!session) {
     sessionCache.delete(token);
     res.status(401).json({ error: "Token inválido ou expirado." });
     return;
   }
 
-  const { data: usuario } = await supabaseAdmin
-    .from("usuarios")
-    .select("role")
-    .eq("email", data.user.email)
-    .single();
-
-  const user = {
-    id: data.user.id,
-    email: data.user.email ?? "",
-    role: (usuario?.role as UserRole) ?? "membro",
-  };
-
-  sessionCache.set(token, { user, expiresAt: Date.now() + SESSION_TTL_MS });
-
-  req.user = user;
+  req.user = session.user;
   next();
 }
 

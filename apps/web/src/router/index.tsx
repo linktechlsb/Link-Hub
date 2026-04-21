@@ -5,6 +5,7 @@ import { AppLayout } from "@/layouts/AppLayout";
 import { AuthLayout } from "@/layouts/AuthLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { LoginPage } from "@/pages/auth/LoginPage";
+import { RedefinirSenhaPage } from "@/pages/auth/RedefinirSenhaPage";
 import { HomePage } from "@/pages/home/HomePage";
 import { LigasPage } from "@/pages/ligas/LigasPage";
 import { LigaDetailPage } from "@/pages/ligas/LigaDetailPage";
@@ -25,6 +26,7 @@ export const router: BrowserRouter = createBrowserRouter([
     element: <AuthLayout />,
     children: [
       { path: "login", element: <LoginPage /> },
+      { path: "redefinir-senha", element: <RedefinirSenhaPage /> },
     ],
   },
   {
