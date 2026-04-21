@@ -13,6 +13,7 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const [role, setRole] = useState<UserRole | null>(null);
+  const [recoveryMode, setRecoveryMode] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -38,11 +39,27 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
 
       setLoading(false);
     });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setRecoveryMode(true);
+      } else if (event === "USER_UPDATED" || event === "SIGNED_OUT") {
+        setRecoveryMode(false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (loading) return null;
 
   if (!authenticated) return <Navigate to="/login" replace />;
+
+  if (recoveryMode) return <Navigate to="/redefinir-senha" replace />;
 
   if (allowedRoles && role && !allowedRoles.includes(role)) {
     return <Navigate to="/home" replace />;

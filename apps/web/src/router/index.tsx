@@ -5,6 +5,8 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/layouts/AppLayout";
 import { AuthLayout } from "@/layouts/AuthLayout";
 import { AgendaPage } from "@/pages/agenda/AgendaPage";
+import { CriarSenhaPage } from "@/pages/auth/CriarSenhaPage";
+import { EsqueciSenhaPage } from "@/pages/auth/EsqueciSenhaPage";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RedefinirSenhaPage } from "@/pages/auth/RedefinirSenhaPage";
 import { ContaPage } from "@/pages/conta/ContaPage";
@@ -26,6 +28,8 @@ export const router: BrowserRouter = createBrowserRouter([
     element: <AuthLayout />,
     children: [
       { path: "login", element: <LoginPage /> },
+      { path: "criar-senha", element: <CriarSenhaPage /> },
+      { path: "esqueci-senha", element: <EsqueciSenhaPage /> },
       { path: "redefinir-senha", element: <RedefinirSenhaPage /> },
     ],
   },

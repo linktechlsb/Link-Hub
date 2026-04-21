@@ -1,19 +1,9 @@
-import {
-  Eye,
-  EyeOff,
-  Save,
-  Bell,
-  Lock,
-  GraduationCap,
-  User,
-  AlertTriangle,
-  X,
-  Camera,
-} from "lucide-react";
+import { Save, Bell, Lock, GraduationCap, User, AlertTriangle, X, Camera } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 import { carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
 import { cn } from "@/lib/utils";
+import { TrocarSenhaSection } from "@/pages/conta/TrocarSenhaSection";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -349,21 +339,8 @@ function AbaDadosAcademicos({
 // ─── Aba: Segurança ───────────────────────────────────────────────────────────
 
 function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
-  const [senhaAtual, setSenhaAtual] = useState("");
-  const [novaSenha, setNovaSenha] = useState("");
-  const [confirmar, setConfirmar] = useState("");
-  const [mostrar, setMostrar] = useState(false);
   const [modalDesativar, setModalDesativar] = useState(false);
   const [textoConfirmacao, setTextoConfirmacao] = useState("");
-
-  const senhasValidas = senhaAtual.length > 0 && novaSenha.length >= 6 && novaSenha === confirmar;
-
-  function handleAtualizarSenha() {
-    setSenhaAtual("");
-    setNovaSenha("");
-    setConfirmar("");
-    onToast("Senha atualizada com sucesso.");
-  }
 
   function fecharModal() {
     setModalDesativar(false);
@@ -372,67 +349,7 @@ function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h3 className="font-display font-bold text-base text-navy mb-4">Trocar senha</h3>
-        <div className="space-y-4">
-          <Campo label="Senha atual">
-            <div className="relative">
-              <input
-                type={mostrar ? "text" : "password"}
-                value={senhaAtual}
-                onChange={(e) => setSenhaAtual(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-3 py-2 pr-10 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-navy/20"
-              />
-              <button
-                type="button"
-                onClick={() => setMostrar(!mostrar)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-navy transition-colors"
-              >
-                {mostrar ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </Campo>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Campo label="Nova senha" dica="Mínimo 6 caracteres">
-              <input
-                type={mostrar ? "text" : "password"}
-                value={novaSenha}
-                onChange={(e) => setNovaSenha(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-navy/20"
-              />
-            </Campo>
-            <Campo label="Confirmar nova senha">
-              <input
-                type={mostrar ? "text" : "password"}
-                value={confirmar}
-                onChange={(e) => setConfirmar(e.target.value)}
-                placeholder="••••••••"
-                className={cn(
-                  "w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2",
-                  confirmar && novaSenha !== confirmar
-                    ? "border-red-400 focus:ring-red-200"
-                    : "border-brand-gray focus:ring-navy/20",
-                )}
-              />
-              {confirmar && novaSenha !== confirmar && (
-                <p className="text-xs text-red-500 mt-1">As senhas não coincidem</p>
-              )}
-            </Campo>
-          </div>
-
-          <button
-            onClick={handleAtualizarSenha}
-            disabled={!senhasValidas}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-md bg-navy text-white hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <Lock className="h-4 w-4" />
-            Atualizar senha
-          </button>
-        </div>
-      </div>
+      <TrocarSenhaSection onToast={onToast} />
 
       <div className="border border-red-200 rounded-lg p-5">
         <h3 className="font-display font-bold text-base text-red-600 mb-1 flex items-center gap-2">

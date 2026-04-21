@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -54,9 +56,17 @@ export function LoginForm({
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="password" className="text-navy/80 font-medium text-sm">
-                  Senha
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-navy/80 font-medium text-sm">
+                    Senha
+                  </Label>
+                  <Link
+                    to="/esqueci-senha"
+                    className="text-xs text-link-blue hover:text-navy underline-offset-4 hover:underline"
+                  >
+                    Esqueci minha senha
+                  </Link>
+                </div>
                 <Input
                   id="password"
                   type="password"

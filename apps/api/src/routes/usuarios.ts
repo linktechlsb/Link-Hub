@@ -181,7 +181,7 @@ usuariosRouter.post("/", authenticate, requireRole("staff"), async (req, res, ne
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       email,
       {
-        redirectTo: `${env.APP_URL}/redefinir-senha`,
+        redirectTo: `${env.APP_URL}/criar-senha`,
         data: { nome, role },
       },
     );

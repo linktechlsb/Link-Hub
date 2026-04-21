@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 
-export function RedefinirSenhaPage() {
+export function CriarSenhaPage() {
   const navigate = useNavigate();
   const [senha, setSenha] = useState("");
   const [confirmar, setConfirmar] = useState("");
@@ -33,7 +33,7 @@ export function RedefinirSenhaPage() {
       if (
         session &&
         !sessionEstabelecida.current &&
-        (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN" || event === "INITIAL_SESSION")
+        (event === "SIGNED_IN" || event === "INITIAL_SESSION")
       ) {
         sessionEstabelecida.current = true;
         setEmail(session.user.email ?? "");
@@ -105,8 +105,8 @@ export function RedefinirSenhaPage() {
               Link expirado
             </CardTitle>
             <CardDescription className="text-muted-foreground text-sm">
-              Este link de recuperação expirou ou já foi utilizado. Solicite um novo em
-              &ldquo;Esqueci minha senha&rdquo;.
+              Este link de acesso expirou ou já foi utilizado. Solicite um novo convite ao
+              administrador.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -127,16 +127,14 @@ export function RedefinirSenhaPage() {
     <div className="flex flex-col gap-6">
       <Card className="border-0 shadow-2xl">
         <CardHeader className="pb-2">
-          <CardTitle className="font-display font-bold text-2xl text-navy">
-            Redefinir senha
-          </CardTitle>
+          <CardTitle className="font-display font-bold text-2xl text-navy">Criar senha</CardTitle>
           <CardDescription className="text-muted-foreground text-sm">
             {email ? (
               <>
-                Defina uma nova senha para <span className="font-medium text-navy/70">{email}</span>
+                Definindo senha para <span className="font-medium text-navy/70">{email}</span>
               </>
             ) : (
-              "Defina uma nova senha para a sua conta"
+              "Defina uma senha para acessar a plataforma"
             )}
           </CardDescription>
         </CardHeader>
@@ -179,7 +177,7 @@ export function RedefinirSenhaPage() {
                 disabled={loading}
                 className="w-full bg-navy hover:bg-navy-800 text-white font-medium mt-1"
               >
-                {loading ? "Salvando..." : "Salvar nova senha"}
+                {loading ? "Salvando..." : "Salvar senha"}
               </Button>
             </div>
           </form>
