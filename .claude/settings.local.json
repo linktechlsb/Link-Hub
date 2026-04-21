@@ -82,7 +82,8 @@
       "Bash(python3 -c \"import json,sys; p=json.load\\(sys.stdin\\); print\\('deps:', list\\(p.get\\('dependencies',{}\\).keys\\(\\)\\)\\); print\\('devdeps:', list\\(p.get\\('devDependencies',{}\\).keys\\(\\)\\)\\)\")",
       "Bash(npm ls *)",
       "Bash(node -e \"const l = require\\('./package-lock.json'\\); const keys = Object.keys\\(l.packages || {}\\); console.log\\('total packages in lock:', keys.length\\); console.log\\('has prettier:', keys.includes\\('node_modules/prettier'\\)\\); console.log\\('has husky:', keys.includes\\('node_modules/husky'\\)\\);\")",
-      "Bash(npm ci *)"
+      "Bash(npm ci *)",
+      "Bash(python3 -c ' *)"
     ],
     "deny": [
       "Bash(git commit *)",

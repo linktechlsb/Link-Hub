@@ -5,7 +5,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Alinhar npm com o packageManager field do package.json (evita divergência npm 10 vs 11)
-RUN corepack enable && corepack prepare npm@11.5.2 --activate
+RUN npm install -g npm@11.5.2
 
 # Copiar manifestos primeiro para aproveitar cache de layer do npm install
 COPY package.json package-lock.json ./
@@ -16,7 +16,7 @@ COPY packages/ui/package.json packages/ui/package.json
 COPY packages/utils/package.json packages/utils/package.json
 
 ENV HUSKY=0
-RUN npm ci --include=dev
+RUN npm install --include=dev --no-audit --no-fund
 
 # Variáveis de buildtime para Vite (web)
 ARG VITE_SUPABASE_URL
@@ -34,7 +34,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Alinhar npm com o packageManager field do package.json (evita divergência npm 10 vs 11)
-RUN corepack enable && corepack prepare npm@11.5.2 --activate
+RUN npm install -g npm@11.5.2
 
 # Copiar manifestos e instalar apenas deps de produção
 COPY package.json package-lock.json ./
@@ -44,7 +44,7 @@ COPY packages/types/package.json packages/types/package.json
 COPY packages/ui/package.json packages/ui/package.json
 COPY packages/utils/package.json packages/utils/package.json
 ENV HUSKY=0
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm install --omit=dev --no-audit --no-fund && npm cache clean --force
 
 # Copiar artefatos buildados
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
