@@ -85,30 +85,32 @@ export function SuperAdminPage() {
 
   async function carregarDados() {
     setCarregando(true);
-    const token = await getToken();
-    const headers = { Authorization: `Bearer ${token}` };
+    try {
+      const token = await getToken();
+      const headers = { Authorization: `Bearer ${token}` };
 
-    const [resUsuarios, resLigas, resVisao, resPendentes] = await Promise.all([
-      fetch("/api/usuarios", { headers }),
-      fetch("/api/ligas", { headers }),
-      fetch("/api/usuarios/visao-geral", { headers }),
-      fetch("/api/pendentes", { headers }),
-    ]);
+      const [resUsuarios, resLigas, resVisao, resPendentes] = await Promise.all([
+        fetch("/api/usuarios", { headers }),
+        fetch("/api/ligas", { headers }),
+        fetch("/api/usuarios/visao-geral", { headers }),
+        fetch("/api/pendentes", { headers }),
+      ]);
 
-    if (resUsuarios.ok) setUsuarios(await resUsuarios.json());
-    if (resLigas.ok) setLigas(await resLigas.json());
-    if (resPendentes.ok) setPendentes(await resPendentes.json());
-    if (resVisao.ok) {
-      const visao: { presenca_pct?: number | null }[] = await resVisao.json();
-      const comPresenca = visao.filter((u) => u.presenca_pct != null);
-      setPresencaMedia(
-        comPresenca.length > 0
-          ? Math.round(comPresenca.reduce((acc, u) => acc + (u.presenca_pct ?? 0), 0) / comPresenca.length)
-          : null
-      );
+      if (resUsuarios.ok) setUsuarios(await resUsuarios.json());
+      if (resLigas.ok) setLigas(await resLigas.json());
+      if (resPendentes.ok) setPendentes(await resPendentes.json());
+      if (resVisao.ok) {
+        const visao: { presenca_pct?: number | null }[] = await resVisao.json();
+        const comPresenca = visao.filter((u) => u.presenca_pct != null);
+        setPresencaMedia(
+          comPresenca.length > 0
+            ? Math.round(comPresenca.reduce((acc, u) => acc + (u.presenca_pct ?? 0), 0) / comPresenca.length)
+            : null
+        );
+      }
+    } finally {
+      setCarregando(false);
     }
-
-    setCarregando(false);
   }
 
   async function aprovarProjeto(id: string) {
