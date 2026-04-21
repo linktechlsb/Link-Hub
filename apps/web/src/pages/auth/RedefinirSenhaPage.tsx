@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -17,27 +17,45 @@ export function RedefinirSenhaPage() {
   const [senha, setSenha] = useState("");
   const [confirmar, setConfirmar] = useState("");
   const [erro, setErro] = useState<string | null>(null);
+  const [erroToken, setErroToken] = useState(false);
   const [loading, setLoading] = useState(false);
   const [verificando, setVerificando] = useState(true);
+  const [email, setEmail] = useState<string>("");
+  const sessionEstabelecida = useRef(false);
 
   useEffect(() => {
-    // Verifica sessão existente primeiro (usuário já logado)
+    // Verifica sessão já existente (garante que captura mesmo se o evento SIGNED_IN foi perdido)
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
+      if (data.session && !sessionEstabelecida.current) {
+        sessionEstabelecida.current = true;
+        setEmail(data.session.user.email ?? "");
         setVerificando(false);
       }
     });
 
-    // Captura sessão vinda do magic link (tokens no hash da URL)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if ((event === "SIGNED_IN" || event === "PASSWORD_RECOVERY") && session) {
+      if (session && !sessionEstabelecida.current &&
+        (event === "SIGNED_IN" || event === "PASSWORD_RECOVERY" || event === "INITIAL_SESSION")) {
+        sessionEstabelecida.current = true;
+        setEmail(session.user.email ?? "");
         setVerificando(false);
-      } else if (event === "SIGNED_OUT" || (!session && event !== "INITIAL_SESSION")) {
+      } else if (event === "SIGNED_OUT") {
         navigate("/login", { replace: true });
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Timeout: token expirado ou inválido
+    const timer = setTimeout(() => {
+      if (!sessionEstabelecida.current) {
+        setErroToken(true);
+        setVerificando(false);
+      }
+    }, 8000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timer);
+    };
   }, [navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -67,17 +85,58 @@ export function RedefinirSenhaPage() {
     navigate("/home", { replace: true });
   }
 
-  if (verificando) return null;
+  if (verificando) {
+    return (
+      <div className="flex flex-col gap-6">
+        <Card className="border-0 shadow-2xl">
+          <CardContent className="pt-8 pb-8 flex flex-col items-center gap-3">
+            <div className="w-6 h-6 border-2 border-navy border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-muted-foreground">Verificando acesso...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (erroToken) {
+    return (
+      <div className="flex flex-col gap-6">
+        <Card className="border-0 shadow-2xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="font-display font-bold text-2xl text-navy">
+              Link expirado
+            </CardTitle>
+            <CardDescription className="text-muted-foreground text-sm">
+              Este link de acesso expirou ou já foi utilizado. Solicite um novo convite ao administrador.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              className="w-full border-navy text-navy hover:bg-navy hover:text-white"
+              onClick={() => navigate("/login")}
+            >
+              Ir para o login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
       <Card className="border-0 shadow-2xl">
         <CardHeader className="pb-2">
           <CardTitle className="font-display font-bold text-2xl text-navy">
-            Criar nova senha
+            Criar senha
           </CardTitle>
           <CardDescription className="text-muted-foreground text-sm">
-            Defina uma senha para acessar a plataforma
+            {email ? (
+              <>Definindo senha para <span className="font-medium text-navy/70">{email}</span></>
+            ) : (
+              "Defina uma senha para acessar a plataforma"
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
