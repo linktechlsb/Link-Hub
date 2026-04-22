@@ -14,8 +14,11 @@ import { GerenciamentoPage } from "@/pages/gerenciamento/GerenciamentoPage";
 import { HomePage } from "@/pages/home/HomePage";
 import { LigaDetailPage } from "@/pages/ligas/LigaDetailPage";
 import { LigasPage } from "@/pages/ligas/LigasPage";
+import { MuralPage } from "@/pages/mural/MuralPage";
 import { PresencaPage } from "@/pages/presenca/PresencaPage";
+import { ProcessoSeletivoPage } from "@/pages/processo-seletivo/ProcessoSeletivoPage";
 import { ProjetosPage } from "@/pages/projetos/ProjetosPage";
+import { RankingPage } from "@/pages/ranking/RankingPage";
 import { SuperAdminPage } from "@/pages/super-admin/SuperAdminPage";
 
 export const router: BrowserRouter = createBrowserRouter([
@@ -46,7 +49,10 @@ export const router: BrowserRouter = createBrowserRouter([
           { path: "ligas/:id", element: <LigaDetailPage /> },
           { path: "projetos", element: <ProjetosPage /> },
           { path: "agenda", element: <AgendaPage /> },
+          { path: "mural", element: <MuralPage /> },
+          { path: "ranking", element: <RankingPage /> },
           { path: "super-admin", element: <SuperAdminPage /> },
+          { path: "processo-seletivo", element: <ProcessoSeletivoPage /> },
           { path: "gerenciamento", element: <GerenciamentoPage /> },
           { path: "presenca", element: <PresencaPage /> },
           { path: "conta", element: <ContaPage /> },

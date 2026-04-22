@@ -1,7 +1,8 @@
 import { Router, type Router as IRouter } from "express";
 
 import { sql } from "../config/db.js";
-import { authenticate, requireRole } from "../middleware/auth.js";
+import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
+import { usuarioEhDiretorDaLiga } from "../middleware/authorization.js";
 
 import type { StatusProjeto } from "@link-leagues/types";
 
@@ -36,6 +37,7 @@ projetosRouter.get("/", authenticate, async (req, res, next) => {
 // POST /projetos
 projetosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
+    const user = (req as AuthenticatedRequest).user!;
     const { liga_id, titulo, descricao, responsavel_id, prazo } = req.body as {
       liga_id: string;
       titulo: string;
@@ -43,6 +45,17 @@ projetosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (r
       responsavel_id: string;
       prazo?: string;
     };
+
+    if (!liga_id || !titulo || !responsavel_id) {
+      res.status(400).json({ error: "liga_id, titulo e responsavel_id são obrigatórios." });
+      return;
+    }
+
+    if (user.role === "diretor" && !(await usuarioEhDiretorDaLiga(user.email, liga_id))) {
+      res.status(403).json({ error: "Você só pode criar projetos da sua própria liga." });
+      return;
+    }
+
     const body: Record<string, unknown> = {
       liga_id,
       titulo,
@@ -69,6 +82,7 @@ projetosRouter.patch(
   requireRole("staff", "diretor"),
   async (req, res, next) => {
     try {
+      const user = (req as AuthenticatedRequest).user!;
       const { status } = req.body as { status: StatusProjeto };
       const statusValidos: StatusProjeto[] = ["rascunho", "em_aprovacao", "aprovado", "rejeitado"];
 
@@ -78,6 +92,15 @@ projetosRouter.patch(
       }
 
       const id = req.params["id"] as string;
+
+      if (user.role === "diretor") {
+        const [alvo] = await sql`SELECT liga_id FROM projetos WHERE id = ${id} LIMIT 1`;
+        if (!alvo || !(await usuarioEhDiretorDaLiga(user.email, alvo.liga_id as string))) {
+          res.status(403).json({ error: "Você só pode alterar projetos da sua própria liga." });
+          return;
+        }
+      }
+
       const [projeto] = await sql`
       UPDATE projetos SET status = ${status} WHERE id = ${id} RETURNING *
     `;
@@ -97,9 +120,10 @@ projetosRouter.patch(
 projetosRouter.patch(
   "/:id/aprovacao",
   authenticate,
-  requireRole("professor", "staff", "diretor"),
+  requireRole("professor", "staff"),
   async (req, res, next) => {
     try {
+      const user = (req as AuthenticatedRequest).user!;
       const { papel, decisao } = req.body as {
         papel: "professor" | "staff";
         decisao: "aprovado" | "rejeitado";
@@ -107,6 +131,10 @@ projetosRouter.patch(
 
       if (!["professor", "staff"].includes(papel)) {
         res.status(400).json({ error: "Papel inválido. Use 'professor' ou 'staff'." });
+        return;
+      }
+      if (user.role !== papel) {
+        res.status(403).json({ error: "Você só pode registrar aprovações no seu próprio papel." });
         return;
       }
       if (!["aprovado", "rejeitado"].includes(decisao)) {

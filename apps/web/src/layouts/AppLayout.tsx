@@ -7,6 +7,9 @@ import {
   Settings,
   User,
   LogOut,
+  MessageSquare,
+  Trophy,
+  ClipboardList,
 } from "lucide-react";
 import { useEffect } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
@@ -29,6 +32,8 @@ const mainNavItems = [
   { to: "/ligas", label: "Ligas", icon: Users },
   { to: "/projetos", label: "Projetos", icon: FolderKanban },
   { to: "/agenda", label: "Agenda", icon: Calendar },
+  { to: "/mural", label: "Mural", icon: MessageSquare },
+  { to: "/ranking", label: "Ranking", icon: Trophy },
 ];
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -84,6 +89,14 @@ export function AppLayout() {
                     <NavLink to="/super-admin" className={navLinkClass}>
                       <ShieldCheck className="h-4 w-4 flex-shrink-0" />
                       Super Admin
+                    </NavLink>
+                  </SidebarMenuItem>
+                )}
+                {canManage && (
+                  <SidebarMenuItem>
+                    <NavLink to="/processo-seletivo" className={navLinkClass}>
+                      <ClipboardList className="h-4 w-4 flex-shrink-0" />
+                      Processo Seletivo
                     </NavLink>
                   </SidebarMenuItem>
                 )}

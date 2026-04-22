@@ -19,22 +19,36 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
+import { AbaPresenca } from "./AbaPresenca";
 import { GerenciamentoStaffPage } from "./GerenciamentoStaffPage";
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
 type Cargo = "Membro" | "Diretor" | "Admin";
-
-interface ConvitePendente {
-  id: string;
-  email: string;
-  cargo: Cargo;
-  diasAtras: number;
-}
 
 interface MembroAtivo {
   id: string;
@@ -181,17 +195,6 @@ interface InfoLiga {
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-const INFO_VAZIO: InfoLiga = {
-  nome: "",
-  area: "",
-  descricao: "",
-  semestre: "",
-  emailContato: "",
-  instagram: "",
-  linkedin: "",
-  bannerUrl: "",
-};
-
 const CORES = ["#10284E", "#546484", "#FEC641", "#6366f1", "#14b8a6", "#f97316"];
 
 function corPorNome(nome: string): string {
@@ -242,13 +245,15 @@ async function getToken() {
 
 // ── Membros ──
 function AbaMembros({ ligaId }: { ligaId: string | null }) {
-  const [convites, setConvites] = useState<ConvitePendente[]>([]);
   const [membros, setMembros] = useState<MembroAtivo[]>([]);
   const [emailConvite, setEmailConvite] = useState("");
   const [cargoConvite, setCargoConvite] = useState<Cargo>("Membro");
+  const [enviandoConvite, setEnviandoConvite] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [novoCargoEdit, setNovoCargoEdit] = useState<Cargo>("Membro");
+  const [salvandoEdicaoId, setSalvandoEdicaoId] = useState<string | null>(null);
   const [confirmandoRemoverId, setConfirmandoRemoverId] = useState<string | null>(null);
+  const [removendoId, setRemovendoId] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
@@ -275,20 +280,49 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
 
   if (carregando) return <p className="text-sm text-muted-foreground">Carregando membros…</p>;
 
-  function convidar() {
-    if (!emailConvite.trim()) return;
-    const novo: ConvitePendente = {
-      id: crypto.randomUUID(),
-      email: emailConvite.trim(),
-      cargo: cargoConvite,
-      diasAtras: 0,
-    };
-    setConvites((prev) => [...prev, novo]);
-    setEmailConvite("");
-  }
-
-  function cancelarConvite(id: string) {
-    setConvites((prev) => prev.filter((c) => c.id !== id));
+  async function convidar() {
+    if (!ligaId) {
+      toast.error("Liga não identificada.");
+      return;
+    }
+    const email = emailConvite.trim();
+    if (!email) {
+      toast.error("Informe o e-mail institucional.");
+      return;
+    }
+    setEnviandoConvite(true);
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/ligas/${ligaId}/membros`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          email,
+          cargo: cargoConvite === "Diretor" ? "Diretor" : null,
+        }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { error?: string } & MembroAPI;
+      if (!res.ok) {
+        toast.error(body.error ?? "Erro ao adicionar membro.");
+        return;
+      }
+      const novo = apiParaMembro({
+        id: body.id,
+        usuario_id: body.usuario_id,
+        nome: body.nome ?? email,
+        email: body.email ?? email,
+        cargo: body.cargo ?? (cargoConvite === "Diretor" ? "Diretor" : null),
+        role: body.role ?? null,
+      });
+      setMembros((prev) => {
+        const semDuplicata = prev.filter((m) => m.id !== novo.id);
+        return [{ ...novo, novo: true }, ...semDuplicata];
+      });
+      setEmailConvite("");
+      toast.success("Membro adicionado.");
+    } finally {
+      setEnviandoConvite(false);
+    }
   }
 
   function iniciarEdicao(membro: MembroAtivo) {
@@ -296,94 +330,95 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
     setNovoCargoEdit(membro.cargo);
   }
 
-  function salvarEdicao(id: string) {
-    setMembros((prev) => prev.map((m) => (m.id === id ? { ...m, cargo: novoCargoEdit } : m)));
-    setEditandoId(null);
+  async function salvarEdicao(id: string) {
+    if (!ligaId) return;
+    setSalvandoEdicaoId(id);
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/ligas/${ligaId}/membros/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          cargo: novoCargoEdit === "Diretor" ? "Diretor" : null,
+        }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        toast.error(body.error ?? "Erro ao salvar cargo.");
+        return;
+      }
+      setMembros((prev) => prev.map((m) => (m.id === id ? { ...m, cargo: novoCargoEdit } : m)));
+      setEditandoId(null);
+      toast.success("Cargo atualizado.");
+    } finally {
+      setSalvandoEdicaoId(null);
+    }
   }
 
-  function remover(id: string) {
-    setMembros((prev) => prev.filter((m) => m.id !== id));
-    setConfirmandoRemoverId(null);
+  async function remover(id: string) {
+    if (!ligaId) return;
+    setRemovendoId(id);
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/ligas/${ligaId}/membros/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok && res.status !== 204) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        toast.error(body.error ?? "Erro ao remover membro.");
+        return;
+      }
+      setMembros((prev) => prev.filter((m) => m.id !== id));
+      toast.success("Membro removido.");
+    } finally {
+      setRemovendoId(null);
+      setConfirmandoRemoverId(null);
+    }
   }
 
   const diretor = membros.find((m) => m.cargo === "Diretor");
+  const membroParaRemover = membros.find((m) => m.id === confirmandoRemoverId);
 
   return (
     <div className="space-y-8">
-      {/* Convidar */}
+      {/* Adicionar */}
       <section className="bg-white border border-brand-gray rounded-xl p-5">
         <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
-          Convidar Novo Membro
+          Adicionar Novo Membro
         </p>
-        <div className="flex gap-2">
-          <input
+        <div className="flex gap-2 flex-wrap">
+          <Input
             type="email"
-            placeholder="E-mail institucional..."
+            placeholder="E-mail institucional…"
             value={emailConvite}
             onChange={(e) => setEmailConvite(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && convidar()}
-            className="flex-1 border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !enviandoConvite) void convidar();
+            }}
+            className="flex-1 min-w-[200px]"
           />
-          <select
-            value={cargoConvite}
-            onChange={(e) => setCargoConvite(e.target.value as Cargo)}
-            className="border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 bg-white"
+          <Select value={cargoConvite} onValueChange={(v) => setCargoConvite(v as Cargo)}>
+            <SelectTrigger className="w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Membro">Membro</SelectItem>
+              <SelectItem value="Diretor">Diretor</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            onClick={() => void convidar()}
+            disabled={enviandoConvite}
+            className="bg-navy hover:bg-navy/90"
           >
-            <option>Membro</option>
-            <option>Diretor</option>
-          </select>
-          <button
-            onClick={convidar}
-            className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-          >
-            Convidar
-          </button>
+            {enviandoConvite ? <Loader2 className="h-4 w-4 animate-spin" /> : "Adicionar"}
+          </Button>
         </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          O usuário precisa já estar cadastrado no sistema (e-mail institucional).
+        </p>
       </section>
-
-      {/* Pendentes */}
-      {convites.length > 0 && (
-        <section className="bg-white border border-brand-gray rounded-xl p-5">
-          <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
-            Pendentes ({convites.length})
-          </p>
-          <div className="divide-y divide-brand-gray">
-            {convites.map((c) => (
-              <div key={c.id} className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-brand-gray flex items-center justify-center text-link-blue font-bold text-sm">
-                    ?
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-navy">{c.email}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {c.diasAtras === 0
-                        ? "Enviado agora"
-                        : `Enviado há ${c.diasAtras} dia${c.diasAtras > 1 ? "s" : ""}`}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span
-                    className={cn(
-                      "text-xs font-semibold px-2.5 py-1 rounded-full",
-                      cargoBadgeClass(c.cargo),
-                    )}
-                  >
-                    {c.cargo}
-                  </span>
-                  <button
-                    onClick={() => cancelarConvite(c.id)}
-                    className="text-xs border border-red-300 text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Membros ativos */}
       <section className="bg-white border border-brand-gray rounded-xl p-5">
@@ -416,26 +451,39 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
               <div className="flex items-center gap-2">
                 {editandoId === m.id ? (
                   <>
-                    <select
+                    <Select
                       value={novoCargoEdit}
-                      onChange={(e) => setNovoCargoEdit(e.target.value as Cargo)}
-                      className="border border-brand-gray rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-navy/20 bg-white"
+                      onValueChange={(v) => setNovoCargoEdit(v as Cargo)}
                     >
-                      <option>Membro</option>
-                      <option>Diretor</option>
-                    </select>
-                    <button
-                      onClick={() => salvarEdicao(m.id)}
-                      className="text-green-600 hover:bg-green-50 p-1.5 rounded-md transition-colors"
+                      <SelectTrigger className="w-28 h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Membro">Membro</SelectItem>
+                        <SelectItem value="Diretor">Diretor</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => void salvarEdicao(m.id)}
+                      disabled={salvandoEdicaoId === m.id}
+                      className="text-green-600 hover:bg-green-50 h-8 w-8"
                     >
-                      <Check className="h-4 w-4" />
-                    </button>
-                    <button
+                      {salvandoEdicaoId === m.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Check className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
                       onClick={() => setEditandoId(null)}
-                      className="text-gray-400 hover:bg-gray-50 p-1.5 rounded-md transition-colors"
+                      className="h-8 w-8"
                     >
                       <X className="h-4 w-4" />
-                    </button>
+                    </Button>
                   </>
                 ) : (
                   <>
@@ -447,37 +495,24 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
                     >
                       {m.cargo}
                     </span>
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => iniciarEdicao(m)}
-                      className="text-xs border border-brand-gray text-link-blue hover:bg-gray-50 px-3 py-1 rounded-lg transition-colors"
+                      className="text-xs h-7"
                     >
                       Editar cargo
-                    </button>
-                    {m.id !== diretor?.id &&
-                      (confirmandoRemoverId === m.id ? (
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs text-red-500">Confirmar?</span>
-                          <button
-                            onClick={() => remover(m.id)}
-                            className="text-xs bg-red-500 text-white px-2 py-1 rounded-md hover:bg-red-600 transition-colors"
-                          >
-                            Sim
-                          </button>
-                          <button
-                            onClick={() => setConfirmandoRemoverId(null)}
-                            className="text-xs border border-gray-300 px-2 py-1 rounded-md hover:bg-gray-50 transition-colors"
-                          >
-                            Não
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setConfirmandoRemoverId(m.id)}
-                          className="text-xs border border-red-300 text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg transition-colors"
-                        >
-                          Remover
-                        </button>
-                      ))}
+                    </Button>
+                    {m.id !== diretor?.id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setConfirmandoRemoverId(m.id)}
+                        className="text-xs h-7 text-red-500 border-red-300 hover:bg-red-50 hover:text-red-600"
+                      >
+                        Remover
+                      </Button>
+                    )}
                   </>
                 )}
               </div>
@@ -485,6 +520,37 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
           ))}
         </div>
       </section>
+
+      <AlertDialog
+        open={confirmandoRemoverId !== null}
+        onOpenChange={(aberto) => {
+          if (!aberto) setConfirmandoRemoverId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover membro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {membroParaRemover
+                ? `${membroParaRemover.nome} será removido da liga. Esta ação pode ser revertida adicionando o membro novamente.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={removendoId !== null}
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmandoRemoverId) void remover(confirmandoRemoverId);
+              }}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {removendoId ? <Loader2 className="h-4 w-4 animate-spin" /> : "Remover"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -1534,9 +1600,9 @@ function AbaDesempenho() {
 
 // ─── página principal ─────────────────────────────────────────────────────────
 
-type Aba = "Membros" | "Informações" | "Recursos" | "Receita" | "Desempenho";
+type Aba = "Membros" | "Informações" | "Recursos" | "Receita" | "Presença" | "Desempenho";
 
-const ABAS: Aba[] = ["Membros", "Informações", "Recursos", "Receita", "Desempenho"];
+const ABAS: Aba[] = ["Membros", "Informações", "Recursos", "Receita", "Presença", "Desempenho"];
 
 const INFO_VAZIA: InfoLiga = {
   nome: "",
@@ -1638,6 +1704,7 @@ export function GerenciamentoPage() {
       {abaAtiva === "Informações" && <AbaInformacoes ligaId={ligaId} initialInfo={ligaInfo} />}
       {abaAtiva === "Recursos" && <AbaRecursos ligaId={ligaId} />}
       {abaAtiva === "Receita" && <AbaReceita ligaId={ligaId} />}
+      {abaAtiva === "Presença" && <AbaPresenca ligaId={ligaId} />}
       {abaAtiva === "Desempenho" && <AbaDesempenho />}
     </div>
   );

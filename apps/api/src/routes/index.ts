@@ -2,9 +2,11 @@ import { Router, type Router as IRouter } from "express";
 
 import { eventosRouter } from "./eventos.js";
 import { ligasRouter } from "./ligas.js";
+import { muralRouter } from "./mural.js";
 import { pendentesRouter } from "./pendentes.js";
 import { presencaRouter } from "./presenca.js";
 import { projetosRouter } from "./projetos.js";
+import { rankingRouter } from "./ranking.js";
 import { receitasRouter } from "./receitas.js";
 import { recursosRouter } from "./recursos.js";
 import { salasRouter } from "./salas.js";
@@ -25,3 +27,5 @@ router.use("/eventos", eventosRouter);
 router.use("/recursos", recursosRouter);
 router.use("/receitas", receitasRouter);
 router.use("/pendentes", pendentesRouter);
+router.use("/mural", muralRouter);
+router.use("/ranking", rankingRouter);

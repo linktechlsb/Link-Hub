@@ -20,12 +20,17 @@ function primeiroUltimoNome(nome: string): string {
   return `${partes[0]} ${partes[partes.length - 1]}`;
 }
 
-const ABAS: { id: AbaId; label: string }[] = [
+const ABAS_COMPLETAS: { id: AbaId; label: string }[] = [
   { id: "visao-geral", label: "Visão Geral" },
   { id: "membros", label: "Membros" },
   { id: "presenca", label: "Presença" },
   { id: "projetos", label: "Projetos" },
   { id: "recursos", label: "Recursos" },
+];
+
+const ABAS_RESTRITAS: { id: AbaId; label: string }[] = [
+  { id: "visao-geral", label: "Visão Geral" },
+  { id: "membros", label: "Membros" },
 ];
 
 async function getToken(): Promise<string> {
@@ -97,7 +102,7 @@ export function LigaDetailPage() {
     }
   }
 
-  const podeEditarImagem = role === "staff" || role === "diretor";
+  const podeEditarImagem = role === "staff" || (role === "diretor" && minhaLigaId === liga?.id);
 
   if (carregando) {
     return <div className="p-8 text-sm text-muted-foreground">Carregando...</div>;
@@ -108,6 +113,11 @@ export function LigaDetailPage() {
 
   const ehMinhaLiga = minhaLigaId === liga.id;
   const membros = (liga as Liga & { membros?: unknown[] }).membros ?? [];
+  const temAcessoCompleto = ehMinhaLiga || role === "staff" || role === "professor";
+  const abasVisiveis = temAcessoCompleto ? ABAS_COMPLETAS : ABAS_RESTRITAS;
+  const abaAtualVisivel = abasVisiveis.some((a) => a.id === abaAtiva)
+    ? abaAtiva
+    : abasVisiveis[0]!.id;
 
   return (
     <div className="flex flex-col h-full">
@@ -181,12 +191,12 @@ export function LigaDetailPage() {
 
       {/* Tabs */}
       <div className="bg-white border-b border-brand-gray flex overflow-x-auto flex-shrink-0 px-2">
-        {ABAS.map((aba) => (
+        {abasVisiveis.map((aba) => (
           <button
             key={aba.id}
             onClick={() => setAbaAtiva(aba.id)}
             className={
-              abaAtiva === aba.id
+              abaAtualVisivel === aba.id
                 ? "px-4 py-3 text-xs font-bold text-navy border-b-2 border-navy whitespace-nowrap"
                 : "px-4 py-3 text-xs font-semibold text-muted-foreground hover:text-navy whitespace-nowrap border-b-2 border-transparent transition-colors"
             }
@@ -198,13 +208,13 @@ export function LigaDetailPage() {
 
       {/* Conteúdo da aba */}
       <div className="flex-1 overflow-y-auto p-6">
-        {abaAtiva === "visao-geral" && (
+        {abaAtualVisivel === "visao-geral" && (
           <VisaoGeralTab ligaId={liga.id} diretores={liga.diretores ?? []} />
         )}
-        {abaAtiva === "membros" && <MembrosTab ligaId={liga.id} />}
-        {abaAtiva === "presenca" && <PresencaTab ligaId={liga.id} />}
-        {abaAtiva === "projetos" && <ProjetosTab ligaId={liga.id} />}
-        {abaAtiva === "recursos" && <RecursosTab ligaId={liga.id} />}
+        {abaAtualVisivel === "membros" && <MembrosTab ligaId={liga.id} />}
+        {abaAtualVisivel === "presenca" && temAcessoCompleto && <PresencaTab ligaId={liga.id} />}
+        {abaAtualVisivel === "projetos" && temAcessoCompleto && <ProjetosTab ligaId={liga.id} />}
+        {abaAtualVisivel === "recursos" && temAcessoCompleto && <RecursosTab ligaId={liga.id} />}
       </div>
     </div>
   );
