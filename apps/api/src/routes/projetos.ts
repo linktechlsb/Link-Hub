@@ -2,7 +2,7 @@ import { Router, type Router as IRouter } from "express";
 
 import { sql } from "../config/db.js";
 import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
-import { usuarioEhDiretorDaLiga } from "../middleware/authorization.js";
+import { usuarioEhDiretorDaLiga, usuarioEhProfessorDaLiga } from "../middleware/authorization.js";
 
 import type { StatusProjeto } from "@link-leagues/types";
 
@@ -11,20 +11,27 @@ export const projetosRouter: IRouter = Router();
 // GET /projetos
 projetosRouter.get("/", authenticate, async (req, res, next) => {
   try {
+    const user = (req as AuthenticatedRequest).user!;
     const ligaId = req.query["liga_id"] as string | undefined;
 
+    const [usuarioAtual] = await sql`SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1`;
+    const usuarioId = (usuarioAtual?.["id"] as string | undefined) ?? null;
+
+    // Rascunhos só aparecem para o criador
     const projetos = ligaId
       ? await sql`
-          SELECT p.*, json_build_object('id', l.id, 'nome', l.nome) AS liga
+          SELECT p.*, p.nome AS titulo, json_build_object('id', l.id, 'nome', l.nome) AS liga
           FROM projetos p
           LEFT JOIN ligas l ON l.id = p.liga_id
           WHERE p.liga_id = ${ligaId}
+            AND (p.status <> 'rascunho' OR p.criado_por = ${usuarioId})
           ORDER BY p.criado_em DESC
         `
       : await sql`
-          SELECT p.*, json_build_object('id', l.id, 'nome', l.nome) AS liga
+          SELECT p.*, p.nome AS titulo, json_build_object('id', l.id, 'nome', l.nome) AS liga
           FROM projetos p
           LEFT JOIN ligas l ON l.id = p.liga_id
+          WHERE p.status <> 'rascunho' OR p.criado_por = ${usuarioId}
           ORDER BY p.criado_em DESC
         `;
 
@@ -56,17 +63,24 @@ projetosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (r
       return;
     }
 
+    const [criador] = await sql`SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1`;
+    if (!criador) {
+      res.status(404).json({ error: "Usuário não encontrado." });
+      return;
+    }
+
     const body: Record<string, unknown> = {
       liga_id,
-      titulo,
+      nome: titulo,
       status: "rascunho" as StatusProjeto,
       responsavel_id,
+      criado_por: criador["id"] as string,
     };
     if (descricao !== undefined) body["descricao"] = descricao;
     if (prazo !== undefined) body["prazo"] = prazo;
 
     const [projeto] = await sql`
-      INSERT INTO projetos ${sql(body)} RETURNING *
+      INSERT INTO projetos ${sql(body)} RETURNING *, nome AS titulo
     `;
 
     res.status(201).json(projeto);
@@ -93,22 +107,50 @@ projetosRouter.patch(
 
       const id = req.params["id"] as string;
 
+      const [alvo] = await sql`
+        SELECT liga_id, status, criado_por FROM projetos WHERE id = ${id} LIMIT 1
+      `;
+      if (!alvo) {
+        res.status(404).json({ error: "Projeto não encontrado." });
+        return;
+      }
+
       if (user.role === "diretor") {
-        const [alvo] = await sql`SELECT liga_id FROM projetos WHERE id = ${id} LIMIT 1`;
-        if (!alvo || !(await usuarioEhDiretorDaLiga(user.email, alvo.liga_id as string))) {
+        if (!(await usuarioEhDiretorDaLiga(user.email, alvo.liga_id as string))) {
           res.status(403).json({ error: "Você só pode alterar projetos da sua própria liga." });
           return;
         }
       }
 
-      const [projeto] = await sql`
-      UPDATE projetos SET status = ${status} WHERE id = ${id} RETURNING *
-    `;
-
-      if (!projeto) {
-        res.status(404).json({ error: "Projeto não encontrado." });
-        return;
+      // Envio para aprovação (rascunho → em_aprovacao) só pelo criador
+      const enviandoParaAprovacao = alvo.status === "rascunho" && status === "em_aprovacao";
+      if (enviandoParaAprovacao) {
+        const [usuarioAtual] =
+          await sql`SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1`;
+        if (!usuarioAtual || alvo.criado_por !== usuarioAtual["id"]) {
+          res
+            .status(403)
+            .json({ error: "Apenas o criador do rascunho pode enviá-lo para aprovação." });
+          return;
+        }
       }
+
+      // Se o staff enviar seu próprio rascunho, já marca a aprovação dele
+      const autoAprovarStaff = enviandoParaAprovacao && user.role === "staff";
+
+      const [projeto] = autoAprovarStaff
+        ? await sql`
+            UPDATE projetos
+            SET status = ${status}, aprovacao_staff = 'aprovado'
+            WHERE id = ${id}
+            RETURNING *, nome AS titulo
+          `
+        : await sql`
+            UPDATE projetos SET status = ${status}
+            WHERE id = ${id}
+            RETURNING *, nome AS titulo
+          `;
+
       res.json(projeto);
     } catch (err) {
       next(err);
@@ -144,12 +186,28 @@ projetosRouter.patch(
 
       const id = req.params["id"] as string;
 
+      if (papel === "professor") {
+        const [alvo] = await sql`SELECT liga_id FROM projetos WHERE id = ${id} LIMIT 1`;
+        if (!alvo) {
+          res.status(404).json({ error: "Projeto não encontrado." });
+          return;
+        }
+        if (!(await usuarioEhProfessorDaLiga(user.id, alvo.liga_id as string))) {
+          res
+            .status(403)
+            .json({
+              error: "Você só pode aprovar projetos de ligas em que é o professor responsável.",
+            });
+          return;
+        }
+      }
+
       const resultado = await sql.begin(async (tx) => {
         const t = tx as unknown as typeof sql;
         const atualizadoRows =
           papel === "professor"
-            ? await t`UPDATE projetos SET aprovacao_professor = ${decisao} WHERE id = ${id} AND status = 'em_aprovacao' RETURNING *`
-            : await t`UPDATE projetos SET aprovacao_staff = ${decisao} WHERE id = ${id} AND status = 'em_aprovacao' RETURNING *`;
+            ? await t`UPDATE projetos SET aprovacao_professor = ${decisao} WHERE id = ${id} AND status = 'em_aprovacao' RETURNING *, nome AS titulo`
+            : await t`UPDATE projetos SET aprovacao_staff = ${decisao} WHERE id = ${id} AND status = 'em_aprovacao' RETURNING *, nome AS titulo`;
 
         const atualizado = atualizadoRows[0];
         if (!atualizado) return null;
@@ -159,7 +217,7 @@ projetosRouter.patch(
           atualizado["aprovacao_staff"] === "aprovado"
         ) {
           const rows =
-            await t`UPDATE projetos SET status = 'aprovado' WHERE id = ${id} RETURNING *`;
+            await t`UPDATE projetos SET status = 'aprovado' WHERE id = ${id} RETURNING *, nome AS titulo`;
           return rows[0];
         }
         if (
@@ -167,7 +225,7 @@ projetosRouter.patch(
           atualizado["aprovacao_staff"] === "rejeitado"
         ) {
           const rows =
-            await t`UPDATE projetos SET status = 'rejeitado' WHERE id = ${id} RETURNING *`;
+            await t`UPDATE projetos SET status = 'rejeitado' WHERE id = ${id} RETURNING *, nome AS titulo`;
           return rows[0];
         }
         return atualizado;

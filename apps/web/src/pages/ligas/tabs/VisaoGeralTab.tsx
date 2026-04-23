@@ -17,7 +17,7 @@ function primeiroUltimoNome(nome: string): string {
 
 interface Props {
   ligaId: string;
-  diretores: { id: string; nome: string }[];
+  diretores: { id: string; nome: string; avatar_url?: string | null }[];
 }
 
 function MetricCard({
@@ -88,9 +88,17 @@ export function VisaoGeralTab({ ligaId, diretores }: Props) {
                 key={d.id}
                 className="bg-white border border-brand-gray rounded-lg p-3 flex items-center gap-3"
               >
-                <div className="w-8 h-8 rounded-full bg-link-blue flex-shrink-0 flex items-center justify-center text-white text-xs font-bold">
-                  {d.nome.charAt(0).toUpperCase()}
-                </div>
+                {d.avatar_url ? (
+                  <img
+                    src={d.avatar_url}
+                    alt={d.nome}
+                    className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-link-blue flex-shrink-0 flex items-center justify-center text-white text-xs font-bold">
+                    {d.nome.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div className="font-semibold text-navy text-sm">{primeiroUltimoNome(d.nome)}</div>
               </div>
             ))}

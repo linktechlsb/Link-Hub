@@ -35,6 +35,12 @@ interface UsuarioAdmin {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function primeiroUltimoNome(nome: string): string {
+  const partes = nome.trim().split(/\s+/);
+  if (partes.length <= 2) return nome;
+  return `${partes[0]} ${partes[partes.length - 1]}`;
+}
+
 async function getToken(): Promise<string> {
   const { data } = await supabase.auth.getSession();
   return data.session?.access_token ?? "";
@@ -336,7 +342,9 @@ export function SuperAdminPage() {
                     >
                       <td className="px-6 py-3 text-sm font-semibold text-navy">{l.nome}</td>
                       <td className="px-6 py-3 text-sm text-muted-foreground">
-                        {l.lider_email ?? "—"}
+                        {l.diretores && l.diretores.length > 0
+                          ? l.diretores.map((d) => primeiroUltimoNome(d.nome)).join(", ")
+                          : "—"}
                       </td>
                       <td className="px-6 py-3 text-sm text-muted-foreground">
                         {l.projetos_ativos ?? 0}

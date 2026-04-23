@@ -20,6 +20,7 @@ export interface Projeto {
   descricao?: string;
   responsavel_id: string;
   responsavel?: Usuario;
+  criado_por?: string;
   status: StatusProjeto;
   prazo?: string;
   percentual_concluido: number;

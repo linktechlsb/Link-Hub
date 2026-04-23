@@ -9,8 +9,10 @@ import {
   Clock,
   AlertCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { useUser } from "@/hooks/use-user";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -23,6 +25,7 @@ type MembroLiga = {
   nome: string;
   iniciais: string;
   cargo: string;
+  avatarUrl?: string;
 };
 
 type ProjetoLider = {
@@ -31,7 +34,10 @@ type ProjetoLider = {
   descricao: string;
   responsavel: string;
   iniciais: string;
+  responsavelCargo?: string;
+  responsavelAvatarUrl?: string;
   status: StatusLider;
+  criadoPor?: string;
   receita?: number;
   prazo?: string;
   motivoRecusa?: string;
@@ -42,96 +48,90 @@ type ProjetoLider = {
   aprovacaoStaff?: StatusAprovacao;
 };
 
-// ─── Mock membros da liga ─────────────────────────────────────────────────────
+// ─── Membros da liga (carregados do backend) ──────────────────────────────────
 
-const MOCK_MEMBROS_LIGA: MembroLiga[] = [
-  { id: "m1", nome: "Ana Lima", iniciais: "AL", cargo: "Diretora" },
-  { id: "m2", nome: "Pedro Alves", iniciais: "PA", cargo: "Desenvolvedor" },
-  { id: "m3", nome: "Marina Santos", iniciais: "MS", cargo: "Designer" },
-  { id: "m4", nome: "Lucas Ferreira", iniciais: "LF", cargo: "Analista" },
-  { id: "m5", nome: "Beatriz Costa", iniciais: "BC", cargo: "Marketing" },
-  { id: "m6", nome: "Rafael Nunes", iniciais: "RN", cargo: "Financeiro" },
-];
+interface MembroLigaAPI {
+  usuario_id: string;
+  nome: string | null;
+  email: string;
+  cargo: string | null;
+  role: string | null;
+  avatar_url: string | null;
+}
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
+function iniciaisDe(nome: string): string {
+  return nome
+    .split(" ")
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
+}
 
-const MOCK_PROJETOS_LIDER: ProjetoLider[] = [
-  {
-    id: "l1",
-    nome: "Automação de notas",
-    descricao: "Automatiza lançamento de notas via integração com o sistema acadêmico.",
-    responsavel: "Pedro Alves",
-    iniciais: "PA",
-    status: "rascunho",
-    prazo: "2026-05-10",
-  },
-  {
-    id: "l2",
-    nome: "App de presenças",
-    descricao: "Check-in via QR code para eventos das ligas.",
-    responsavel: "Marina Santos",
-    iniciais: "MS",
-    status: "rascunho",
-    prazo: "2026-03-01", // vencido
-  },
-  {
-    id: "l3",
-    nome: "API de integração acadêmica",
-    descricao: "Integração com o sistema acadêmico da faculdade.",
-    responsavel: "Ana Lima",
-    iniciais: "AL",
-    status: "em_aprovacao",
-    submissaoEm: "2026-04-11",
-    aprovacaoProfessor: "pendente",
-    aprovacaoStaff: "pendente",
-  },
-  {
-    id: "l7",
-    nome: "Newsletter mensal",
-    descricao: "Comunicado mensal com novidades e conquistas da liga.",
-    responsavel: "Beatriz Costa",
-    iniciais: "BC",
-    status: "em_aprovacao",
-    submissaoEm: "2026-04-08",
-    aprovacaoProfessor: "aprovado",
-    aprovacaoStaff: "pendente",
-  },
-  {
-    id: "l4",
-    nome: "Sistema de feedback de eventos",
-    descricao: "Formulário automatizado para coleta de feedback pós-evento.",
-    responsavel: "Ana Lima",
-    iniciais: "AL",
-    status: "rejeitado",
-    motivoRecusa: "Escopo muito amplo",
-    aprovacaoProfessor: "rejeitado",
-    aprovacaoStaff: "pendente",
-  },
-  {
-    id: "l5",
-    nome: "Plataforma de eventos",
-    descricao: "Sistema de inscrições e QR code para eventos da liga.",
-    responsavel: "Lucas Ferreira",
-    iniciais: "LF",
-    status: "aprovado",
-    receita: 4500,
-    prazo: "2026-08-15",
-    aprovacaoProfessor: "aprovado",
-    aprovacaoStaff: "aprovado",
-  },
-  {
-    id: "l6",
-    nome: "Landing page da liga",
-    descricao: "Página pública com membros, projetos e conquistas.",
-    responsavel: "Ana Lima",
-    iniciais: "AL",
-    status: "aprovado",
-    receita: 2500,
-    prazo: "2025-06-30", // vencido
-    aprovacaoProfessor: "aprovado",
-    aprovacaoStaff: "aprovado",
-  },
-];
+const ROLE_LABEL: Record<string, string> = {
+  staff: "Staff",
+  professor: "Professor",
+  lider: "Líder",
+  diretor: "Diretor",
+  membro: "Membro",
+};
+
+function rotuloCargo(m: MembroLigaAPI): string {
+  if (m.cargo) return m.cargo;
+  if (m.role && ROLE_LABEL[m.role]) return ROLE_LABEL[m.role]!;
+  if (m.role) return m.role.charAt(0).toUpperCase() + m.role.slice(1);
+  return "Membro";
+}
+
+function apiParaMembroLiga(m: MembroLigaAPI): MembroLiga {
+  const nome = m.nome ?? m.email;
+  return {
+    id: m.usuario_id,
+    nome,
+    iniciais: iniciaisDe(nome),
+    cargo: rotuloCargo(m),
+    avatarUrl: m.avatar_url ?? undefined,
+  };
+}
+
+// ─── Projetos (API) ───────────────────────────────────────────────────────────
+
+interface ProjetoAPI {
+  id: string;
+  liga_id: string;
+  titulo: string;
+  descricao?: string | null;
+  responsavel_id: string;
+  criado_por?: string | null;
+  status: string;
+  prazo?: string | null;
+  aprovacao_professor: StatusAprovacao;
+  aprovacao_staff: StatusAprovacao;
+}
+
+function normalizarStatus(s: string): StatusLider {
+  if (s === "rascunho" || s === "em_aprovacao" || s === "rejeitado" || s === "aprovado") return s;
+  // em_andamento, concluido, cancelado → exibir como aprovado no kanban do líder
+  return "aprovado";
+}
+
+function apiParaProjetoLider(p: ProjetoAPI, membrosPorId: Map<string, MembroLiga>): ProjetoLider {
+  const resp = membrosPorId.get(p.responsavel_id);
+  const nomeResp = resp?.nome ?? "—";
+  return {
+    id: p.id,
+    nome: p.titulo,
+    descricao: p.descricao ?? "",
+    responsavel: nomeResp,
+    iniciais: resp?.iniciais ?? iniciaisDe(nomeResp),
+    responsavelCargo: resp?.cargo,
+    responsavelAvatarUrl: resp?.avatarUrl,
+    status: normalizarStatus(p.status),
+    criadoPor: p.criado_por ?? undefined,
+    prazo: p.prazo ?? undefined,
+    aprovacaoProfessor: p.aprovacao_professor,
+    aprovacaoStaff: p.aprovacao_staff,
+  };
+}
 
 // ─── Configuração de status ───────────────────────────────────────────────────
 
@@ -167,12 +167,33 @@ function diasAguardando(submissaoEm?: string): number | null {
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
-function Avatar({ iniciais, size = "sm" }: { iniciais: string; size?: "sm" | "md" }) {
+function Avatar({
+  iniciais,
+  size = "sm",
+  avatarUrl,
+  alt,
+}: {
+  iniciais: string;
+  size?: "sm" | "md";
+  avatarUrl?: string;
+  alt?: string;
+}) {
+  const sizeClass = size === "sm" ? "h-7 w-7" : "h-9 w-9";
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={alt ?? iniciais}
+        className={cn("rounded-full object-cover shrink-0", sizeClass)}
+      />
+    );
+  }
   return (
     <div
       className={cn(
         "rounded-full bg-navy text-white font-bold flex items-center justify-center shrink-0",
-        size === "sm" ? "h-7 w-7 text-[10px]" : "h-9 w-9 text-xs",
+        sizeClass,
+        size === "sm" ? "text-[10px]" : "text-xs",
       )}
     >
       {iniciais}
@@ -211,11 +232,13 @@ function AprovacaoIndicador({ label, status }: { label: string; status: StatusAp
 
 function KanbanCard({
   projeto,
+  podeSubmeter,
   onClick,
   onSubmeter,
   onRevisar,
 }: {
   projeto: ProjetoLider;
+  podeSubmeter: boolean;
   onClick: () => void;
   onSubmeter: (id: string) => void;
   onRevisar: (id: string) => void;
@@ -291,13 +314,22 @@ function KanbanCard({
       )}
 
       {/* Responsável */}
-      <div className="flex items-center gap-1.5">
-        <Avatar iniciais={projeto.iniciais} />
-        <span className="text-xs text-muted-foreground">{projeto.responsavel}</span>
+      <div className="flex items-center gap-2">
+        <Avatar
+          iniciais={projeto.iniciais}
+          avatarUrl={projeto.responsavelAvatarUrl}
+          alt={projeto.responsavel}
+        />
+        <span className="text-xs text-navy font-medium">{projeto.responsavel}</span>
+        {projeto.responsavelCargo && (
+          <span className="text-[10px] font-semibold uppercase tracking-wide bg-navy/5 text-navy border border-navy/10 rounded-full px-2 py-0.5">
+            {projeto.responsavelCargo}
+          </span>
+        )}
       </div>
 
       {/* Ações */}
-      {projeto.status === "rascunho" && (
+      {projeto.status === "rascunho" && podeSubmeter && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -305,7 +337,7 @@ function KanbanCard({
           }}
           className="mt-3 w-full text-xs font-medium py-1.5 px-3 rounded-md border border-navy text-navy hover:bg-navy hover:text-white transition-colors"
         >
-          Submeter ao professor
+          Enviar para aprovação
         </button>
       )}
       {projeto.status === "rejeitado" && (
@@ -448,7 +480,12 @@ function PainelDetalhes({
       <div className="mb-5">
         <span className={labelClass}>Responsável</span>
         <div className="flex items-center gap-2 mt-1">
-          <Avatar iniciais={projeto.iniciais} size="md" />
+          <Avatar
+            iniciais={projeto.iniciais}
+            size="md"
+            avatarUrl={projeto.responsavelAvatarUrl}
+            alt={projeto.responsavel}
+          />
           <span className="text-sm text-navy">{projeto.responsavel}</span>
         </div>
       </div>
@@ -463,10 +500,19 @@ function PainelDetalhes({
                 key={m.id}
                 className="flex items-center gap-1.5 bg-navy/5 border border-navy/10 rounded-full pl-1 pr-2 py-1"
               >
-                <div className="h-5 w-5 rounded-full bg-navy text-white text-[9px] font-bold flex items-center justify-center shrink-0">
-                  {m.iniciais}
-                </div>
+                {m.avatarUrl ? (
+                  <img
+                    src={m.avatarUrl}
+                    alt={m.nome}
+                    className="h-5 w-5 rounded-full object-cover shrink-0"
+                  />
+                ) : (
+                  <div className="h-5 w-5 rounded-full bg-navy text-white text-[9px] font-bold flex items-center justify-center shrink-0">
+                    {m.iniciais}
+                  </div>
+                )}
                 <span className="text-xs font-medium text-navy">{m.nome}</span>
+                <span className="text-[10px] text-muted-foreground">· {m.cargo}</span>
               </div>
             ))}
           </div>
@@ -510,9 +556,13 @@ function PainelDetalhes({
 function ModalNovoProjeto({
   onFechar,
   onCriar,
+  membrosLiga,
+  carregandoMembros,
 }: {
   onFechar: () => void;
-  onCriar: (p: Omit<ProjetoLider, "id" | "status">) => void;
+  onCriar: (p: Omit<ProjetoLider, "id" | "status">) => Promise<{ ok: boolean; error?: string }>;
+  membrosLiga: MembroLiga[];
+  carregandoMembros: boolean;
 }) {
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -521,8 +571,29 @@ function ModalNovoProjeto({
   const [buscaMembro, setBuscaMembro] = useState("");
   const [selecionados, setSelecionados] = useState<MembroLiga[]>([]);
   const [dropdownAberto, setDropdownAberto] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const membrosRef = useRef<HTMLDivElement>(null);
 
-  const membrosFiltrados = MOCK_MEMBROS_LIGA.filter(
+  useEffect(() => {
+    if (!dropdownAberto) return;
+    function handleClick(e: MouseEvent) {
+      if (membrosRef.current && !membrosRef.current.contains(e.target as Node)) {
+        setDropdownAberto(false);
+      }
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setDropdownAberto(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [dropdownAberto]);
+
+  const membrosFiltrados = membrosLiga.filter(
     (m) =>
       m.nome.toLowerCase().includes(buscaMembro.toLowerCase()) &&
       !selecionados.some((s) => s.id === m.id),
@@ -542,18 +613,31 @@ function ModalNovoProjeto({
     setSelecionados((prev) => prev.filter((s) => s.id !== id));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setErro(null);
     if (!nome.trim()) return;
-    onCriar({
+    if (selecionados.length === 0) {
+      setErro("Selecione ao menos um membro como responsável.");
+      return;
+    }
+    setEnviando(true);
+    const resultado = await onCriar({
       nome,
       descricao,
       prazo: prazo || undefined,
       observacao: observacao || undefined,
-      responsavel: selecionados[0]?.nome ?? "A definir",
-      iniciais: selecionados[0]?.iniciais ?? "?",
+      responsavel: selecionados[0]!.nome,
+      iniciais: selecionados[0]!.iniciais,
+      responsavelCargo: selecionados[0]!.cargo,
+      responsavelAvatarUrl: selecionados[0]!.avatarUrl,
       membros: selecionados,
     });
+    setEnviando(false);
+    if (!resultado.ok) {
+      setErro(resultado.error ?? "Não foi possível criar o projeto.");
+      return;
+    }
     onFechar();
   }
 
@@ -619,7 +703,7 @@ function ModalNovoProjeto({
           {/* Seleção de membros */}
           <div>
             <label className={labelClass}>Membros</label>
-            <div className="relative">
+            <div className="relative" ref={membrosRef}>
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
               <input
                 value={buscaMembro}
@@ -628,12 +712,15 @@ function ModalNovoProjeto({
                   setDropdownAberto(true);
                 }}
                 onFocus={() => setDropdownAberto(true)}
-                placeholder="Buscar membro da liga..."
+                placeholder={
+                  carregandoMembros ? "Carregando membros..." : "Buscar membro da liga..."
+                }
+                disabled={carregandoMembros}
                 className={cn(inputClass, "pl-8")}
                 autoComplete="off"
               />
               {dropdownAberto && membrosFiltrados.length > 0 && (
-                <div className="absolute z-10 mt-1 w-full bg-white border border-brand-gray rounded-md shadow-md overflow-hidden">
+                <div className="absolute z-10 mt-1 w-full bg-white border border-brand-gray rounded-md shadow-md overflow-y-auto max-h-56">
                   {membrosFiltrados.map((m) => (
                     <button
                       key={m.id}
@@ -641,9 +728,17 @@ function ModalNovoProjeto({
                       onClick={() => toggleMembro(m)}
                       className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors text-left"
                     >
-                      <div className="h-7 w-7 rounded-full bg-navy text-white text-[10px] font-bold flex items-center justify-center shrink-0">
-                        {m.iniciais}
-                      </div>
+                      {m.avatarUrl ? (
+                        <img
+                          src={m.avatarUrl}
+                          alt={m.nome}
+                          className="h-7 w-7 rounded-full object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="h-7 w-7 rounded-full bg-navy text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                          {m.iniciais}
+                        </div>
+                      )}
                       <div>
                         <p className="text-sm font-medium text-navy">{m.nome}</p>
                         <p className="text-xs text-muted-foreground">{m.cargo}</p>
@@ -660,10 +755,19 @@ function ModalNovoProjeto({
                     key={m.id}
                     className="flex items-center gap-1.5 bg-navy/5 border border-navy/15 rounded-full pl-1 pr-2 py-1"
                   >
-                    <div className="h-5 w-5 rounded-full bg-navy text-white text-[9px] font-bold flex items-center justify-center shrink-0">
-                      {m.iniciais}
-                    </div>
+                    {m.avatarUrl ? (
+                      <img
+                        src={m.avatarUrl}
+                        alt={m.nome}
+                        className="h-5 w-5 rounded-full object-cover shrink-0"
+                      />
+                    ) : (
+                      <div className="h-5 w-5 rounded-full bg-navy text-white text-[9px] font-bold flex items-center justify-center shrink-0">
+                        {m.iniciais}
+                      </div>
+                    )}
                     <span className="text-xs font-medium text-navy">{m.nome}</span>
+                    <span className="text-[10px] text-muted-foreground">· {m.cargo}</span>
                     <button
                       type="button"
                       onClick={() => removerMembro(m.id)}
@@ -678,6 +782,12 @@ function ModalNovoProjeto({
             )}
           </div>
 
+          {erro && (
+            <div className="bg-red-50 border border-red-200 rounded-md px-3 py-2">
+              <p className="text-xs text-red-700">{erro}</p>
+            </div>
+          )}
+
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
@@ -688,9 +798,10 @@ function ModalNovoProjeto({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium bg-navy text-white rounded-md hover:bg-navy/90 transition-colors"
+              disabled={enviando}
+              className="px-4 py-2 text-sm font-medium bg-navy text-white rounded-md hover:bg-navy/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Criar projeto
+              {enviando ? "Criando..." : "Criar projeto"}
             </button>
           </div>
         </form>
@@ -702,12 +813,57 @@ function ModalNovoProjeto({
 // ─── View principal do Líder ──────────────────────────────────────────────────
 
 export function ProjetosLiderView() {
-  const [projetos, setProjetos] = useState<ProjetoLider[]>(MOCK_PROJETOS_LIDER);
+  const { usuarioId } = useUser();
+  const [projetosAPI, setProjetosAPI] = useState<ProjetoAPI[]>([]);
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<StatusLider | "todos">("todos");
   const [visualizacao, setVisualizacao] = useState<"kanban" | "lista">("kanban");
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [modalAberto, setModalAberto] = useState(false);
+  const [membrosLiga, setMembrosLiga] = useState<MembroLiga[]>([]);
+  const [carregandoMembros, setCarregandoMembros] = useState(true);
+  const [ligaId, setLigaId] = useState<string | null>(null);
+
+  async function authHeaders(): Promise<Record<string, string> | null> {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) return null;
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  useEffect(() => {
+    async function carregar() {
+      try {
+        const headers = await authHeaders();
+        if (!headers) return;
+
+        const resLiga = await fetch("/api/ligas/minha", { headers });
+        if (!resLiga.ok) return;
+        const liga = (await resLiga.json()) as { id?: string };
+        if (!liga.id) return;
+        setLigaId(liga.id);
+
+        const [resMembros, resProjetos] = await Promise.all([
+          fetch(`/api/ligas/${liga.id}/membros`, { headers }),
+          fetch(`/api/projetos?liga_id=${liga.id}`, { headers }),
+        ]);
+
+        if (resMembros.ok) {
+          const data = (await resMembros.json()) as MembroLigaAPI[];
+          setMembrosLiga(data.map(apiParaMembroLiga));
+        }
+        if (resProjetos.ok) {
+          setProjetosAPI((await resProjetos.json()) as ProjetoAPI[]);
+        }
+      } finally {
+        setCarregandoMembros(false);
+      }
+    }
+    void carregar();
+  }, []);
+
+  const membrosPorId = new Map(membrosLiga.map((m) => [m.id, m]));
+  const projetos = projetosAPI.map((p) => apiParaProjetoLider(p, membrosPorId));
 
   const projetosFiltrados = projetos
     .filter((p) => {
@@ -725,37 +881,66 @@ export function ProjetosLiderView() {
     setSelecionado((prev) => (prev === id ? null : id));
   }
 
+  async function atualizarStatus(id: string, status: StatusLider) {
+    const headers = await authHeaders();
+    if (!headers) return;
+    const res = await fetch(`/api/projetos/${id}/status`, {
+      method: "PATCH",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) return;
+    const atualizado = (await res.json()) as ProjetoAPI;
+    setProjetosAPI((prev) => prev.map((p) => (p.id === id ? atualizado : p)));
+  }
+
   function submeterAoProfessor(id: string) {
-    setProjetos((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              status: "em_aprovacao" as StatusLider,
-              submissaoEm: new Date().toISOString().split("T")[0],
-            }
-          : p,
-      ),
-    );
+    void atualizarStatus(id, "em_aprovacao");
     if (selecionado === id) setSelecionado(null);
   }
 
   function revisarEResubmeter(id: string) {
-    setProjetos((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, status: "rascunho" as StatusLider, motivoRecusa: undefined } : p,
-      ),
-    );
+    void atualizarStatus(id, "rascunho");
     if (selecionado === id) setSelecionado(null);
   }
 
-  function salvarProjeto(atualizado: ProjetoLider) {
-    setProjetos((prev) => prev.map((p) => (p.id === atualizado.id ? atualizado : p)));
+  function salvarProjeto(_atualizado: ProjetoLider) {
+    // Edição inline ainda não persiste no backend — placeholder.
     setSelecionado(null);
   }
 
-  function criarProjeto(dados: Omit<ProjetoLider, "id" | "status">) {
-    setProjetos((prev) => [{ ...dados, id: `novo-${Date.now()}`, status: "rascunho" }, ...prev]);
+  async function criarProjeto(
+    dados: Omit<ProjetoLider, "id" | "status">,
+  ): Promise<{ ok: boolean; error?: string }> {
+    const headers = await authHeaders();
+    if (!headers) return { ok: false, error: "Sessão expirada. Faça login novamente." };
+    if (!ligaId) return { ok: false, error: "Liga não encontrada para o seu usuário." };
+    const responsavelId = dados.membros?.[0]?.id;
+    if (!responsavelId) return { ok: false, error: "Selecione um responsável." };
+    const res = await fetch(`/api/projetos`, {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        liga_id: ligaId,
+        titulo: dados.nome,
+        descricao: dados.descricao || undefined,
+        responsavel_id: responsavelId,
+        prazo: dados.prazo,
+      }),
+    });
+    if (!res.ok) {
+      let mensagem = `Falha ao criar projeto (${res.status}).`;
+      try {
+        const body = (await res.json()) as { error?: string };
+        if (body.error) mensagem = body.error;
+      } catch {
+        // sem corpo JSON
+      }
+      return { ok: false, error: mensagem };
+    }
+    const novo = (await res.json()) as ProjetoAPI;
+    setProjetosAPI((prev) => [novo, ...prev]);
+    return { ok: true };
   }
 
   const projetoSelecionado = projetos.find((p) => p.id === selecionado);
@@ -879,6 +1064,7 @@ export function ProjetosLiderView() {
                       <KanbanCard
                         key={p.id}
                         projeto={p}
+                        podeSubmeter={!!usuarioId && p.criadoPor === usuarioId}
                         onClick={() => toggleSelecionado(p.id)}
                         onSubmeter={submeterAoProfessor}
                         onRevisar={revisarEResubmeter}
@@ -970,7 +1156,11 @@ export function ProjetosLiderView() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
-                            <Avatar iniciais={p.iniciais} />
+                            <Avatar
+                              iniciais={p.iniciais}
+                              avatarUrl={p.responsavelAvatarUrl}
+                              alt={p.responsavel}
+                            />
                             <span className="text-xs text-muted-foreground">{p.responsavel}</span>
                           </div>
                         </td>
@@ -999,7 +1189,12 @@ export function ProjetosLiderView() {
       )}
 
       {modalAberto && (
-        <ModalNovoProjeto onFechar={() => setModalAberto(false)} onCriar={criarProjeto} />
+        <ModalNovoProjeto
+          onFechar={() => setModalAberto(false)}
+          onCriar={criarProjeto}
+          membrosLiga={membrosLiga}
+          carregandoMembros={carregandoMembros}
+        />
       )}
     </div>
   );

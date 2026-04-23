@@ -3,14 +3,30 @@ import { type Response, type NextFunction } from "express";
 import { type AuthenticatedRequest } from "./auth.js";
 import { sql } from "../config/db.js";
 
-export async function usuarioEhDiretorDaLiga(email: string, ligaId: string): Promise<boolean> {
-  const [membro] = await sql`
-    SELECT 1 FROM liga_membros lm
-    JOIN usuarios u ON u.id = lm.usuario_id
-    WHERE lm.liga_id = ${ligaId} AND u.email = ${email} AND lm.cargo = 'Diretor'
+export async function usuarioEhProfessorDaLiga(userId: string, ligaId: string): Promise<boolean> {
+  const [match] = await sql`
+    SELECT 1 FROM ligas
+    WHERE id = ${ligaId}
+      AND (professor_id IS NULL OR professor_id = ${userId})
     LIMIT 1
   `;
-  return Boolean(membro);
+  return Boolean(match);
+}
+
+export async function usuarioEhDiretorDaLiga(email: string, ligaId: string): Promise<boolean> {
+  const [match] = await sql`
+    SELECT 1
+    FROM ligas l
+    LEFT JOIN liga_membros lm ON lm.liga_id = l.id
+    LEFT JOIN usuarios u ON u.id = lm.usuario_id
+    WHERE l.id = ${ligaId}
+      AND (
+        l.lider_id = (SELECT id FROM usuarios WHERE email = ${email})
+        OR (u.email = ${email} AND lm.cargo = 'Diretor')
+      )
+    LIMIT 1
+  `;
+  return Boolean(match);
 }
 
 export async function usuarioPertenceALiga(email: string, ligaId: string): Promise<boolean> {

@@ -17,6 +17,7 @@ interface MembroRow {
   ingressou_em: string;
   nome: string;
   email: string;
+  avatar_url: string | null;
 }
 
 async function getToken(): Promise<string> {
@@ -79,7 +80,17 @@ export function MembrosTab({ ligaId }: Props) {
                 <tr key={m.id} className="border-b border-brand-gray last:border-0">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-navy flex-shrink-0" />
+                      {m.avatar_url ? (
+                        <img
+                          src={m.avatar_url}
+                          alt={m.nome}
+                          className="w-6 h-6 rounded-full flex-shrink-0 object-cover"
+                        />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-navy flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold">
+                          {m.nome.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <span className="text-sm font-medium text-navy">{m.nome}</span>
                     </div>
                   </td>

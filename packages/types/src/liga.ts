@@ -11,8 +11,9 @@ export interface Liga {
   ativo: boolean;
   criado_em: string;
   atualizado_em: string;
-  diretores?: { id: string; nome: string }[];
+  diretores?: { id: string; nome: string; avatar_url?: string | null }[];
   projetos_ativos?: number;
+  professor_id?: string;
 }
 
 export interface LigaMembro {
@@ -37,4 +38,5 @@ export interface UpdateLigaInput {
   lider_id?: string;
   ativo?: boolean;
   diretores?: string[];
+  professor_id?: string | null;
 }

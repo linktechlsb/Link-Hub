@@ -215,6 +215,21 @@ usuariosRouter.post("/", authenticate, requireRole("staff"), async (req, res, ne
   }
 });
 
+// GET /usuarios/professores — lista todos os professores (para atribuir a uma liga)
+usuariosRouter.get("/professores", authenticate, requireRole("staff"), async (_req, res, next) => {
+  try {
+    const professores = await sql`
+        SELECT id, nome, email
+        FROM usuarios
+        WHERE role = 'professor'
+        ORDER BY nome
+      `;
+    res.json(professores);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /usuarios/busca?email= — busca usuários por e-mail (autocomplete de diretores)
 // IMPORTANTE: deve estar antes de PATCH /:id e GET /:id para não ser capturado por esses padrões
 usuariosRouter.get(

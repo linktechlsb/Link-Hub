@@ -20,6 +20,12 @@ interface DiretorBusca {
   email: string;
 }
 
+interface Professor {
+  id: string;
+  nome: string;
+  email: string;
+}
+
 interface LigaSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -40,6 +46,8 @@ export function LigaSheet({ open, onOpenChange, liga, onSalvo }: LigaSheetProps)
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(liga?.imagem_url ?? null);
   const [salvando, setSalvando] = useState(false);
+  const [professores, setProfessores] = useState<Professor[]>([]);
+  const [professorId, setProfessorId] = useState<string>(liga?.professor_id ?? "");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -50,8 +58,20 @@ export function LigaSheet({ open, onOpenChange, liga, onSalvo }: LigaSheetProps)
       setImageFile(null);
       setBusca("");
       setResultados([]);
+      setProfessorId(liga?.professor_id ?? "");
     }
   }, [open, liga]);
+
+  useEffect(() => {
+    if (!open) return;
+    void (async () => {
+      const token = await getToken();
+      const res = await fetch("/api/usuarios/professores", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) setProfessores(await res.json());
+    })();
+  }, [open]);
 
   useEffect(() => {
     if (busca.length < 2) {
@@ -94,6 +114,7 @@ export function LigaSheet({ open, onOpenChange, liga, onSalvo }: LigaSheetProps)
       const body = {
         nome: nome.trim(),
         diretores: diretores.map((d) => d.id),
+        professor_id: professorId || null,
       };
 
       let ligaId: string;
@@ -245,6 +266,26 @@ export function LigaSheet({ open, onOpenChange, liga, onSalvo }: LigaSheetProps)
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Professor responsável */}
+          <div className="space-y-2">
+            <Label className="text-navy font-semibold">Professor responsável</Label>
+            <select
+              value={professorId}
+              onChange={(e) => setProfessorId(e.target.value)}
+              className="w-full text-sm border border-brand-gray rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40"
+            >
+              <option value="">Nenhum</option>
+              {professores.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nome} ({p.email})
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Somente o professor atribuído pode aprovar projetos desta liga.
+            </p>
           </div>
         </div>
 

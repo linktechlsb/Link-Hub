@@ -27,22 +27,24 @@ ligasRouter.get("/", authenticate, async (_req, res, next) => {
       SELECT
         l.*,
         lu.email AS lider_email,
-        COALESCE(
-          json_agg(
-            json_build_object('id', u.id, 'nome', u.nome)
-          ) FILTER (WHERE (lm.cargo = 'Diretor' OR u.role = 'diretor') AND lm.id IS NOT NULL),
-          '[]'
-        ) AS diretores,
-        COUNT(p.id) FILTER (
-          WHERE p.status IN ('aprovado', 'em_andamento')
-        )::int AS projetos_ativos
+        COALESCE((
+          SELECT json_agg(
+            json_build_object('id', u.id, 'nome', u.nome, 'avatar_url', u.avatar_url)
+          )
+          FROM liga_membros lm
+          JOIN usuarios u ON u.id = lm.usuario_id
+          WHERE lm.liga_id = l.id
+            AND (lm.cargo = 'Diretor' OR u.role = 'diretor')
+        ), '[]') AS diretores,
+        (
+          SELECT COUNT(*)::int
+          FROM projetos p
+          WHERE p.liga_id = l.id
+            AND p.status IN ('aprovado', 'em_andamento')
+        ) AS projetos_ativos
       FROM ligas l
       LEFT JOIN usuarios lu ON lu.id = l.lider_id
-      LEFT JOIN liga_membros lm ON lm.liga_id = l.id
-      LEFT JOIN usuarios u ON u.id = lm.usuario_id
-      LEFT JOIN projetos p ON p.liga_id = l.id
       WHERE l.ativo = true
-      GROUP BY l.id, lu.email
       ORDER BY l.nome
     `;
     res.json(ligas);
@@ -61,7 +63,7 @@ ligasRouter.get("/minha", authenticate, async (req, res, next) => {
         lu.email AS lider_email,
         COALESCE(
           json_agg(
-            json_build_object('id', u.id, 'nome', u.nome)
+            json_build_object('id', u.id, 'nome', u.nome, 'avatar_url', u.avatar_url)
           ) FILTER (WHERE (lm.cargo = 'Diretor' OR u.role = 'diretor') AND lm.id IS NOT NULL),
           '[]'
         ) AS diretores
@@ -111,7 +113,7 @@ ligasRouter.get("/:id", authenticate, async (req, res, next) => {
         ) AS membros,
         COALESCE(
           json_agg(
-            json_build_object('id', u.id, 'nome', u.nome)
+            json_build_object('id', u.id, 'nome', u.nome, 'avatar_url', u.avatar_url)
           ) FILTER (WHERE (lm.cargo = 'Diretor' OR u.role = 'diretor') AND lm.id IS NOT NULL),
           '[]'
         ) AS diretores
@@ -139,7 +141,7 @@ ligasRouter.get("/:id/membros", authenticate, async (req, res, next) => {
     const membros = await sql`
       SELECT
         lm.id, lm.usuario_id, lm.cargo, lm.ingressou_em,
-        u.nome, u.email, u.role
+        u.nome, u.email, u.role, u.avatar_url
       FROM liga_membros lm
       JOIN usuarios u ON u.id = lm.usuario_id
       WHERE lm.liga_id = ${id}
@@ -160,7 +162,7 @@ ligasRouter.get(
     try {
       const id = req.params["id"] as string;
       const projetos = await sql`
-      SELECT p.*, u.nome AS responsavel_nome
+      SELECT p.*, p.nome AS titulo, u.nome AS responsavel_nome
       FROM projetos p
       LEFT JOIN usuarios u ON u.id = p.responsavel_id
       WHERE p.liga_id = ${id}
@@ -337,7 +339,12 @@ ligasRouter.patch("/:id", authenticate, requireLigaOwnership("id"), async (req, 
       return;
     }
 
-    const camposPermitidos = ["nome", "descricao", "categoria", "ativo"] as const;
+    if (user.role === "diretor" && "professor_id" in rawUpdates) {
+      res.status(403).json({ error: "Apenas staff pode alterar o professor da liga." });
+      return;
+    }
+
+    const camposPermitidos = ["nome", "descricao", "categoria", "ativo", "professor_id"] as const;
     const updates: Record<string, unknown> = {};
     for (const campo of camposPermitidos) {
       if (campo in rawUpdates) updates[campo] = rawUpdates[campo];

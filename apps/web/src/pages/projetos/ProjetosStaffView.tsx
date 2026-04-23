@@ -9,9 +9,12 @@ import {
   Pencil,
   CheckCircle,
   XCircle,
+  Plus,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { useUser } from "@/hooks/use-user";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -19,7 +22,13 @@ import { cn } from "@/lib/utils";
 type StatusStaff = "rascunho" | "em_aprovacao" | "rejeitado" | "aprovado";
 type StatusAprovacao = "pendente" | "aprovado" | "rejeitado";
 
-type MembroStaff = { id: string; nome: string; iniciais: string; cargo: string };
+type MembroStaff = {
+  id: string;
+  nome: string;
+  iniciais: string;
+  cargo: string;
+  avatarUrl?: string;
+};
 
 type HistoricoEntry = {
   etapa: string;
@@ -36,7 +45,9 @@ type ProjetoStaff = {
   descricao: string;
   responsavel: string;
   iniciais: string;
+  responsavelAvatarUrl?: string;
   status: StatusStaff;
+  criadoPor?: string;
   receita?: number;
   prazo?: string;
   motivoRecusa?: string;
@@ -58,180 +69,95 @@ const STATUS_CONFIG: Record<StatusStaff, { label: string; badge: string }> = {
 };
 
 // Colunas do kanban
-const COLUNAS_KANBAN: StatusStaff[] = ["em_aprovacao", "aprovado", "rejeitado"];
+const COLUNAS_KANBAN: StatusStaff[] = ["rascunho", "em_aprovacao", "aprovado", "rejeitado"];
 
-const LIGAS = ["Todas as ligas", "Liga Tech", "Liga Finanças", "Liga Marketing", "Liga RH"];
+// ─── API / mapeamento ─────────────────────────────────────────────────────────
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
+interface ProjetoAPI {
+  id: string;
+  liga_id: string;
+  liga?: { id: string; nome: string };
+  titulo: string;
+  descricao?: string | null;
+  responsavel_id: string;
+  criado_por?: string | null;
+  status: string;
+  prazo?: string | null;
+  aprovacao_professor: StatusAprovacao;
+  aprovacao_staff: StatusAprovacao;
+}
 
-const MOCK_PROJETOS_STAFF: ProjetoStaff[] = [
-  {
-    id: "s1",
-    nome: "Automação de notas",
-    liga: "Liga Tech",
-    descricao: "Automatiza lançamento de notas via integração com o sistema acadêmico.",
-    responsavel: "Pedro Alves",
-    iniciais: "PA",
-    status: "rascunho",
-    prazo: "2026-05-10",
-    historico: [{ etapa: "Criação", acao: "submetido", por: "Pedro Alves", em: "2026-03-20" }],
-  },
-  {
-    id: "s2",
-    nome: "App de presenças",
-    liga: "Liga Tech",
-    descricao: "Check-in via QR code para eventos das ligas.",
-    responsavel: "Marina Silva",
-    iniciais: "MS",
-    status: "em_aprovacao",
-    aprovacaoProfessor: "pendente",
-    aprovacaoStaff: "pendente",
-    prazo: "2026-03-01",
-    historico: [
-      { etapa: "Criação", acao: "submetido", por: "Marina Silva", em: "2026-02-10" },
-      { etapa: "Professor", acao: "submetido", por: "Marina Silva", em: "2026-02-15" },
-    ],
-  },
-  {
-    id: "s3",
-    nome: "App de gestão de membros",
-    liga: "Liga RH",
-    descricao: "Sistema para cadastro e acompanhamento de membros das ligas.",
-    responsavel: "Carla Nunes",
-    iniciais: "CN",
-    status: "em_aprovacao",
-    aprovacaoProfessor: "pendente",
-    aprovacaoStaff: "pendente",
-    historico: [
-      { etapa: "Criação", acao: "submetido", por: "Carla Nunes", em: "2026-03-01" },
-      { etapa: "Professor", acao: "submetido", por: "Carla Nunes", em: "2026-03-05" },
-    ],
-  },
-  {
-    id: "s4",
-    nome: "API de integração acadêmica",
-    liga: "Liga Tech",
-    descricao: "Integração com o sistema acadêmico da faculdade.",
-    responsavel: "Ana Lima",
-    iniciais: "AL",
-    status: "em_aprovacao",
-    aprovacaoProfessor: "pendente",
-    aprovacaoStaff: "pendente",
-    historico: [
-      { etapa: "Criação", acao: "submetido", por: "Ana Lima", em: "2026-03-10" },
-      { etapa: "Professor", acao: "submetido", por: "Ana Lima", em: "2026-04-11" },
-    ],
-  },
-  {
-    id: "s5",
-    nome: "Plataforma de eventos",
-    liga: "Liga Tech",
-    descricao: "Sistema de inscrições e check-in via QR code para eventos da liga.",
-    responsavel: "Lucas Ferreira",
-    iniciais: "LF",
-    status: "em_aprovacao",
-    aprovacaoProfessor: "aprovado",
-    aprovacaoStaff: "pendente",
-    submissaoEm: "2026-04-08",
-    receita: 4500,
-    prazo: "2026-08-15",
-    historico: [
-      { etapa: "Criação", acao: "submetido", por: "Lucas Ferreira", em: "2026-02-01" },
-      { etapa: "Professor", acao: "submetido", por: "Lucas Ferreira", em: "2026-02-10" },
-      { etapa: "Professor", acao: "aprovado", por: "Prof. Roberto", em: "2026-02-20" },
-      { etapa: "Staff", acao: "submetido", por: "Lucas Ferreira", em: "2026-03-01" },
-    ],
-  },
-  {
-    id: "s6",
-    nome: "Newsletter automática",
-    liga: "Liga Marketing",
-    descricao: "Envio semanal de resumos das atividades das ligas para os membros.",
-    responsavel: "Renata Barros",
-    iniciais: "RB",
-    status: "em_aprovacao",
-    aprovacaoProfessor: "aprovado",
-    aprovacaoStaff: "pendente",
-    submissaoEm: "2026-04-11",
-    prazo: "2026-06-01",
-    historico: [
-      { etapa: "Criação", acao: "submetido", por: "Renata Barros", em: "2026-03-15" },
-      { etapa: "Professor", acao: "submetido", por: "Renata Barros", em: "2026-03-20" },
-      { etapa: "Professor", acao: "aprovado", por: "Prof. Cláudia", em: "2026-03-28" },
-      { etapa: "Staff", acao: "submetido", por: "Renata Barros", em: "2026-04-08" },
-    ],
-  },
-  {
-    id: "s7",
-    nome: "Landing page da liga",
-    liga: "Liga Tech",
-    descricao: "Página pública com membros, projetos e conquistas.",
-    responsavel: "Ana Lima",
-    iniciais: "AL",
-    status: "aprovado",
-    aprovacaoProfessor: "aprovado",
-    aprovacaoStaff: "aprovado",
-    receita: 2500,
-    prazo: "2025-06-30",
-    historico: [
-      { etapa: "Criação", acao: "submetido", por: "Ana Lima", em: "2025-03-01" },
-      { etapa: "Professor", acao: "aprovado", por: "Prof. Roberto", em: "2025-03-15" },
-      { etapa: "Staff", acao: "aprovado", por: "Staff", em: "2025-04-01" },
-    ],
-  },
-  {
-    id: "s8",
-    nome: "Relatório financeiro trimestral",
-    liga: "Liga Finanças",
-    descricao: "Consolidação e apresentação dos resultados financeiros das ligas a cada trimestre.",
-    responsavel: "Rafael Costa",
-    iniciais: "RC",
-    status: "aprovado",
-    aprovacaoProfessor: "aprovado",
-    aprovacaoStaff: "aprovado",
-    receita: 3200,
-    prazo: "2026-07-01",
-    historico: [
-      { etapa: "Criação", acao: "submetido", por: "Rafael Costa", em: "2026-01-10" },
-      { etapa: "Professor", acao: "aprovado", por: "Prof. Fátima", em: "2026-01-20" },
-      { etapa: "Staff", acao: "aprovado", por: "Staff", em: "2026-02-01" },
-    ],
-  },
-  {
-    id: "s9",
-    nome: "Campanha de captação",
-    liga: "Liga Marketing",
-    descricao: "Campanha para atrair novos membros nas semanas de calouros.",
-    responsavel: "Beatriz Costa",
-    iniciais: "BC",
-    status: "rejeitado",
-    aprovacaoProfessor: "aprovado",
-    aprovacaoStaff: "rejeitado",
-    motivoRecusa: "Orçamento acima do permitido para o semestre.",
-    historico: [
-      { etapa: "Criação", acao: "submetido", por: "Beatriz Costa", em: "2026-02-05" },
-      { etapa: "Professor", acao: "aprovado", por: "Prof. Cláudia", em: "2026-02-12" },
-      {
-        etapa: "Staff",
-        acao: "recusado",
-        por: "Staff",
-        em: "2026-02-20",
-        motivo: "Orçamento acima do permitido para o semestre.",
-      },
-    ],
-  },
-  {
-    id: "s10",
-    nome: "Treinamento de líderes",
-    liga: "Liga RH",
-    descricao: "Programa semestral de capacitação para líderes de ligas.",
-    responsavel: "Carla Nunes",
-    iniciais: "CN",
-    status: "rascunho",
-    prazo: "2026-09-01",
-    historico: [{ etapa: "Criação", acao: "submetido", por: "Carla Nunes", em: "2026-04-01" }],
-  },
-];
+interface LigaAPI {
+  id: string;
+  nome: string;
+}
+
+interface MembroLigaAPI {
+  usuario_id: string;
+  nome: string | null;
+  email: string;
+  cargo: string | null;
+  role: string | null;
+  avatar_url: string | null;
+}
+
+function iniciaisDe(nome: string): string {
+  return nome
+    .split(" ")
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+const ROLE_LABEL: Record<string, string> = {
+  staff: "Staff",
+  professor: "Professor",
+  lider: "Líder",
+  diretor: "Diretor",
+  membro: "Membro",
+};
+
+function rotuloCargo(m: MembroLigaAPI): string {
+  if (m.cargo) return m.cargo;
+  if (m.role && ROLE_LABEL[m.role]) return ROLE_LABEL[m.role]!;
+  if (m.role) return m.role.charAt(0).toUpperCase() + m.role.slice(1);
+  return "Membro";
+}
+
+function apiParaMembroStaff(m: MembroLigaAPI): MembroStaff {
+  const nome = m.nome ?? m.email;
+  return {
+    id: m.usuario_id,
+    nome,
+    iniciais: iniciaisDe(nome),
+    cargo: rotuloCargo(m),
+    avatarUrl: m.avatar_url ?? undefined,
+  };
+}
+
+function normalizarStatus(s: string): StatusStaff {
+  if (s === "rascunho" || s === "em_aprovacao" || s === "rejeitado" || s === "aprovado") return s;
+  return "aprovado";
+}
+
+function apiParaProjetoStaff(p: ProjetoAPI, membrosPorId: Map<string, MembroStaff>): ProjetoStaff {
+  const resp = membrosPorId.get(p.responsavel_id);
+  const nomeResp = resp?.nome ?? "—";
+  return {
+    id: p.id,
+    nome: p.titulo,
+    liga: p.liga?.nome ?? "—",
+    descricao: p.descricao ?? "",
+    responsavel: nomeResp,
+    iniciais: resp?.iniciais ?? iniciaisDe(nomeResp),
+    responsavelAvatarUrl: resp?.avatarUrl,
+    status: normalizarStatus(p.status),
+    criadoPor: p.criado_por ?? undefined,
+    prazo: p.prazo ?? undefined,
+    aprovacaoProfessor: p.aprovacao_professor,
+    aprovacaoStaff: p.aprovacao_staff,
+  };
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -256,12 +182,33 @@ function estaVencido(prazo?: string) {
 
 // ─── Subcomponentes base ──────────────────────────────────────────────────────
 
-function Avatar({ iniciais, size = "sm" }: { iniciais: string; size?: "sm" | "md" }) {
+function Avatar({
+  iniciais,
+  size = "sm",
+  avatarUrl,
+  alt,
+}: {
+  iniciais: string;
+  size?: "sm" | "md";
+  avatarUrl?: string;
+  alt?: string;
+}) {
+  const sizeClass = size === "sm" ? "h-7 w-7" : "h-9 w-9";
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={alt ?? iniciais}
+        className={cn("rounded-full object-cover shrink-0", sizeClass)}
+      />
+    );
+  }
   return (
     <div
       className={cn(
         "rounded-full bg-navy text-white font-bold flex items-center justify-center shrink-0",
-        size === "sm" ? "h-7 w-7 text-[10px]" : "h-9 w-9 text-xs",
+        sizeClass,
+        size === "sm" ? "text-[10px]" : "text-xs",
       )}
     >
       {iniciais}
@@ -463,7 +410,12 @@ function PainelDetalhes({
       <div className="mb-5">
         <span className={labelClass}>Responsável</span>
         <div className="flex items-center gap-2 mt-1">
-          <Avatar iniciais={projeto.iniciais} size="md" />
+          <Avatar
+            iniciais={projeto.iniciais}
+            size="md"
+            avatarUrl={projeto.responsavelAvatarUrl}
+            alt={projeto.responsavel}
+          />
           <span className="text-sm text-navy">{projeto.responsavel}</span>
         </div>
       </div>
@@ -586,16 +538,20 @@ function AprovacaoIndicador({ label, status }: { label: string; status: StatusAp
 
 function KanbanCard({
   projeto,
+  podeEnviar,
   onVerDetalhes,
   onEditar,
   onAprovar,
   onRecusar,
+  onEnviar,
 }: {
   projeto: ProjetoStaff;
+  podeEnviar: boolean;
   onVerDetalhes: () => void;
   onEditar: () => void;
   onAprovar: (id: string) => void;
   onRecusar: (id: string) => void;
+  onEnviar: (id: string) => void;
 }) {
   const vencido = estaVencido(projeto.prazo);
   const dias = diasAguardando(projeto.submissaoEm);
@@ -670,7 +626,11 @@ function KanbanCard({
 
       {/* Responsável */}
       <div className="flex items-center gap-1.5 mb-3">
-        <Avatar iniciais={projeto.iniciais} />
+        <Avatar
+          iniciais={projeto.iniciais}
+          avatarUrl={projeto.responsavelAvatarUrl}
+          alt={projeto.responsavel}
+        />
         <span className="text-xs text-muted-foreground">{projeto.responsavel}</span>
       </div>
 
@@ -707,6 +667,337 @@ function KanbanCard({
           </button>
         </div>
       )}
+
+      {/* Enviar para aprovação — somente rascunho do próprio criador */}
+      {projeto.status === "rascunho" && podeEnviar && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEnviar(projeto.id);
+          }}
+          className="mt-1 w-full text-xs font-medium py-1.5 px-3 rounded-md border border-navy text-navy hover:bg-navy hover:text-white transition-colors"
+        >
+          Enviar para aprovação
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── Modal novo projeto (Staff) ───────────────────────────────────────────────
+
+function ModalNovoProjetoStaff({
+  ligas,
+  onFechar,
+  onCriar,
+}: {
+  ligas: LigaAPI[];
+  onFechar: () => void;
+  onCriar: (dados: {
+    liga_id: string;
+    titulo: string;
+    descricao?: string;
+    prazo?: string;
+    observacao?: string;
+    responsavel_id: string;
+  }) => Promise<{ ok: boolean; error?: string }>;
+}) {
+  const [ligaId, setLigaId] = useState("");
+  const [nome, setNome] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [prazo, setPrazo] = useState("");
+  const [observacao, setObservacao] = useState("");
+  const [buscaMembro, setBuscaMembro] = useState("");
+  const [selecionados, setSelecionados] = useState<MembroStaff[]>([]);
+  const [dropdownAberto, setDropdownAberto] = useState(false);
+  const [membrosDaLiga, setMembrosDaLiga] = useState<MembroStaff[]>([]);
+  const [carregandoMembros, setCarregandoMembros] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const membrosRef = useRef<HTMLDivElement>(null);
+
+  // Carrega membros quando a liga muda
+  useEffect(() => {
+    setSelecionados([]);
+    setMembrosDaLiga([]);
+    if (!ligaId) return;
+    let cancelado = false;
+    async function carregar() {
+      setCarregandoMembros(true);
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (!token) return;
+        const res = await fetch(`/api/ligas/${ligaId}/membros`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as MembroLigaAPI[];
+        if (!cancelado) setMembrosDaLiga(data.map(apiParaMembroStaff));
+      } finally {
+        if (!cancelado) setCarregandoMembros(false);
+      }
+    }
+    void carregar();
+    return () => {
+      cancelado = true;
+    };
+  }, [ligaId]);
+
+  useEffect(() => {
+    if (!dropdownAberto) return;
+    function handleClick(e: MouseEvent) {
+      if (membrosRef.current && !membrosRef.current.contains(e.target as Node)) {
+        setDropdownAberto(false);
+      }
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setDropdownAberto(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [dropdownAberto]);
+
+  const membrosFiltrados = membrosDaLiga.filter(
+    (m) =>
+      m.nome.toLowerCase().includes(buscaMembro.toLowerCase()) &&
+      !selecionados.some((s) => s.id === m.id),
+  );
+
+  function toggleMembro(m: MembroStaff) {
+    setSelecionados((prev) =>
+      prev.some((s) => s.id === m.id) ? prev.filter((s) => s.id !== m.id) : [...prev, m],
+    );
+    setBuscaMembro("");
+    setDropdownAberto(false);
+  }
+
+  function removerMembro(id: string) {
+    setSelecionados((prev) => prev.filter((s) => s.id !== id));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setErro(null);
+    if (!ligaId) {
+      setErro("Selecione uma liga.");
+      return;
+    }
+    if (!nome.trim()) return;
+    if (selecionados.length === 0) {
+      setErro("Selecione ao menos um membro como responsável.");
+      return;
+    }
+    setEnviando(true);
+    const resultado = await onCriar({
+      liga_id: ligaId,
+      titulo: nome,
+      descricao: descricao || undefined,
+      prazo: prazo || undefined,
+      observacao: observacao || undefined,
+      responsavel_id: selecionados[0]!.id,
+    });
+    setEnviando(false);
+    if (!resultado.ok) {
+      setErro(resultado.error ?? "Não foi possível criar o projeto.");
+      return;
+    }
+    onFechar();
+  }
+
+  const inputClass =
+    "w-full text-sm border border-brand-gray rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40";
+  const labelClass = "text-xs font-bold text-link-blue uppercase tracking-wider block mb-1.5";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40" onClick={onFechar} />
+      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-display font-bold text-lg text-navy">Novo projeto</h2>
+          <button
+            onClick={onFechar}
+            className="text-muted-foreground hover:text-navy transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className={labelClass}>Nome *</label>
+            <input
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Nome do projeto"
+              required
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Liga *</label>
+            <select
+              value={ligaId}
+              onChange={(e) => setLigaId(e.target.value)}
+              required
+              className={cn(inputClass, "bg-white")}
+            >
+              <option value="">Selecione uma liga...</option>
+              {ligas.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass}>Descrição</label>
+            <textarea
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              placeholder="Descreva o objetivo do projeto..."
+              rows={3}
+              className={cn(inputClass, "resize-none")}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Prazo</label>
+            <input
+              type="date"
+              value={prazo}
+              onChange={(e) => setPrazo(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Observação</label>
+            <textarea
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+              placeholder="Informações adicionais sobre o projeto..."
+              rows={3}
+              className={cn(inputClass, "resize-none")}
+            />
+          </div>
+
+          {/* Membros da liga selecionada */}
+          <div>
+            <label className={labelClass}>Membros</label>
+            <div className="relative" ref={membrosRef}>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <input
+                value={buscaMembro}
+                onChange={(e) => {
+                  setBuscaMembro(e.target.value);
+                  setDropdownAberto(true);
+                }}
+                onFocus={() => setDropdownAberto(true)}
+                placeholder={
+                  !ligaId
+                    ? "Selecione uma liga primeiro..."
+                    : carregandoMembros
+                      ? "Carregando membros..."
+                      : "Buscar membro da liga..."
+                }
+                disabled={!ligaId || carregandoMembros}
+                className={cn(inputClass, "pl-8")}
+                autoComplete="off"
+              />
+              {dropdownAberto && membrosFiltrados.length > 0 && (
+                <div className="absolute z-10 mt-1 w-full bg-white border border-brand-gray rounded-md shadow-md overflow-y-auto max-h-56">
+                  {membrosFiltrados.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => toggleMembro(m)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors text-left"
+                    >
+                      {m.avatarUrl ? (
+                        <img
+                          src={m.avatarUrl}
+                          alt={m.nome}
+                          className="h-7 w-7 rounded-full object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="h-7 w-7 rounded-full bg-navy text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                          {m.iniciais}
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-medium text-navy">{m.nome}</p>
+                        <p className="text-xs text-muted-foreground">{m.cargo}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {selecionados.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {selecionados.map((m) => (
+                  <div
+                    key={m.id}
+                    className="flex items-center gap-1.5 bg-navy/5 border border-navy/15 rounded-full pl-1 pr-2 py-1"
+                  >
+                    {m.avatarUrl ? (
+                      <img
+                        src={m.avatarUrl}
+                        alt={m.nome}
+                        className="h-5 w-5 rounded-full object-cover shrink-0"
+                      />
+                    ) : (
+                      <div className="h-5 w-5 rounded-full bg-navy text-white text-[9px] font-bold flex items-center justify-center shrink-0">
+                        {m.iniciais}
+                      </div>
+                    )}
+                    <span className="text-xs font-medium text-navy">{m.nome}</span>
+                    <span className="text-[10px] text-muted-foreground">· {m.cargo}</span>
+                    <button
+                      type="button"
+                      onClick={() => removerMembro(m.id)}
+                      className="text-muted-foreground hover:text-navy transition-colors ml-0.5"
+                      aria-label={`Remover ${m.nome}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {erro && (
+            <div className="bg-red-50 border border-red-200 rounded-md px-3 py-2">
+              <p className="text-xs text-red-700">{erro}</p>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onFechar}
+              className="px-4 py-2 text-sm font-medium border border-brand-gray rounded-md text-link-blue hover:border-navy/40 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={enviando}
+              className="px-4 py-2 text-sm font-medium bg-navy text-white rounded-md hover:bg-navy/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {enviando ? "Criando..." : "Criar projeto"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
@@ -714,13 +1005,64 @@ function KanbanCard({
 // ─── View principal do Staff ──────────────────────────────────────────────────
 
 export function ProjetosStaffView() {
-  const [projetos, setProjetos] = useState<ProjetoStaff[]>(MOCK_PROJETOS_STAFF);
+  const { usuarioId } = useUser();
+  const [projetosAPI, setProjetosAPI] = useState<ProjetoAPI[]>([]);
+  const [ligas, setLigas] = useState<LigaAPI[]>([]);
+  const [membrosPorLiga, setMembrosPorLiga] = useState<Map<string, MembroStaff>>(new Map());
   const [busca, setBusca] = useState("");
   const [filtroLiga, setFiltroLiga] = useState("Todas as ligas");
   const [filtroStatus, setFiltroStatus] = useState<StatusStaff | "todos">("todos");
   const [visualizacao, setVisualizacao] = useState<"kanban" | "lista">("kanban");
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [recusarId, setRecusarId] = useState<string | null>(null);
+  const [modalAberto, setModalAberto] = useState(false);
+
+  async function authHeaders(): Promise<Record<string, string> | null> {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) return null;
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  async function recarregarProjetos(headers: Record<string, string>) {
+    const res = await fetch(`/api/projetos`, { headers });
+    if (!res.ok) return;
+    const data = (await res.json()) as ProjetoAPI[];
+    setProjetosAPI(data);
+
+    // Carrega membros de cada liga única para resolver nomes dos responsáveis.
+    const ligasUnicas = Array.from(new Set(data.map((p) => p.liga_id)));
+    const novoMapa = new Map<string, MembroStaff>();
+    await Promise.all(
+      ligasUnicas.map(async (ligaId) => {
+        const r = await fetch(`/api/ligas/${ligaId}/membros`, { headers });
+        if (!r.ok) return;
+        const membros = (await r.json()) as MembroLigaAPI[];
+        for (const m of membros) {
+          novoMapa.set(m.usuario_id, apiParaMembroStaff(m));
+        }
+      }),
+    );
+    setMembrosPorLiga(novoMapa);
+  }
+
+  useEffect(() => {
+    async function carregar() {
+      const headers = await authHeaders();
+      if (!headers) return;
+
+      const resLigas = await fetch(`/api/ligas`, { headers });
+      if (resLigas.ok) {
+        const data = (await resLigas.json()) as LigaAPI[];
+        setLigas(data);
+      }
+
+      await recarregarProjetos(headers);
+    }
+    void carregar();
+  }, []);
+
+  const projetos = projetosAPI.map((p) => apiParaProjetoStaff(p, membrosPorLiga));
 
   // ── Filtros ────────────────────────────────────────────────────────────────
 
@@ -747,38 +1089,82 @@ export function ProjetosStaffView() {
 
   // ── Ações ─────────────────────────────────────────────────────────────────
 
+  async function registrarAprovacao(id: string, decisao: "aprovado" | "rejeitado") {
+    const headers = await authHeaders();
+    if (!headers) return;
+    const res = await fetch(`/api/projetos/${id}/aprovacao`, {
+      method: "PATCH",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ papel: "staff", decisao }),
+    });
+    if (!res.ok) return;
+    const atualizado = (await res.json()) as ProjetoAPI;
+    setProjetosAPI((prev) => prev.map((p) => (p.id === id ? { ...p, ...atualizado } : p)));
+  }
+
   function aprovar(id: string) {
-    setProjetos((prev) =>
-      prev.map((p) => {
-        if (p.id !== id) return p;
-        const novaProfessor = p.aprovacaoProfessor ?? "pendente";
-        const novoStatus: StatusStaff = novaProfessor === "aprovado" ? "aprovado" : p.status;
-        return { ...p, aprovacaoStaff: "aprovado" as StatusAprovacao, status: novoStatus };
-      }),
-    );
+    void registrarAprovacao(id, "aprovado");
     setSelecionado(null);
   }
 
-  function recusar(id: string, motivo: string) {
-    setProjetos((prev) =>
-      prev.map((p) =>
-        p.id !== id
-          ? p
-          : {
-              ...p,
-              aprovacaoStaff: "rejeitado" as StatusAprovacao,
-              status: "rejeitado" as StatusStaff,
-              motivoRecusa: motivo,
-            },
-      ),
-    );
+  function recusar(id: string, _motivo: string) {
+    // API atual não armazena o motivo — registra apenas a decisão.
+    void registrarAprovacao(id, "rejeitado");
     setRecusarId(null);
     setSelecionado(null);
   }
 
-  function salvarProjeto(atualizado: ProjetoStaff) {
-    setProjetos((prev) => prev.map((p) => (p.id === atualizado.id ? atualizado : p)));
+  function salvarProjeto(_atualizado: ProjetoStaff) {
+    // Edição inline ainda não persiste no backend.
     setSelecionado(null);
+  }
+
+  async function enviarParaAprovacao(id: string) {
+    const headers = await authHeaders();
+    if (!headers) return;
+    const res = await fetch(`/api/projetos/${id}/status`, {
+      method: "PATCH",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "em_aprovacao" }),
+    });
+    if (!res.ok) return;
+    const atualizado = (await res.json()) as ProjetoAPI;
+    setProjetosAPI((prev) => prev.map((p) => (p.id === id ? { ...p, ...atualizado } : p)));
+  }
+
+  async function criarProjeto(dados: {
+    liga_id: string;
+    titulo: string;
+    descricao?: string;
+    prazo?: string;
+    observacao?: string;
+    responsavel_id: string;
+  }): Promise<{ ok: boolean; error?: string }> {
+    const headers = await authHeaders();
+    if (!headers) return { ok: false, error: "Sessão expirada. Faça login novamente." };
+    const res = await fetch(`/api/projetos`, {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        liga_id: dados.liga_id,
+        titulo: dados.titulo,
+        descricao: dados.descricao,
+        responsavel_id: dados.responsavel_id,
+        prazo: dados.prazo,
+      }),
+    });
+    if (!res.ok) {
+      let mensagem = `Falha ao criar projeto (${res.status}).`;
+      try {
+        const body = (await res.json()) as { error?: string };
+        if (body.error) mensagem = body.error;
+      } catch {
+        // sem corpo JSON
+      }
+      return { ok: false, error: mensagem };
+    }
+    await recarregarProjetos(headers);
+    return { ok: true };
   }
 
   function toggleSelecionado(id: string) {
@@ -803,22 +1189,29 @@ export function ProjetosStaffView() {
           <h1 className="font-display font-bold text-2xl text-navy">Projetos</h1>
           <p className="text-muted-foreground text-sm mt-1">{subtitulo}</p>
         </div>
+        <button
+          onClick={() => setModalAberto(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-navy text-white text-sm font-medium rounded-md hover:bg-navy/90 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          Novo projeto
+        </button>
       </div>
 
       {/* Pills de liga */}
       <div className="flex items-center gap-2 flex-wrap mb-4">
-        {LIGAS.map((liga) => (
+        {["Todas as ligas", ...ligas.map((l) => l.nome)].map((nome) => (
           <button
-            key={liga}
-            onClick={() => setFiltroLiga(liga)}
+            key={nome}
+            onClick={() => setFiltroLiga(nome)}
             className={cn(
               "px-4 py-1.5 text-sm font-medium rounded-full border transition-colors",
-              filtroLiga === liga
+              filtroLiga === nome
                 ? "bg-navy text-white border-navy"
                 : "bg-white text-link-blue border-brand-gray hover:border-navy/40",
             )}
           >
-            {liga}
+            {nome}
           </button>
         ))}
       </div>
@@ -912,10 +1305,12 @@ export function ProjetosStaffView() {
                       <KanbanCard
                         key={p.id}
                         projeto={p}
+                        podeEnviar={!!usuarioId && p.criadoPor === usuarioId}
                         onVerDetalhes={() => toggleSelecionado(p.id)}
                         onEditar={() => toggleSelecionado(p.id)}
                         onAprovar={aprovar}
                         onRecusar={(id) => setRecusarId(id)}
+                        onEnviar={enviarParaAprovacao}
                       />
                     ))
                   )}
@@ -1032,6 +1427,16 @@ export function ProjetosStaffView() {
                                 Recusar
                               </button>
                             </div>
+                          ) : p.status === "rascunho" && usuarioId && p.criadoPor === usuarioId ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void enviarParaAprovacao(p.id);
+                              }}
+                              className="text-xs font-medium px-2.5 py-1.5 rounded-md border border-navy text-navy hover:bg-navy hover:text-white transition-colors"
+                            >
+                              Enviar para aprovação
+                            </button>
                           ) : (
                             <button
                               onClick={(e) => {
@@ -1072,6 +1477,15 @@ export function ProjetosStaffView() {
           nomeProjeto={projetoParaRecusar.nome}
           onFechar={() => setRecusarId(null)}
           onConfirmar={(motivo) => recusar(recusarId, motivo)}
+        />
+      )}
+
+      {/* Modal novo projeto */}
+      {modalAberto && (
+        <ModalNovoProjetoStaff
+          ligas={ligas}
+          onFechar={() => setModalAberto(false)}
+          onCriar={criarProjeto}
         />
       )}
     </div>
