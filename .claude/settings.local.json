@@ -83,7 +83,12 @@
       "Bash(npm ls *)",
       "Bash(node -e \"const l = require\\('./package-lock.json'\\); const keys = Object.keys\\(l.packages || {}\\); console.log\\('total packages in lock:', keys.length\\); console.log\\('has prettier:', keys.includes\\('node_modules/prettier'\\)\\); console.log\\('has husky:', keys.includes\\('node_modules/husky'\\)\\);\")",
       "Bash(npm ci *)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(npx shadcn@latest add login-02)",
+      "Bash(npx shadcn@latest add login-02 --overwrite)",
+      "Bash(curl -s https://ui.shadcn.com/r/styles/default/login-02.json)",
+      "Bash(npx -p typescript tsc --noEmit -p apps/web/tsconfig.json)",
+      "Bash(npm config *)"
     ],
     "deny": [
       "Bash(git commit *)",

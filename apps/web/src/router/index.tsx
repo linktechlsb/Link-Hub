@@ -27,10 +27,13 @@ export const router: BrowserRouter = createBrowserRouter([
     element: <Navigate to="/home" replace />,
   },
   {
+    path: "/login",
+    element: <LoginPage />,
+  },
+  {
     path: "/",
     element: <AuthLayout />,
     children: [
-      { path: "login", element: <LoginPage /> },
       { path: "criar-senha", element: <CriarSenhaPage /> },
       { path: "esqueci-senha", element: <EsqueciSenhaPage /> },
       { path: "redefinir-senha", element: <RedefinirSenhaPage /> },
