@@ -35,21 +35,14 @@
 
     --radius: 0.5rem;
 
-    --sidebar-background: 214 68% 19%; /* #10284F */
-
+    --sidebar-background: 215 66% 18%; /* #10284F navy */
     --sidebar-foreground: 0 0% 100%;
-
-    --sidebar-primary: 0 0% 100%;
-
-    --sidebar-primary-foreground: 214 68% 19%;
-
-    --sidebar-accent: 214 68% 25%;
-
+    --sidebar-primary: 43 99% 63%; /* #FEC641 brand-yellow */
+    --sidebar-primary-foreground: 215 66% 18%;
+    --sidebar-accent: 215 50% 26%;
     --sidebar-accent-foreground: 0 0% 100%;
-
-    --sidebar-border: 214 68% 25%;
-
-    --sidebar-ring: 214 68% 40%;
+    --sidebar-border: 215 30% 30%;
+    --sidebar-ring: 43 99% 63%;
   }
 
   * {
