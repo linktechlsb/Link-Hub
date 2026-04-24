@@ -45,7 +45,7 @@ export function LoginPage() {
         <div className="flex justify-center gap-2 md:justify-start">
           <div className="flex items-center gap-2">
             <span className="font-display font-bold text-xl text-navy tracking-tight">
-              Link Leagues
+              Link Hub
             </span>
           </div>
         </div>
