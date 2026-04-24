@@ -75,6 +75,8 @@ const config: Config = {
       fontFamily: {
         sans: ["Montserrat", "ui-sans-serif", "system-ui", "sans-serif"],
         display: ["Aeonik", "Montserrat", "ui-sans-serif", "sans-serif"],
+        "plex-sans": ['"IBM Plex Sans"', "ui-sans-serif", "system-ui", "sans-serif"],
+        "plex-mono": ['"IBM Plex Mono"', "ui-monospace", "monospace"],
       },
       borderRadius: {
         lg: "var(--radius)",

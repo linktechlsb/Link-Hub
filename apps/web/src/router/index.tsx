@@ -12,6 +12,7 @@ import { RedefinirSenhaPage } from "@/pages/auth/RedefinirSenhaPage";
 import { ContaPage } from "@/pages/conta/ContaPage";
 import { GerenciamentoPage } from "@/pages/gerenciamento/GerenciamentoPage";
 import { HomePage } from "@/pages/home/HomePage";
+import { HomeV1Page } from "@/pages/home/v1/HomeV1Page";
 import { LigaDetailPage } from "@/pages/ligas/LigaDetailPage";
 import { LigasPage } from "@/pages/ligas/LigasPage";
 import { MuralPage } from "@/pages/mural/MuralPage";
@@ -48,6 +49,7 @@ export const router: BrowserRouter = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { path: "home", element: <HomePage /> },
+          { path: "home/v1", element: <HomeV1Page /> },
           { path: "ligas", element: <LigasPage /> },
           { path: "ligas/:id", element: <LigaDetailPage /> },
           { path: "projetos", element: <ProjetosPage /> },
