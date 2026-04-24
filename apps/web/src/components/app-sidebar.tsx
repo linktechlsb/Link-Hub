@@ -85,7 +85,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </div>
               <div className="grid flex-1 text-left leading-tight">
                 <span className="font-display font-bold text-base tracking-tight whitespace-nowrap">
-                  Link Hub
+                  Link Leagues
                 </span>
                 <span className="truncate text-xs text-sidebar-foreground/70">
                   Link School of Business

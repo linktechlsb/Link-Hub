@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
@@ -85,13 +84,9 @@ export function CriarSenhaPage() {
 
   if (verificando) {
     return (
-      <div className="flex flex-col gap-6">
-        <Card className="border-0 shadow-2xl">
-          <CardContent className="pt-8 pb-8 flex flex-col items-center gap-3">
-            <div className="w-6 h-6 border-2 border-navy border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-muted-foreground">Verificando acesso...</p>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col items-center gap-3 py-8">
+        <div className="w-6 h-6 border-2 border-navy border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-muted-foreground">Verificando acesso...</p>
       </div>
     );
   }
@@ -99,90 +94,78 @@ export function CriarSenhaPage() {
   if (erroToken) {
     return (
       <div className="flex flex-col gap-6">
-        <Card className="border-0 shadow-2xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="font-display font-bold text-2xl text-navy">
-              Link expirado
-            </CardTitle>
-            <CardDescription className="text-muted-foreground text-sm">
-              Este link de acesso expirou ou já foi utilizado. Solicite um novo convite ao
-              administrador.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              variant="outline"
-              className="w-full border-navy text-navy hover:bg-navy hover:text-white"
-              onClick={() => navigate("/login")}
-            >
-              Ir para o login
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center gap-2 text-center">
+          <h1 className="font-display font-bold text-2xl text-navy">Link expirado</h1>
+          <p className="text-balance text-sm text-muted-foreground">
+            Este link de acesso expirou ou já foi utilizado. Solicite um novo convite ao
+            administrador.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          className="w-full border-navy text-navy hover:bg-navy hover:text-white"
+          onClick={() => navigate("/login")}
+        >
+          Ir para o login
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <Card className="border-0 shadow-2xl">
-        <CardHeader className="pb-2">
-          <CardTitle className="font-display font-bold text-2xl text-navy">Criar senha</CardTitle>
-          <CardDescription className="text-muted-foreground text-sm">
-            {email ? (
-              <>
-                Definindo senha para <span className="font-medium text-navy/70">{email}</span>
-              </>
-            ) : (
-              "Defina uma senha para acessar a plataforma"
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-5">
-              <div className="grid gap-2">
-                <Label htmlFor="senha" className="text-navy/80 font-medium text-sm">
-                  Nova senha
-                </Label>
-                <Input
-                  id="senha"
-                  type="password"
-                  placeholder="Mínimo 8 caracteres"
-                  required
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
-                  className="border-brand-gray focus-visible:ring-link-blue"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="confirmar" className="text-navy/80 font-medium text-sm">
-                  Confirmar senha
-                </Label>
-                <Input
-                  id="confirmar"
-                  type="password"
-                  placeholder="Repita a nova senha"
-                  required
-                  value={confirmar}
-                  onChange={(e) => setConfirmar(e.target.value)}
-                  className="border-brand-gray focus-visible:ring-link-blue"
-                />
-              </div>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <h1 className="font-display font-bold text-2xl text-navy">Criar senha</h1>
+        <p className="text-balance text-sm text-muted-foreground">
+          {email ? (
+            <>
+              Definindo senha para <span className="font-medium text-navy/70">{email}</span>
+            </>
+          ) : (
+            "Defina uma senha para acessar a plataforma"
+          )}
+        </p>
+      </div>
+      <div className="grid gap-6">
+        <div className="grid gap-2">
+          <Label htmlFor="senha" className="text-navy/80 font-medium text-sm">
+            Nova senha
+          </Label>
+          <Input
+            id="senha"
+            type="password"
+            placeholder="Mínimo 8 caracteres"
+            required
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            className="border-brand-gray focus-visible:ring-link-blue"
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="confirmar" className="text-navy/80 font-medium text-sm">
+            Confirmar senha
+          </Label>
+          <Input
+            id="confirmar"
+            type="password"
+            placeholder="Repita a nova senha"
+            required
+            value={confirmar}
+            onChange={(e) => setConfirmar(e.target.value)}
+            className="border-brand-gray focus-visible:ring-link-blue"
+          />
+        </div>
 
-              {erro && <p className="text-sm text-destructive">{erro}</p>}
+        {erro && <p className="text-sm text-destructive">{erro}</p>}
 
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-navy hover:bg-navy-800 text-white font-medium mt-1"
-              >
-                {loading ? "Salvando..." : "Salvar senha"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-navy hover:bg-navy-800 text-white font-medium"
+        >
+          {loading ? "Salvando..." : "Salvar senha"}
+        </Button>
+      </div>
+    </form>
   );
 }
