@@ -2,6 +2,7 @@ import { Camera } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
+import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { splitLigaTitle } from "@/pages/home/v1/splitLigaTitle";
 
@@ -42,68 +43,55 @@ async function getToken(): Promise<string> {
 export function LigaDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [liga, setLiga] = useState<Liga | null>(null);
-  const [minhaLigaId, setMinhaLigaId] = useState<string | null>(null);
+  const { data: liga, carregando } = useCachedFetch<Liga>(id ? `/api/ligas/${id}` : null);
+  const { data: minhaLiga } = useCachedFetch<Liga>("/api/ligas/minha");
+  const minhaLigaId = minhaLiga?.id ?? null;
+  const [ligaLocal, setLigaLocal] = useState<Liga | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<AbaId>("visao-geral");
-  const [carregando, setCarregando] = useState(true);
   const [uploadandoImagem, setUploadandoImagem] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const ligaExibida = ligaLocal ?? liga;
+
   useEffect(() => {
-    async function carregar() {
-      const token = await getToken();
-      const headers = { Authorization: `Bearer ${token}` };
-
-      const [ligaRes, minhaRes, sessionData] = await Promise.all([
-        fetch(`/api/ligas/${id}`, { headers }),
-        fetch("/api/ligas/minha", { headers }),
-        supabase.auth.getSession(),
-      ]);
-
-      if (ligaRes.ok) setLiga(await ligaRes.json());
-      if (minhaRes.ok) {
-        const minha = (await minhaRes.json()) as Liga;
-        setMinhaLigaId(minha.id);
-      }
-
-      const email = sessionData.data.session?.user.email;
-      if (email) {
-        const { data: usuario } = await supabase
-          .from("usuarios")
-          .select("role")
-          .eq("email", email)
-          .single();
-        setRole(usuario?.role ?? null);
-      }
-
-      setCarregando(false);
-    }
-    carregar();
-  }, [id]);
+    supabase.auth.getSession().then(async ({ data: sessao }) => {
+      const email = sessao.session?.user.email;
+      if (!email) return;
+      const { data: usuario } = await supabase
+        .from("usuarios")
+        .select("role")
+        .eq("email", email)
+        .single();
+      setRole(usuario?.role ?? null);
+    });
+  }, []);
 
   async function handleImagemUpload(file: File) {
-    if (!liga) return;
+    if (!ligaExibida) return;
     setUploadandoImagem(true);
     try {
       const token = await getToken();
       const formData = new FormData();
       formData.append("imagem", file);
-      const res = await fetch(`/api/ligas/${liga.id}/imagem`, {
+      const res = await fetch(`/api/ligas/${ligaExibida.id}/imagem`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
       if (res.ok) {
         const ligaAtualizada = (await res.json()) as Liga;
-        setLiga((prev) => (prev ? { ...prev, imagem_url: ligaAtualizada.imagem_url } : prev));
+        setLigaLocal((prev) =>
+          prev ? { ...prev, imagem_url: ligaAtualizada.imagem_url } : ligaAtualizada,
+        );
       }
     } finally {
       setUploadandoImagem(false);
     }
   }
 
-  const podeEditarImagem = role === "staff" || (role === "diretor" && minhaLigaId === liga?.id);
+  const podeEditarImagem =
+    role === "staff" || (role === "diretor" && minhaLigaId === ligaExibida?.id);
 
   if (carregando) {
     return (
@@ -112,7 +100,7 @@ export function LigaDetailPage() {
       </div>
     );
   }
-  if (!liga) {
+  if (!ligaExibida) {
     return (
       <div className="max-w-5xl mx-auto px-8 py-10">
         <p className="font-plex-sans text-[13px] text-navy/50">Liga não encontrada.</p>
@@ -120,25 +108,24 @@ export function LigaDetailPage() {
     );
   }
 
-  const ehMinhaLiga = minhaLigaId === liga.id;
-  const membros = (liga as Liga & { membros?: unknown[] }).membros ?? [];
+  const ehMinhaLiga = minhaLigaId === ligaExibida.id;
+  const membros = (ligaExibida as Liga & { membros?: unknown[] }).membros ?? [];
   const temAcessoCompleto = ehMinhaLiga || role === "staff" || role === "professor";
   const abasVisiveis = temAcessoCompleto ? ABAS_COMPLETAS : ABAS_RESTRITAS;
   const abaAtualVisivel = abasVisiveis.some((a) => a.id === abaAtiva)
     ? abaAtiva
     : abasVisiveis[0]!.id;
 
-  const segments = splitLigaTitle(liga.nome);
+  const segments = splitLigaTitle(ligaExibida.nome);
   const diretoresNomes =
-    liga.diretores && liga.diretores.length > 0
-      ? liga.diretores.map((d) => primeiroUltimoNome(d.nome)).join(", ")
+    ligaExibida.diretores && ligaExibida.diretores.length > 0
+      ? ligaExibida.diretores.map((d) => primeiroUltimoNome(d.nome)).join(", ")
       : "—";
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header editorial */}
       <div className="flex-shrink-0">
-        <div className="h-px bg-navy/90" />
         <div className="max-w-5xl mx-auto px-8 pt-8 pb-6">
           <button
             onClick={() => navigate("/ligas")}
@@ -203,33 +190,37 @@ export function LigaDetailPage() {
         </div>
 
         {/* Abas */}
-        <div className="border-t border-navy/15">
-          <div className="max-w-5xl mx-auto px-8 flex overflow-x-auto">
-            {abasVisiveis.map((aba) => (
-              <button
-                key={aba.id}
-                onClick={() => setAbaAtiva(aba.id)}
-                className={
-                  abaAtualVisivel === aba.id
-                    ? "px-4 py-3 font-plex-mono text-[11px] tracking-[0.18em] uppercase text-navy border-b-2 border-navy whitespace-nowrap"
-                    : "px-4 py-3 font-plex-mono text-[11px] tracking-[0.18em] uppercase text-navy/40 hover:text-navy/70 whitespace-nowrap border-b-2 border-transparent transition-colors"
-                }
-              >
-                {aba.label}
-              </button>
-            ))}
-          </div>
+        <div className="max-w-5xl mx-auto px-8 flex overflow-x-auto">
+          {abasVisiveis.map((aba) => (
+            <button
+              key={aba.id}
+              onClick={() => setAbaAtiva(aba.id)}
+              className={
+                abaAtualVisivel === aba.id
+                  ? "px-4 py-3 font-plex-mono text-[11px] tracking-[0.18em] uppercase text-navy border-b-2 border-navy whitespace-nowrap"
+                  : "px-4 py-3 font-plex-mono text-[11px] tracking-[0.18em] uppercase text-navy/40 hover:text-navy/70 whitespace-nowrap border-b-2 border-transparent transition-colors"
+              }
+            >
+              {aba.label}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Conteúdo da aba */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-8 py-10 space-y-12">
-          {abaAtualVisivel === "visao-geral" && <VisaoGeralTab ligaId={liga.id} />}
-          {abaAtualVisivel === "membros" && <MembrosTab ligaId={liga.id} />}
-          {abaAtualVisivel === "presenca" && temAcessoCompleto && <PresencaTab ligaId={liga.id} />}
-          {abaAtualVisivel === "projetos" && temAcessoCompleto && <ProjetosTab ligaId={liga.id} />}
-          {abaAtualVisivel === "recursos" && temAcessoCompleto && <RecursosTab ligaId={liga.id} />}
+        <div className="max-w-5xl mx-auto px-8 pb-10 space-y-12">
+          {abaAtualVisivel === "visao-geral" && <VisaoGeralTab ligaId={ligaExibida.id} />}
+          {abaAtualVisivel === "membros" && <MembrosTab ligaId={ligaExibida.id} />}
+          {abaAtualVisivel === "presenca" && temAcessoCompleto && (
+            <PresencaTab ligaId={ligaExibida.id} />
+          )}
+          {abaAtualVisivel === "projetos" && temAcessoCompleto && (
+            <ProjetosTab ligaId={ligaExibida.id} />
+          )}
+          {abaAtualVisivel === "recursos" && temAcessoCompleto && (
+            <RecursosTab ligaId={ligaExibida.id} />
+          )}
         </div>
       </div>
     </div>

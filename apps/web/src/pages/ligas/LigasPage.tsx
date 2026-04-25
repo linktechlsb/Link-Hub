@@ -1,17 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
 
 import { LigaSheet } from "./LigaSheet";
 
 import type { Liga, UserRole } from "@link-leagues/types";
-
-async function getToken(): Promise<string> {
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token ?? "";
-}
 
 function primeiroUltimoNome(nome: string): string {
   const partes = nome.trim().split(/\s+/);
@@ -21,22 +17,14 @@ function primeiroUltimoNome(nome: string): string {
 
 export function LigasPage() {
   const navigate = useNavigate();
-  const [ligas, setLigas] = useState<Liga[]>([]);
-  const [carregando, setCarregando] = useState(true);
+  const { data: ligasData, refetch: refetchLigas } = useCachedFetch<Liga[]>("/api/ligas");
+  const ligas = ligasData ?? [];
+  const carregando = ligasData === null;
   const [role, setRole] = useState<UserRole | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ligaParaEditar, setLigaParaEditar] = useState<Liga | undefined>(undefined);
-
-  async function carregarLigas() {
-    const token = await getToken();
-    const res = await fetch("/api/ligas", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) setLigas(await res.json());
-    setCarregando(false);
-  }
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -53,8 +41,6 @@ export function LigasPage() {
       setRole((usuario?.role as UserRole) ?? "membro");
       setUserId(usuario?.id ?? null);
     });
-
-    carregarLigas();
   }, []);
 
   function abrirEditar() {
@@ -94,7 +80,7 @@ export function LigasPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-10">
-      <div className="mb-10">
+      <div className="mb-6">
         <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">Ligas</h1>
         <p className="font-plex-mono text-[11px] tracking-[0.18em] uppercase text-navy/50 mt-1">
           Ligas acadêmicas · Link School of Business
@@ -102,18 +88,18 @@ export function LigasPage() {
       </div>
 
       <div className="space-y-12">
-        <div>
-          <div className="h-px bg-navy/90" />
+        <section>
+          <SectionHeader numero="01" eyebrow="Resumo" titulo="Panorama das Ligas" />
           <KpiRow
             items={[
               { label: "Ligas ativas", valor: String(ligas.length) },
               { label: "Projetos em andamento", valor: String(totalProjetosAtivos) },
             ]}
           />
-        </div>
+        </section>
 
         <div>
-          <SectionHeader numero="01" eyebrow="Diretório" titulo="Todas as Ligas" acao={acaoBotao} />
+          <SectionHeader numero="02" eyebrow="Diretório" titulo="Todas as Ligas" acao={acaoBotao} />
 
           {carregando ? (
             <p className="font-plex-sans text-[13px] text-navy/50">Carregando ligas...</p>
@@ -178,7 +164,7 @@ export function LigasPage() {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         liga={ligaParaEditar}
-        onSalvo={carregarLigas}
+        onSalvo={refetchLigas}
         role={role ?? undefined}
       />
     </div>

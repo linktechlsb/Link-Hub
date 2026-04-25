@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 
@@ -14,11 +15,6 @@ import { MinhaLigaCard } from "./MinhaLigaCard";
 
 import type { Liga } from "@link-leagues/types";
 
-async function getToken(): Promise<string | null> {
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token ?? null;
-}
-
 const ROLE_LABELS: Record<string, string> = {
   staff: "Staff",
   diretor: "Diretor",
@@ -29,28 +25,23 @@ const ROLE_LABELS: Record<string, string> = {
 
 export function HomePage() {
   const { role } = useUser();
-  const [ligas, setLigas] = useState<Liga[]>([]);
-  const [minhaLiga, setMinhaLiga] = useState<Liga | null>(null);
-  const [nomeUsuario, setNomeUsuario] = useState<string>("");
-  const [loadingUser, setLoadingUser] = useState(true);
-  const [pendentes, setPendentes] = useState<{
+  const { data: ligasData } = useCachedFetch<Liga[]>("/api/ligas");
+  const { data: minhaLigaData } = useCachedFetch<Liga>("/api/ligas/minha");
+  const { data: pendentesData } = useCachedFetch<{
     projetos: { id: string; titulo: string; liga?: { nome: string } }[];
     eventos: { id: string; titulo: string; liga?: { nome: string } }[];
-  }>({ projetos: [], eventos: [] });
+  }>(role === "staff" ? "/api/pendentes" : null);
+  const ligas = ligasData ?? [];
+  const minhaLiga = minhaLigaData ?? null;
+  const pendentes = pendentesData ?? { projetos: [], eventos: [] };
+  const [nomeUsuario, setNomeUsuario] = useState<string>("");
+  const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
     async function carregar() {
       try {
-        const token = await getToken();
-        if (!token) {
-          setLoadingUser(false);
-          return;
-        }
-        const headers = { Authorization: `Bearer ${token}` };
-
         const { data: sessionData } = await supabase.auth.getSession();
         const email = sessionData.session?.user.email ?? "";
-
         if (email) {
           const { data: usuario } = await supabase
             .from("usuarios")
@@ -60,32 +51,14 @@ export function HomePage() {
           if (usuario?.nome) setNomeUsuario(usuario.nome as string);
           else setNomeUsuario(email.split("@")[0] ?? "Usuário");
         }
-
-        const [ligasRes, minhaRes] = await Promise.all([
-          fetch(`/api/ligas`, { headers }),
-          fetch(`/api/ligas/minha`, { headers }),
-        ]);
-        if (ligasRes.ok) setLigas(await ligasRes.json());
-        if (minhaRes.ok) setMinhaLiga(await minhaRes.json());
       } catch {
-        // Falha silenciosa — apenas para de carregar
+        // Falha silenciosa
       } finally {
         setLoadingUser(false);
       }
     }
-    carregar();
+    void carregar();
   }, []);
-
-  useEffect(() => {
-    if (role !== "staff") return;
-    async function carregarPendentes() {
-      const token = await getToken();
-      if (!token) return;
-      const res = await fetch(`/api/pendentes`, { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) setPendentes(await res.json());
-    }
-    void carregarPendentes();
-  }, [role]);
 
   const hoje = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",

@@ -102,7 +102,7 @@ export function HomeDiretorViewV1() {
       {visao === "minha" && (
         <section>
           <SectionHeader numero="03" eyebrow="Próxima reserva" titulo="Sala agendada" />
-          <div className="border-t border-b border-navy/15 py-6 grid grid-cols-[auto_1fr_auto] items-center gap-6">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-6">
             <div className="w-14 h-14 border border-navy flex items-center justify-center font-plex-sans font-bold text-[18px] text-navy">
               {SALA.sala.replace("Sala ", "")}
             </div>

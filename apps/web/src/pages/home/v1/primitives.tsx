@@ -49,15 +49,21 @@ export function SectionHeader({ numero, eyebrow, titulo, acao }: SectionHeaderPr
 
 interface KpiRowProps {
   items: KpiItem[];
+  cols?: 2 | 4;
+  borderBottom?: boolean;
 }
 
-export function KpiRow({ items }: KpiRowProps) {
+export function KpiRow({ items, cols, borderBottom = true }: KpiRowProps) {
+  const resolvedCols = cols ?? (items.length <= 2 ? 2 : 4);
+  const gridClass = resolvedCols === 2 ? "grid-cols-2" : "grid-cols-2 md:grid-cols-4";
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border-t border-b border-navy/15">
+    <div
+      className={`grid ${gridClass} gap-0 border-t border-navy/15 ${borderBottom ? "border-b" : ""}`}
+    >
       {items.map((m, i) => (
         <div
           key={m.label}
-          className={`py-5 px-4 ${i < items.length - 1 ? "md:border-r border-navy/15" : ""}`}
+          className={`py-5 px-4 ${i < items.length - 1 ? "border-r border-navy/15" : ""}`}
         >
           <div className="font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/60">
             {m.label}

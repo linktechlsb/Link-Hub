@@ -55,8 +55,6 @@ export function HomeV1Page() {
           )}
         </header>
 
-        <div className="h-px bg-navy/90 mt-5" />
-
         {ligas.length > 0 && (
           <div className="mt-6">
             <EditorialHero ligas={ligas} />
@@ -69,7 +67,7 @@ export function HomeV1Page() {
           </div>
         )}
 
-        <div className="mt-12">
+        <div>
           {role === "staff" && <HomeStaffViewV1 pendentes={pendentes} />}
           {role === "diretor" && <HomeDiretorViewV1 />}
           {role === "professor" && <HomeProfessorViewV1 />}
