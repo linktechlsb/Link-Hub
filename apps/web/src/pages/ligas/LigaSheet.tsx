@@ -1,15 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/lib/supabase";
 
 import type { Liga } from "@link-leagues/types";
@@ -31,6 +22,7 @@ interface LigaSheetProps {
   onOpenChange: (open: boolean) => void;
   liga?: Liga;
   onSalvo: () => void;
+  role?: string;
 }
 
 async function getToken(): Promise<string> {
@@ -38,7 +30,8 @@ async function getToken(): Promise<string> {
   return data.session?.access_token ?? "";
 }
 
-export function LigaSheet({ open, onOpenChange, liga, onSalvo }: LigaSheetProps) {
+export function LigaSheet({ open, onOpenChange, liga, onSalvo, role }: LigaSheetProps) {
+  const isDiretor = role === "diretor";
   const [nome, setNome] = useState(liga?.nome ?? "");
   const [diretores, setDiretores] = useState<DiretorBusca[]>([]);
   const [busca, setBusca] = useState("");
@@ -167,32 +160,45 @@ export function LigaSheet({ open, onOpenChange, liga, onSalvo }: LigaSheetProps)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0">
-        <SheetHeader className="p-6 pb-4 border-b border-brand-gray">
-          <SheetTitle className="font-display font-bold text-navy">{titulo}</SheetTitle>
-          <SheetDescription className="text-sm text-muted-foreground">
-            Preencha as informações da liga
-          </SheetDescription>
-        </SheetHeader>
+      <SheetContent
+        side="right"
+        className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-white"
+      >
+        {/* Header */}
+        <div className="flex-shrink-0">
+          <div className="h-px bg-navy/90" />
+          <div className="px-8 pt-8 pb-6">
+            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50">
+              {liga ? "Editar" : "Novo"}
+            </p>
+            <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy mt-1">
+              {titulo}
+            </h2>
+          </div>
+          <div className="h-px bg-navy/15" />
+        </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Corpo */}
+        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
           {/* Imagem */}
-          <div className="space-y-2">
-            <Label className="text-navy font-semibold">Imagem da liga</Label>
+          <div>
+            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
+              Imagem da liga
+            </p>
             <div
-              className="border-2 border-dashed border-brand-gray rounded-xl p-6 text-center cursor-pointer hover:border-link-blue transition-colors"
+              className="border border-navy/20 p-5 text-center cursor-pointer hover:border-navy/50 transition-colors"
               onClick={() => fileInputRef.current?.click()}
             >
               {imagePreview ? (
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="h-24 w-full object-cover rounded-lg"
-                />
+                <img src={imagePreview} alt="Preview" className="h-24 w-full object-cover" />
               ) : (
                 <>
-                  <p className="text-sm text-muted-foreground">Clique para fazer upload</p>
-                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG até 2MB</p>
+                  <p className="font-plex-sans text-[13px] text-navy/50">
+                    Clique para fazer upload
+                  </p>
+                  <p className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-navy/30 mt-1">
+                    PNG · JPG · Até 2MB
+                  </p>
                 </>
               )}
             </div>
@@ -206,98 +212,116 @@ export function LigaSheet({ open, onOpenChange, liga, onSalvo }: LigaSheetProps)
           </div>
 
           {/* Nome */}
-          <div className="space-y-2">
-            <Label htmlFor="nome" className="text-navy font-semibold">
+          <div>
+            <label
+              htmlFor="nome"
+              className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+            >
               Nome da liga
-            </Label>
-            <Input
+            </label>
+            <input
               id="nome"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Ex: Liga de Tecnologia"
+              className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
             />
           </div>
 
-          {/* Diretores */}
-          <div className="space-y-2">
-            <Label className="text-navy font-semibold">Diretores</Label>
-            <div className="relative">
-              <Input
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                placeholder="Buscar por e-mail..."
-              />
-              {resultados.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-brand-gray rounded-xl shadow-md z-10 overflow-hidden">
-                  {resultados.map((u) => (
-                    <button
-                      key={u.id}
-                      className="w-full text-left px-4 py-2.5 hover:bg-muted text-sm flex items-center gap-3 border-b border-brand-gray last:border-0"
-                      onClick={() => adicionarDiretor(u)}
+          {/* Diretores — visível apenas para staff */}
+          {!isDiretor && (
+            <div>
+              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
+                Diretores
+              </p>
+              <div className="relative">
+                <input
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  placeholder="Buscar por e-mail..."
+                  className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+                />
+                {resultados.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-px bg-white border border-navy/20 z-10">
+                    {resultados.map((u) => (
+                      <button
+                        key={u.id}
+                        className="w-full text-left px-4 py-3 hover:bg-navy/[0.03] flex items-center gap-3 border-b border-navy/10 last:border-0 transition-colors"
+                        onClick={() => adicionarDiretor(u)}
+                      >
+                        <div className="h-6 w-6 bg-navy text-white flex items-center justify-center font-plex-mono text-[9px] font-bold flex-shrink-0">
+                          {u.nome.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-plex-sans text-[13px] font-medium text-navy">
+                            {u.nome}
+                          </p>
+                          <p className="font-plex-mono text-[10px] text-navy/50">{u.email}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {diretores.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {diretores.map((d) => (
+                    <span
+                      key={d.id}
+                      className="inline-flex items-center gap-2 border border-navy px-2.5 py-1 font-plex-sans text-[12px] text-navy"
                     >
-                      <div className="h-7 w-7 rounded-full bg-navy text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-                        {u.nome.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="font-medium text-navy">{u.nome}</p>
-                        <p className="text-xs text-muted-foreground">{u.email}</p>
-                      </div>
-                    </button>
+                      {d.nome}
+                      <button
+                        onClick={() => removerDiretor(d.id)}
+                        className="font-plex-mono text-[10px] text-navy/50 hover:text-navy transition-colors"
+                      >
+                        ✕
+                      </button>
+                    </span>
                   ))}
                 </div>
               )}
             </div>
+          )}
 
-            {diretores.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {diretores.map((d) => (
-                  <span
-                    key={d.id}
-                    className="inline-flex items-center gap-1.5 bg-navy text-white text-xs rounded-full px-3 py-1"
-                  >
-                    {d.nome}
-                    <button
-                      onClick={() => removerDiretor(d.id)}
-                      className="opacity-70 hover:opacity-100"
-                    >
-                      ✕
-                    </button>
-                  </span>
+          {/* Professor responsável — visível apenas para staff */}
+          {!isDiretor && (
+            <div>
+              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
+                Professor responsável
+              </p>
+              <select
+                value={professorId}
+                onChange={(e) => setProfessorId(e.target.value)}
+                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+              >
+                <option value="">Nenhum</option>
+                {professores.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nome} ({p.email})
+                  </option>
                 ))}
-              </div>
-            )}
-          </div>
-
-          {/* Professor responsável */}
-          <div className="space-y-2">
-            <Label className="text-navy font-semibold">Professor responsável</Label>
-            <select
-              value={professorId}
-              onChange={(e) => setProfessorId(e.target.value)}
-              className="w-full text-sm border border-brand-gray rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40"
-            >
-              <option value="">Nenhum</option>
-              {professores.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nome} ({p.email})
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-muted-foreground">
-              Somente o professor atribuído pode aprovar projetos desta liga.
-            </p>
-          </div>
+              </select>
+              <p className="font-plex-mono text-[10px] tracking-[0.08em] text-navy/40 mt-2">
+                Somente o professor atribuído pode aprovar projetos desta liga.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-brand-gray">
-          <Button
-            className="w-full bg-navy hover:bg-navy/90 text-white font-semibold"
-            onClick={handleSalvar}
-            disabled={salvando || !nome.trim()}
-          >
-            {salvando ? "Salvando..." : "Salvar liga"}
-          </Button>
+        <div className="flex-shrink-0">
+          <div className="h-px bg-navy/15" />
+          <div className="px-8 py-6">
+            <button
+              onClick={handleSalvar}
+              disabled={salvando || !nome.trim()}
+              className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {salvando ? "Salvando..." : "Salvar liga"}
+            </button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>

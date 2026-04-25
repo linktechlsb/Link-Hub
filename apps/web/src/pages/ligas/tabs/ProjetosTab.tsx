@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
+import { EditorialTable, SectionHeader } from "@/pages/home/v1/primitives";
 
 import type { Projeto, StatusProjeto } from "@link-leagues/types";
 
@@ -14,13 +15,13 @@ async function getToken(): Promise<string> {
 }
 
 const STATUS_CONFIG: Record<StatusProjeto, { label: string; className: string }> = {
-  rascunho: { label: "Rascunho", className: "bg-gray-100 text-gray-600" },
-  em_aprovacao: { label: "Em aprovação", className: "bg-yellow-100 text-yellow-700" },
-  aprovado: { label: "Aprovado", className: "bg-blue-100 text-blue-700" },
-  rejeitado: { label: "Rejeitado", className: "bg-red-100 text-red-700" },
-  em_andamento: { label: "Em andamento", className: "bg-blue-100 text-blue-700" },
-  concluido: { label: "Concluído", className: "bg-green-100 text-green-700" },
-  cancelado: { label: "Cancelado", className: "bg-gray-100 text-gray-500" },
+  rascunho: { label: "Rascunho", className: "text-navy/50" },
+  em_aprovacao: { label: "Em aprovação", className: "text-amber-600" },
+  aprovado: { label: "Aprovado", className: "text-blue-600" },
+  rejeitado: { label: "Rejeitado", className: "text-red-600" },
+  em_andamento: { label: "Em andamento", className: "text-blue-600" },
+  concluido: { label: "Concluído", className: "text-green-700" },
+  cancelado: { label: "Cancelado", className: "text-navy/40" },
 };
 
 interface Props {
@@ -44,40 +45,39 @@ export function ProjetosTab({ ligaId }: Props) {
   }, [ligaId]);
 
   if (carregando) {
-    return <p className="text-sm text-muted-foreground">Carregando projetos...</p>;
+    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando projetos...</p>;
   }
 
   return (
-    <div className="space-y-3">
-      <p className="text-xs font-bold text-link-blue uppercase tracking-wider">Projetos da Liga</p>
+    <div>
+      <SectionHeader numero="01" eyebrow="Iniciativas" titulo="Projetos da Liga" />
       {projetos.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhum projeto cadastrado.</p>
+        <p className="font-plex-sans text-[13px] text-navy/50">Nenhum projeto cadastrado.</p>
       ) : (
-        projetos.map((p) => {
-          const s = STATUS_CONFIG[p.status];
-          return (
-            <div
-              key={p.id}
-              className="bg-white border border-brand-gray rounded-lg px-4 py-3 flex items-center justify-between"
-            >
-              <div>
-                <div className="font-bold text-navy text-sm">{p.titulo}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  Resp: {p.responsavel_nome ?? "—"}
-                  {p.prazo ? ` · Prazo: ${new Date(p.prazo).toLocaleDateString("pt-BR")}` : ""}
-                </div>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${s.className}`}>
-                  {s.label}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {p.percentual_concluido}% concluído
-                </span>
-              </div>
-            </div>
-          );
-        })
+        <EditorialTable
+          columns={["Projeto", "Responsável", "Prazo", "Status", "%"]}
+          rows={projetos.map((p) => {
+            const s = STATUS_CONFIG[p.status];
+            return [
+              <span key={p.id} className="font-medium">
+                {p.titulo}
+              </span>,
+              p.responsavel_nome ?? "—",
+              p.prazo
+                ? new Date(p.prazo).toLocaleDateString("pt-BR", {
+                    day: "2-digit",
+                    month: "short",
+                  })
+                : "—",
+              <span key={`s-${p.id}`} className={`font-medium ${s.className}`}>
+                {s.label}
+              </span>,
+              <span key={`pct-${p.id}`} className="font-plex-mono text-navy/70">
+                {p.percentual_concluido}
+              </span>,
+            ];
+          })}
+        />
       )}
     </div>
   );

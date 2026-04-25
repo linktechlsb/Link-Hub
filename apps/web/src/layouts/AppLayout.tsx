@@ -23,7 +23,7 @@ export function AppLayout() {
           <SidebarTrigger className="text-link-blue -ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
         </header>
-        <main className="flex-1 overflow-y-auto bg-[#EAEAEA]">
+        <main className="flex-1 overflow-y-auto bg-white">
           <Outlet />
         </main>
       </SidebarInset>
