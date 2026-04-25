@@ -17,12 +17,16 @@ export async function usuarioEhDiretorDaLiga(email: string, ligaId: string): Pro
   const [match] = await sql`
     SELECT 1
     FROM ligas l
-    LEFT JOIN liga_membros lm ON lm.liga_id = l.id
-    LEFT JOIN usuarios u ON u.id = lm.usuario_id
     WHERE l.id = ${ligaId}
       AND (
         l.lider_id = (SELECT id FROM usuarios WHERE email = ${email})
-        OR (u.email = ${email} AND lm.cargo = 'Diretor')
+        OR EXISTS (
+          SELECT 1 FROM liga_membros lm2
+          JOIN usuarios u2 ON u2.id = lm2.usuario_id
+          WHERE lm2.liga_id = l.id
+            AND u2.email = ${email}
+            AND (lm2.cargo = 'Diretor' OR u2.role = 'diretor')
+        )
       )
     LIMIT 1
   `;

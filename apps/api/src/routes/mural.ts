@@ -1,10 +1,57 @@
 import { Router, type Router as IRouter } from "express";
+import multer from "multer";
 
 import { sql } from "../config/db.js";
+import { supabaseAdmin } from "../config/supabase.js";
 import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 import { usuarioEhDiretorDaLiga } from "../middleware/authorization.js";
 
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!["image/jpeg", "image/png"].includes(file.mimetype)) {
+      cb(new Error("Apenas PNG e JPG são permitidos."));
+      return;
+    }
+    cb(null, true);
+  },
+});
+
 export const muralRouter: IRouter = Router();
+
+// POST /mural/upload — upload de imagem para post
+muralRouter.post(
+  "/upload",
+  authenticate,
+  requireRole("staff", "diretor"),
+  upload.single("imagem"),
+  async (req, res, next) => {
+    try {
+      if (!req.file) {
+        res.status(400).json({ error: "Arquivo de imagem obrigatório." });
+        return;
+      }
+
+      const ext = req.file.mimetype === "image/png" ? "png" : "jpg";
+      const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+      const { error: storageError } = await supabaseAdmin.storage
+        .from("posts-imagens")
+        .upload(filename, req.file.buffer, {
+          contentType: req.file.mimetype,
+          upsert: false,
+        });
+
+      if (storageError) throw storageError;
+
+      const { data: urlData } = supabaseAdmin.storage.from("posts-imagens").getPublicUrl(filename);
+      res.json({ imagem_url: urlData.publicUrl });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // GET /mural?liga_id= — lista posts (feed global ou de uma liga)
 muralRouter.get("/", authenticate, async (req, res, next) => {
@@ -23,6 +70,8 @@ muralRouter.get("/", authenticate, async (req, res, next) => {
         l.nome AS liga_nome,
         p.autor_id,
         u.nome AS autor_nome,
+        u.role AS autor_role,
+        u.avatar_url AS autor_avatar_url,
         p.conteudo,
         p.imagem_url,
         p.criado_em,
@@ -82,7 +131,7 @@ muralRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req,
 
     res.status(201).json({
       ...post,
-      autor_nome: user.email,
+      autor_nome: autor.nome,
       curtidas: 0,
       curtido_por_mim: false,
       total_comentarios: 0,

@@ -88,7 +88,8 @@
       "Bash(npx shadcn@latest add login-02 --overwrite)",
       "Bash(curl -s https://ui.shadcn.com/r/styles/default/login-02.json)",
       "Bash(npx -p typescript tsc --noEmit -p apps/web/tsconfig.json)",
-      "Bash(npm config *)"
+      "Bash(npm config *)",
+      "Bash(npx tsc *)"
     ],
     "deny": [
       "Bash(git commit *)",

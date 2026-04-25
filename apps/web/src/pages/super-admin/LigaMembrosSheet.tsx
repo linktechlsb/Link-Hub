@@ -1,16 +1,7 @@
-import { X, UserPlus } from "lucide-react";
+import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/lib/supabase";
 
 import type { Liga } from "@link-leagues/types";
@@ -52,7 +43,7 @@ export function LigaMembrosSheet({ open, onOpenChange, liga, onSalvo }: LigaMemb
 
   useEffect(() => {
     if (open && liga) {
-      carregarMembros();
+      void carregarMembros();
       setBusca("");
       setResultados([]);
       setUsuarioSelecionado(null);
@@ -113,10 +104,7 @@ export function LigaMembrosSheet({ open, onOpenChange, liga, onSalvo }: LigaMemb
       const token = await getToken();
       await fetch(`/api/ligas/${liga.id}/membros`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           usuario_id: usuarioSelecionado.id,
           cargo: cargoNovo.trim() || null,
@@ -134,44 +122,56 @@ export function LigaMembrosSheet({ open, onOpenChange, liga, onSalvo }: LigaMemb
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0">
-        <SheetHeader className="p-6 pb-4 border-b border-brand-gray">
-          <SheetTitle className="font-display font-bold text-navy">
-            Membros — {liga?.nome}
-          </SheetTitle>
-          <SheetDescription className="text-sm text-muted-foreground">
-            Gerencie os membros desta liga
-          </SheetDescription>
-        </SheetHeader>
+      <SheetContent
+        side="right"
+        className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-white"
+      >
+        <div className="flex-shrink-0">
+          <div className="h-px bg-navy/90" />
+          <div className="px-8 pt-8 pb-6">
+            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50">
+              Membros
+            </p>
+            <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy mt-1">
+              {liga?.nome ?? "—"}
+            </h2>
+          </div>
+          <div className="h-px bg-navy/15" />
+        </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
           {/* Adicionar membro */}
-          <div className="space-y-3">
-            <Label className="text-navy font-semibold">Adicionar membro</Label>
+          <div>
+            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
+              Adicionar membro
+            </p>
 
             <div className="relative">
-              <Input
+              <input
                 value={busca}
                 onChange={(e) => {
                   setBusca(e.target.value);
                   if (usuarioSelecionado) setUsuarioSelecionado(null);
                 }}
                 placeholder="Buscar por e-mail..."
+                className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
               />
               {resultados.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-brand-gray rounded-xl shadow-md z-10 overflow-hidden">
+                <div className="absolute top-full left-0 right-0 z-10 bg-white border border-navy/15 overflow-hidden">
                   {resultados.map((u) => (
                     <button
                       key={u.id}
-                      className="w-full text-left px-4 py-2.5 hover:bg-muted text-sm flex items-center gap-3 border-b border-brand-gray last:border-0"
+                      className="w-full text-left px-4 py-3 hover:bg-navy/[0.03] border-b border-navy/10 last:border-0 flex items-center gap-3 transition-colors"
                       onClick={() => selecionarUsuario(u)}
                     >
-                      <div className="h-7 w-7 rounded-full bg-navy text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-                        {u.nome.charAt(0).toUpperCase()}
+                      <div className="h-7 w-7 bg-navy flex items-center justify-center flex-shrink-0">
+                        <span className="font-plex-mono text-[10px] text-white">
+                          {u.nome.charAt(0).toUpperCase()}
+                        </span>
                       </div>
                       <div>
-                        <p className="font-medium text-navy">{u.nome}</p>
-                        <p className="text-xs text-muted-foreground">{u.email}</p>
+                        <p className="font-plex-sans font-medium text-[13px] text-navy">{u.nome}</p>
+                        <p className="font-plex-mono text-[10px] text-navy/50">{u.email}</p>
                       </div>
                     </button>
                   ))}
@@ -180,59 +180,65 @@ export function LigaMembrosSheet({ open, onOpenChange, liga, onSalvo }: LigaMemb
             </div>
 
             {usuarioSelecionado && (
-              <Input
+              <input
                 value={cargoNovo}
                 onChange={(e) => setCargoNovo(e.target.value)}
                 placeholder="Cargo (ex: Diretor, Membro...)"
+                className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 mt-3"
               />
             )}
 
-            <Button
-              className="w-full bg-navy hover:bg-navy/90 text-white font-semibold flex items-center gap-2"
-              onClick={adicionarMembro}
+            <button
+              onClick={() => void adicionarMembro()}
               disabled={!usuarioSelecionado || salvando}
+              className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed mt-3"
             >
-              <UserPlus className="h-4 w-4" />
               {salvando ? "Adicionando..." : "Adicionar membro"}
-            </Button>
+            </button>
           </div>
 
           {/* Lista de membros */}
-          <div className="space-y-2">
-            <Label className="text-navy font-semibold">
+          <div>
+            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
               Membros atuais{membros.length > 0 && ` (${membros.length})`}
-            </Label>
+            </p>
 
             {carregando ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">Carregando...</p>
+              <p className="font-plex-sans text-[13px] text-navy/50">Carregando...</p>
             ) : membros.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">
+              <p className="font-plex-sans text-[13px] text-navy/50">
                 Nenhum membro nesta liga ainda.
               </p>
             ) : (
-              <div className="space-y-1">
+              <div className="border-t border-navy/15">
                 {membros.map((m) => (
                   <div
                     key={m.id}
-                    className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-brand-gray bg-white hover:bg-muted/30 transition-colors"
+                    className="border-b border-navy/10 py-3 flex items-center justify-between gap-3"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-8 w-8 rounded-full bg-navy text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-                        {m.nome.charAt(0).toUpperCase()}
+                      <div className="h-8 w-8 bg-navy flex items-center justify-center flex-shrink-0">
+                        <span className="font-plex-mono text-[10px] text-white">
+                          {m.nome.charAt(0).toUpperCase()}
+                        </span>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-navy truncate">{m.nome}</p>
-                        <p className="text-xs text-muted-foreground truncate">{m.email}</p>
+                        <p className="font-plex-sans font-semibold text-[13px] text-navy truncate">
+                          {m.nome}
+                        </p>
+                        <p className="font-plex-mono text-[10px] text-navy/50 truncate">
+                          {m.email}
+                        </p>
                         {m.cargo && (
-                          <span className="text-[10px] font-bold text-link-blue uppercase tracking-wider">
+                          <span className="font-plex-mono text-[9px] uppercase tracking-[0.14em] text-navy/60">
                             {m.cargo}
                           </span>
                         )}
                       </div>
                     </div>
                     <button
-                      onClick={() => removerMembro(m.usuario_id)}
-                      className="flex-shrink-0 ml-2 p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
+                      onClick={() => void removerMembro(m.usuario_id)}
+                      className="flex-shrink-0 text-navy/30 hover:text-red-500 transition-colors"
                       title="Remover membro"
                     >
                       <X className="h-4 w-4" />

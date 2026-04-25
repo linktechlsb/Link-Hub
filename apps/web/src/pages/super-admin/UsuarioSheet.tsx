@@ -1,15 +1,6 @@
 import { useState, useEffect } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/lib/supabase";
 
 import type { UserRole } from "@link-leagues/types";
@@ -76,10 +67,7 @@ export function UsuarioSheet({ open, onOpenChange, usuario, ligas, onSalvo }: Us
       if (usuario) {
         const res = await fetch(`/api/usuarios/${usuario.id}`, {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({ nome: nome.trim(), role }),
         });
         if (!res.ok) {
@@ -89,10 +77,7 @@ export function UsuarioSheet({ open, onOpenChange, usuario, ligas, onSalvo }: Us
       } else {
         const res = await fetch("/api/usuarios", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({
             nome: nome.trim(),
             email: email.trim(),
@@ -115,63 +100,80 @@ export function UsuarioSheet({ open, onOpenChange, usuario, ligas, onSalvo }: Us
     }
   }
 
-  const titulo = usuario ? "Editar usuário" : "Novo usuário";
+  const isNovo = !usuario;
   const podeSalvar = nome.trim().length > 0 && (!!usuario || email.trim().length > 0);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0">
-        <SheetHeader className="p-6 pb-4 border-b border-brand-gray">
-          <SheetTitle className="font-display font-bold text-navy">{titulo}</SheetTitle>
-          <SheetDescription className="text-sm text-muted-foreground">
-            {usuario
-              ? "Atualize os dados do usuário"
-              : "Preencha os dados para criar um novo usuário"}
-          </SheetDescription>
-        </SheetHeader>
+      <SheetContent
+        side="right"
+        className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-white"
+      >
+        <div className="flex-shrink-0">
+          <div className="h-px bg-navy/90" />
+          <div className="px-8 pt-8 pb-6">
+            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50">
+              {isNovo ? "Novo" : "Editar"}
+            </p>
+            <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy mt-1">
+              {isNovo ? "Criar usuário" : usuario.nome}
+            </h2>
+          </div>
+          <div className="h-px bg-navy/15" />
+        </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="nome" className="text-navy font-semibold">
+        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+          <div>
+            <label
+              htmlFor="u-nome"
+              className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+            >
               Nome completo
-            </Label>
-            <Input
-              id="nome"
+            </label>
+            <input
+              id="u-nome"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Ex: João da Silva"
+              className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-navy font-semibold">
+          <div>
+            <label
+              htmlFor="u-email"
+              className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+            >
               Email estudantil
-            </Label>
-            <Input
-              id="email"
+            </label>
+            <input
+              id="u-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="joao.silva@facul.edu.br"
               disabled={!!usuario}
-              className={usuario ? "opacity-60 cursor-not-allowed bg-muted" : ""}
+              className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            {!usuario && (
-              <p className="text-xs text-muted-foreground">
+            {isNovo && (
+              <p className="font-plex-sans text-[11px] text-navy/40 mt-1.5">
                 O usuário receberá um acesso para criar sua senha.
               </p>
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="role" className="text-navy font-semibold">
+          <div>
+            <label
+              htmlFor="u-role"
+              className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+            >
               Role
-            </Label>
+            </label>
             <select
-              id="role"
+              id="u-role"
               value={role}
               onChange={(e) => setRole(e.target.value as UserRole)}
-              className="w-full text-sm border border-brand-gray rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40 bg-white text-navy"
+              className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60"
             >
               {ROLES.map((r) => (
                 <option key={r.value} value={r.value}>
@@ -181,16 +183,22 @@ export function UsuarioSheet({ open, onOpenChange, usuario, ligas, onSalvo }: Us
             </select>
           </div>
 
-          {!usuario && (
-            <div className="space-y-2">
-              <Label htmlFor="liga" className="text-navy font-semibold">
-                Liga <span className="font-normal text-muted-foreground">(opcional)</span>
-              </Label>
+          {isNovo && (
+            <div>
+              <label
+                htmlFor="u-liga"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+              >
+                Liga{" "}
+                <span className="normal-case font-plex-sans text-[11px] text-navy/40">
+                  (opcional)
+                </span>
+              </label>
               <select
-                id="liga"
+                id="u-liga"
                 value={ligaId}
                 onChange={(e) => setLigaId(e.target.value)}
-                className="w-full text-sm border border-brand-gray rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40 bg-white text-navy"
+                className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60"
               >
                 <option value="">— Sem liga —</option>
                 {ligas.map((l) => (
@@ -202,21 +210,20 @@ export function UsuarioSheet({ open, onOpenChange, usuario, ligas, onSalvo }: Us
             </div>
           )}
 
-          {erro && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-              {erro}
-            </p>
-          )}
+          {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
         </div>
 
-        <div className="p-6 border-t border-brand-gray">
-          <Button
-            className="w-full bg-navy hover:bg-navy/90 text-white font-semibold"
-            onClick={handleSalvar}
-            disabled={salvando || !podeSalvar}
-          >
-            {salvando ? "Salvando..." : usuario ? "Salvar alterações" : "Criar usuário"}
-          </Button>
+        <div className="flex-shrink-0">
+          <div className="h-px bg-navy/15" />
+          <div className="px-8 py-6">
+            <button
+              onClick={() => void handleSalvar()}
+              disabled={salvando || !podeSalvar}
+              className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {salvando ? "Salvando..." : isNovo ? "Criar usuário" : "Salvar alterações"}
+            </button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>

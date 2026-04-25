@@ -21,25 +21,6 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -85,14 +66,14 @@ const ICONES: { id: string; componente: LucideIcon }[] = [
 ];
 
 const CORES_PICKER = [
-  "#10284E", // navy
-  "#546484", // link-blue
-  "#7C3AED", // purple
-  "#16A34A", // green
-  "#D97706", // amber
-  "#DC2626", // red
-  "#DB2777", // pink
-  "#0D9488", // teal
+  "#10284E",
+  "#546484",
+  "#7C3AED",
+  "#16A34A",
+  "#D97706",
+  "#DC2626",
+  "#DB2777",
+  "#0D9488",
 ];
 
 function iconeComponente(id: string): LucideIcon {
@@ -129,7 +110,7 @@ function IconeCor({
       <button
         type="button"
         onClick={() => setAberto((v) => !v)}
-        className="h-9 w-9 rounded-lg flex items-center justify-center border-2 border-transparent hover:border-navy/20 transition-colors"
+        className="h-9 w-9 flex items-center justify-center border-2 border-transparent hover:border-navy/20 transition-colors"
         style={{ backgroundColor: cor }}
         title="Escolher ícone e cor"
       >
@@ -137,8 +118,8 @@ function IconeCor({
       </button>
 
       {aberto && (
-        <div className="absolute left-0 top-11 z-50 bg-white border border-brand-gray rounded-xl shadow-lg p-3 w-56">
-          <p className="text-[10px] font-bold text-link-blue uppercase tracking-wider mb-2">
+        <div className="absolute left-0 top-11 z-50 bg-white border border-navy/15 p-3 w-56">
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
             Ícone
           </p>
           <div className="grid grid-cols-5 gap-1.5 mb-3">
@@ -150,7 +131,7 @@ function IconeCor({
                   type="button"
                   onClick={() => onChange(ic.id, cor)}
                   className={cn(
-                    "h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
+                    "h-8 w-8 flex items-center justify-center transition-colors",
                     icone === ic.id
                       ? "bg-navy text-white"
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200",
@@ -161,7 +142,9 @@ function IconeCor({
               );
             })}
           </div>
-          <p className="text-[10px] font-bold text-link-blue uppercase tracking-wider mb-2">Cor</p>
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
+            Cor
+          </p>
           <div className="flex flex-wrap gap-1.5">
             {CORES_PICKER.map((c) => (
               <button
@@ -241,6 +224,9 @@ async function getToken() {
   return data.session?.access_token ?? "";
 }
 
+const inputClass =
+  "w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60";
+
 // ─── sub-componentes de aba ───────────────────────────────────────────────────
 
 // ── Membros ──
@@ -278,7 +264,8 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
     void carregar();
   }, [ligaId]);
 
-  if (carregando) return <p className="text-sm text-muted-foreground">Carregando membros…</p>;
+  if (carregando)
+    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando membros…</p>;
 
   async function convidar() {
     if (!ligaId) {
@@ -378,17 +365,16 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
   }
 
   const diretor = membros.find((m) => m.cargo === "Diretor");
-  const membroParaRemover = membros.find((m) => m.id === confirmandoRemoverId);
 
   return (
     <div className="space-y-8">
       {/* Adicionar */}
-      <section className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+      <section className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Adicionar Novo Membro
         </p>
         <div className="flex gap-2 flex-wrap">
-          <Input
+          <input
             type="email"
             placeholder="E-mail institucional…"
             value={emailConvite}
@@ -396,122 +382,133 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
             onKeyDown={(e) => {
               if (e.key === "Enter" && !enviandoConvite) void convidar();
             }}
-            className="flex-1 min-w-[200px]"
+            className="flex-1 min-w-[200px] border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
           />
-          <Select value={cargoConvite} onValueChange={(v) => setCargoConvite(v as Cargo)}>
-            <SelectTrigger className="w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Membro">Membro</SelectItem>
-              <SelectItem value="Diretor">Diretor</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
+          <select
+            value={cargoConvite}
+            onChange={(e) => setCargoConvite(e.target.value as Cargo)}
+            className="w-36 border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60"
+          >
+            <option value="Membro">Membro</option>
+            <option value="Diretor">Diretor</option>
+          </select>
+          <button
             onClick={() => void convidar()}
             disabled={enviandoConvite}
-            className="bg-navy hover:bg-navy/90"
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-2.5 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {enviandoConvite ? <Loader2 className="h-4 w-4 animate-spin" /> : "Adicionar"}
-          </Button>
+            {enviandoConvite ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Adicionar"}
+          </button>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
+        <p className="font-plex-sans text-[12px] text-navy/40 mt-2">
           O usuário precisa já estar cadastrado no sistema (e-mail institucional).
         </p>
       </section>
 
       {/* Membros ativos */}
-      <section className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+      <section className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Membros Ativos ({membros.length})
         </p>
-        <div className="divide-y divide-brand-gray">
+        <div className="border-t border-navy/15">
           {membros.map((m) => (
-            <div key={m.id} className="flex items-center justify-between py-3">
+            <div
+              key={m.id}
+              className="flex items-center justify-between py-3 border-b border-navy/10"
+            >
               <div className="flex items-center gap-3">
                 <div
-                  className="h-9 w-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                  className="h-9 w-9 flex items-center justify-center text-white font-plex-mono text-[11px] shrink-0"
                   style={{ backgroundColor: m.cor }}
                 >
                   {m.iniciais}
                 </div>
                 <div>
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-semibold text-navy">{m.nome}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-plex-sans font-semibold text-[13px] text-navy">{m.nome}</p>
                     {m.novo && (
-                      <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                      <span className="font-plex-mono text-[9px] uppercase tracking-[0.10em] bg-green-100 text-green-700 px-1.5 py-0.5">
                         Novo
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">{m.email}</p>
+                  <p className="font-plex-mono text-[10px] text-navy/50">{m.email}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 {editandoId === m.id ? (
                   <>
-                    <Select
+                    <select
                       value={novoCargoEdit}
-                      onValueChange={(v) => setNovoCargoEdit(v as Cargo)}
+                      onChange={(e) => setNovoCargoEdit(e.target.value as Cargo)}
+                      className="border border-navy/20 px-2 py-1.5 bg-white font-plex-sans text-[12px] text-navy focus:outline-none focus:border-navy/60"
                     >
-                      <SelectTrigger className="w-28 h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Membro">Membro</SelectItem>
-                        <SelectItem value="Diretor">Diretor</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      size="icon"
-                      variant="ghost"
+                      <option value="Membro">Membro</option>
+                      <option value="Diretor">Diretor</option>
+                    </select>
+                    <button
                       onClick={() => void salvarEdicao(m.id)}
                       disabled={salvandoEdicaoId === m.id}
-                      className="text-green-600 hover:bg-green-50 h-8 w-8"
+                      className="text-green-600 hover:text-green-800 transition-colors disabled:opacity-40"
                     >
                       {salvandoEdicaoId === m.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         <Check className="h-4 w-4" />
                       )}
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
+                    </button>
+                    <button
                       onClick={() => setEditandoId(null)}
-                      className="h-8 w-8"
+                      className="text-navy/40 hover:text-navy transition-colors"
                     >
                       <X className="h-4 w-4" />
-                    </Button>
+                    </button>
                   </>
+                ) : confirmandoRemoverId === m.id ? (
+                  <div className="flex items-center gap-3">
+                    <span className="font-plex-sans text-[12px] text-red-600">Remover?</span>
+                    <button
+                      onClick={() => void remover(m.id)}
+                      disabled={removendoId === m.id}
+                      className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-600 hover:text-red-800 transition-colors disabled:opacity-40"
+                    >
+                      {removendoId === m.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        "Sim"
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setConfirmandoRemoverId(null)}
+                      className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
+                    >
+                      Não
+                    </button>
+                  </div>
                 ) : (
                   <>
                     <span
                       className={cn(
-                        "text-xs font-semibold px-2.5 py-1 rounded-full",
+                        "font-plex-mono text-[9px] uppercase tracking-[0.10em] px-2 py-0.5",
                         cargoBadgeClass(m.cargo),
                       )}
                     >
                       {m.cargo}
                     </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
+                    <button
                       onClick={() => iniciarEdicao(m)}
-                      className="text-xs h-7"
+                      className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
                     >
                       Editar cargo
-                    </Button>
+                    </button>
                     {m.id !== diretor?.id && (
-                      <Button
-                        variant="outline"
-                        size="sm"
+                      <button
                         onClick={() => setConfirmandoRemoverId(m.id)}
-                        className="text-xs h-7 text-red-500 border-red-300 hover:bg-red-50 hover:text-red-600"
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-400 hover:text-red-600 transition-colors"
                       >
                         Remover
-                      </Button>
+                      </button>
                     )}
                   </>
                 )}
@@ -520,37 +517,6 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
           ))}
         </div>
       </section>
-
-      <AlertDialog
-        open={confirmandoRemoverId !== null}
-        onOpenChange={(aberto) => {
-          if (!aberto) setConfirmandoRemoverId(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remover membro?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {membroParaRemover
-                ? `${membroParaRemover.nome} será removido da liga. Esta ação pode ser revertida adicionando o membro novamente.`
-                : ""}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={removendoId !== null}
-              onClick={(e) => {
-                e.preventDefault();
-                if (confirmandoRemoverId) void remover(confirmandoRemoverId);
-              }}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              {removendoId ? <Loader2 className="h-4 w-4 animate-spin" /> : "Remover"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
@@ -617,16 +583,17 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
     setBannerPreview(URL.createObjectURL(file));
   }
 
-  const inputClass =
-    "w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20";
-
   return (
     <div className="space-y-4">
       {/* Dados gerais */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5 space-y-4">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">Dados Gerais</p>
+      <div className="border border-navy/15 p-5 space-y-4">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
+          Dados Gerais
+        </p>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">Nome da liga</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            Nome da liga
+          </label>
           <input
             value={form.nome}
             onChange={(e) => setForm({ ...form, nome: e.target.value })}
@@ -634,7 +601,9 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">Área de atuação</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            Área de atuação
+          </label>
           <input
             value={form.area}
             onChange={(e) => setForm({ ...form, area: e.target.value })}
@@ -642,7 +611,9 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">Descrição</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            Descrição
+          </label>
           <textarea
             value={form.descricao}
             onChange={(e) => setForm({ ...form, descricao: e.target.value })}
@@ -651,7 +622,9 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">Semestre de fundação</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            Semestre de fundação
+          </label>
           <input
             value={form.semestre}
             onChange={(e) => setForm({ ...form, semestre: e.target.value })}
@@ -662,31 +635,31 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
       </div>
 
       {/* Foto / Banner */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5 space-y-3">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">
+      <div className="border border-navy/15 p-5 space-y-3">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
           Foto / Banner da Liga
         </p>
         {bannerPreview ? (
-          <div className="relative rounded-lg overflow-hidden border border-brand-gray h-36">
+          <div className="relative overflow-hidden border border-navy/15 h-36">
             <img src={bannerPreview} alt="Banner da liga" className="w-full h-full object-cover" />
             <button
               onClick={() => {
                 setBannerPreview("");
                 setForm((prev) => ({ ...prev, bannerUrl: "" }));
               }}
-              className="absolute top-2 right-2 bg-white/80 hover:bg-white text-red-500 rounded-full p-1 transition-colors"
+              className="absolute top-2 right-2 bg-white/80 hover:bg-white text-red-500 p-1 transition-colors"
               title="Remover imagem"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
         ) : (
-          <div className="border-2 border-dashed border-brand-gray rounded-lg h-36 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+          <div className="border border-dashed border-navy/20 h-36 flex flex-col items-center justify-center gap-2 text-navy/40">
             <Image className="h-6 w-6" />
-            <span className="text-xs">Nenhuma imagem selecionada</span>
+            <span className="font-plex-sans text-[12px]">Nenhuma imagem selecionada</span>
           </div>
         )}
-        <label className="inline-flex items-center gap-2 cursor-pointer bg-gray-50 hover:bg-gray-100 border border-brand-gray text-navy text-xs font-semibold px-3 py-2 rounded-lg transition-colors">
+        <label className="inline-flex items-center gap-2 cursor-pointer font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors">
           <Plus className="h-3.5 w-3.5" />
           {bannerPreview ? "Trocar imagem" : "Selecionar imagem"}
           <input type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
@@ -694,12 +667,14 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
       </div>
 
       {/* Contatos */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5 space-y-4">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">
+      <div className="border border-navy/15 p-5 space-y-4">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
           Contatos da Liga
         </p>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">E-mail de contato</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            E-mail de contato
+          </label>
           <input
             type="email"
             value={form.emailContato}
@@ -709,7 +684,9 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">Instagram</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            Instagram
+          </label>
           <input
             value={form.instagram}
             onChange={(e) => setForm({ ...form, instagram: e.target.value })}
@@ -718,7 +695,9 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">LinkedIn</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            LinkedIn
+          </label>
           <input
             value={form.linkedin}
             onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
@@ -734,12 +713,14 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           <button
             onClick={() => void salvar()}
             disabled={salvando}
-            className="bg-navy hover:bg-navy/90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {salvando ? "Salvando…" : "Salvar alterações"}
           </button>
-          {salvo && <span className="text-sm text-green-600">Salvo com sucesso!</span>}
-          {erro && <span className="text-sm text-red-500">{erro}</span>}
+          {salvo && (
+            <span className="font-plex-sans text-[12px] text-green-600">Salvo com sucesso!</span>
+          )}
+          {erro && <span className="font-plex-sans text-[12px] text-red-600">{erro}</span>}
         </div>
       )}
     </div>
@@ -788,7 +769,6 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
     setUrl: (url: string) => void,
     setEnviando: (v: boolean) => void,
   ) {
-    // Validação no cliente antes do upload
     const tiposPermitidos = [
       "image/jpeg",
       "image/png",
@@ -920,22 +900,24 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
   }
 
   if (carregando) {
-    return <p className="text-sm text-muted-foreground">Carregando recursos…</p>;
+    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando recursos…</p>;
   }
 
   return (
     <div className="space-y-4">
       {/* Lista */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Recursos ({recursos.length})
         </p>
         {recursos.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum recurso cadastrado ainda.</p>
+          <p className="font-plex-sans text-[13px] text-navy/50">
+            Nenhum recurso cadastrado ainda.
+          </p>
         ) : (
-          <div className="divide-y divide-brand-gray">
+          <div className="border-t border-navy/15">
             {recursos.map((r) => (
-              <div key={r.id} className="py-3">
+              <div key={r.id} className="border-b border-navy/10 py-3">
                 {editandoId === r.id ? (
                   <div className="flex flex-col gap-2">
                     <div className="flex gap-2 items-center">
@@ -948,14 +930,14 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                         value={editForm.nome ?? ""}
                         onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
                         placeholder="Nome"
-                        className="flex-1 border border-brand-gray rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+                        className="flex-1 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
                       />
                     </div>
                     <div className="flex gap-2">
                       <select
                         value={editForm.tipo ?? "URL"}
                         onChange={(e) => setEditForm({ ...editForm, tipo: e.target.value })}
-                        className="w-36 border border-brand-gray rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 bg-white"
+                        className="w-36 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
                       >
                         <option>URL</option>
                         <option>Documento</option>
@@ -970,10 +952,10 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                       <div>
                         <label
                           className={cn(
-                            "flex items-center gap-2 w-full border-2 border-dashed rounded-lg px-3 py-2 cursor-pointer transition-colors text-sm",
+                            "flex items-center gap-2 w-full border border-dashed px-3 py-2 cursor-pointer transition-colors font-plex-sans text-[13px]",
                             editEnviando
                               ? "border-navy/30 bg-navy/5 text-navy/60 cursor-not-allowed"
-                              : "border-brand-gray hover:border-navy/30 text-muted-foreground hover:text-navy",
+                              : "border-navy/20 hover:border-navy/40 text-navy/50 hover:text-navy",
                           )}
                         >
                           {editEnviando ? (
@@ -981,7 +963,7 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                           ) : (
                             <Upload className="h-4 w-4 shrink-0" />
                           )}
-                          <span className="truncate text-xs">
+                          <span className="truncate text-[12px]">
                             {editEnviando
                               ? "Enviando…"
                               : editForm.url
@@ -1005,7 +987,9 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                           />
                         </label>
                         {editForm.url && (
-                          <p className="mt-1 text-xs text-green-600 truncate">✓ {editForm.url}</p>
+                          <p className="mt-1 font-plex-sans text-[12px] text-green-600 truncate">
+                            ✓ {editForm.url}
+                          </p>
                         )}
                       </div>
                     ) : (
@@ -1013,20 +997,20 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                         value={editForm.url ?? ""}
                         onChange={(e) => setEditForm({ ...editForm, url: e.target.value })}
                         placeholder="URL"
-                        className="w-full border border-brand-gray rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+                        className="w-full border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
                       />
                     )}
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <button
                         onClick={() => void salvarEdicao(r.id)}
                         disabled={editEnviando}
-                        className="bg-navy text-white text-xs px-3 py-1.5 rounded-lg hover:bg-navy/90 transition-colors disabled:opacity-50"
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-white bg-navy px-3 py-1.5 hover:bg-navy/90 transition-colors disabled:opacity-40"
                       >
                         Salvar
                       </button>
                       <button
                         onClick={() => setEditandoId(null)}
-                        className="border border-brand-gray text-xs px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
                       >
                         Cancelar
                       </button>
@@ -1036,30 +1020,32 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div
-                        className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+                        className="h-9 w-9 flex items-center justify-center shrink-0"
                         style={{ backgroundColor: r.cor }}
                       >
                         <RecursoIcone id={r.icone} />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-navy">{r.nome}</p>
-                        <p className="text-xs text-muted-foreground">{r.tipo}</p>
+                        <p className="font-plex-sans font-semibold text-[13px] text-navy">
+                          {r.nome}
+                        </p>
+                        <p className="font-plex-mono text-[10px] text-navy/50">{r.tipo}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <button
                         onClick={() => iniciarEdicao(r)}
-                        className="text-link-blue hover:bg-gray-50 p-1.5 rounded-md transition-colors"
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
                         title="Editar"
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => void remover(r.id)}
-                        className="text-red-400 hover:bg-red-50 p-1.5 rounded-md transition-colors"
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-400 hover:text-red-600 transition-colors"
                         title="Remover"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
@@ -1071,8 +1057,8 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
       </div>
 
       {/* Adicionar novo recurso */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Adicionar Recurso
         </p>
         <div className="flex gap-2 flex-wrap items-center">
@@ -1088,12 +1074,12 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
             value={novoNome}
             onChange={(e) => setNovoNome(e.target.value)}
             placeholder="Nome do recurso"
-            className="flex-1 min-w-[140px] border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+            className="flex-1 min-w-[140px] border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
           />
           <select
             value={novoTipo}
             onChange={(e) => setNovoTipo(e.target.value)}
-            className="w-36 border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 bg-white"
+            className="w-36 border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
           >
             <option>URL</option>
             <option>Documento</option>
@@ -1106,9 +1092,9 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
           <button
             onClick={() => void adicionar()}
             disabled={novoEnviando}
-            className="flex items-center gap-1.5 bg-navy hover:bg-navy/90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-2.5 hover:bg-navy/90 transition-colors disabled:opacity-40"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
             Adicionar
           </button>
         </div>
@@ -1116,10 +1102,10 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
           {(TIPOS_COM_ARQUIVO as readonly string[]).includes(novoTipo) ? (
             <label
               className={cn(
-                "flex items-center gap-2 w-full border-2 border-dashed rounded-lg px-4 py-3 cursor-pointer transition-colors text-sm",
+                "flex items-center gap-2 w-full border border-dashed px-4 py-3 cursor-pointer transition-colors font-plex-sans text-[13px]",
                 novoEnviando
                   ? "border-navy/30 bg-navy/5 text-navy/60 cursor-not-allowed"
-                  : "border-brand-gray hover:border-navy/30 text-muted-foreground hover:text-navy",
+                  : "border-navy/20 hover:border-navy/40 text-navy/50 hover:text-navy",
               )}
             >
               {novoEnviando ? (
@@ -1150,11 +1136,11 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
               value={novoUrl}
               onChange={(e) => setNovoUrl(e.target.value)}
               placeholder="URL do recurso"
-              className="w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+              className="w-full border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
             />
           )}
         </div>
-        {erro && <p className="mt-2 text-sm text-red-500">{erro}</p>}
+        {erro && <p className="font-plex-sans text-[12px] text-red-600 mt-2">{erro}</p>}
       </div>
     </div>
   );
@@ -1203,7 +1189,6 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  // form novo registro
   const [novoTipo, setNovoTipo] = useState<"receita" | "custo">("receita");
   const [novaRecorrencia, setNovaRecorrencia] = useState<"unico" | "recorrente">("unico");
   const [novaDescricao, setNovaDescricao] = useState("");
@@ -1300,30 +1285,36 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
   const saldo = totalReceitas - totalCustos;
 
   if (carregando) {
-    return <p className="text-sm text-muted-foreground">Carregando financeiro…</p>;
+    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando financeiro…</p>;
   }
 
   return (
     <div className="space-y-4">
-      {/* Resumo */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white border border-brand-gray rounded-xl p-4">
-          <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-1">Receitas</p>
-          <p className="font-display font-bold text-xl text-green-600">
+      {/* Resumo KPI */}
+      <div className="grid grid-cols-3">
+        <div className="border border-navy/15 p-5 border-r-0">
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
+            Receitas
+          </p>
+          <p className="font-display font-bold text-[22px] tracking-[-0.02em] text-green-600">
             {formatarMoeda(totalReceitas)}
           </p>
         </div>
-        <div className="bg-white border border-brand-gray rounded-xl p-4">
-          <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-1">Custos</p>
-          <p className="font-display font-bold text-xl text-red-500">
+        <div className="border border-navy/15 p-5 border-r-0">
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
+            Custos
+          </p>
+          <p className="font-display font-bold text-[22px] tracking-[-0.02em] text-red-500">
             {formatarMoeda(totalCustos)}
           </p>
         </div>
-        <div className="bg-white border border-brand-gray rounded-xl p-4">
-          <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-1">Saldo</p>
+        <div className="border border-navy/15 p-5">
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
+            Saldo
+          </p>
           <p
             className={cn(
-              "font-display font-bold text-xl",
+              "font-display font-bold text-[22px] tracking-[-0.02em]",
               saldo >= 0 ? "text-navy" : "text-red-500",
             )}
           >
@@ -1333,37 +1324,44 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
       </div>
 
       {/* Lista */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Lançamentos ({registros.length})
         </p>
         {registros.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum lançamento ainda.</p>
+          <p className="font-plex-sans text-[13px] text-navy/50">Nenhum lançamento ainda.</p>
         ) : (
-          <div className="divide-y divide-brand-gray">
+          <div className="border-t border-navy/15">
             {registros.map((r) => (
-              <div key={r.id} className="py-3 flex items-start justify-between gap-3">
+              <div
+                key={r.id}
+                className="border-b border-navy/10 py-3 flex items-start justify-between gap-3"
+              >
                 <div className="flex items-start gap-3">
                   <div
                     className={cn(
-                      "h-8 w-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 text-white text-xs font-bold",
+                      "h-7 w-7 flex items-center justify-center shrink-0 mt-0.5 text-white font-plex-mono text-[11px]",
                       r.tipo === "receita" ? "bg-green-500" : "bg-red-400",
                     )}
                   >
                     {r.tipo === "receita" ? "+" : "−"}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-navy">{r.descricao}</p>
+                    <p className="font-plex-sans font-semibold text-[13px] text-navy">
+                      {r.descricao}
+                    </p>
                     {r.observacao && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{r.observacao}</p>
+                      <p className="font-plex-sans text-[12px] text-navy/50 mt-0.5">
+                        {r.observacao}
+                      </p>
                     )}
                     <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-xs text-muted-foreground">
+                      <p className="font-plex-mono text-[10px] text-navy/50">
                         {new Date(r.data + "T00:00:00").toLocaleDateString("pt-BR")}
                       </p>
                       <span
                         className={cn(
-                          "text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
+                          "font-plex-mono text-[9px] uppercase tracking-[0.10em] px-1.5 py-0.5",
                           r.recorrencia === "recorrente"
                             ? "bg-blue-100 text-blue-600"
                             : "bg-gray-100 text-gray-500",
@@ -1374,10 +1372,10 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-3 shrink-0">
                   <span
                     className={cn(
-                      "text-sm font-bold",
+                      "font-plex-mono text-[12px]",
                       r.tipo === "receita" ? "text-green-600" : "text-red-500",
                     )}
                   >
@@ -1386,10 +1384,10 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                   </span>
                   <button
                     onClick={() => void remover(r.id)}
-                    className="text-red-400 hover:bg-red-50 p-1.5 rounded-md transition-colors"
+                    className="text-red-400 hover:text-red-600 transition-colors"
                     title="Remover"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
@@ -1399,8 +1397,8 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
       </div>
 
       {/* Adicionar */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Adicionar Lançamento
         </p>
         <div className="space-y-3">
@@ -1410,10 +1408,10 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
               type="button"
               onClick={() => setNovoTipo("receita")}
               className={cn(
-                "flex-1 py-2 text-sm font-semibold rounded-lg border-2 transition-colors",
+                "flex-1 py-2 font-plex-mono text-[10px] tracking-[0.14em] uppercase border-2 transition-colors",
                 novoTipo === "receita"
                   ? "border-green-500 bg-green-50 text-green-700"
-                  : "border-brand-gray text-muted-foreground hover:border-green-300",
+                  : "border-navy/15 text-navy/40 hover:border-green-300",
               )}
             >
               + Receita
@@ -1422,10 +1420,10 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
               type="button"
               onClick={() => setNovoTipo("custo")}
               className={cn(
-                "flex-1 py-2 text-sm font-semibold rounded-lg border-2 transition-colors",
+                "flex-1 py-2 font-plex-mono text-[10px] tracking-[0.14em] uppercase border-2 transition-colors",
                 novoTipo === "custo"
                   ? "border-red-400 bg-red-50 text-red-600"
-                  : "border-brand-gray text-muted-foreground hover:border-red-300",
+                  : "border-navy/15 text-navy/40 hover:border-red-300",
               )}
             >
               − Custo
@@ -1436,7 +1434,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
           <select
             value={novaRecorrencia}
             onChange={(e) => setNovaRecorrencia(e.target.value as "unico" | "recorrente")}
-            className="w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 bg-white text-navy"
+            className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60"
           >
             <option value="unico">Único</option>
             <option value="recorrente">Recorrente</option>
@@ -1447,7 +1445,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
             value={novaDescricao}
             onChange={(e) => setNovaDescricao(e.target.value)}
             placeholder="Descrição"
-            className="w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+            className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
           />
 
           {/* Observação */}
@@ -1455,13 +1453,13 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
             value={novaObs}
             onChange={(e) => setNovaObs(e.target.value)}
             placeholder="Observação (opcional)"
-            className="w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+            className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
           />
 
           {/* Valor + Data */}
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-plex-sans text-[13px] text-navy/50 pointer-events-none">
                 R$
               </span>
               <input
@@ -1469,30 +1467,29 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                 inputMode="decimal"
                 value={novoValor}
                 onChange={(e) => {
-                  // aceita apenas dígitos, vírgula e ponto
                   const v = e.target.value.replace(/[^0-9.,]/g, "");
                   setNovoValor(v);
                 }}
                 placeholder="0,00"
-                className="w-full border border-brand-gray rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+                className="w-full border border-navy/20 pl-9 pr-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
               />
             </div>
             <input
               type="date"
               value={novaData}
               onChange={(e) => setNovaData(e.target.value)}
-              className="w-40 border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 bg-white"
+              className="w-40 border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60"
             />
           </div>
 
-          {erro && <p className="text-sm text-red-500">{erro}</p>}
+          {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
 
           <button
             onClick={() => void adicionar()}
             disabled={enviando}
-            className="flex items-center gap-1.5 bg-navy hover:bg-navy/90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
             {enviando ? "Salvando…" : "Adicionar"}
           </button>
         </div>
@@ -1524,32 +1521,30 @@ function AbaDesempenho() {
 
   return (
     <div className="space-y-4">
-      {/* Score e ranking */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-4">
+      {/* Score */}
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-4">
           Score Atual
         </p>
         <div className="flex items-end justify-between mb-3">
           <div>
             <span className="font-display font-bold text-4xl text-navy">{score}</span>
-            <span className="text-lg text-muted-foreground ml-1">pts</span>
+            <span className="font-plex-sans text-lg text-navy/40 ml-1">pts</span>
           </div>
-          <div className="text-right">
-            <span className="bg-brand-yellow text-navy text-xs font-bold px-2.5 py-1 rounded-full">
-              🏆 1º lugar
-            </span>
-          </div>
+          <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-brand-yellow text-navy px-2 py-0.5">
+            1º lugar
+          </span>
         </div>
-        <div className="w-full bg-brand-gray rounded-full h-3 overflow-hidden">
+        <div className="w-full bg-navy/10 h-px overflow-hidden">
           <div
-            className="h-3 rounded-full transition-all duration-500"
+            className="h-px transition-all duration-500"
             style={{
               width: `${porcentagem}%`,
               background: "linear-gradient(90deg, #10284E, #546484)",
             }}
           />
         </div>
-        <div className="flex justify-between mt-1.5 text-xs text-muted-foreground">
+        <div className="flex justify-between mt-2 font-plex-mono text-[10px] text-navy/40">
           <span>0 pts</span>
           <span>{porcentagem}% do máximo</span>
           <span>{scoreMax} pts</span>
@@ -1557,36 +1552,40 @@ function AbaDesempenho() {
       </div>
 
       {/* Resumo */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">Resumo</p>
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
+          Resumo
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {resumo.map((r) => (
-            <div key={r.label} className="bg-gray-50 rounded-lg p-3">
+            <div key={r.label} className="border border-navy/10 p-3">
               <p className={cn("font-display font-bold text-xl", r.cor)}>{r.valor}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{r.label}</p>
+              <p className="font-plex-sans text-[12px] text-navy/50 mt-0.5">{r.label}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* Composição do score */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Composição do Score
         </p>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {composicao.map((c) => (
             <div key={c.label}>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-2">
                 <div>
-                  <span className="text-sm font-semibold text-navy">{c.label}</span>
-                  <span className="text-xs text-muted-foreground ml-2">{c.formula}</span>
+                  <span className="font-plex-sans font-semibold text-[13px] text-navy">
+                    {c.label}
+                  </span>
+                  <span className="font-plex-mono text-[10px] text-navy/50 ml-2">{c.formula}</span>
                 </div>
-                <span className="text-sm font-bold text-navy">{c.valor} pts</span>
+                <span className="font-plex-mono text-[12px] text-navy">{c.valor} pts</span>
               </div>
-              <div className="w-full bg-brand-gray rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-navy/10 h-px overflow-hidden">
                 <div
-                  className={cn("h-2 rounded-full", c.cor)}
+                  className={cn("h-px", c.cor)}
                   style={{ width: `${Math.round((c.valor / score) * 100)}%` }}
                 />
               </div>
@@ -1665,32 +1664,33 @@ export function GerenciamentoPage() {
     void carregarDados();
   }, []);
 
-  // perfil Staff (admin) → página própria com todas as ligas
   if (role === "staff") return <GerenciamentoStaffPage />;
 
   return (
-    <div className="p-8">
+    <div className="max-w-5xl mx-auto px-8 py-10">
       {/* Cabeçalho */}
-      <div className="mb-6">
-        <h1 className="font-display font-bold text-2xl text-navy">Gerenciamento</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+      <div className="mb-10">
+        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
+          Gerenciamento
+        </h1>
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
           {ligaNome || "Carregando…"}
           {diretorNome ? ` · ${diretorNome}` : ""}
         </p>
       </div>
 
       {/* Abas */}
-      <div className="border-b border-brand-gray mb-6">
-        <div className="flex gap-1">
+      <div className="border-b border-navy/15 mb-8">
+        <div className="flex">
           {ABAS.map((aba) => (
             <button
               key={aba}
               onClick={() => setAbaAtiva(aba)}
               className={cn(
-                "px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px",
+                "px-5 py-3 font-plex-mono text-[10px] uppercase tracking-[0.14em] transition-colors border-b-2 -mb-px",
                 abaAtiva === aba
-                  ? "border-[#7C3AED] text-[#7C3AED]"
-                  : "border-transparent text-muted-foreground hover:text-navy",
+                  ? "border-navy text-navy"
+                  : "border-transparent text-navy/40 hover:text-navy",
               )}
             >
               {aba}

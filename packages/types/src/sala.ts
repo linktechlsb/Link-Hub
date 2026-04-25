@@ -5,6 +5,7 @@ export interface Sala {
   nome: string;
   capacidade?: number;
   localizacao?: string;
+  disponivel_a_partir?: string; // HH:MM — se definido, sala só aparece a partir deste horário
   ativo: boolean;
 }
 

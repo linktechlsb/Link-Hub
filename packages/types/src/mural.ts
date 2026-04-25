@@ -4,6 +4,8 @@ export interface Post {
   liga_nome?: string;
   autor_id: string;
   autor_nome?: string;
+  autor_role?: string;
+  autor_avatar_url?: string | null;
   conteudo: string;
   imagem_url?: string | null;
   criado_em: string;
