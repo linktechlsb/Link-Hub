@@ -1,5 +1,5 @@
-import { Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Search, MoreVertical, Pencil, Trash2, Users, Archive } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -78,6 +78,10 @@ export function SuperAdminPage() {
   const [busca, setBusca] = useState("");
   const [confirmarRemocaoId, setConfirmarRemocaoId] = useState<string | null>(null);
   const [confirmarArquivoId, setConfirmarArquivoId] = useState<string | null>(null);
+  const [dropdownLigaId, setDropdownLigaId] = useState<string | null>(null);
+  const [dropdownUsuarioId, setDropdownUsuarioId] = useState<string | null>(null);
+  const dropdownLigaRef = useRef<HTMLDivElement>(null);
+  const dropdownUsuarioRef = useRef<HTMLDivElement>(null);
 
   const [sheetUsuarioOpen, setSheetUsuarioOpen] = useState(false);
   const [usuarioParaEditar, setUsuarioParaEditar] = useState<UsuarioAdmin | undefined>(undefined);
@@ -182,6 +186,24 @@ export function SuperAdminPage() {
 
   useEffect(() => {
     void carregarDados();
+  }, []);
+
+  useEffect(() => {
+    function fechar(e: MouseEvent) {
+      if (dropdownLigaRef.current && !dropdownLigaRef.current.contains(e.target as Node))
+        setDropdownLigaId(null);
+    }
+    document.addEventListener("mousedown", fechar);
+    return () => document.removeEventListener("mousedown", fechar);
+  }, []);
+
+  useEffect(() => {
+    function fechar(e: MouseEvent) {
+      if (dropdownUsuarioRef.current && !dropdownUsuarioRef.current.contains(e.target as Node))
+        setDropdownUsuarioId(null);
+    }
+    document.addEventListener("mousedown", fechar);
+    return () => document.removeEventListener("mousedown", fechar);
   }, []);
 
   async function removerUsuario(id: string) {
@@ -327,31 +349,53 @@ export function SuperAdminPage() {
                       </button>
                     </div>
                   ) : (
-                    <div key="acoes" className="flex items-center gap-4">
+                    <div
+                      key="acoes"
+                      className="relative"
+                      ref={dropdownLigaId === l.id ? dropdownLigaRef : null}
+                    >
                       <button
-                        onClick={() => {
-                          setLigaParaEditar(l);
-                          setSheetLigaOpen(true);
-                        }}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors"
+                        onClick={() => setDropdownLigaId(dropdownLigaId === l.id ? null : l.id)}
+                        className="text-navy/40 hover:text-navy transition-colors p-1"
                       >
-                        Editar
+                        <MoreVertical className="h-4 w-4" />
                       </button>
-                      <button
-                        onClick={() => {
-                          setLigaMembros(l);
-                          setSheetMembrosOpen(true);
-                        }}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors"
-                      >
-                        Membros
-                      </button>
-                      <button
-                        onClick={() => setConfirmarArquivoId(l.id)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-400 hover:text-red-700 transition-colors"
-                      >
-                        Arquivar
-                      </button>
+                      {dropdownLigaId === l.id && (
+                        <div className="absolute right-0 top-7 z-50 bg-white border border-navy/15 min-w-[130px] shadow-sm">
+                          <button
+                            onClick={() => {
+                              setLigaParaEditar(l);
+                              setSheetLigaOpen(true);
+                              setDropdownLigaId(null);
+                            }}
+                            className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-navy hover:bg-navy/5 transition-colors flex items-center gap-2"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => {
+                              setLigaMembros(l);
+                              setSheetMembrosOpen(true);
+                              setDropdownLigaId(null);
+                            }}
+                            className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-navy hover:bg-navy/5 transition-colors flex items-center gap-2"
+                          >
+                            <Users className="h-3.5 w-3.5" />
+                            Membros
+                          </button>
+                          <button
+                            onClick={() => {
+                              setConfirmarArquivoId(l.id);
+                              setDropdownLigaId(null);
+                            }}
+                            className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2"
+                          >
+                            <Archive className="h-3.5 w-3.5" />
+                            Arquivar
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ),
                 ])}
@@ -502,22 +546,44 @@ export function SuperAdminPage() {
                       </button>
                     </div>
                   ) : (
-                    <div key="acoes" className="flex items-center gap-4">
+                    <div
+                      key="acoes"
+                      className="relative"
+                      ref={dropdownUsuarioId === u.id ? dropdownUsuarioRef : null}
+                    >
                       <button
-                        onClick={() => {
-                          setUsuarioParaEditar(u);
-                          setSheetUsuarioOpen(true);
-                        }}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors"
+                        onClick={() =>
+                          setDropdownUsuarioId(dropdownUsuarioId === u.id ? null : u.id)
+                        }
+                        className="text-navy/40 hover:text-navy transition-colors p-1"
                       >
-                        Editar
+                        <MoreVertical className="h-4 w-4" />
                       </button>
-                      <button
-                        onClick={() => setConfirmarRemocaoId(u.id)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-400 hover:text-red-700 transition-colors"
-                      >
-                        Remover
-                      </button>
+                      {dropdownUsuarioId === u.id && (
+                        <div className="absolute right-0 top-7 z-50 bg-white border border-navy/15 min-w-[130px] shadow-sm">
+                          <button
+                            onClick={() => {
+                              setUsuarioParaEditar(u);
+                              setSheetUsuarioOpen(true);
+                              setDropdownUsuarioId(null);
+                            }}
+                            className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-navy hover:bg-navy/5 transition-colors flex items-center gap-2"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => {
+                              setConfirmarRemocaoId(u.id);
+                              setDropdownUsuarioId(null);
+                            }}
+                            className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Remover
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ),
                 ])}

@@ -6,14 +6,10 @@ import { cn } from "@/lib/utils";
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block text-xs font-bold text-link-blue uppercase tracking-wider mb-1">
+    <label className="block font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/60 mb-1.5">
       {children}
     </label>
   );
-}
-
-function Dica({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs text-muted-foreground mt-1">{children}</p>;
 }
 
 function Campo({
@@ -29,7 +25,7 @@ function Campo({
     <div>
       <Label>{label}</Label>
       {children}
-      {dica && <Dica>{dica}</Dica>}
+      {dica && <p className="font-plex-sans text-[11px] text-navy/40 mt-1">{dica}</p>}
     </div>
   );
 }
@@ -90,68 +86,65 @@ export function TrocarSenhaSection({ onToast }: { onToast: (msg: string) => void
   }
 
   return (
-    <div>
-      <h3 className="font-display font-bold text-base text-navy mb-4">Trocar senha</h3>
-      <div className="space-y-4">
-        <Campo label="Senha atual">
-          <div className="relative">
-            <input
-              type={mostrar ? "text" : "password"}
-              value={senhaAtual}
-              onChange={(e) => setSenhaAtual(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-3 py-2 pr-10 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-navy/20"
-            />
-            <button
-              type="button"
-              onClick={() => setMostrar(!mostrar)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-navy transition-colors"
-            >
-              {mostrar ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-        </Campo>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Campo label="Nova senha" dica={`Mínimo ${TAMANHO_MINIMO} caracteres`}>
-            <input
-              type={mostrar ? "text" : "password"}
-              value={novaSenha}
-              onChange={(e) => setNovaSenha(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-navy/20"
-            />
-          </Campo>
-          <Campo label="Confirmar nova senha">
-            <input
-              type={mostrar ? "text" : "password"}
-              value={confirmar}
-              onChange={(e) => setConfirmar(e.target.value)}
-              placeholder="••••••••"
-              className={cn(
-                "w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2",
-                confirmar && novaSenha !== confirmar
-                  ? "border-red-400 focus:ring-red-200"
-                  : "border-brand-gray focus:ring-navy/20",
-              )}
-            />
-            {confirmar && novaSenha !== confirmar && (
-              <p className="text-xs text-red-500 mt-1">As senhas não coincidem</p>
-            )}
-          </Campo>
+    <div className="space-y-4">
+      <Campo label="Senha atual">
+        <div className="relative">
+          <input
+            type={mostrar ? "text" : "password"}
+            value={senhaAtual}
+            onChange={(e) => setSenhaAtual(e.target.value)}
+            placeholder="••••••••"
+            className="w-full px-3 py-2.5 pr-10 border border-navy/20 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 placeholder:text-navy/30"
+          />
+          <button
+            type="button"
+            onClick={() => setMostrar(!mostrar)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-navy/30 hover:text-navy transition-colors"
+          >
+            {mostrar ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
         </div>
+      </Campo>
 
-        {erro && <p className="text-sm text-red-500">{erro}</p>}
-
-        <button
-          onClick={handleAtualizarSenha}
-          disabled={!senhasValidas || loading}
-          className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-md bg-navy text-white hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <Lock className="h-4 w-4" />
-          {loading ? "Atualizando..." : "Atualizar senha"}
-        </button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Campo label="Nova senha" dica={`Mínimo ${TAMANHO_MINIMO} caracteres`}>
+          <input
+            type={mostrar ? "text" : "password"}
+            value={novaSenha}
+            onChange={(e) => setNovaSenha(e.target.value)}
+            placeholder="••••••••"
+            className="w-full px-3 py-2.5 border border-navy/20 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 placeholder:text-navy/30"
+          />
+        </Campo>
+        <Campo label="Confirmar nova senha">
+          <input
+            type={mostrar ? "text" : "password"}
+            value={confirmar}
+            onChange={(e) => setConfirmar(e.target.value)}
+            placeholder="••••••••"
+            className={cn(
+              "w-full px-3 py-2.5 border bg-white font-plex-sans text-[13px] text-navy focus:outline-none placeholder:text-navy/30",
+              confirmar && novaSenha !== confirmar
+                ? "border-red-400 focus:border-red-500"
+                : "border-navy/20 focus:border-navy/60",
+            )}
+          />
+          {confirmar && novaSenha !== confirmar && (
+            <p className="font-plex-sans text-[11px] text-red-500 mt-1">As senhas não coincidem</p>
+          )}
+        </Campo>
       </div>
+
+      {erro && <p className="font-plex-sans text-[13px] text-red-500">{erro}</p>}
+
+      <button
+        onClick={handleAtualizarSenha}
+        disabled={!senhasValidas || loading}
+        className="flex items-center gap-2 font-plex-mono text-[11px] tracking-[0.14em] uppercase border border-navy text-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        <Lock className="h-3.5 w-3.5" />
+        {loading ? "Atualizando..." : "Atualizar senha"}
+      </button>
     </div>
   );
 }

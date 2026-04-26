@@ -20,13 +20,22 @@ export function NavMain({ items, label }: { items: NavMainItem[]; label?: string
 
   return (
     <SidebarGroup>
-      {label && <SidebarGroupLabel>{label}</SidebarGroupLabel>}
+      {label && (
+        <SidebarGroupLabel className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-white/40 h-auto mb-1">
+          {label}
+        </SidebarGroupLabel>
+      )}
       <SidebarMenu>
         {items.map((item) => {
           const isActive = pathname === item.url || pathname.startsWith(`${item.url}/`);
           return (
             <SidebarMenuItem key={item.url}>
-              <SidebarMenuButton asChild tooltip={item.title} isActive={isActive}>
+              <SidebarMenuButton
+                asChild
+                tooltip={item.title}
+                isActive={isActive}
+                className={isActive ? "text-brand-yellow font-semibold" : ""}
+              >
                 <Link to={item.url}>
                   <item.icon />
                   <span>{item.title}</span>

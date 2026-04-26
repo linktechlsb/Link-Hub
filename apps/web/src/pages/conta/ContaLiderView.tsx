@@ -1,9 +1,10 @@
-import { Save, Bell, Lock, GraduationCap, User, AlertTriangle, X, Camera } from "lucide-react";
+import { AlertTriangle, Camera, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 import { carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
 import { cn } from "@/lib/utils";
 import { TrocarSenhaSection } from "@/pages/conta/TrocarSenhaSection";
+import { SectionHeader } from "@/pages/home/v1/primitives";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -31,17 +32,6 @@ type Notificacoes = {
 
 // ─── Utilitários ──────────────────────────────────────────────────────────────
 
-const LIGA_CORES: Record<string, string> = {
-  Tech: "bg-blue-100 text-blue-700",
-  Finanças: "bg-emerald-100 text-emerald-700",
-  Marketing: "bg-pink-100 text-pink-700",
-  RH: "bg-violet-100 text-violet-700",
-};
-
-function ligaBadgeClass(liga: string) {
-  return LIGA_CORES[liga] ?? "bg-gray-100 text-gray-700";
-}
-
 function gerarIniciais(nome: string) {
   return nome
     .split(" ")
@@ -51,18 +41,14 @@ function gerarIniciais(nome: string) {
     .join("");
 }
 
-// ─── Componentes base ─────────────────────────────────────────────────────────
+// ─── Primitivos ───────────────────────────────────────────────────────────────
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block text-xs font-bold text-link-blue uppercase tracking-wider mb-1">
+    <label className="block font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/60 mb-1.5">
       {children}
     </label>
   );
-}
-
-function Dica({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs text-muted-foreground mt-1">{children}</p>;
 }
 
 function Campo({
@@ -78,7 +64,7 @@ function Campo({
     <div>
       <Label>{label}</Label>
       {children}
-      {dica && <Dica>{dica}</Dica>}
+      {dica && <p className="font-plex-sans text-[11px] text-navy/40 mt-1">{dica}</p>}
     </div>
   );
 }
@@ -101,12 +87,12 @@ function InputTexto({
   return (
     <div
       className={cn(
-        "flex items-center border border-brand-gray rounded-md overflow-hidden",
-        readOnly && "bg-gray-50",
+        "flex items-center border border-navy/20 overflow-hidden",
+        readOnly && "bg-navy/[0.02]",
       )}
     >
       {prefix && (
-        <span className="px-3 py-2 text-sm text-muted-foreground bg-gray-50 border-r border-brand-gray select-none shrink-0">
+        <span className="px-3 py-2.5 font-plex-mono text-[11px] text-navy/40 bg-navy/[0.03] border-r border-navy/20 select-none shrink-0">
           {prefix}
         </span>
       )}
@@ -118,8 +104,8 @@ function InputTexto({
         placeholder={placeholder}
         onChange={(e) => onChange?.(e.target.value)}
         className={cn(
-          "flex-1 px-3 py-2 text-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-navy/20",
-          readOnly && "text-muted-foreground cursor-default",
+          "flex-1 px-3 py-2.5 font-plex-sans text-[13px] bg-transparent focus:outline-none",
+          readOnly ? "text-navy/40 cursor-default" : "text-navy placeholder:text-navy/30",
         )}
       />
     </div>
@@ -136,9 +122,8 @@ function BotaoSalvar({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-md bg-navy text-white hover:bg-navy/90 transition-colors"
+      className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors"
     >
-      <Save className="h-4 w-4" />
       {label}
     </button>
   );
@@ -146,9 +131,9 @@ function BotaoSalvar({
 
 function Toast({ mensagem, onFechar }: { mensagem: string; onFechar: () => void }) {
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-navy text-white text-sm font-medium px-4 py-3 rounded-lg shadow-lg">
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-navy text-white font-plex-sans text-[13px] px-4 py-3 shadow-lg">
       {mensagem}
-      <button onClick={onFechar} className="text-white/70 hover:text-white transition-colors">
+      <button onClick={onFechar} className="text-white/60 hover:text-white transition-colors">
         <X className="h-4 w-4" />
       </button>
     </div>
@@ -162,8 +147,8 @@ function Toggle({ ativo, onToggle }: { ativo: boolean; onToggle: () => void }) {
       aria-checked={ativo}
       onClick={onToggle}
       className={cn(
-        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-navy/30",
-        ativo ? "bg-navy" : "bg-gray-200",
+        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none",
+        ativo ? "bg-navy" : "bg-navy/20",
       )}
     >
       <span
@@ -198,6 +183,8 @@ function AbaPerfil({
 
   return (
     <div className="space-y-6">
+      <SectionHeader numero="01" eyebrow="Conta" titulo="Perfil" />
+
       <div className="flex items-center gap-4">
         <div
           className="relative group cursor-pointer shrink-0"
@@ -230,8 +217,10 @@ function AbaPerfil({
           }}
         />
         <div>
-          <p className="text-sm font-bold text-navy">{dados.nome}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Clique na foto para alterar</p>
+          <p className="font-plex-sans font-medium text-[14px] text-navy">{dados.nome}</p>
+          <p className="font-plex-sans text-[12px] text-navy/40 mt-0.5">
+            Clique na foto para alterar
+          </p>
         </div>
       </div>
 
@@ -258,7 +247,7 @@ function AbaPerfil({
           maxLength={160}
           rows={3}
           placeholder="Conte um pouco sobre você..."
-          className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-navy/20 resize-none"
+          className="w-full px-3 py-2.5 border border-navy/20 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 resize-none placeholder:text-navy/30"
         />
       </Campo>
 
@@ -301,11 +290,13 @@ function AbaDadosAcademicos({
 }) {
   return (
     <div className="space-y-6">
+      <SectionHeader numero="02" eyebrow="Conta" titulo="Dados Acadêmicos" />
+
       <Campo label="Semestre atual">
         <select
           value={dados.semestre}
           onChange={(e) => onChange("semestre", e.target.value)}
-          className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-navy/20 max-w-xs"
+          className="w-full max-w-xs px-3 py-2.5 border border-navy/20 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60"
         >
           {SEMESTRES.map((s) => (
             <option key={s} value={s}>
@@ -317,13 +308,10 @@ function AbaDadosAcademicos({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Campo label="Liga" dica="Para trocar de liga, fale com o Staff">
-          <div className="flex items-center gap-2 px-3 py-2 border border-brand-gray rounded-md bg-gray-50">
-            <span
-              className={cn("text-xs font-bold px-2 py-0.5 rounded-md", ligaBadgeClass(dados.liga))}
-            >
+          <div className="flex items-center gap-2 px-3 py-2.5 border border-navy/20 bg-navy/[0.02]">
+            <span className="font-plex-mono text-[9px] uppercase tracking-[0.14em] px-2 py-0.5 bg-navy/10 text-navy">
               {dados.liga}
             </span>
-            <span className="text-xs text-muted-foreground">Liga {dados.liga}</span>
           </div>
         </Campo>
         <Campo label="Cargo na liga" dica="Somente leitura">
@@ -349,19 +337,22 @@ function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
 
   return (
     <div className="space-y-8">
-      <TrocarSenhaSection onToast={onToast} />
+      <div>
+        <SectionHeader numero="03" eyebrow="Conta" titulo="Segurança" />
+        <TrocarSenhaSection onToast={onToast} />
+      </div>
 
-      <div className="border border-red-200 rounded-lg p-5">
-        <h3 className="font-display font-bold text-base text-red-600 mb-1 flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4" />
+      <div className="border-t border-red-200 pt-5">
+        <p className="font-plex-mono text-[9px] uppercase tracking-[0.18em] text-red-500 mb-3 flex items-center gap-2">
+          <AlertTriangle className="h-3.5 w-3.5" />
           Zona de perigo
-        </h3>
-        <p className="text-sm text-muted-foreground mb-4">
+        </p>
+        <p className="font-plex-sans text-[13px] text-navy/50 mb-4">
           Desativar sua conta remove o acesso à plataforma. Esta ação pode ser revertida pelo Staff.
         </p>
         <button
           onClick={() => setModalDesativar(true)}
-          className="px-4 py-2 text-sm font-bold rounded-md border border-red-400 text-red-600 hover:bg-red-50 transition-colors"
+          className="font-plex-mono text-[10px] uppercase tracking-[0.14em] border border-red-400 text-red-600 px-3 py-1.5 hover:bg-red-50 transition-colors"
         >
           Desativar conta
         </button>
@@ -369,36 +360,38 @@ function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
 
       {modalDesativar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
-            <div className="flex items-start justify-between mb-4">
-              <h3 className="font-display font-bold text-lg text-navy">Desativar conta</h3>
+          <div className="bg-white shadow-xl w-full max-w-md mx-4 p-6">
+            <div className="flex items-start justify-between mb-5">
+              <h3 className="font-display font-bold text-[18px] tracking-[-0.02em] text-navy">
+                Desativar conta
+              </h3>
               <button
                 onClick={fecharModal}
-                className="text-muted-foreground hover:text-navy transition-colors"
+                className="text-navy/30 hover:text-navy transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Digite <strong className="text-navy">DESATIVAR</strong> para confirmar.
+            <p className="font-plex-sans text-[13px] text-navy/60 mb-4">
+              Digite <strong className="text-navy font-bold">DESATIVAR</strong> para confirmar.
             </p>
             <input
               type="text"
               value={textoConfirmacao}
               onChange={(e) => setTextoConfirmacao(e.target.value)}
               placeholder="DESATIVAR"
-              className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-red-200 mb-4"
+              className="w-full px-3 py-2.5 border border-navy/20 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 mb-4 placeholder:text-navy/30"
             />
             <div className="flex gap-3">
               <button
                 onClick={fecharModal}
-                className="flex-1 px-4 py-2 text-sm font-medium rounded-md border border-brand-gray text-navy hover:bg-gray-50 transition-colors"
+                className="flex-1 font-plex-mono text-[10px] uppercase tracking-[0.14em] border border-navy/20 text-navy px-3 py-2 hover:bg-navy/5 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 disabled={textoConfirmacao !== "DESATIVAR"}
-                className="flex-1 px-4 py-2 text-sm font-bold rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-red-600 text-white px-3 py-2 hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Confirmar desativação
               </button>
@@ -465,13 +458,10 @@ function AbaNotificacoes({
 
   function renderOpcao({ chave, label, descricao }: OpcaoNotif) {
     return (
-      <div
-        key={chave}
-        className="flex items-center justify-between py-4 border-b border-brand-gray last:border-0"
-      >
+      <div key={chave} className="flex items-center justify-between py-4 border-b border-navy/10">
         <div>
-          <p className="text-sm font-medium text-navy">{label}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{descricao}</p>
+          <p className="font-plex-sans font-medium text-[13px] text-navy">{label}</p>
+          <p className="font-plex-sans text-[12px] text-navy/40 mt-0.5">{descricao}</p>
         </div>
         <Toggle ativo={notif[chave]} onToggle={() => onChange(chave, !notif[chave])} />
       </div>
@@ -480,15 +470,17 @@ function AbaNotificacoes({
 
   return (
     <div className="space-y-6">
-      <div>{base.map(renderOpcao)}</div>
+      <SectionHeader numero="04" eyebrow="Conta" titulo="Notificações" />
+
+      <div className="border-t border-navy/15">{base.map(renderOpcao)}</div>
+
       <div>
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-1">
+        <p className="font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Exclusivo do Líder
         </p>
-        <div className="border border-brand-gray rounded-lg overflow-hidden">
-          {lider.map(renderOpcao)}
-        </div>
+        <div className="border-t border-navy/15">{lider.map(renderOpcao)}</div>
       </div>
+
       <BotaoSalvar onClick={onSalvar} label="Salvar preferências" />
     </div>
   );
@@ -496,11 +488,11 @@ function AbaNotificacoes({
 
 // ─── View principal ───────────────────────────────────────────────────────────
 
-const ABAS: { key: Aba; label: string; icon: React.ElementType }[] = [
-  { key: "perfil", label: "Perfil", icon: User },
-  { key: "academico", label: "Dados acadêmicos", icon: GraduationCap },
-  { key: "seguranca", label: "Segurança", icon: Lock },
-  { key: "notificacoes", label: "Notificações", icon: Bell },
+const ABAS: { key: Aba; label: string }[] = [
+  { key: "perfil", label: "Perfil" },
+  { key: "academico", label: "Acadêmico" },
+  { key: "seguranca", label: "Segurança" },
+  { key: "notificacoes", label: "Notificações" },
 ];
 
 const ROLE_LABEL: Record<string, string> = {
@@ -606,59 +598,56 @@ export function ContaLiderView() {
   }
 
   return (
-    <div className="p-8 max-w-3xl">
-      <div className="mb-6">
-        <h1 className="font-display font-bold text-2xl text-navy">Minha conta</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+    <div className="max-w-3xl mx-auto px-8 py-10">
+      <div className="mb-10">
+        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
+          Minha conta
+        </h1>
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
           Gerencie suas informações e preferências
         </p>
       </div>
 
-      <div className="flex gap-1 border-b border-brand-gray mb-6 overflow-x-auto">
-        {ABAS.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setAbaAtiva(key)}
-            className={cn(
-              "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-colors",
-              abaAtiva === key
-                ? "border-navy text-navy"
-                : "border-transparent text-muted-foreground hover:text-navy",
-            )}
-          >
-            <Icon className="h-3.5 w-3.5" />
-            {label}
-          </button>
-        ))}
+      <div className="border-b border-navy/15 mb-8">
+        <div className="flex">
+          {ABAS.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setAbaAtiva(key)}
+              className={cn(
+                "px-5 py-3 font-plex-mono text-[10px] uppercase tracking-[0.14em] transition-colors border-b-2 -mb-px",
+                abaAtiva === key
+                  ? "border-navy text-navy"
+                  : "border-transparent text-navy/40 hover:text-navy",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="bg-white border border-brand-gray rounded-lg p-6">
-        {abaAtiva === "perfil" && (
-          <AbaPerfil
-            dados={dados}
-            avatarUrl={avatarUrl}
-            uploadandoAvatar={uploadandoAvatar}
-            onChange={alterarDado}
-            onSalvar={salvarPerfil}
-            onAvatarChange={handleAvatarChange}
-          />
-        )}
-        {abaAtiva === "academico" && (
-          <AbaDadosAcademicos
-            dados={dados}
-            onChange={alterarDado}
-            onSalvar={salvarDadosAcademicos}
-          />
-        )}
-        {abaAtiva === "seguranca" && <AbaSeguranca onToast={exibirToast} />}
-        {abaAtiva === "notificacoes" && (
-          <AbaNotificacoes
-            notif={notif}
-            onChange={(k, v) => setNotif((p) => ({ ...p, [k]: v }))}
-            onSalvar={() => exibirToast("Preferências salvas.")}
-          />
-        )}
-      </div>
+      {abaAtiva === "perfil" && (
+        <AbaPerfil
+          dados={dados}
+          avatarUrl={avatarUrl}
+          uploadandoAvatar={uploadandoAvatar}
+          onChange={alterarDado}
+          onSalvar={salvarPerfil}
+          onAvatarChange={handleAvatarChange}
+        />
+      )}
+      {abaAtiva === "academico" && (
+        <AbaDadosAcademicos dados={dados} onChange={alterarDado} onSalvar={salvarDadosAcademicos} />
+      )}
+      {abaAtiva === "seguranca" && <AbaSeguranca onToast={exibirToast} />}
+      {abaAtiva === "notificacoes" && (
+        <AbaNotificacoes
+          notif={notif}
+          onChange={(k, v) => setNotif((p) => ({ ...p, [k]: v }))}
+          onSalvar={() => exibirToast("Preferências salvas.")}
+        />
+      )}
 
       {toast && <Toast mensagem={toast} onFechar={() => setToast(null)} />}
     </div>

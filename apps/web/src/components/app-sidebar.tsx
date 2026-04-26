@@ -75,7 +75,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar
+      collapsible="icon"
+      {...props}
+      style={
+        {
+          "--sidebar-background": "218 66% 18%",
+          "--sidebar-foreground": "0 0% 95%",
+          "--sidebar-accent": "218 50% 26%",
+          "--sidebar-accent-foreground": "0 0% 100%",
+          "--sidebar-border": "218 50% 28%",
+          "--sidebar-ring": "43 98% 63%",
+          "--sidebar-primary": "43 98% 63%",
+          "--sidebar-primary-foreground": "218 66% 18%",
+        } as React.CSSProperties
+      }
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

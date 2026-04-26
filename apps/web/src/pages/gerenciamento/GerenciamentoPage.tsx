@@ -16,6 +16,7 @@ import {
   Star,
   Upload,
   Loader2,
+  MoreVertical,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -38,6 +39,7 @@ interface MembroAtivo {
   cargo: Cargo;
   iniciais: string;
   cor: string;
+  avatarUrl?: string | null;
   novo?: boolean;
 }
 
@@ -191,6 +193,7 @@ interface MembroAPI {
   email: string;
   cargo: string | null;
   role: string | null;
+  avatar_url?: string | null;
 }
 
 function apiParaMembro(m: MembroAPI): MembroAtivo {
@@ -210,7 +213,15 @@ function apiParaMembro(m: MembroAPI): MembroAtivo {
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase() ?? "")
     .join("");
-  return { id: m.usuario_id, nome, email: m.email, cargo, iniciais, cor: corPorNome(nome) };
+  return {
+    id: m.usuario_id,
+    nome,
+    email: m.email,
+    cargo,
+    iniciais,
+    cor: corPorNome(nome),
+    avatarUrl: m.avatar_url,
+  };
 }
 
 function cargoBadgeClass(cargo: Cargo) {
@@ -240,7 +251,18 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
   const [salvandoEdicaoId, setSalvandoEdicaoId] = useState<string | null>(null);
   const [confirmandoRemoverId, setConfirmandoRemoverId] = useState<string | null>(null);
   const [removendoId, setRemovendoId] = useState<string | null>(null);
+  const [dropdownAbertoId, setDropdownAbertoId] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    function fechar(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
+        setDropdownAbertoId(null);
+    }
+    document.addEventListener("mousedown", fechar);
+    return () => document.removeEventListener("mousedown", fechar);
+  }, []);
 
   useEffect(() => {
     if (!ligaId) {
@@ -418,10 +440,14 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
             >
               <div className="flex items-center gap-3">
                 <div
-                  className="h-9 w-9 flex items-center justify-center text-white font-plex-mono text-[11px] shrink-0"
-                  style={{ backgroundColor: m.cor }}
+                  className="h-9 w-9 shrink-0 overflow-hidden flex items-center justify-center text-white font-plex-mono text-[11px]"
+                  style={m.avatarUrl ? undefined : { backgroundColor: m.cor }}
                 >
-                  {m.iniciais}
+                  {m.avatarUrl ? (
+                    <img src={m.avatarUrl} alt={m.nome} className="h-full w-full object-cover" />
+                  ) : (
+                    m.iniciais
+                  )}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
@@ -496,20 +522,40 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
                     >
                       {m.cargo}
                     </span>
-                    <button
-                      onClick={() => iniciarEdicao(m)}
-                      className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
-                    >
-                      Editar cargo
-                    </button>
-                    {m.id !== diretor?.id && (
+                    <div className="relative" ref={dropdownAbertoId === m.id ? dropdownRef : null}>
                       <button
-                        onClick={() => setConfirmandoRemoverId(m.id)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-400 hover:text-red-600 transition-colors"
+                        onClick={() => setDropdownAbertoId(dropdownAbertoId === m.id ? null : m.id)}
+                        className="text-navy/40 hover:text-navy transition-colors p-1"
                       >
-                        Remover
+                        <MoreVertical className="h-4 w-4" />
                       </button>
-                    )}
+                      {dropdownAbertoId === m.id && (
+                        <div className="absolute right-0 top-7 z-50 bg-white border border-navy/15 min-w-[130px] shadow-sm">
+                          <button
+                            onClick={() => {
+                              iniciarEdicao(m);
+                              setDropdownAbertoId(null);
+                            }}
+                            className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-navy hover:bg-navy/5 transition-colors flex items-center gap-2"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            Editar
+                          </button>
+                          {m.id !== diretor?.id && (
+                            <button
+                              onClick={() => {
+                                setConfirmandoRemoverId(m.id);
+                                setDropdownAbertoId(null);
+                              }}
+                              className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Remover
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </>
                 )}
               </div>
