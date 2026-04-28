@@ -153,6 +153,22 @@ ligasRouter.get("/:id/membros", authenticate, async (req, res, next) => {
   }
 });
 
+// GET /ligas/:id/professor — professor responsável pela liga
+ligasRouter.get("/:id/professor", authenticate, async (req, res, next) => {
+  try {
+    const id = req.params["id"] as string;
+    const [row] = await sql`
+      SELECT u.id, u.nome, u.email
+      FROM ligas l
+      LEFT JOIN usuarios u ON u.id = l.professor_id
+      WHERE l.id = ${id}
+    `;
+    res.json(row?.["id"] ? row : null);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /ligas/:id/projetos — projetos da liga (somente membros, staff ou professor)
 ligasRouter.get(
   "/:id/projetos",

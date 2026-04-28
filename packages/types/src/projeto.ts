@@ -12,6 +12,12 @@ export type StatusProjeto =
 
 export type StatusAprovacao = "pendente" | "aprovado" | "rejeitado";
 
+export type TipoProjeto =
+  | "iniciacao_cientifica"
+  | "projeto_interno"
+  | "projeto_externo"
+  | "projeto_estruturante";
+
 export interface Projeto {
   id: string;
   liga_id: string;
@@ -26,6 +32,10 @@ export interface Projeto {
   percentual_concluido: number;
   aprovacao_professor: StatusAprovacao;
   aprovacao_staff: StatusAprovacao;
+  impacto?: string;
+  professor_id?: string;
+  empresa_parceira?: string;
+  tipo_projeto?: TipoProjeto;
   criado_em: string;
   atualizado_em: string;
 }
@@ -36,6 +46,10 @@ export interface CreateProjetoInput {
   descricao?: string;
   responsavel_id: string;
   prazo?: string;
+  impacto?: string;
+  professor_id?: string;
+  empresa_parceira?: string;
+  tipo_projeto?: TipoProjeto;
 }
 
 export interface UpdateProjetoInput {
@@ -44,4 +58,8 @@ export interface UpdateProjetoInput {
   responsavel_id?: string;
   prazo?: string;
   percentual_concluido?: number;
+  impacto?: string;
+  professor_id?: string;
+  empresa_parceira?: string;
+  tipo_projeto?: TipoProjeto;
 }

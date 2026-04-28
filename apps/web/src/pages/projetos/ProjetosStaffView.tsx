@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
@@ -21,7 +21,18 @@ type ProjetoAPI = {
 
 type LigaAPI = { id: string; nome: string };
 
-type NovoForm = { titulo: string; descricao: string; prazo: string; liga_id: string };
+type NovoForm = {
+  titulo: string;
+  descricao: string;
+  prazo: string;
+  liga_id: string;
+  impacto: string;
+  professor_id: string;
+  empresa_parceira: string;
+  tipo_projeto: string;
+};
+
+type ProfessorAPI = { id: string; nome: string; email: string } | null;
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   rascunho: { label: "Rascunho", className: "text-navy/50" },
@@ -38,7 +49,16 @@ async function getToken() {
   return data.session?.access_token ?? "";
 }
 
-const FORM_VAZIO: NovoForm = { titulo: "", descricao: "", prazo: "", liga_id: "" };
+const FORM_VAZIO: NovoForm = {
+  titulo: "",
+  descricao: "",
+  prazo: "",
+  liga_id: "",
+  impacto: "",
+  professor_id: "",
+  empresa_parceira: "",
+  tipo_projeto: "",
+};
 
 export function ProjetosStaffView() {
   const { data: projetosData, refetch: refetchProjetos } =
@@ -53,6 +73,7 @@ export function ProjetosStaffView() {
   const [motivo, setMotivo] = useState("");
   const [form, setForm] = useState<NovoForm>(FORM_VAZIO);
   const [salvando, setSalvando] = useState(false);
+  const [professorDaLiga, setProfessorDaLiga] = useState<ProfessorAPI>(null);
 
   const filtrados = projetos.filter((p) => {
     if (filtroLiga && p.liga?.id !== filtroLiga) return false;
@@ -113,6 +134,24 @@ export function ProjetosStaffView() {
     }
   }
 
+  useEffect(() => {
+    if (!form.liga_id) {
+      setProfessorDaLiga(null);
+      return;
+    }
+    getToken().then((token) =>
+      fetch(`/api/ligas/${form.liga_id}/professor`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => r.json())
+        .then((data: ProfessorAPI) => {
+          setProfessorDaLiga(data);
+          setForm((f) => ({ ...f, professor_id: data?.id ?? "" }));
+        })
+        .catch(() => setProfessorDaLiga(null)),
+    );
+  }, [form.liga_id]);
+
   async function handleCriar() {
     if (!form.titulo.trim() || !form.liga_id) return;
     setSalvando(true);
@@ -126,6 +165,10 @@ export function ProjetosStaffView() {
           descricao: form.descricao.trim() || undefined,
           prazo: form.prazo || undefined,
           liga_id: form.liga_id,
+          impacto: form.impacto.trim() || undefined,
+          professor_id: form.professor_id || undefined,
+          empresa_parceira: form.empresa_parceira.trim() || undefined,
+          tipo_projeto: form.tipo_projeto || undefined,
         }),
       });
       setSheetNovo(false);
@@ -419,6 +462,56 @@ export function ProjetosStaffView() {
 
             <div>
               <label
+                htmlFor="novo-tipo"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+              >
+                Tipo de Projeto
+              </label>
+              <select
+                id="novo-tipo"
+                value={form.tipo_projeto}
+                onChange={(e) => setForm((f) => ({ ...f, tipo_projeto: e.target.value }))}
+                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+              >
+                <option value="">Selecionar tipo...</option>
+                <option value="iniciacao_cientifica">Iniciação Científica</option>
+                <option value="projeto_interno">Projeto Interno</option>
+                <option value="projeto_externo">Projeto Externo (com parceiros)</option>
+                <option value="projeto_estruturante">
+                  Projeto Estruturante (Interdisciplinar e/ou Inovação)
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="novo-professor"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+              >
+                Professor Mentor Alocado
+              </label>
+              <select
+                id="novo-professor"
+                value={form.professor_id}
+                onChange={(e) => setForm((f) => ({ ...f, professor_id: e.target.value }))}
+                disabled={!form.liga_id || !professorDaLiga}
+                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <option value="">
+                  {!form.liga_id
+                    ? "Selecione uma liga primeiro"
+                    : professorDaLiga
+                      ? "Nenhum"
+                      : "Nenhum professor na liga"}
+                </option>
+                {professorDaLiga && (
+                  <option value={professorDaLiga.id}>{professorDaLiga.nome}</option>
+                )}
+              </select>
+            </div>
+
+            <div>
+              <label
                 htmlFor="novo-descricao"
                 className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
               >
@@ -431,6 +524,39 @@ export function ProjetosStaffView() {
                 placeholder="Descreva o projeto..."
                 rows={3}
                 className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60 resize-none"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="novo-impacto"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+              >
+                Impacto Projetado/Realizado
+              </label>
+              <textarea
+                id="novo-impacto"
+                value={form.impacto}
+                onChange={(e) => setForm((f) => ({ ...f, impacto: e.target.value }))}
+                placeholder="Descreva o impacto esperado ou realizado..."
+                rows={3}
+                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60 resize-none"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="novo-empresa"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+              >
+                Empresa Parceira Envolvida
+              </label>
+              <input
+                id="novo-empresa"
+                value={form.empresa_parceira}
+                onChange={(e) => setForm((f) => ({ ...f, empresa_parceira: e.target.value }))}
+                placeholder="Ex: Empresa XYZ"
+                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
               />
             </div>
 

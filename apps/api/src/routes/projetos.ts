@@ -45,12 +45,26 @@ projetosRouter.get("/", authenticate, async (req, res, next) => {
 projetosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
     const user = (req as AuthenticatedRequest).user!;
-    const { liga_id, titulo, descricao, responsavel_id, prazo } = req.body as {
+    const {
+      liga_id,
+      titulo,
+      descricao,
+      responsavel_id,
+      prazo,
+      impacto,
+      professor_id,
+      empresa_parceira,
+      tipo_projeto,
+    } = req.body as {
       liga_id: string;
       titulo: string;
       descricao?: string;
       responsavel_id: string;
       prazo?: string;
+      impacto?: string;
+      professor_id?: string;
+      empresa_parceira?: string;
+      tipo_projeto?: string;
     };
 
     if (!liga_id || !titulo || !responsavel_id) {
@@ -78,6 +92,10 @@ projetosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (r
     };
     if (descricao !== undefined) body["descricao"] = descricao;
     if (prazo !== undefined) body["prazo"] = prazo;
+    if (impacto !== undefined) body["impacto"] = impacto;
+    if (professor_id !== undefined) body["professor_id"] = professor_id;
+    if (empresa_parceira !== undefined) body["empresa_parceira"] = empresa_parceira;
+    if (tipo_projeto !== undefined) body["tipo_projeto"] = tipo_projeto;
 
     const [projeto] = await sql`
       INSERT INTO projetos ${sql(body)} RETURNING *, nome AS titulo
@@ -193,11 +211,9 @@ projetosRouter.patch(
           return;
         }
         if (!(await usuarioEhProfessorDaLiga(user.id, alvo.liga_id as string))) {
-          res
-            .status(403)
-            .json({
-              error: "Você só pode aprovar projetos de ligas em que é o professor responsável.",
-            });
+          res.status(403).json({
+            error: "Você só pode aprovar projetos de ligas em que é o professor responsável.",
+          });
           return;
         }
       }
@@ -237,6 +253,79 @@ projetosRouter.patch(
       }
 
       res.json(resultado);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// PATCH /projetos/:id — atualizar dados do projeto
+projetosRouter.patch(
+  "/:id",
+  authenticate,
+  requireRole("staff", "diretor"),
+  async (req, res, next) => {
+    try {
+      const user = (req as AuthenticatedRequest).user!;
+      const id = req.params["id"] as string;
+      const {
+        titulo,
+        descricao,
+        responsavel_id,
+        prazo,
+        status,
+        impacto,
+        professor_id,
+        empresa_parceira,
+        tipo_projeto,
+      } = req.body as {
+        titulo?: string;
+        descricao?: string;
+        responsavel_id?: string;
+        prazo?: string;
+        status?: StatusProjeto;
+        impacto?: string;
+        professor_id?: string;
+        empresa_parceira?: string;
+        tipo_projeto?: string;
+      };
+
+      const [existente] =
+        await sql`SELECT liga_id, criado_por FROM projetos WHERE id = ${id} LIMIT 1`;
+      if (!existente) {
+        res.status(404).json({ error: "Projeto não encontrado." });
+        return;
+      }
+
+      if (
+        user.role === "diretor" &&
+        !(await usuarioEhDiretorDaLiga(user.email, existente["liga_id"] as string))
+      ) {
+        res.status(403).json({ error: "Você só pode editar projetos da sua própria liga." });
+        return;
+      }
+
+      const updates: Record<string, unknown> = {};
+      if (titulo !== undefined) updates["nome"] = titulo;
+      if (descricao !== undefined) updates["descricao"] = descricao;
+      if (responsavel_id !== undefined) updates["responsavel_id"] = responsavel_id;
+      if (prazo !== undefined) updates["prazo"] = prazo;
+      if (status !== undefined) updates["status"] = status;
+      if (impacto !== undefined) updates["impacto"] = impacto;
+      if (professor_id !== undefined) updates["professor_id"] = professor_id;
+      if (empresa_parceira !== undefined) updates["empresa_parceira"] = empresa_parceira;
+      if (tipo_projeto !== undefined) updates["tipo_projeto"] = tipo_projeto;
+
+      if (Object.keys(updates).length === 0) {
+        res.status(400).json({ error: "Nenhum campo para atualizar." });
+        return;
+      }
+
+      const [projeto] = await sql`
+      UPDATE projetos SET ${sql(updates)} WHERE id = ${id} RETURNING *, nome AS titulo
+    `;
+
+      res.json(projeto);
     } catch (err) {
       next(err);
     }
