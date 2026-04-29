@@ -24,4 +24,8 @@ export const cache = {
       if (chave.startsWith(prefixo)) store.delete(chave);
     }
   },
+
+  limpar(): void {
+    store.clear();
+  },
 };

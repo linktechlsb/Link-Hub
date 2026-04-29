@@ -17,6 +17,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { cache } from "@/lib/cache";
 import { supabase } from "@/lib/supabase";
 
 export type NavUserData = {
@@ -41,6 +42,7 @@ export function NavUser({ user }: { user: NavUserData }) {
   const navigate = useNavigate();
 
   async function handleLogout() {
+    cache.limpar();
     await supabase.auth.signOut();
     navigate("/login");
   }

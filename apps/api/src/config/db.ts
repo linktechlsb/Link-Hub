@@ -9,4 +9,8 @@ if (!env.DATABASE_URL) {
   );
 }
 
-export const sql = postgres(env.DATABASE_URL);
+export const sql = postgres(env.DATABASE_URL, {
+  max: 15, // máximo de conexões simultâneas
+  idle_timeout: 20, // fecha conexões ociosas após 20s
+  connect_timeout: 10,
+});
