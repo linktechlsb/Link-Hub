@@ -254,7 +254,7 @@ export function ContaStaffView() {
         </p>
       </div>
 
-      <div>
+      <div className="border-b border-[#DBDFE4]">
         <div className="flex">
           {ABAS.map(({ key, label }) => (
             <button

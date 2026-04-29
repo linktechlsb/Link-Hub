@@ -30,7 +30,7 @@ interface SectionHeaderProps {
 
 export function SectionHeader({ numero, eyebrow, titulo, acao }: SectionHeaderProps) {
   return (
-    <div className="border-t border-navy pt-5 mb-6 flex items-end justify-between">
+    <div className="pt-5 mb-6 flex items-end justify-between">
       <div>
         <div className="flex items-baseline gap-4">
           <span className="font-plex-mono text-[11px] tracking-[0.18em] text-navy">{numero}</span>
