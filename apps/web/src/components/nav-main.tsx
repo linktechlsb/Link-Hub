@@ -34,7 +34,7 @@ export function NavMain({ items, label }: { items: NavMainItem[]; label?: string
                 asChild
                 tooltip={item.title}
                 isActive={isActive}
-                className={isActive ? "text-brand-yellow font-semibold" : ""}
+                className={`rounded-none ${isActive ? "text-brand-yellow font-semibold" : ""}`}
               >
                 <Link to={item.url}>
                   <item.icon />

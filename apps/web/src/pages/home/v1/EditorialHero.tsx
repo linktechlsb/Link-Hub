@@ -129,7 +129,7 @@ export function EditorialHero({ ligas }: EditorialHeroProps) {
                   <div className="mt-5 pt-4 border-t border-navy grid grid-cols-3 gap-0">
                     <Stat label="Score" value="78" />
                     <Stat label="Projetos" value={String(liga.projetos_ativos ?? 0)} />
-                    <Stat label="Membros" value="—" />
+                    <Stat label="Membros" value={String(liga.total_membros ?? "—")} />
                   </div>
                 </div>
               </div>

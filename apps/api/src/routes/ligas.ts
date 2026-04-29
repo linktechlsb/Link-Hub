@@ -41,7 +41,12 @@ ligasRouter.get("/", authenticate, async (_req, res, next) => {
           FROM projetos p
           WHERE p.liga_id = l.id
             AND p.status IN ('aprovado', 'em_andamento')
-        ) AS projetos_ativos
+        ) AS projetos_ativos,
+        (
+          SELECT COUNT(*)::int
+          FROM liga_membros lm2
+          WHERE lm2.liga_id = l.id
+        ) AS total_membros
       FROM ligas l
       LEFT JOIN usuarios lu ON lu.id = l.lider_id
       WHERE l.ativo = true

@@ -258,11 +258,15 @@ usuariosRouter.get(
   },
 );
 
-// PATCH /usuarios/:id — atualiza nome e/ou role (admin)
+// PATCH /usuarios/:id — atualiza nome, role e/ou liga (admin)
 usuariosRouter.patch("/:id", authenticate, requireRole("staff"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
-    const { nome, role } = req.body as { nome?: string; role?: string };
+    const { nome, role, liga_id } = req.body as {
+      nome?: string;
+      role?: string;
+      liga_id?: string | null;
+    };
 
     const [usuario] = await sql`
       UPDATE usuarios
@@ -276,6 +280,17 @@ usuariosRouter.patch("/:id", authenticate, requireRole("staff"), async (req, res
     if (!usuario) {
       res.status(404).json({ error: "Usuário não encontrado." });
       return;
+    }
+
+    if (liga_id !== undefined) {
+      await sql`DELETE FROM liga_membros WHERE usuario_id = ${id}`;
+      if (liga_id) {
+        await sql`
+          INSERT INTO liga_membros (liga_id, usuario_id)
+          VALUES (${liga_id}, ${id})
+          ON CONFLICT (liga_id, usuario_id) DO NOTHING
+        `;
+      }
     }
 
     res.json(usuario);

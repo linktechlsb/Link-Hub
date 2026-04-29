@@ -68,7 +68,7 @@ export function UsuarioSheet({ open, onOpenChange, usuario, ligas, onSalvo }: Us
         const res = await fetch(`/api/usuarios/${usuario.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ nome: nome.trim(), role }),
+          body: JSON.stringify({ nome: nome.trim(), role, liga_id: ligaId || null }),
         });
         if (!res.ok) {
           const data = await res.json();
@@ -183,32 +183,30 @@ export function UsuarioSheet({ open, onOpenChange, usuario, ligas, onSalvo }: Us
             </select>
           </div>
 
-          {isNovo && (
-            <div>
-              <label
-                htmlFor="u-liga"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
-              >
-                Liga{" "}
-                <span className="normal-case font-plex-sans text-[11px] text-navy/40">
-                  (opcional)
-                </span>
-              </label>
-              <select
-                id="u-liga"
-                value={ligaId}
-                onChange={(e) => setLigaId(e.target.value)}
-                className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60"
-              >
-                <option value="">— Sem liga —</option>
-                {ligas.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          <div>
+            <label
+              htmlFor="u-liga"
+              className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+            >
+              Liga{" "}
+              <span className="normal-case font-plex-sans text-[11px] text-navy/40">
+                (opcional)
+              </span>
+            </label>
+            <select
+              id="u-liga"
+              value={ligaId}
+              onChange={(e) => setLigaId(e.target.value)}
+              className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60"
+            >
+              <option value="">— Sem liga —</option>
+              {ligas.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.nome}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
         </div>

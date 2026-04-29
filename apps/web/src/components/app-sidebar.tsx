@@ -94,7 +94,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" className="hover:bg-transparent active:bg-transparent">
+            <SidebarMenuButton
+              size="lg"
+              className="rounded-none hover:bg-transparent active:bg-transparent"
+            >
               <div className="flex aspect-square size-8 items-center justify-center">
                 <img src="/link_logo.png" alt="Link" className="size-8 object-contain" />
               </div>

@@ -73,7 +73,10 @@ export function TrocarSenhaSection({ onToast }: { onToast: (msg: string) => void
     const { error: erroUpdate } = await supabase.auth.updateUser({ password: novaSenha });
 
     if (erroUpdate) {
-      setErro(`Erro ao atualizar senha: ${erroUpdate.message}`);
+      const msg = erroUpdate.message.includes("New password should be different")
+        ? "A nova senha deve ser diferente da senha atual."
+        : `Erro ao atualizar senha: ${erroUpdate.message}`;
+      setErro(msg);
       setLoading(false);
       return;
     }
