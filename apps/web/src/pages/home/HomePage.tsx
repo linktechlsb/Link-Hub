@@ -26,7 +26,9 @@ const ROLE_LABELS: Record<string, string> = {
 export function HomePage() {
   const { role } = useUser();
   const { data: ligasData } = useCachedFetch<Liga[]>("/api/ligas");
-  const { data: minhaLigaData } = useCachedFetch<Liga>("/api/ligas/minha");
+  const { data: minhaLigaData } = useCachedFetch<Liga>(
+    role !== null && role !== "staff" ? "/api/ligas/minha" : null,
+  );
   const { data: pendentesData } = useCachedFetch<{
     projetos: { id: string; titulo: string; liga?: { nome: string } }[];
     eventos: { id: string; titulo: string; liga?: { nome: string } }[];
