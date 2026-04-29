@@ -378,7 +378,7 @@ export function ContaProfessorView() {
         </p>
       </div>
 
-      <div className="border-b border-navy/15 mb-8">
+      <div>
         <div className="flex">
           {ABAS.map(({ key, label }) => (
             <button
