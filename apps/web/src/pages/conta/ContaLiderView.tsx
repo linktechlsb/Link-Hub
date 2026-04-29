@@ -1,7 +1,7 @@
 import { AlertTriangle, Camera, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
-import { carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
+import { carregarMinhaLiga, carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
 import { cn } from "@/lib/utils";
 import { TrocarSenhaSection } from "@/pages/conta/TrocarSenhaSection";
 import { SectionHeader } from "@/pages/home/v1/primitives";
@@ -530,7 +530,7 @@ export function ContaLiderView() {
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
-    carregarUsuarioMe().then((usuario) => {
+    Promise.all([carregarUsuarioMe(), carregarMinhaLiga()]).then(([usuario, liga]) => {
       if (!usuario) return;
       setAvatarUrl(usuario.avatar_url);
       setDados((prev) => ({
@@ -542,6 +542,7 @@ export function ContaLiderView() {
         linkedin: usuario.linkedin ?? "",
         semestre: usuario.semestre ?? "1",
         cargo: ROLE_LABEL[usuario.role] ?? usuario.role,
+        liga: liga?.nome ?? "",
       }));
     });
   }, []);

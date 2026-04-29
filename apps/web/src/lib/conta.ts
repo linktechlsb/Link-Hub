@@ -64,6 +64,23 @@ export async function salvarPerfilMe(data: {
   return res.json() as Promise<UsuarioMe>;
 }
 
+export interface MinhaLiga {
+  id: string;
+  nome: string;
+}
+
+export async function carregarMinhaLiga(): Promise<MinhaLiga | null> {
+  const token = await getToken();
+  if (!token) return null;
+  const res = await fetch(`/api/ligas/minha`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) return null;
+  const liga = (await res.json()) as MinhaLiga;
+  return { id: liga.id, nome: liga.nome };
+}
+
 export async function uploadAvatarMe(file: File): Promise<UsuarioMe | null> {
   const token = await getToken();
   if (!token) return null;

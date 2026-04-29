@@ -1,7 +1,7 @@
 import { Camera, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
-import { carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
+import { carregarMinhaLiga, carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
 import { cn } from "@/lib/utils";
 import { TrocarSenhaSection } from "@/pages/conta/TrocarSenhaSection";
 import { SectionHeader } from "@/pages/home/v1/primitives";
@@ -311,7 +311,7 @@ export function ContaProfessorView() {
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
-    carregarUsuarioMe().then((usuario) => {
+    Promise.all([carregarUsuarioMe(), carregarMinhaLiga()]).then(([usuario, liga]) => {
       if (!usuario) return;
       setAvatarUrl(usuario.avatar_url);
       setDados((prev) => ({
@@ -321,6 +321,7 @@ export function ContaProfessorView() {
         bio: usuario.biografia ?? "",
         instagram: usuario.instagram ?? "",
         linkedin: usuario.linkedin ?? "",
+        liga: liga?.nome ?? "",
       }));
     });
   }, []);
