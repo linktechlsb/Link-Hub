@@ -1,6 +1,7 @@
 import { Router, type Router as IRouter } from "express";
 
 import { eventosRouter } from "./eventos.js";
+import { feedbacksRouter } from "./feedbacks.js";
 import { ligasRouter } from "./ligas.js";
 import { muralRouter } from "./mural.js";
 import { pendentesRouter } from "./pendentes.js";
@@ -29,3 +30,4 @@ router.use("/receitas", receitasRouter);
 router.use("/pendentes", pendentesRouter);
 router.use("/mural", muralRouter);
 router.use("/ranking", rankingRouter);
+router.use("/feedbacks", feedbacksRouter);

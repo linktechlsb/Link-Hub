@@ -3,6 +3,7 @@ import {
   ClipboardList,
   FolderKanban,
   Home,
+  MessageCirclePlus,
   MessageSquare,
   Settings,
   ShieldCheck,
@@ -12,6 +13,7 @@ import {
 import * as React from "react";
 import { useEffect, useState } from "react";
 
+import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { NavMain, type NavMainItem } from "@/components/nav-main";
 import { NavUser, type NavUserData } from "@/components/nav-user";
 import {
@@ -24,6 +26,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 
@@ -39,6 +42,7 @@ const mainNav: NavMainItem[] = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { role } = useUser();
   const [user, setUser] = useState<NavUserData>({ name: "", email: "", avatarUrl: null });
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -118,8 +122,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {manageNav.length > 0 && <NavMain items={manageNav} label="Gestão" />}
       </SidebarContent>
       <SidebarFooter>
+        <TooltipProvider delayDuration={0}>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SidebarMenuButton onClick={() => setFeedbackOpen(true)}>
+                    <MessageCirclePlus />
+                    <span>Feedback</span>
+                  </SidebarMenuButton>
+                </TooltipTrigger>
+                <TooltipContent side="right">Enviar Feedback</TooltipContent>
+              </Tooltip>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </TooltipProvider>
         <NavUser user={user} />
       </SidebarFooter>
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <SidebarRail />
     </Sidebar>
   );
