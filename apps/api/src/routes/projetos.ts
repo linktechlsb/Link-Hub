@@ -20,17 +20,23 @@ projetosRouter.get("/", authenticate, async (req, res, next) => {
     // Rascunhos só aparecem para o criador
     const projetos = ligaId
       ? await sql`
-          SELECT p.*, p.nome AS titulo, json_build_object('id', l.id, 'nome', l.nome) AS liga
+          SELECT p.*, p.nome AS titulo,
+            json_build_object('id', l.id, 'nome', l.nome) AS liga,
+            u.nome AS responsavel_nome
           FROM projetos p
           LEFT JOIN ligas l ON l.id = p.liga_id
+          LEFT JOIN usuarios u ON u.id = p.responsavel_id
           WHERE p.liga_id = ${ligaId}
             AND (p.status <> 'rascunho' OR p.criado_por = ${usuarioId})
           ORDER BY p.criado_em DESC
         `
       : await sql`
-          SELECT p.*, p.nome AS titulo, json_build_object('id', l.id, 'nome', l.nome) AS liga
+          SELECT p.*, p.nome AS titulo,
+            json_build_object('id', l.id, 'nome', l.nome) AS liga,
+            u.nome AS responsavel_nome
           FROM projetos p
           LEFT JOIN ligas l ON l.id = p.liga_id
+          LEFT JOIN usuarios u ON u.id = p.responsavel_id
           WHERE p.status <> 'rascunho' OR p.criado_por = ${usuarioId}
           ORDER BY p.criado_em DESC
         `;
@@ -42,70 +48,80 @@ projetosRouter.get("/", authenticate, async (req, res, next) => {
 });
 
 // POST /projetos
-projetosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
-  try {
-    const user = (req as AuthenticatedRequest).user!;
-    const {
-      liga_id,
-      titulo,
-      descricao,
-      responsavel_id,
-      prazo,
-      impacto,
-      professor_id,
-      empresa_parceira,
-      tipo_projeto,
-    } = req.body as {
-      liga_id: string;
-      titulo: string;
-      descricao?: string;
-      responsavel_id: string;
-      prazo?: string;
-      impacto?: string;
-      professor_id?: string;
-      empresa_parceira?: string;
-      tipo_projeto?: string;
-    };
+projetosRouter.post(
+  "/",
+  authenticate,
+  requireRole("staff", "diretor", "professor"),
+  async (req, res, next) => {
+    try {
+      const user = (req as AuthenticatedRequest).user!;
+      const {
+        liga_id,
+        titulo,
+        descricao,
+        responsavel_id,
+        prazo,
+        impacto,
+        professor_id,
+        empresa_parceira,
+        tipo_projeto,
+      } = req.body as {
+        liga_id: string;
+        titulo: string;
+        descricao?: string;
+        responsavel_id: string;
+        prazo?: string;
+        impacto?: string;
+        professor_id?: string;
+        empresa_parceira?: string;
+        tipo_projeto?: string;
+      };
 
-    if (!liga_id || !titulo || !responsavel_id) {
-      res.status(400).json({ error: "liga_id, titulo e responsavel_id são obrigatórios." });
-      return;
-    }
+      if (!liga_id || !titulo || !responsavel_id) {
+        res.status(400).json({ error: "liga_id, titulo e responsavel_id são obrigatórios." });
+        return;
+      }
 
-    if (user.role === "diretor" && !(await usuarioEhDiretorDaLiga(user.email, liga_id))) {
-      res.status(403).json({ error: "Você só pode criar projetos da sua própria liga." });
-      return;
-    }
+      if (user.role === "diretor" && !(await usuarioEhDiretorDaLiga(user.email, liga_id))) {
+        res.status(403).json({ error: "Você só pode criar projetos da sua própria liga." });
+        return;
+      }
 
-    const [criador] = await sql`SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1`;
-    if (!criador) {
-      res.status(404).json({ error: "Usuário não encontrado." });
-      return;
-    }
+      const [criador] = await sql`SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1`;
+      if (!criador) {
+        res.status(404).json({ error: "Usuário não encontrado." });
+        return;
+      }
 
-    const body: Record<string, unknown> = {
-      liga_id,
-      nome: titulo,
-      status: "rascunho" as StatusProjeto,
-      responsavel_id,
-      criado_por: criador["id"] as string,
-    };
-    if (descricao !== undefined) body["descricao"] = descricao;
-    if (prazo !== undefined) body["prazo"] = prazo;
-    if (impacto !== undefined) body["impacto"] = impacto;
-    if (professor_id !== undefined) body["professor_id"] = professor_id;
-    if (empresa_parceira !== undefined) body["empresa_parceira"] = empresa_parceira;
-    if (tipo_projeto !== undefined) body["tipo_projeto"] = tipo_projeto;
+      const aprovaAutomaticamente = user.role === "staff" || user.role === "professor";
+      const body: Record<string, unknown> = {
+        liga_id,
+        nome: titulo,
+        status: (aprovaAutomaticamente ? "aprovado" : "rascunho") as StatusProjeto,
+        responsavel_id,
+        criado_por: criador["id"] as string,
+        ...(aprovaAutomaticamente && {
+          aprovacao_staff: "aprovado",
+          aprovacao_professor: "aprovado",
+        }),
+      };
+      if (descricao !== undefined) body["descricao"] = descricao;
+      if (prazo !== undefined) body["prazo"] = prazo;
+      if (impacto !== undefined) body["impacto"] = impacto;
+      if (professor_id !== undefined) body["professor_id"] = professor_id;
+      if (empresa_parceira !== undefined) body["empresa_parceira"] = empresa_parceira;
+      if (tipo_projeto !== undefined) body["tipo_projeto"] = tipo_projeto;
 
-    const [projeto] = await sql`
+      const [projeto] = await sql`
       INSERT INTO projetos ${sql(body)} RETURNING *, nome AS titulo
     `;
 
-    res.status(201).json(projeto);
-  } catch (err) {
-    next(err);
-  }
-});
+      res.status(201).json(projeto);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // PATCH /projetos/:id/status — fluxo de aprovação
 projetosRouter.patch(

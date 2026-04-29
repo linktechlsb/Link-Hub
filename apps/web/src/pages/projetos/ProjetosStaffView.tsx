@@ -26,6 +26,7 @@ type NovoForm = {
   descricao: string;
   prazo: string;
   liga_id: string;
+  responsavel_id: string;
   impacto: string;
   professor_id: string;
   empresa_parceira: string;
@@ -33,6 +34,7 @@ type NovoForm = {
 };
 
 type ProfessorAPI = { id: string; nome: string; email: string } | null;
+type MembroAPI = { id: string; usuario_id: string; nome: string; cargo?: string; role?: string };
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   rascunho: { label: "Rascunho", className: "text-navy/50" },
@@ -54,6 +56,7 @@ const FORM_VAZIO: NovoForm = {
   descricao: "",
   prazo: "",
   liga_id: "",
+  responsavel_id: "",
   impacto: "",
   professor_id: "",
   empresa_parceira: "",
@@ -74,6 +77,9 @@ export function ProjetosStaffView() {
   const [form, setForm] = useState<NovoForm>(FORM_VAZIO);
   const [salvando, setSalvando] = useState(false);
   const [professorDaLiga, setProfessorDaLiga] = useState<ProfessorAPI>(null);
+  const [membrosLiga, setMembrosLiga] = useState<MembroAPI[]>([]);
+  const [modoEditar, setModoEditar] = useState(false);
+  const [formEditar, setFormEditar] = useState<Partial<NovoForm>>({});
 
   const filtrados = projetos.filter((p) => {
     if (filtroLiga && p.liga?.id !== filtroLiga) return false;
@@ -134,12 +140,56 @@ export function ProjetosStaffView() {
     }
   }
 
+  async function handleEnviar() {
+    if (!sheetRevisar) return;
+    setSalvando(true);
+    try {
+      const token = await getToken();
+      await fetch(`/api/projetos/${sheetRevisar.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: "em_aprovacao" }),
+      });
+      setSheetRevisar(null);
+      refetchProjetos();
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  async function handleSalvarEdicao() {
+    if (!sheetRevisar) return;
+    setSalvando(true);
+    try {
+      const token = await getToken();
+      await fetch(`/api/projetos/${sheetRevisar.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          titulo: formEditar.titulo?.trim() || undefined,
+          descricao: formEditar.descricao?.trim() || undefined,
+          prazo: formEditar.prazo || undefined,
+          impacto: formEditar.impacto?.trim() || undefined,
+          empresa_parceira: formEditar.empresa_parceira?.trim() || undefined,
+          tipo_projeto: formEditar.tipo_projeto || undefined,
+        }),
+      });
+      setModoEditar(false);
+      setSheetRevisar(null);
+      refetchProjetos();
+    } finally {
+      setSalvando(false);
+    }
+  }
+
   useEffect(() => {
     if (!form.liga_id) {
       setProfessorDaLiga(null);
+      setMembrosLiga([]);
+      setForm((f) => ({ ...f, responsavel_id: "" }));
       return;
     }
-    getToken().then((token) =>
+    getToken().then((token) => {
       fetch(`/api/ligas/${form.liga_id}/professor`, {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -148,12 +198,20 @@ export function ProjetosStaffView() {
           setProfessorDaLiga(data);
           setForm((f) => ({ ...f, professor_id: data?.id ?? "" }));
         })
-        .catch(() => setProfessorDaLiga(null)),
-    );
+        .catch(() => setProfessorDaLiga(null));
+
+      fetch(`/api/ligas/${form.liga_id}/membros`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => r.json())
+        .then((data: MembroAPI[]) => setMembrosLiga(Array.isArray(data) ? data : []))
+        .catch(() => setMembrosLiga([]));
+    });
+    setForm((f) => ({ ...f, responsavel_id: "" }));
   }, [form.liga_id]);
 
   async function handleCriar() {
-    if (!form.titulo.trim() || !form.liga_id) return;
+    if (!form.titulo.trim() || !form.liga_id || !form.responsavel_id) return;
     setSalvando(true);
     try {
       const token = await getToken();
@@ -165,6 +223,7 @@ export function ProjetosStaffView() {
           descricao: form.descricao.trim() || undefined,
           prazo: form.prazo || undefined,
           liga_id: form.liga_id,
+          responsavel_id: form.responsavel_id,
           impacto: form.impacto.trim() || undefined,
           professor_id: form.professor_id || undefined,
           empresa_parceira: form.empresa_parceira.trim() || undefined,
@@ -259,7 +318,7 @@ export function ProjetosStaffView() {
                   p.liga?.nome ?? "—",
                   responsavelNome(p),
                   p.prazo
-                    ? new Date(p.prazo + "T00:00:00").toLocaleDateString("pt-BR", {
+                    ? new Date(p.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString("pt-BR", {
                         day: "2-digit",
                         month: "short",
                       })
@@ -288,7 +347,10 @@ export function ProjetosStaffView() {
       <Sheet
         open={!!sheetRevisar}
         onOpenChange={(o) => {
-          if (!o) setSheetRevisar(null);
+          if (!o) {
+            setSheetRevisar(null);
+            setModoEditar(false);
+          }
         }}
       >
         <SheetContent
@@ -309,91 +371,222 @@ export function ProjetosStaffView() {
           </div>
 
           <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
-            {sheetRevisar?.descricao && (
-              <div>
-                <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
-                  Descrição
-                </p>
-                <p className="font-plex-sans text-[13px] text-navy/80">{sheetRevisar.descricao}</p>
-              </div>
-            )}
+            {modoEditar ? (
+              <>
+                <div>
+                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2 block">
+                    Título
+                  </label>
+                  <input
+                    value={formEditar.titulo ?? ""}
+                    onChange={(e) => setFormEditar((f) => ({ ...f, titulo: e.target.value }))}
+                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                  />
+                </div>
+                <div>
+                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2 block">
+                    Descrição
+                  </label>
+                  <textarea
+                    value={formEditar.descricao ?? ""}
+                    onChange={(e) => setFormEditar((f) => ({ ...f, descricao: e.target.value }))}
+                    rows={3}
+                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60 resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2 block">
+                    Tipo de Projeto
+                  </label>
+                  <select
+                    value={formEditar.tipo_projeto ?? ""}
+                    onChange={(e) => setFormEditar((f) => ({ ...f, tipo_projeto: e.target.value }))}
+                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                  >
+                    <option value="">Selecionar tipo...</option>
+                    <option value="iniciacao_cientifica">Iniciação Científica</option>
+                    <option value="projeto_interno">Projeto Interno</option>
+                    <option value="projeto_externo">Projeto Externo (com parceiros)</option>
+                    <option value="projeto_estruturante">
+                      Projeto Estruturante (Interdisciplinar e/ou Inovação)
+                    </option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2 block">
+                    Impacto Projetado/Realizado
+                  </label>
+                  <textarea
+                    value={formEditar.impacto ?? ""}
+                    onChange={(e) => setFormEditar((f) => ({ ...f, impacto: e.target.value }))}
+                    rows={3}
+                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60 resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2 block">
+                    Empresa Parceira
+                  </label>
+                  <input
+                    value={formEditar.empresa_parceira ?? ""}
+                    onChange={(e) =>
+                      setFormEditar((f) => ({ ...f, empresa_parceira: e.target.value }))
+                    }
+                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                  />
+                </div>
+                <div>
+                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2 block">
+                    Prazo
+                  </label>
+                  <input
+                    type="date"
+                    value={formEditar.prazo ?? ""}
+                    onChange={(e) => setFormEditar((f) => ({ ...f, prazo: e.target.value }))}
+                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                {sheetRevisar?.descricao && (
+                  <div>
+                    <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
+                      Descrição
+                    </p>
+                    <p className="font-plex-sans text-[13px] text-navy/80">
+                      {sheetRevisar.descricao}
+                    </p>
+                  </div>
+                )}
 
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-1">
-                  Liga
-                </p>
-                <p className="font-plex-sans text-[13px] text-navy">
-                  {sheetRevisar?.liga?.nome ?? "—"}
-                </p>
-              </div>
-              <div>
-                <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-1">
-                  Status
-                </p>
-                <p
-                  className={`font-plex-sans text-[13px] font-medium ${STATUS_CONFIG[sheetRevisar?.status ?? ""]?.className ?? ""}`}
-                >
-                  {STATUS_CONFIG[sheetRevisar?.status ?? ""]?.label ?? sheetRevisar?.status}
-                </p>
-              </div>
-              <div>
-                <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-1">
-                  Prazo
-                </p>
-                <p className="font-plex-sans text-[13px] text-navy">
-                  {sheetRevisar?.prazo
-                    ? new Date(sheetRevisar.prazo + "T00:00:00").toLocaleDateString("pt-BR")
-                    : "—"}
-                </p>
-              </div>
-              <div>
-                <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-1">
-                  Progresso
-                </p>
-                <p className="font-plex-sans text-[13px] text-navy">
-                  {sheetRevisar?.percentual_concluido ?? 0}%
-                </p>
-              </div>
-            </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-1">
+                      Liga
+                    </p>
+                    <p className="font-plex-sans text-[13px] text-navy">
+                      {sheetRevisar?.liga?.nome ?? "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-1">
+                      Status
+                    </p>
+                    <p
+                      className={`font-plex-sans text-[13px] font-medium ${STATUS_CONFIG[sheetRevisar?.status ?? ""]?.className ?? ""}`}
+                    >
+                      {STATUS_CONFIG[sheetRevisar?.status ?? ""]?.label ?? sheetRevisar?.status}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-1">
+                      Prazo
+                    </p>
+                    <p className="font-plex-sans text-[13px] text-navy">
+                      {sheetRevisar?.prazo
+                        ? new Date(
+                            sheetRevisar.prazo.slice(0, 10) + "T12:00:00",
+                          ).toLocaleDateString("pt-BR")
+                        : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-1">
+                      Progresso
+                    </p>
+                    <p className="font-plex-sans text-[13px] text-navy">
+                      {sheetRevisar?.percentual_concluido ?? 0}%
+                    </p>
+                  </div>
+                </div>
 
-            {sheetRevisar?.status === "em_aprovacao" && (
-              <div>
-                <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-                  Motivo da recusa (se recusar)
-                </p>
-                <textarea
-                  value={motivo}
-                  onChange={(e) => setMotivo(e.target.value)}
-                  placeholder="Descreva o motivo..."
-                  rows={3}
-                  className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60 resize-none"
-                />
-              </div>
+                {sheetRevisar?.status === "em_aprovacao" && (
+                  <div>
+                    <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
+                      Motivo da recusa (se recusar)
+                    </p>
+                    <textarea
+                      value={motivo}
+                      onChange={(e) => setMotivo(e.target.value)}
+                      placeholder="Descreva o motivo..."
+                      rows={3}
+                      className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60 resize-none"
+                    />
+                  </div>
+                )}
+              </>
             )}
           </div>
 
-          {sheetRevisar?.status === "em_aprovacao" && (
-            <div className="flex-shrink-0">
-              <div className="h-px bg-navy/15" />
-              <div className="px-8 py-6 flex gap-3">
-                <button
-                  onClick={handleAprovar}
-                  disabled={salvando}
-                  className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {salvando ? "..." : "Aprovar"}
-                </button>
-                <button
-                  onClick={handleRecusar}
-                  disabled={salvando || !motivo.trim()}
-                  className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-4 py-3 hover:bg-navy hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {salvando ? "..." : "Recusar"}
-                </button>
-              </div>
+          <div className="flex-shrink-0">
+            <div className="h-px bg-navy/15" />
+            <div className="px-8 py-6 flex gap-3">
+              {modoEditar ? (
+                <>
+                  <button
+                    onClick={handleSalvarEdicao}
+                    disabled={salvando}
+                    className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {salvando ? "..." : "Salvar"}
+                  </button>
+                  <button
+                    onClick={() => setModoEditar(false)}
+                    disabled={salvando}
+                    className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-4 py-3 hover:bg-navy hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Cancelar
+                  </button>
+                </>
+              ) : sheetRevisar?.status === "em_aprovacao" ? (
+                <>
+                  <button
+                    onClick={handleAprovar}
+                    disabled={salvando}
+                    className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {salvando ? "..." : "Aprovar"}
+                  </button>
+                  <button
+                    onClick={handleRecusar}
+                    disabled={salvando || !motivo.trim()}
+                    className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-4 py-3 hover:bg-navy hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {salvando ? "..." : "Recusar"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      setFormEditar({
+                        titulo: sheetRevisar?.titulo ?? "",
+                        descricao: sheetRevisar?.descricao ?? "",
+                        prazo: sheetRevisar?.prazo?.slice(0, 10) ?? "",
+                        impacto: "",
+                        empresa_parceira: "",
+                        tipo_projeto: "",
+                      });
+                      setModoEditar(true);
+                    }}
+                    className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-4 py-3 hover:bg-navy hover:text-white transition-colors"
+                  >
+                    Editar
+                  </button>
+                  {sheetRevisar?.status === "rascunho" && (
+                    <button
+                      onClick={handleEnviar}
+                      disabled={salvando}
+                      className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {salvando ? "..." : "Enviar"}
+                    </button>
+                  )}
+                </>
+              )}
             </div>
-          )}
+          </div>
         </SheetContent>
       </Sheet>
 
@@ -455,6 +648,32 @@ export function ProjetosStaffView() {
                 {ligas.map((l) => (
                   <option key={l.id} value={l.id}>
                     {l.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="novo-responsavel"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+              >
+                Responsável
+              </label>
+              <select
+                id="novo-responsavel"
+                value={form.responsavel_id}
+                onChange={(e) => setForm((f) => ({ ...f, responsavel_id: e.target.value }))}
+                disabled={!form.liga_id}
+                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <option value="">
+                  {!form.liga_id ? "Selecione uma liga primeiro" : "Selecionar responsável..."}
+                </option>
+                {membrosLiga.map((m) => (
+                  <option key={m.usuario_id} value={m.usuario_id}>
+                    {m.nome}
+                    {m.role ? ` — ${m.role}` : ""}
                   </option>
                 ))}
               </select>
@@ -582,7 +801,7 @@ export function ProjetosStaffView() {
             <div className="px-8 py-6">
               <button
                 onClick={handleCriar}
-                disabled={salvando || !form.titulo.trim() || !form.liga_id}
+                disabled={salvando || !form.titulo.trim() || !form.liga_id || !form.responsavel_id}
                 className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {salvando ? "Salvando..." : "Criar projeto"}
