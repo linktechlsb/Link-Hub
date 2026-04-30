@@ -1,7 +1,8 @@
-import { Heart, MessageCircle, Send, ImageIcon, X } from "lucide-react";
+import { Heart, MessageCircle, Send, ImageIcon, X, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -59,6 +60,7 @@ export function MuralPage() {
   const [novoConteudo, setNovoConteudo] = useState("");
   const [publicando, setPublicando] = useState(false);
   const [ligaSelecionadaId, setLigaSelecionadaId] = useState<string>("");
+  const [modalAberto, setModalAberto] = useState(false);
 
   const [imagemFile, setImagemFile] = useState<File | null>(null);
   const [imagemPreview, setImagemPreview] = useState<string | null>(null);
@@ -187,6 +189,7 @@ export function MuralPage() {
       ]);
       setNovoConteudo("");
       removerImagem();
+      setModalAberto(false);
       toast.success("Post publicado.");
     } finally {
       setPublicando(false);
@@ -286,9 +289,37 @@ export function MuralPage() {
       </div>
 
       <div className="max-w-3xl space-y-0">
-        {/* Área de publicação */}
+        {/* Trigger card de criar postagem */}
         {podeExibirFormulario && (
-          <div className="border border-navy/20 mb-10">
+          <button
+            onClick={() => setModalAberto(true)}
+            className="w-full border border-navy/20 mb-10 px-6 py-5 flex items-center justify-between hover:border-navy/60 hover:bg-navy/[0.02] transition-colors group text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 flex-shrink-0 bg-navy/5 border border-navy/10 flex items-center justify-center group-hover:bg-navy group-hover:border-navy transition-colors">
+                <Plus className="h-4 w-4 text-navy/60 group-hover:text-white transition-colors" />
+              </div>
+              <div>
+                <p className="font-plex-sans font-semibold text-[13px] text-navy">Criar postagem</p>
+                <p className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-navy/50 mt-0.5">
+                  Compartilhe com a comunidade
+                </p>
+              </div>
+            </div>
+            <span className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-2.5 group-hover:bg-navy/90 transition-colors">
+              Publicar
+            </span>
+          </button>
+        )}
+
+        {/* Modal de criar postagem */}
+        <Dialog open={modalAberto} onOpenChange={setModalAberto}>
+          <DialogContent className="sm:max-w-[560px] p-0 gap-0 border-navy/20 rounded-none">
+            <DialogHeader className="px-6 py-4 border-b border-navy/10">
+              <DialogTitle className="font-display font-bold text-[16px] text-navy">
+                Criar postagem
+              </DialogTitle>
+            </DialogHeader>
             <div className="px-6 py-5">
               {/* Seletor de liga para staff */}
               {isStaff ? (
@@ -318,7 +349,8 @@ export function MuralPage() {
                 value={novoConteudo}
                 onChange={(e) => setNovoConteudo(e.target.value)}
                 placeholder="O que está acontecendo na sua liga?"
-                rows={3}
+                rows={5}
+                autoFocus
                 className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60 resize-none"
               />
 
@@ -339,7 +371,7 @@ export function MuralPage() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between mt-3">
+              <div className="flex items-center justify-between mt-4">
                 <div>
                   <input
                     ref={fileInputRef}
@@ -356,17 +388,25 @@ export function MuralPage() {
                     Imagem
                   </button>
                 </div>
-                <button
-                  onClick={() => void publicar()}
-                  disabled={publicando || enviandoImagem || !novoConteudo.trim()}
-                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-2.5 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {publicando ? "Publicando..." : "Publicar"}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setModalAberto(false)}
+                    className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy/60 px-4 py-2.5 hover:text-navy transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => void publicar()}
+                    disabled={publicando || enviandoImagem || !novoConteudo.trim()}
+                    className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-2.5 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {publicando ? "Publicando..." : "Publicar"}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          </DialogContent>
+        </Dialog>
 
         <SectionHeader numero="01" eyebrow="Feed" titulo="Publicações das Ligas" />
 
@@ -398,8 +438,8 @@ export function MuralPage() {
                     </div>
 
                     <div>
-                      {/* Nome + role badge */}
-                      <div className="flex items-center gap-2">
+                      {/* Nome · Role · Liga */}
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-plex-sans font-semibold text-[13px] text-navy">
                           {post.autor_nome}
                         </p>
@@ -408,11 +448,14 @@ export function MuralPage() {
                             {ROLE_LABELS[post.autor_role] ?? post.autor_role}
                           </span>
                         )}
+                        {post.liga_nome && (
+                          <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-navy/70">
+                            {post.liga_nome}
+                          </span>
+                        )}
                       </div>
-                      {/* Liga + data */}
+                      {/* Data */}
                       <p className="font-plex-mono text-[10px] text-navy/50 mt-0.5">
-                        {post.liga_nome}
-                        {" · "}
                         <span title={formatarDataCompleta(post.criado_em)}>
                           {formatarDataRelativa(post.criado_em)}
                         </span>

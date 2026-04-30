@@ -17,7 +17,8 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export function HomeV1Page() {
-  const { ligas, minhaLiga, nomeUsuario, loadingUser, pendentes, role } = useHomeData();
+  const { ligas, minhaLiga, ranking, nomeUsuario, loadingUser, pendentes, role, usuarioId } =
+    useHomeData();
 
   const hoje = new Date().toLocaleDateString("pt-BR", {
     weekday: "short",
@@ -68,10 +69,18 @@ export function HomeV1Page() {
         )}
 
         <div>
-          {role === "staff" && <HomeStaffViewV1 pendentes={pendentes} />}
-          {role === "diretor" && <HomeDiretorViewV1 />}
-          {role === "professor" && <HomeProfessorViewV1 />}
-          {role === "membro" && <HomeMembroViewV1 />}
+          {role === "staff" && (
+            <HomeStaffViewV1 pendentes={pendentes} ligas={ligas} ranking={ranking} />
+          )}
+          {role === "diretor" && minhaLiga && (
+            <HomeDiretorViewV1 minhaLiga={minhaLiga} ligas={ligas} ranking={ranking} />
+          )}
+          {role === "professor" && minhaLiga && (
+            <HomeProfessorViewV1 minhaLiga={minhaLiga} ranking={ranking} />
+          )}
+          {role === "membro" && minhaLiga && (
+            <HomeMembroViewV1 minhaLiga={minhaLiga} ranking={ranking} usuarioId={usuarioId} />
+          )}
         </div>
       </div>
     </div>

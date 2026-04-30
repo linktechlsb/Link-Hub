@@ -22,11 +22,14 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 import { AbaPresenca } from "./AbaPresenca";
 import { GerenciamentoStaffPage } from "./GerenciamentoStaffPage";
+
+import type { Liga, RankingLiga } from "@link-leagues/types";
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
@@ -1545,25 +1548,63 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
 }
 
 // ── Desempenho ──
-function AbaDesempenho() {
-  const score = 840;
-  const scoreMax = 1000;
+function AbaDesempenho({ ligaId }: { ligaId: string | null }) {
+  const { data: rankingData } = useCachedFetch<RankingLiga[]>("/api/ranking");
+  const { data: ligasData } = useCachedFetch<Liga[]>("/api/ligas");
+
+  const ranking = rankingData ?? [];
+  const ligas = ligasData ?? [];
+  const minha = ligaId ? ranking.find((r) => r.liga_id === ligaId) : null;
+  const ligaInfo = ligaId ? ligas.find((l) => l.id === ligaId) : null;
+
+  const score = minha?.pontuacao ?? 0;
+  const scoreMaxRanking = ranking.reduce((acc, r) => Math.max(acc, r.pontuacao ?? 0), 0);
+  const scoreMax = Math.max(scoreMaxRanking, 1);
   const porcentagem = Math.round((score / scoreMax) * 100);
+  const posicao = minha?.posicao ?? null;
+
+  const formatarMoeda = (valor: number) =>
+    valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
   const resumo = [
-    { label: "Projetos concluídos", valor: "4", cor: "text-green-600" },
-    { label: "Em andamento", valor: "2", cor: "text-blue-600" },
-    { label: "Receita total", valor: "R$ 3.200", cor: "text-amber-600" },
-    { label: "Frequência média", valor: "87%", cor: "text-purple-600" },
-    { label: "Membros ativos", valor: "5", cor: "text-navy" },
+    {
+      label: "Projetos concluídos",
+      valor: String(minha?.projetos_concluidos ?? 0),
+      cor: "text-green-600",
+    },
+    {
+      label: "Em andamento",
+      valor: String(minha?.projetos_em_andamento ?? 0),
+      cor: "text-blue-600",
+    },
+    {
+      label: "Receita total",
+      valor: formatarMoeda(Number(minha?.receita_total ?? 0)),
+      cor: "text-amber-600",
+    },
+    { label: "Presenças", valor: String(minha?.presencas ?? 0), cor: "text-purple-600" },
+    {
+      label: "Membros ativos",
+      valor: String(ligaInfo?.total_membros ?? 0),
+      cor: "text-navy",
+    },
   ];
 
   const composicao = [
-    { label: "Projetos", formula: "4 projetos × 50 pts", valor: 200, cor: "bg-green-500" },
-    { label: "Presenças", formula: "32 presenças × 10 pts", valor: 320, cor: "bg-blue-500" },
-    { label: "Receita", formula: "R$ 3.200 × 0,015 pts", valor: 48, cor: "bg-amber-500" },
-    { label: "Feed", formula: "54 publicações × 5 pts", valor: 272, cor: "bg-purple-500" },
+    {
+      label: "Projetos concluídos",
+      valor: minha?.projetos_concluidos ?? 0,
+      cor: "bg-green-500",
+    },
+    { label: "Presenças", valor: minha?.presencas ?? 0, cor: "bg-blue-500" },
+    {
+      label: "Receita (R$)",
+      valor: Math.round(Number(minha?.receita_total ?? 0)),
+      cor: "bg-amber-500",
+    },
+    { label: "Publicações", valor: minha?.posts ?? 0, cor: "bg-purple-500" },
   ];
+  const composicaoMax = Math.max(...composicao.map((c) => c.valor), 1);
 
   return (
     <div className="space-y-4">
@@ -1577,9 +1618,11 @@ function AbaDesempenho() {
             <span className="font-display font-bold text-4xl text-navy">{score}</span>
             <span className="font-plex-sans text-lg text-navy/40 ml-1">pts</span>
           </div>
-          <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-brand-yellow text-navy px-2 py-0.5">
-            1º lugar
-          </span>
+          {posicao !== null && (
+            <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-brand-yellow text-navy px-2 py-0.5">
+              {posicao}º lugar
+            </span>
+          )}
         </div>
         <div className="w-full bg-navy/10 h-px overflow-hidden">
           <div
@@ -1612,27 +1655,24 @@ function AbaDesempenho() {
         </div>
       </div>
 
-      {/* Composição do score */}
+      {/* Indicadores que compõem o score */}
       <div className="border border-navy/15 p-5">
         <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Composição do Score
+          Indicadores
         </p>
         <div className="space-y-4">
           {composicao.map((c) => (
             <div key={c.label}>
               <div className="flex items-center justify-between mb-2">
-                <div>
-                  <span className="font-plex-sans font-semibold text-[13px] text-navy">
-                    {c.label}
-                  </span>
-                  <span className="font-plex-mono text-[10px] text-navy/50 ml-2">{c.formula}</span>
-                </div>
-                <span className="font-plex-mono text-[12px] text-navy">{c.valor} pts</span>
+                <span className="font-plex-sans font-semibold text-[13px] text-navy">
+                  {c.label}
+                </span>
+                <span className="font-plex-mono text-[12px] text-navy">{c.valor}</span>
               </div>
               <div className="w-full bg-navy/10 h-px overflow-hidden">
                 <div
                   className={cn("h-px", c.cor)}
-                  style={{ width: `${Math.round((c.valor / score) * 100)}%` }}
+                  style={{ width: `${Math.round((c.valor / composicaoMax) * 100)}%` }}
                 />
               </div>
             </div>
@@ -1751,7 +1791,7 @@ export function GerenciamentoPage() {
       {abaAtiva === "Recursos" && <AbaRecursos ligaId={ligaId} />}
       {abaAtiva === "Receita" && <AbaReceita ligaId={ligaId} />}
       {abaAtiva === "Presença" && <AbaPresenca ligaId={ligaId} />}
-      {abaAtiva === "Desempenho" && <AbaDesempenho />}
+      {abaAtiva === "Desempenho" && <AbaDesempenho ligaId={ligaId} />}
     </div>
   );
 }

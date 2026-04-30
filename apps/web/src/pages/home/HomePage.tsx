@@ -13,7 +13,7 @@ import { HomeStaffView } from "./HomeStaffView";
 import { LigasCarousel } from "./LigasCarousel";
 import { MinhaLigaCard } from "./MinhaLigaCard";
 
-import type { Liga } from "@link-leagues/types";
+import type { Liga, RankingLiga } from "@link-leagues/types";
 
 const ROLE_LABELS: Record<string, string> = {
   staff: "Staff",
@@ -24,7 +24,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export function HomePage() {
-  const { role } = useUser();
+  const { role, usuarioId } = useUser();
   const { data: ligasData } = useCachedFetch<Liga[]>("/api/ligas");
   const { data: minhaLigaData } = useCachedFetch<Liga>(
     role !== null && role !== "staff" ? "/api/ligas/minha" : null,
@@ -33,9 +33,12 @@ export function HomePage() {
     projetos: { id: string; titulo: string; liga?: { nome: string } }[];
     eventos: { id: string; titulo: string; liga?: { nome: string } }[];
   }>(role === "staff" ? "/api/pendentes" : null);
+  const { data: rankingData } = useCachedFetch<RankingLiga[]>("/api/ranking");
+
   const ligas = ligasData ?? [];
   const minhaLiga = minhaLigaData ?? null;
   const pendentes = pendentesData ?? { projetos: [], eventos: [] };
+  const ranking = rankingData ?? [];
   const [nomeUsuario, setNomeUsuario] = useState<string>("");
   const [loadingUser, setLoadingUser] = useState(true);
 
@@ -110,10 +113,16 @@ export function HomePage() {
       )}
 
       {/* View por papel */}
-      {role === "staff" && <HomeStaffView pendentes={pendentes} />}
-      {role === "diretor" && <HomeDiretorView />}
-      {role === "professor" && <HomeProfessorView />}
-      {role === "membro" && <HomeMembroView />}
+      {role === "staff" && <HomeStaffView pendentes={pendentes} ligas={ligas} ranking={ranking} />}
+      {role === "diretor" && minhaLiga && (
+        <HomeDiretorView minhaLiga={minhaLiga} ligas={ligas} ranking={ranking} />
+      )}
+      {role === "professor" && minhaLiga && (
+        <HomeProfessorView minhaLiga={minhaLiga} ranking={ranking} />
+      )}
+      {role === "membro" && minhaLiga && (
+        <HomeMembroView minhaLiga={minhaLiga} ranking={ranking} usuarioId={usuarioId} />
+      )}
     </div>
   );
 }

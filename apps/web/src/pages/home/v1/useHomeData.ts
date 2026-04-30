@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 
-import type { Liga } from "@link-leagues/types";
+import type { Liga, RankingLiga } from "@link-leagues/types";
 
 interface PendenteItem {
   id: string;
@@ -19,10 +19,12 @@ interface Pendentes {
 export interface HomeData {
   ligas: Liga[];
   minhaLiga: Liga | null;
+  ranking: RankingLiga[];
   nomeUsuario: string;
   loadingUser: boolean;
   pendentes: Pendentes;
   role: string | null;
+  usuarioId: string | null;
 }
 
 async function getToken(): Promise<string | null> {
@@ -31,9 +33,10 @@ async function getToken(): Promise<string | null> {
 }
 
 export function useHomeData(): HomeData {
-  const { role } = useUser();
+  const { role, usuarioId } = useUser();
   const [ligas, setLigas] = useState<Liga[]>([]);
   const [minhaLiga, setMinhaLiga] = useState<Liga | null>(null);
+  const [ranking, setRanking] = useState<RankingLiga[]>([]);
   const [nomeUsuario, setNomeUsuario] = useState<string>("");
   const [loadingUser, setLoadingUser] = useState(true);
   const [pendentes, setPendentes] = useState<Pendentes>({ projetos: [], eventos: [] });
@@ -61,12 +64,14 @@ export function useHomeData(): HomeData {
           else setNomeUsuario(email.split("@")[0] ?? "Usuário");
         }
 
-        const [ligasRes, minhaRes] = await Promise.all([
+        const [ligasRes, minhaRes, rankingRes] = await Promise.all([
           fetch(`/api/ligas`, { headers }),
           fetch(`/api/ligas/minha`, { headers }),
+          fetch(`/api/ranking`, { headers }),
         ]);
         if (ligasRes.ok) setLigas(await ligasRes.json());
         if (minhaRes.ok) setMinhaLiga(await minhaRes.json());
+        if (rankingRes.ok) setRanking(await rankingRes.json());
       } catch {
         // Falha silenciosa — mesmo padrão do HomePage original
       } finally {
@@ -87,5 +92,5 @@ export function useHomeData(): HomeData {
     void carregarPendentes();
   }, [role]);
 
-  return { ligas, minhaLiga, nomeUsuario, loadingUser, pendentes, role };
+  return { ligas, minhaLiga, ranking, nomeUsuario, loadingUser, pendentes, role, usuarioId };
 }

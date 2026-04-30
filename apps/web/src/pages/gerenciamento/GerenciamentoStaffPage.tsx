@@ -19,8 +19,11 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+
+import type { RankingLiga } from "@link-leagues/types";
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
@@ -771,46 +774,39 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
 
 // ── Desempenho ──
 function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] }) {
-  const { metricas: m, nome } = liga;
-  const scoreMax = 1000;
-  const porcentagem = Math.round((m.score / scoreMax) * 100);
+  const { data: rankingData } = useCachedFetch<RankingLiga[]>("/api/ranking");
+  const ranking = rankingData ?? [];
+  const minha = ranking.find((r) => r.liga_id === liga.id) ?? null;
+  const score = minha?.pontuacao ?? 0;
+  const scoreMaxRanking = ranking.reduce((acc, r) => Math.max(acc, r.pontuacao ?? 0), 0);
+  const scoreMax = Math.max(scoreMaxRanking, 1);
+  const porcentagem = Math.round((score / scoreMax) * 100);
+
+  const formatarMoeda = (valor: number) =>
+    valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
   const composicao = [
     {
-      label: "Projetos",
-      formula: `${m.projetosConcluidos} proj. × 50 pts`,
-      valor: m.projetosConcluidos * 50,
+      label: "Projetos concluídos",
+      valor: minha?.projetos_concluidos ?? 0,
       cor: "bg-green-500",
     },
+    { label: "Presenças", valor: minha?.presencas ?? 0, cor: "bg-blue-500" },
     {
-      label: "Presenças",
-      formula: `${Math.round(m.frequencia * 0.5)} pres. × 10 pts`,
-      valor: Math.round(m.frequencia * 0.5) * 10,
-      cor: "bg-blue-500",
-    },
-    {
-      label: "Receita",
-      formula: `R$ ${m.receita.toLocaleString("pt-BR")} × 0,015`,
-      valor: Math.round(m.receita * 0.015),
+      label: "Receita (R$)",
+      valor: Math.round(Number(minha?.receita_total ?? 0)),
       cor: "bg-amber-500",
     },
-    {
-      label: "Feed",
-      formula: `publicações × 5 pts`,
-      valor:
-        m.score -
-        (m.projetosConcluidos * 50 +
-          Math.round(m.frequencia * 0.5) * 10 +
-          Math.round(m.receita * 0.015)),
-      cor: "bg-purple-500",
-    },
+    { label: "Publicações", valor: minha?.posts ?? 0, cor: "bg-purple-500" },
   ];
+  const composicaoMax = Math.max(...composicao.map((c) => c.valor), 1);
 
-  const rankingOrdenado = [...todasLigas].sort((a, b) => b.metricas.score - a.metricas.score);
-  const posicao = rankingOrdenado.findIndex((l) => l.id === liga.id) + 1;
-
-  // suppress unused variable warning
-  void nome;
+  // Ranking ordenado a partir dos dados reais; cai pra todasLigas se ranking ainda não carregou
+  const rankingMap = new Map(ranking.map((r) => [r.liga_id, r] as const));
+  const rankingOrdenado = [...todasLigas]
+    .map((l) => ({ ...l, pontos: rankingMap.get(l.id)?.pontuacao ?? 0 }))
+    .sort((a, b) => b.pontos - a.pontos);
+  const posicao = minha?.posicao ?? rankingOrdenado.findIndex((l) => l.id === liga.id) + 1;
 
   return (
     <div className="space-y-4">
@@ -820,12 +816,14 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
         </p>
         <div className="flex items-end justify-between mb-3">
           <div>
-            <span className="font-display font-bold text-4xl text-navy">{m.score}</span>
+            <span className="font-display font-bold text-4xl text-navy">{score}</span>
             <span className="font-plex-sans text-lg text-navy/40 ml-1">pts</span>
           </div>
-          <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-brand-yellow text-navy px-2 py-0.5">
-            {posicao}º lugar
-          </span>
+          {posicao > 0 && (
+            <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-brand-yellow text-navy px-2 py-0.5">
+              {posicao}º lugar
+            </span>
+          )}
         </div>
         <div className="w-full bg-navy/10 h-px overflow-hidden">
           <div
@@ -851,17 +849,29 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
           {[
             {
               label: "Projetos concluídos",
-              valor: String(m.projetosConcluidos),
+              valor: String(minha?.projetos_concluidos ?? 0),
               cor: "text-green-600",
             },
-            { label: "Em andamento", valor: String(m.projetosAndamento), cor: "text-blue-600" },
+            {
+              label: "Em andamento",
+              valor: String(minha?.projetos_em_andamento ?? 0),
+              cor: "text-blue-600",
+            },
             {
               label: "Receita total",
-              valor: `R$ ${m.receita.toLocaleString("pt-BR")}`,
+              valor: formatarMoeda(Number(minha?.receita_total ?? 0)),
               cor: "text-amber-600",
             },
-            { label: "Frequência média", valor: `${m.frequencia}%`, cor: "text-purple-600" },
-            { label: "Membros ativos", valor: String(m.membrosAtivos), cor: "text-navy" },
+            {
+              label: "Presenças",
+              valor: String(minha?.presencas ?? 0),
+              cor: "text-purple-600",
+            },
+            {
+              label: "Publicações",
+              valor: String(minha?.posts ?? 0),
+              cor: "text-navy",
+            },
           ].map((r) => (
             <div key={r.label} className="border border-navy/10 p-3">
               <p className={cn("font-display font-bold text-xl", r.cor)}>{r.valor}</p>
@@ -873,27 +883,22 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
 
       <div className="border border-navy/15 p-5">
         <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Composição do Score
+          Indicadores
         </p>
         <div className="space-y-4">
           {composicao.map((c) => (
             <div key={c.label}>
               <div className="flex items-center justify-between mb-2">
-                <div>
-                  <span className="font-plex-sans font-semibold text-[13px] text-navy">
-                    {c.label}
-                  </span>
-                  <span className="font-plex-mono text-[10px] text-navy/50 ml-2">{c.formula}</span>
-                </div>
-                <span className="font-plex-mono text-[12px] text-navy">
-                  {Math.max(0, c.valor)} pts
+                <span className="font-plex-sans font-semibold text-[13px] text-navy">
+                  {c.label}
                 </span>
+                <span className="font-plex-mono text-[12px] text-navy">{c.valor}</span>
               </div>
               <div className="w-full bg-navy/10 h-px overflow-hidden">
                 <div
                   className={cn("h-px", c.cor)}
                   style={{
-                    width: `${Math.min(100, Math.round((Math.max(0, c.valor) / (m.score || 1)) * 100))}%`,
+                    width: `${Math.round((c.valor / composicaoMax) * 100)}%`,
                   }}
                 />
               </div>
@@ -909,7 +914,7 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
         <div className="space-y-1">
           {rankingOrdenado.map((l, i) => {
             const isAtual = l.id === liga.id;
-            const pct = Math.round((l.metricas.score / scoreMax) * 100);
+            const pct = Math.round((l.pontos / scoreMax) * 100);
             return (
               <div
                 key={l.id}
@@ -947,7 +952,7 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
                         isAtual ? "text-navy" : "text-navy/40",
                       )}
                     >
-                      {l.metricas.score} pts
+                      {l.pontos} pts
                     </span>
                   </div>
                   <div className="w-full bg-navy/10 h-px overflow-hidden">

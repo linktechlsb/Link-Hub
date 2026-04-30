@@ -8,10 +8,12 @@ vi.mock("../useHomeData", () => ({
   useHomeData: () => ({
     ligas: [],
     minhaLiga: null,
+    ranking: [],
     nomeUsuario: "Diogo",
     loadingUser: false,
     pendentes: { projetos: [], eventos: [] },
     role: "membro",
+    usuarioId: null,
   }),
 }));
 
