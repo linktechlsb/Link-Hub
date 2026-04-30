@@ -12,26 +12,27 @@
 
 ## Estrutura de Arquivos
 
-| Arquivo | Ação | Responsabilidade |
-|---------|------|-----------------|
-| `packages/types/src/recurso.ts` | Criar | Tipo `Recurso` |
-| `packages/types/src/index.ts` | Modificar | Re-exportar `Recurso` |
-| `apps/api/src/routes/ligas.ts` | Modificar | Novos endpoints: `/minha`, `/:id/membros`, `/:id/projetos`, `/:id/presenca`, `/:id/eventos/proximo` |
-| `apps/web/src/router/index.tsx` | Modificar | Adicionar rota `/ligas/:id` |
-| `apps/web/src/pages/home/HomePage.tsx` | Reescrever | 3 zonas: carrossel + minha liga + destaques |
-| `apps/web/src/pages/ligas/LigaDetailPage.tsx` | Criar | Hero + tabs shell |
-| `apps/web/src/pages/ligas/tabs/VisaoGeralTab.tsx` | Criar | 4 métricas + próximo evento |
-| `apps/web/src/pages/ligas/tabs/LiderTab.tsx` | Criar | Perfil líder + diretores |
-| `apps/web/src/pages/ligas/tabs/MembrosTab.tsx` | Criar | Tabela de membros |
-| `apps/web/src/pages/ligas/tabs/PresencaTab.tsx` | Criar | Tabela de presenças |
-| `apps/web/src/pages/ligas/tabs/ProjetosTab.tsx` | Criar | Lista de projetos |
-| `apps/web/src/pages/ligas/tabs/RecursosTab.tsx` | Criar | Links mock (TODO: API) |
+| Arquivo                                           | Ação       | Responsabilidade                                                                                    |
+| ------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------- |
+| `packages/types/src/recurso.ts`                   | Criar      | Tipo `Recurso`                                                                                      |
+| `packages/types/src/index.ts`                     | Modificar  | Re-exportar `Recurso`                                                                               |
+| `apps/api/src/routes/ligas.ts`                    | Modificar  | Novos endpoints: `/minha`, `/:id/membros`, `/:id/projetos`, `/:id/presenca`, `/:id/eventos/proximo` |
+| `apps/web/src/router/index.tsx`                   | Modificar  | Adicionar rota `/ligas/:id`                                                                         |
+| `apps/web/src/pages/home/HomePage.tsx`            | Reescrever | 3 zonas: carrossel + minha liga + destaques                                                         |
+| `apps/web/src/pages/ligas/LigaDetailPage.tsx`     | Criar      | Hero + tabs shell                                                                                   |
+| `apps/web/src/pages/ligas/tabs/VisaoGeralTab.tsx` | Criar      | 4 métricas + próximo evento                                                                         |
+| `apps/web/src/pages/ligas/tabs/LiderTab.tsx`      | Criar      | Perfil líder + diretores                                                                            |
+| `apps/web/src/pages/ligas/tabs/MembrosTab.tsx`    | Criar      | Tabela de membros                                                                                   |
+| `apps/web/src/pages/ligas/tabs/PresencaTab.tsx`   | Criar      | Tabela de presenças                                                                                 |
+| `apps/web/src/pages/ligas/tabs/ProjetosTab.tsx`   | Criar      | Lista de projetos                                                                                   |
+| `apps/web/src/pages/ligas/tabs/RecursosTab.tsx`   | Criar      | Links mock (TODO: API)                                                                              |
 
 ---
 
 ## Task 1: Adicionar tipo `Recurso` nos pacotes compartilhados
 
 **Files:**
+
 - Create: `packages/types/src/recurso.ts`
 - Modify: `packages/types/src/index.ts`
 
@@ -54,6 +55,7 @@ export interface Recurso {
 - [ ] **Step 2: Exportar `Recurso` de `packages/types/src/index.ts`**
 
 Adicionar no final do arquivo:
+
 ```typescript
 export * from "./recurso.js";
 ```
@@ -70,6 +72,7 @@ git commit -m "feat(types): add Recurso type"
 ## Task 2: Adicionar endpoints na API
 
 **Files:**
+
 - Modify: `apps/api/src/routes/ligas.ts`
 
 > Todos os novos routes devem ser adicionados **antes** do `GET /:id` existente (linha 52), pois `GET /minha` seria capturado por `/:id` se vier depois.
@@ -98,7 +101,10 @@ ligasRouter.get("/minha", authenticate, async (req, res, next) => {
         )
       LIMIT 1
     `;
-    if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
+    if (!liga) {
+      res.status(404).json({ error: "Liga não encontrada." });
+      return;
+    }
     res.json(liga);
   } catch (err) {
     next(err);
@@ -195,7 +201,10 @@ ligasRouter.get("/:id/eventos/proximo", authenticate, async (req, res, next) => 
       ORDER BY data ASC
       LIMIT 1
     `;
-    if (!evento) { res.status(404).json({ error: "Nenhum evento futuro." }); return; }
+    if (!evento) {
+      res.status(404).json({ error: "Nenhum evento futuro." });
+      return;
+    }
     res.json(evento);
   } catch (err) {
     next(err);
@@ -206,6 +215,7 @@ ligasRouter.get("/:id/eventos/proximo", authenticate, async (req, res, next) => 
 - [ ] **Step 6: Verificar que `GET /minha` está posicionado ANTES de `GET /:id` no arquivo**
 
 Ordem correta no arquivo:
+
 1. `GET /` (linha 22)
 2. `GET /minha` ← deve vir aqui
 3. `GET /:id` (linha 52)
@@ -223,21 +233,25 @@ git commit -m "feat(api): add liga detail endpoints (minha, membros, projetos, p
 ## Task 3: Registrar rota `/ligas/:id` no router frontend
 
 **Files:**
+
 - Modify: `apps/web/src/router/index.tsx`
 
 - [ ] **Step 1: Importar `LigaDetailPage` e adicionar rota**
 
 Em `apps/web/src/router/index.tsx`, adicionar import:
+
 ```typescript
 import { LigaDetailPage } from "@/pages/ligas/LigaDetailPage";
 ```
 
 Adicionar na lista `children` do `AppLayout`:
+
 ```typescript
 { path: "ligas/:id", element: <LigaDetailPage /> },
 ```
 
 O arquivo completo fica:
+
 ```typescript
 import { createBrowserRouter, Navigate, type RouterProviderProps } from "react-router-dom";
 
@@ -288,6 +302,7 @@ git commit -m "feat(router): add /ligas/:id route"
 ## Task 4: Criar `LigaDetailPage` — shell com hero e tabs
 
 **Files:**
+
 - Create: `apps/web/src/pages/ligas/LigaDetailPage.tsx`
 
 - [ ] **Step 1: Criar o arquivo `LigaDetailPage.tsx`**
@@ -445,6 +460,7 @@ git commit -m "feat(web): add LigaDetailPage shell with hero and tab navigation"
 ## Task 5: Criar `VisaoGeralTab`
 
 **Files:**
+
 - Create: `apps/web/src/pages/ligas/tabs/VisaoGeralTab.tsx`
 
 - [ ] **Step 1: Criar o arquivo**
@@ -615,6 +631,7 @@ git commit -m "feat(web): add VisaoGeralTab with metrics and next event"
 ## Task 6: Criar `LiderTab`
 
 **Files:**
+
 - Create: `apps/web/src/pages/ligas/tabs/LiderTab.tsx`
 
 - [ ] **Step 1: Criar o arquivo**
@@ -685,6 +702,7 @@ git commit -m "feat(web): add LiderTab"
 ## Task 7: Criar `MembrosTab`
 
 **Files:**
+
 - Create: `apps/web/src/pages/ligas/tabs/MembrosTab.tsx`
 
 - [ ] **Step 1: Criar o arquivo**
@@ -798,6 +816,7 @@ git commit -m "feat(web): add MembrosTab"
 ## Task 8: Criar `PresencaTab`
 
 **Files:**
+
 - Create: `apps/web/src/pages/ligas/tabs/PresencaTab.tsx`
 
 - [ ] **Step 1: Criar o arquivo**
@@ -920,6 +939,7 @@ git commit -m "feat(web): add PresencaTab"
 ## Task 9: Criar `ProjetosTab`
 
 **Files:**
+
 - Create: `apps/web/src/pages/ligas/tabs/ProjetosTab.tsx`
 
 - [ ] **Step 1: Criar o arquivo**
@@ -1025,6 +1045,7 @@ git commit -m "feat(web): add ProjetosTab"
 ## Task 10: Criar `RecursosTab`
 
 **Files:**
+
 - Create: `apps/web/src/pages/ligas/tabs/RecursosTab.tsx`
 
 - [ ] **Step 1: Criar o arquivo**
@@ -1122,6 +1143,7 @@ git commit -m "feat(web): add RecursosTab with mock data"
 ## Task 11: Reescrever `HomePage`
 
 **Files:**
+
 - Modify: `apps/web/src/pages/home/HomePage.tsx`
 
 - [ ] **Step 1: Reescrever o arquivo completo**
@@ -1389,6 +1411,7 @@ pnpm dev
 ```
 
 Abrir `http://localhost:3000/home` e verificar:
+
 - Carrossel full-width aparece
 - Auto-avanço a cada 1,5 segundos
 - Setas ‹ › funcionam e reiniciam o timer
@@ -1400,6 +1423,7 @@ Abrir `http://localhost:3000/home` e verificar:
 - [ ] **Step 3: Verificar página de detalhe da liga**
 
 Navegar para `/ligas/:id` (qualquer liga):
+
 - Hero com nome, líder, badge "Minha Liga" se aplicável
 - 6 abas clicáveis
 - Aba **Visão Geral**: 4 métricas + próximo evento (se houver)

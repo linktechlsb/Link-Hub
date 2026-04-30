@@ -46,10 +46,10 @@ npm run dev
 
 Isso sobe frontend e API simultaneamente:
 
-| Serviço | URL |
-|---------|-----|
+| Serviço  | URL                   |
+| -------- | --------------------- |
 | Frontend | http://localhost:3000 |
-| API | http://localhost:3001 |
+| API      | http://localhost:3001 |
 
 ## Comandos úteis
 
@@ -63,11 +63,11 @@ npm run lint         # Lint
 
 ## Papéis de usuário
 
-| Papel | Acesso |
-|-------|--------|
-| `staff` | Admin geral + Admin + Ligas + páginas comuns |
-| `diretor` | Admin + Ligas + páginas comuns |
-| `membro` | Ligas + páginas comuns |
-| `aluno` | Páginas comuns apenas |
+| Papel     | Acesso                                       |
+| --------- | -------------------------------------------- |
+| `staff`   | Admin geral + Admin + Ligas + páginas comuns |
+| `diretor` | Admin + Ligas + páginas comuns               |
+| `membro`  | Ligas + páginas comuns                       |
+| `aluno`   | Páginas comuns apenas                        |
 
 O papel é definido em `user_metadata.role` no painel Supabase → Authentication → Users.

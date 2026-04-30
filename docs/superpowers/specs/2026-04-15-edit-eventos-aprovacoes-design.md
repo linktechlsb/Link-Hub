@@ -26,13 +26,16 @@ A plataforma já tem o fluxo de criação de eventos com aprovação (categorias
 
 Regra atual (incorreta): preserva o status existente quando `requer_aprovacao = true`.  
 Regra nova:
+
 - **Staff edita:** preserva `status_aprovacao` existente (não interrompe o fluxo)
 - **Diretor edita:** se `requer_aprovacao = true`, sempre reseta para `"pendente"` — a edição resubmete para aprovação
 
 ```ts
 // Linha ~100 em eventos.ts
 const status_aprovacao = requer_aprovacao
-  ? (user.role === "staff" ? (eventoAtual.status_aprovacao ?? "pendente") : "pendente")
+  ? user.role === "staff"
+    ? (eventoAtual.status_aprovacao ?? "pendente")
+    : "pendente"
   : null;
 ```
 
@@ -58,12 +61,12 @@ Usar a mesma classe visual do aviso de criação (`bg-brand-yellow/15 border-bra
 
 Mostrar badge apenas para `status_aprovacao` relevantes — não poluir eventos sem aprovação:
 
-| Status | Visual | Onde mostrar |
-|--------|--------|--------------|
-| `pendente` | Dot amarelo + texto "pendente" | Sidebar do evento (painel lateral) |
+| Status      | Visual                           | Onde mostrar                       |
+| ----------- | -------------------------------- | ---------------------------------- |
+| `pendente`  | Dot amarelo + texto "pendente"   | Sidebar do evento (painel lateral) |
 | `rejeitado` | Dot vermelho + texto "rejeitado" | Sidebar do evento (painel lateral) |
-| `aprovado` | Sem badge | — (não poluir UI) |
-| `null` | Sem badge | — |
+| `aprovado`  | Sem badge                        | — (não poluir UI)                  |
+| `null`      | Sem badge                        | —                                  |
 
 No pill do calendário (grade): apenas um pequeno dot colorido no canto do pill quando `pendente` ou `rejeitado` (espaço é limitado).
 
@@ -96,6 +99,7 @@ Já renderizados via `podeGerenciarEvento(evento)` no painel lateral. Nenhuma mu
 - Tab **Usuários**: conteúdo atual da seção "Gestão de Usuários"
 
 **Componente de Tabs:** instalar `shadcn/ui Tabs` via:
+
 ```bash
 cd apps/web && pnpm dlx shadcn@latest add tabs
 ```
@@ -103,6 +107,7 @@ cd apps/web && pnpm dlx shadcn@latest add tabs
 Gera `apps/web/src/components/ui/tabs.tsx`.
 
 **Empty state da aba de Aprovações:**
+
 ```tsx
 <div className="px-6 py-12 flex flex-col items-center gap-2 text-center">
   <CheckCircle2 className="w-8 h-8 text-muted-foreground/30" />
@@ -115,12 +120,12 @@ Gera `apps/web/src/components/ui/tabs.tsx`.
 
 ## Arquivos Afetados
 
-| Arquivo | Tipo de mudança |
-|---------|----------------|
-| `apps/api/src/routes/eventos.ts` | Fix: lógica de `status_aprovacao` no PATCH (1 linha) |
-| `apps/web/src/pages/agenda/AgendaPage.tsx` | Fix: aviso de re-submissão no modal de edição + badges de status |
-| `apps/web/src/pages/super-admin/SuperAdminPage.tsx` | Refactor: adicionar tabs, mover seções para dentro das tabs |
-| `apps/web/src/components/ui/tabs.tsx` | Novo: gerado pelo shadcn/ui |
+| Arquivo                                             | Tipo de mudança                                                  |
+| --------------------------------------------------- | ---------------------------------------------------------------- |
+| `apps/api/src/routes/eventos.ts`                    | Fix: lógica de `status_aprovacao` no PATCH (1 linha)             |
+| `apps/web/src/pages/agenda/AgendaPage.tsx`          | Fix: aviso de re-submissão no modal de edição + badges de status |
+| `apps/web/src/pages/super-admin/SuperAdminPage.tsx` | Refactor: adicionar tabs, mover seções para dentro das tabs      |
+| `apps/web/src/components/ui/tabs.tsx`               | Novo: gerado pelo shadcn/ui                                      |
 
 Nenhum novo tipo, rota de API ou pacote compartilhado precisa ser criado.
 

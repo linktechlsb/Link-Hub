@@ -1,6 +1,3 @@
-import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
 import {
   X,
   Pencil,
@@ -20,6 +17,13 @@ import {
   AlertTriangle,
   type LucideIcon,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
+import { useCachedFetch } from "@/hooks/use-cached-fetch";
+import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
+
+import type { RankingLiga } from "@link-leagues/types";
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
@@ -60,7 +64,14 @@ interface Liga {
   metricas: MetricasLiga;
 }
 
-type RecursoAPI = { id: string; titulo: string; tipo: string; url: string; icone: string; cor: string };
+type RecursoAPI = {
+  id: string;
+  titulo: string;
+  tipo: string;
+  url: string;
+  icone: string;
+  cor: string;
+};
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -84,33 +95,56 @@ function apiParaLiga(l: Record<string, unknown>): Liga {
       bannerUrl: (l.imagem_url as string) ?? "",
       professorMentor: (l.professor_mentor as string) ?? "",
     },
-    metricas: { score: 0, projetosConcluidos: 0, projetosAndamento: 0, receita: 0, frequencia: 0, membrosAtivos: 0 },
+    metricas: {
+      score: 0,
+      projetosConcluidos: 0,
+      projetosAndamento: 0,
+      receita: 0,
+      frequencia: 0,
+      membrosAtivos: 0,
+    },
   };
 }
 
 function apiParaRecurso(r: RecursoAPI): Recurso {
-  return { id: r.id, nome: r.titulo, tipo: r.tipo, url: r.url, icone: r.icone ?? "link", cor: r.cor ?? "#546484" };
+  return {
+    id: r.id,
+    nome: r.titulo,
+    tipo: r.tipo,
+    url: r.url,
+    icone: r.icone ?? "link",
+    cor: r.cor ?? "#546484",
+  };
 }
 
 const inputClass =
-  "w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 bg-white";
+  "w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60";
 
 // ─── picker de ícone/cor ──────────────────────────────────────────────────────
 
 const ICONES: { id: string; componente: LucideIcon }[] = [
-  { id: "link",      componente: Link },
+  { id: "link", componente: Link },
   { id: "file-text", componente: FileText },
-  { id: "image",     componente: Image },
-  { id: "globe",     componente: Globe },
-  { id: "folder",    componente: Folder },
+  { id: "image", componente: Image },
+  { id: "globe", componente: Globe },
+  { id: "folder", componente: Folder },
   { id: "book-open", componente: BookOpen },
-  { id: "code2",     componente: Code2 },
-  { id: "video",     componente: Video },
-  { id: "music",     componente: Music },
-  { id: "star",      componente: Star },
+  { id: "code2", componente: Code2 },
+  { id: "video", componente: Video },
+  { id: "music", componente: Music },
+  { id: "star", componente: Star },
 ];
 
-const CORES_PICKER = ["#10284E","#546484","#7C3AED","#16A34A","#D97706","#DC2626","#DB2777","#0D9488"];
+const CORES_PICKER = [
+  "#10284E",
+  "#546484",
+  "#7C3AED",
+  "#16A34A",
+  "#D97706",
+  "#DC2626",
+  "#DB2777",
+  "#0D9488",
+];
 
 function iconeComponente(id: string): LucideIcon {
   return ICONES.find((i) => i.id === id)?.componente ?? Link;
@@ -121,7 +155,15 @@ function RecursoIcone({ id, className }: { id: string; className?: string }) {
   return <Comp className={className ?? "h-4 w-4 text-white"} />;
 }
 
-function IconeCor({ icone, cor, onChange }: { icone: string; cor: string; onChange: (i: string, c: string) => void }) {
+function IconeCor({
+  icone,
+  cor,
+  onChange,
+}: {
+  icone: string;
+  cor: string;
+  onChange: (i: string, c: string) => void;
+}) {
   const [aberto, setAberto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -138,15 +180,17 @@ function IconeCor({ icone, cor, onChange }: { icone: string; cor: string; onChan
       <button
         type="button"
         onClick={() => setAberto((v) => !v)}
-        className="h-9 w-9 rounded-lg flex items-center justify-center border-2 border-transparent hover:border-navy/20 transition-colors"
+        className="h-9 w-9 flex items-center justify-center border-2 border-transparent hover:border-navy/20 transition-colors"
         style={{ backgroundColor: cor }}
         title="Escolher ícone e cor"
       >
         <RecursoIcone id={icone} />
       </button>
       {aberto && (
-        <div className="absolute left-0 top-11 z-50 bg-white border border-brand-gray rounded-xl shadow-lg p-3 w-56">
-          <p className="text-[10px] font-bold text-link-blue uppercase tracking-wider mb-2">Ícone</p>
+        <div className="absolute left-0 top-11 z-50 bg-white border border-navy/15 p-3 w-56">
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
+            Ícone
+          </p>
           <div className="grid grid-cols-5 gap-1.5 mb-3">
             {ICONES.map((ic) => {
               const Comp = ic.componente;
@@ -156,8 +200,10 @@ function IconeCor({ icone, cor, onChange }: { icone: string; cor: string; onChan
                   type="button"
                   onClick={() => onChange(ic.id, cor)}
                   className={cn(
-                    "h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
-                    icone === ic.id ? "bg-navy text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    "h-8 w-8 flex items-center justify-center transition-colors",
+                    icone === ic.id
+                      ? "bg-navy text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200",
                   )}
                 >
                   <Comp className="h-4 w-4" />
@@ -165,14 +211,19 @@ function IconeCor({ icone, cor, onChange }: { icone: string; cor: string; onChan
               );
             })}
           </div>
-          <p className="text-[10px] font-bold text-link-blue uppercase tracking-wider mb-2">Cor</p>
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
+            Cor
+          </p>
           <div className="flex flex-wrap gap-1.5">
             {CORES_PICKER.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => onChange(icone, c)}
-                className={cn("h-6 w-6 rounded-full border-2 transition-colors", cor === c ? "border-navy scale-110" : "border-transparent")}
+                className={cn(
+                  "h-6 w-6 rounded-full border-2 transition-colors",
+                  cor === c ? "border-navy scale-110" : "border-transparent",
+                )}
                 style={{ backgroundColor: c }}
               />
             ))}
@@ -203,7 +254,6 @@ function AbaInformacoes({
   const [erro, setErro] = useState<string | null>(null);
   const [confirmandoArquivar, setConfirmandoArquivar] = useState(false);
 
-  // Reset quando muda de liga
   const [prevId, setPrevId] = useState(ligaId);
   if (ligaId !== prevId) {
     setPrevId(ligaId);
@@ -229,7 +279,10 @@ function AbaInformacoes({
           headers: { Authorization: `Bearer ${token}` },
           body: fd,
         });
-        if (!imgRes.ok) { setErro("Erro ao enviar imagem."); return; }
+        if (!imgRes.ok) {
+          setErro("Erro ao enviar imagem.");
+          return;
+        }
         setBannerFile(null);
       }
       const res = await fetch(`/api/ligas/${ligaId}`, {
@@ -246,7 +299,10 @@ function AbaInformacoes({
           professor_mentor: form.professorMentor,
         }),
       });
-      if (!res.ok) { setErro("Erro ao salvar informações."); return; }
+      if (!res.ok) {
+        setErro("Erro ao salvar informações.");
+        return;
+      }
       setSalvo(true);
       setTimeout(() => setSalvo(false), 2000);
     } finally {
@@ -274,18 +330,34 @@ function AbaInformacoes({
   return (
     <div className="space-y-4">
       {/* Dados gerais */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5 space-y-4">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">Dados Gerais</p>
+      <div className="border border-navy/15 p-5 space-y-4">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
+          Dados Gerais
+        </p>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">Nome da liga</label>
-          <input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className={inputClass} />
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            Nome da liga
+          </label>
+          <input
+            value={form.nome}
+            onChange={(e) => setForm({ ...form, nome: e.target.value })}
+            className={inputClass}
+          />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">Área de atuação</label>
-          <input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} className={inputClass} />
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            Área de atuação
+          </label>
+          <input
+            value={form.area}
+            onChange={(e) => setForm({ ...form, area: e.target.value })}
+            className={inputClass}
+          />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">Descrição</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            Descrição
+          </label>
           <textarea
             value={form.descricao}
             onChange={(e) => setForm({ ...form, descricao: e.target.value })}
@@ -294,7 +366,9 @@ function AbaInformacoes({
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">Semestre de fundação</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            Semestre de fundação
+          </label>
           <input
             value={form.semestre}
             onChange={(e) => setForm({ ...form, semestre: e.target.value })}
@@ -305,25 +379,31 @@ function AbaInformacoes({
       </div>
 
       {/* Foto / Banner */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5 space-y-3">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">Foto / Banner da Liga</p>
+      <div className="border border-navy/15 p-5 space-y-3">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
+          Foto / Banner da Liga
+        </p>
         {bannerPreview ? (
-          <div className="relative rounded-lg overflow-hidden border border-brand-gray h-36">
+          <div className="relative overflow-hidden border border-navy/15 h-36">
             <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
             <button
-              onClick={() => { setBannerPreview(""); setBannerFile(null); setForm((prev) => ({ ...prev, bannerUrl: "" })); }}
-              className="absolute top-2 right-2 bg-white/80 hover:bg-white text-red-500 rounded-full p-1 transition-colors"
+              onClick={() => {
+                setBannerPreview("");
+                setBannerFile(null);
+                setForm((prev) => ({ ...prev, bannerUrl: "" }));
+              }}
+              className="absolute top-2 right-2 bg-white/80 hover:bg-white text-red-500 p-1 transition-colors"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
         ) : (
-          <div className="border-2 border-dashed border-brand-gray rounded-lg h-36 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+          <div className="border border-dashed border-navy/20 h-36 flex flex-col items-center justify-center gap-2 text-navy/40">
             <Image className="h-6 w-6" />
-            <span className="text-xs">Nenhuma imagem selecionada</span>
+            <span className="font-plex-sans text-[12px]">Nenhuma imagem selecionada</span>
           </div>
         )}
-        <label className="inline-flex items-center gap-2 cursor-pointer bg-gray-50 hover:bg-gray-100 border border-brand-gray text-navy text-xs font-semibold px-3 py-2 rounded-lg transition-colors">
+        <label className="inline-flex items-center gap-2 cursor-pointer font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors">
           <Plus className="h-3.5 w-3.5" />
           {bannerPreview ? "Trocar imagem" : "Selecionar imagem"}
           <input type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
@@ -331,10 +411,14 @@ function AbaInformacoes({
       </div>
 
       {/* Contatos */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5 space-y-4">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">Contatos da Liga</p>
+      <div className="border border-navy/15 p-5 space-y-4">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
+          Contatos da Liga
+        </p>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">E-mail de contato</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            E-mail de contato
+          </label>
           <input
             type="email"
             value={form.emailContato}
@@ -344,7 +428,9 @@ function AbaInformacoes({
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">Instagram</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            Instagram
+          </label>
           <input
             value={form.instagram}
             onChange={(e) => setForm({ ...form, instagram: e.target.value })}
@@ -353,7 +439,9 @@ function AbaInformacoes({
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">LinkedIn</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            LinkedIn
+          </label>
           <input
             value={form.linkedin}
             onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
@@ -364,8 +452,10 @@ function AbaInformacoes({
       </div>
 
       {/* Professor mentor */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5 space-y-3">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">Professor Mentor</p>
+      <div className="border border-navy/15 p-5 space-y-3">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
+          Professor Mentor
+        </p>
         <input
           value={form.professorMentor}
           onChange={(e) => setForm({ ...form, professorMentor: e.target.value })}
@@ -380,36 +470,41 @@ function AbaInformacoes({
           <button
             onClick={() => void salvar()}
             disabled={salvando}
-            className="bg-navy hover:bg-navy/90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {salvando ? "Salvando…" : "Salvar alterações"}
           </button>
-          {salvo && <span className="text-sm text-green-600">Salvo com sucesso!</span>}
-          {erro && <span className="text-sm text-red-500">{erro}</span>}
+          {salvo && (
+            <span className="font-plex-sans text-[12px] text-green-600">Salvo com sucesso!</span>
+          )}
+          {erro && <span className="font-plex-sans text-[12px] text-red-600">{erro}</span>}
         </div>
       )}
 
       {/* Zona de perigo */}
-      <div className="bg-white border border-red-200 rounded-xl p-5 space-y-3">
-        <p className="text-xs font-bold text-red-500 uppercase tracking-wider flex items-center gap-1.5">
+      <div className="border border-red-200 p-5 space-y-3">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-red-500 flex items-center gap-1.5">
           <AlertTriangle className="h-3.5 w-3.5" />
           Zona de Perigo
         </p>
-        <p className="text-sm text-muted-foreground">
-          Arquivar a liga a tornará inativa e ela não aparecerá mais para os membros. Esta ação pode ser revertida pelo Super Admin.
+        <p className="font-plex-sans text-[13px] text-navy/50">
+          Arquivar a liga a tornará inativa e ela não aparecerá mais para os membros. Esta ação pode
+          ser revertida pelo Super Admin.
         </p>
         {confirmandoArquivar ? (
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-red-600 font-medium">Confirmar arquivamento de "{form.nome}"?</span>
+          <div className="flex items-center gap-4">
+            <span className="font-plex-sans text-[12px] text-red-600">
+              Confirmar arquivamento de &quot;{form.nome}&quot;?
+            </span>
             <button
               onClick={() => void arquivar()}
-              className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors"
+              className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-600 hover:text-red-800 transition-colors"
             >
               Sim, arquivar
             </button>
             <button
               onClick={() => setConfirmandoArquivar(false)}
-              className="border border-brand-gray text-sm px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+              className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
             >
               Cancelar
             </button>
@@ -417,7 +512,7 @@ function AbaInformacoes({
         ) : (
           <button
             onClick={() => setConfirmandoArquivar(true)}
-            className="border border-red-300 text-red-500 hover:bg-red-50 text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+            className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-500 hover:text-red-700 transition-colors"
           >
             Arquivar liga
           </button>
@@ -440,7 +535,6 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  // Reset ao trocar de liga
   const [prevId, setPrevId] = useState(ligaId);
   if (ligaId !== prevId) {
     setPrevId(ligaId);
@@ -457,7 +551,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const data = await res.json() as RecursoAPI[];
+          const data = (await res.json()) as RecursoAPI[];
           setRecursos(data.map(apiParaRecurso));
         }
       } finally {
@@ -469,26 +563,42 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
 
   async function adicionar() {
     setErro(null);
-    if (!novoNome.trim() || !novoUrl.trim()) { setErro("Informe o nome e a URL."); return; }
+    if (!novoNome.trim() || !novoUrl.trim()) {
+      setErro("Informe o nome e a URL.");
+      return;
+    }
     const token = await getToken();
     const res = await fetch("/api/recursos", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ liga_id: ligaId, titulo: novoNome.trim(), tipo: novoTipo, url: novoUrl.trim(), icone: novoIcone, cor: novoCor }),
+      body: JSON.stringify({
+        liga_id: ligaId,
+        titulo: novoNome.trim(),
+        tipo: novoTipo,
+        url: novoUrl.trim(),
+        icone: novoIcone,
+        cor: novoCor,
+      }),
     });
     if (res.ok) {
-      const criado = await res.json() as RecursoAPI;
+      const criado = (await res.json()) as RecursoAPI;
       setRecursos((prev) => [apiParaRecurso(criado), ...prev]);
-      setNovoNome(""); setNovoUrl(""); setNovoIcone("link"); setNovoCor("#546484");
+      setNovoNome("");
+      setNovoUrl("");
+      setNovoIcone("link");
+      setNovoCor("#546484");
     } else {
-      const body = await res.json().catch(() => ({})) as { error?: string };
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
       setErro(body.error ?? `Erro ${res.status}.`);
     }
   }
 
   async function remover(id: string) {
     const token = await getToken();
-    const res = await fetch(`/api/recursos/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`/api/recursos/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
     if (res.ok) setRecursos((prev) => prev.filter((r) => r.id !== id));
   }
 
@@ -502,29 +612,36 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
     const res = await fetch(`/api/recursos/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ titulo: editForm.nome, tipo: editForm.tipo, url: editForm.url, icone: editForm.icone, cor: editForm.cor }),
+      body: JSON.stringify({
+        titulo: editForm.nome,
+        tipo: editForm.tipo,
+        url: editForm.url,
+        icone: editForm.icone,
+        cor: editForm.cor,
+      }),
     });
     if (res.ok) {
-      const atualizado = await res.json() as RecursoAPI;
+      const atualizado = (await res.json()) as RecursoAPI;
       setRecursos((prev) => prev.map((r) => (r.id === id ? apiParaRecurso(atualizado) : r)));
     }
     setEditandoId(null);
   }
 
-  if (carregando) return <p className="text-sm text-muted-foreground">Carregando recursos…</p>;
+  if (carregando)
+    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando recursos…</p>;
 
   return (
     <div className="space-y-4">
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Recursos ({recursos.length})
         </p>
         {recursos.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum recurso cadastrado.</p>
+          <p className="font-plex-sans text-[13px] text-navy/50">Nenhum recurso cadastrado.</p>
         ) : (
-          <div className="divide-y divide-brand-gray">
+          <div className="border-t border-navy/15">
             {recursos.map((r) => (
-              <div key={r.id} className="py-3">
+              <div key={r.id} className="border-b border-navy/10 py-3">
                 {editandoId === r.id ? (
                   <div className="flex flex-col gap-2">
                     <div className="flex gap-2 items-center">
@@ -537,7 +654,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                         value={editForm.nome ?? ""}
                         onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
                         placeholder="Nome"
-                        className="flex-1 border border-brand-gray rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+                        className="flex-1 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
                       />
                     </div>
                     <div className="flex gap-2">
@@ -545,34 +662,61 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                         value={editForm.url ?? ""}
                         onChange={(e) => setEditForm({ ...editForm, url: e.target.value })}
                         placeholder="URL"
-                        className="flex-1 border border-brand-gray rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+                        className="flex-1 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
                       />
                       <input
                         value={editForm.tipo ?? ""}
                         onChange={(e) => setEditForm({ ...editForm, tipo: e.target.value })}
                         placeholder="Tipo"
-                        className="w-36 border border-brand-gray rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+                        className="w-36 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
                       />
                     </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => void salvarEdicao(r.id)} className="bg-navy text-white text-xs px-3 py-1.5 rounded-lg hover:bg-navy/90 transition-colors">Salvar</button>
-                      <button onClick={() => setEditandoId(null)} className="border border-brand-gray text-xs px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => void salvarEdicao(r.id)}
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-white bg-navy px-3 py-1.5 hover:bg-navy/90 transition-colors"
+                      >
+                        Salvar
+                      </button>
+                      <button
+                        onClick={() => setEditandoId(null)}
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
+                      >
+                        Cancelar
+                      </button>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: r.cor }}>
+                      <div
+                        className="h-9 w-9 flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: r.cor }}
+                      >
                         <RecursoIcone id={r.icone} />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-navy">{r.nome}</p>
-                        <p className="text-xs text-muted-foreground">{r.tipo}</p>
+                        <p className="font-plex-sans font-semibold text-[13px] text-navy">
+                          {r.nome}
+                        </p>
+                        <p className="font-plex-mono text-[10px] text-navy/50">{r.tipo}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => iniciarEdicao(r)} className="text-link-blue hover:bg-gray-50 p-1.5 rounded-md transition-colors" title="Editar"><Pencil className="h-4 w-4" /></button>
-                      <button onClick={() => void remover(r.id)} className="text-red-400 hover:bg-red-50 p-1.5 rounded-md transition-colors" title="Remover"><Trash2 className="h-4 w-4" /></button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => iniciarEdicao(r)}
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
+                        title="Editar"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => void remover(r.id)}
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-400 hover:text-red-600 transition-colors"
+                        title="Remover"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -583,37 +727,46 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
       </div>
 
       {/* Adicionar */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">Adicionar Recurso</p>
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
+          Adicionar Recurso
+        </p>
         <div className="flex gap-2 flex-wrap items-center">
-          <IconeCor icone={novoIcone} cor={novoCor} onChange={(ic, c) => { setNovoIcone(ic); setNovoCor(c); }} />
+          <IconeCor
+            icone={novoIcone}
+            cor={novoCor}
+            onChange={(ic, c) => {
+              setNovoIcone(ic);
+              setNovoCor(c);
+            }}
+          />
           <input
             value={novoNome}
             onChange={(e) => setNovoNome(e.target.value)}
             placeholder="Nome do recurso"
-            className="flex-1 min-w-[140px] border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+            className="flex-1 min-w-[140px] border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
           />
           <input
             value={novoUrl}
             onChange={(e) => setNovoUrl(e.target.value)}
             placeholder="URL"
-            className="flex-1 min-w-[160px] border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+            className="flex-1 min-w-[160px] border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
           />
           <input
             value={novoTipo}
             onChange={(e) => setNovoTipo(e.target.value)}
             placeholder="Tipo (ex: Documento)"
-            className="w-36 border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+            className="w-36 border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
           />
           <button
             onClick={() => void adicionar()}
-            className="flex items-center gap-1.5 bg-navy hover:bg-navy/90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-2.5 hover:bg-navy/90 transition-colors"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
             Adicionar
           </button>
         </div>
-        {erro && <p className="mt-2 text-sm text-red-500">{erro}</p>}
+        {erro && <p className="font-plex-sans text-[12px] text-red-600 mt-2">{erro}</p>}
       </div>
     </div>
   );
@@ -621,77 +774,132 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
 
 // ── Desempenho ──
 function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] }) {
-  const { metricas: m, nome } = liga;
-  const scoreMax = 1000;
-  const porcentagem = Math.round((m.score / scoreMax) * 100);
+  const { data: rankingData } = useCachedFetch<RankingLiga[]>("/api/ranking");
+  const ranking = rankingData ?? [];
+  const minha = ranking.find((r) => r.liga_id === liga.id) ?? null;
+  const score = minha?.pontuacao ?? 0;
+  const scoreMaxRanking = ranking.reduce((acc, r) => Math.max(acc, r.pontuacao ?? 0), 0);
+  const scoreMax = Math.max(scoreMaxRanking, 1);
+  const porcentagem = Math.round((score / scoreMax) * 100);
+
+  const formatarMoeda = (valor: number) =>
+    valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
   const composicao = [
-    { label: "Projetos", formula: `${m.projetosConcluidos} proj. × 50 pts`, valor: m.projetosConcluidos * 50, cor: "bg-green-500" },
-    { label: "Presenças", formula: `${Math.round(m.frequencia * 0.5)} pres. × 10 pts`, valor: Math.round(m.frequencia * 0.5) * 10, cor: "bg-blue-500" },
-    { label: "Receita", formula: `R$ ${m.receita.toLocaleString("pt-BR")} × 0,015`, valor: Math.round(m.receita * 0.015), cor: "bg-amber-500" },
-    { label: "Feed", formula: `publicações × 5 pts`, valor: m.score - (m.projetosConcluidos * 50 + Math.round(m.frequencia * 0.5) * 10 + Math.round(m.receita * 0.015)), cor: "bg-purple-500" },
+    {
+      label: "Projetos concluídos",
+      valor: minha?.projetos_concluidos ?? 0,
+      cor: "bg-green-500",
+    },
+    { label: "Presenças", valor: minha?.presencas ?? 0, cor: "bg-blue-500" },
+    {
+      label: "Receita (R$)",
+      valor: Math.round(Number(minha?.receita_total ?? 0)),
+      cor: "bg-amber-500",
+    },
+    { label: "Publicações", valor: minha?.posts ?? 0, cor: "bg-purple-500" },
   ];
+  const composicaoMax = Math.max(...composicao.map((c) => c.valor), 1);
 
-  const rankingOrdenado = [...todasLigas].sort((a, b) => b.metricas.score - a.metricas.score);
-  const posicao = rankingOrdenado.findIndex((l) => l.id === liga.id) + 1;
+  // Ranking ordenado a partir dos dados reais; cai pra todasLigas se ranking ainda não carregou
+  const rankingMap = new Map(ranking.map((r) => [r.liga_id, r] as const));
+  const rankingOrdenado = [...todasLigas]
+    .map((l) => ({ ...l, pontos: rankingMap.get(l.id)?.pontuacao ?? 0 }))
+    .sort((a, b) => b.pontos - a.pontos);
+  const posicao = minha?.posicao ?? rankingOrdenado.findIndex((l) => l.id === liga.id) + 1;
 
   return (
     <div className="space-y-4">
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-4">Score Atual</p>
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-4">
+          Score Atual
+        </p>
         <div className="flex items-end justify-between mb-3">
           <div>
-            <span className="font-display font-bold text-4xl text-navy">{m.score}</span>
-            <span className="text-lg text-muted-foreground ml-1">pts</span>
+            <span className="font-display font-bold text-4xl text-navy">{score}</span>
+            <span className="font-plex-sans text-lg text-navy/40 ml-1">pts</span>
           </div>
-          <span className="bg-brand-yellow text-navy text-xs font-bold px-2.5 py-1 rounded-full">
-            🏆 {posicao}º lugar
-          </span>
+          {posicao > 0 && (
+            <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-brand-yellow text-navy px-2 py-0.5">
+              {posicao}º lugar
+            </span>
+          )}
         </div>
-        <div className="w-full bg-brand-gray rounded-full h-3 overflow-hidden">
-          <div className="h-3 rounded-full transition-all duration-500" style={{ width: `${porcentagem}%`, background: "linear-gradient(90deg, #10284E, #546484)" }} />
+        <div className="w-full bg-navy/10 h-px overflow-hidden">
+          <div
+            className="h-px transition-all duration-500"
+            style={{
+              width: `${porcentagem}%`,
+              background: "linear-gradient(90deg, #10284E, #546484)",
+            }}
+          />
         </div>
-        <div className="flex justify-between mt-1.5 text-xs text-muted-foreground">
+        <div className="flex justify-between mt-2 font-plex-mono text-[10px] text-navy/40">
           <span>0 pts</span>
           <span>{porcentagem}% do máximo</span>
           <span>{scoreMax} pts</span>
         </div>
       </div>
 
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">Resumo</p>
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
+          Resumo
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
-            { label: "Projetos concluídos", valor: String(m.projetosConcluidos), cor: "text-green-600" },
-            { label: "Em andamento", valor: String(m.projetosAndamento), cor: "text-blue-600" },
-            { label: "Receita total", valor: `R$ ${m.receita.toLocaleString("pt-BR")}`, cor: "text-amber-600" },
-            { label: "Frequência média", valor: `${m.frequencia}%`, cor: "text-purple-600" },
-            { label: "Membros ativos", valor: String(m.membrosAtivos), cor: "text-navy" },
+            {
+              label: "Projetos concluídos",
+              valor: String(minha?.projetos_concluidos ?? 0),
+              cor: "text-green-600",
+            },
+            {
+              label: "Em andamento",
+              valor: String(minha?.projetos_em_andamento ?? 0),
+              cor: "text-blue-600",
+            },
+            {
+              label: "Receita total",
+              valor: formatarMoeda(Number(minha?.receita_total ?? 0)),
+              cor: "text-amber-600",
+            },
+            {
+              label: "Presenças",
+              valor: String(minha?.presencas ?? 0),
+              cor: "text-purple-600",
+            },
+            {
+              label: "Publicações",
+              valor: String(minha?.posts ?? 0),
+              cor: "text-navy",
+            },
           ].map((r) => (
-            <div key={r.label} className="bg-gray-50 rounded-lg p-3">
+            <div key={r.label} className="border border-navy/10 p-3">
               <p className={cn("font-display font-bold text-xl", r.cor)}>{r.valor}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{r.label}</p>
+              <p className="font-plex-sans text-[12px] text-navy/50 mt-0.5">{r.label}</p>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">Composição do Score</p>
-        <div className="space-y-3">
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
+          Indicadores
+        </p>
+        <div className="space-y-4">
           {composicao.map((c) => (
             <div key={c.label}>
-              <div className="flex items-center justify-between mb-1">
-                <div>
-                  <span className="text-sm font-semibold text-navy">{c.label}</span>
-                  <span className="text-xs text-muted-foreground ml-2">{c.formula}</span>
-                </div>
-                <span className="text-sm font-bold text-navy">{Math.max(0, c.valor)} pts</span>
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-plex-sans font-semibold text-[13px] text-navy">
+                  {c.label}
+                </span>
+                <span className="font-plex-mono text-[12px] text-navy">{c.valor}</span>
               </div>
-              <div className="w-full bg-brand-gray rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-navy/10 h-px overflow-hidden">
                 <div
-                  className={cn("h-2 rounded-full", c.cor)}
-                  style={{ width: `${Math.min(100, Math.round((Math.max(0, c.valor) / (m.score || 1)) * 100))}%` }}
+                  className={cn("h-px", c.cor)}
+                  style={{
+                    width: `${Math.round((c.valor / composicaoMax) * 100)}%`,
+                  }}
                 />
               </div>
             </div>
@@ -699,27 +907,64 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
         </div>
       </div>
 
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Comparativo — Ranking Geral
         </p>
-        <div className="space-y-2">
+        <div className="space-y-1">
           {rankingOrdenado.map((l, i) => {
             const isAtual = l.id === liga.id;
-            const pct = Math.round((l.metricas.score / scoreMax) * 100);
+            const pct = Math.round((l.pontos / scoreMax) * 100);
             return (
-              <div key={l.id} className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors", isAtual ? "bg-navy/5 ring-1 ring-navy/20" : "hover:bg-gray-50")}>
-                <span className={cn("text-xs font-bold w-5 text-center", isAtual ? "text-navy" : "text-muted-foreground")}>{i + 1}º</span>
+              <div
+                key={l.id}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 transition-colors",
+                  isAtual ? "bg-navy/5 border border-navy/15" : "hover:bg-navy/[0.02]",
+                )}
+              >
+                <span
+                  className={cn(
+                    "font-plex-mono text-[10px] w-5 text-center",
+                    isAtual ? "text-navy" : "text-navy/40",
+                  )}
+                >
+                  {i + 1}º
+                </span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={cn("text-sm font-semibold truncate", isAtual ? "text-navy" : "text-gray-700")}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span
+                      className={cn(
+                        "font-plex-sans font-semibold text-[13px] truncate",
+                        isAtual ? "text-navy" : "text-navy/70",
+                      )}
+                    >
                       {l.nome}
-                      {isAtual && <span className="ml-2 text-[10px] font-bold bg-navy text-white px-1.5 py-0.5 rounded-full align-middle">atual</span>}
+                      {isAtual && (
+                        <span className="ml-2 font-plex-mono text-[9px] uppercase tracking-[0.10em] bg-navy text-white px-1.5 py-0.5 align-middle">
+                          atual
+                        </span>
+                      )}
                     </span>
-                    <span className={cn("text-xs font-bold ml-3 shrink-0", isAtual ? "text-navy" : "text-gray-500")}>{l.metricas.score} pts</span>
+                    <span
+                      className={cn(
+                        "font-plex-mono text-[11px] ml-3 shrink-0",
+                        isAtual ? "text-navy" : "text-navy/40",
+                      )}
+                    >
+                      {l.pontos} pts
+                    </span>
                   </div>
-                  <div className="w-full bg-brand-gray rounded-full h-1.5 overflow-hidden">
-                    <div className="h-1.5 rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: isAtual ? "linear-gradient(90deg, #10284E, #546484)" : "#CBCBCB" }} />
+                  <div className="w-full bg-navy/10 h-px overflow-hidden">
+                    <div
+                      className="h-px transition-all duration-500"
+                      style={{
+                        width: `${pct}%`,
+                        background: isAtual
+                          ? "linear-gradient(90deg, #10284E, #546484)"
+                          : "#CBCBCB",
+                      }}
+                    />
                   </div>
                 </div>
               </div>
@@ -749,7 +994,7 @@ export function GerenciamentoStaffPage() {
         const token = await getToken();
         const res = await fetch("/api/ligas", { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) {
-          const data = await res.json() as Record<string, unknown>[];
+          const data = (await res.json()) as Record<string, unknown>[];
           const mapped = data.map(apiParaLiga);
           setLigas(mapped);
           if (mapped.length > 0) setLigaSelecionadaId(mapped[0]!.id);
@@ -778,79 +1023,116 @@ export function GerenciamentoStaffPage() {
 
   if (carregando) {
     return (
-      <div className="p-8">
-        <h1 className="font-display font-bold text-2xl text-navy mb-2">Gerenciamento</h1>
-        <p className="text-sm text-muted-foreground">Carregando ligas…</p>
+      <div className="max-w-5xl mx-auto px-8 py-10">
+        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy mb-2">
+          Gerenciamento
+        </h1>
+        <p className="font-plex-sans text-[13px] text-navy/50">Carregando ligas…</p>
       </div>
     );
   }
 
   if (!liga) {
     return (
-      <div className="p-8">
-        <h1 className="font-display font-bold text-2xl text-navy mb-2">Gerenciamento</h1>
-        <p className="text-sm text-muted-foreground">Nenhuma liga encontrada.</p>
+      <div className="max-w-5xl mx-auto px-8 py-10">
+        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy mb-2">
+          Gerenciamento
+        </h1>
+        <p className="font-plex-sans text-[13px] text-navy/50">Nenhuma liga encontrada.</p>
       </div>
     );
   }
 
   return (
-    <div className="p-8">
+    <div className="max-w-5xl mx-auto px-8 py-10">
       {/* Cabeçalho */}
-      <div className="mb-6">
-        <h1 className="font-display font-bold text-2xl text-navy">Gerenciamento</h1>
-        <p className="text-muted-foreground text-sm mt-1">Visão Staff — todas as ligas</p>
+      <div className="mb-10">
+        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
+          Gerenciamento
+        </h1>
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
+          Visão Staff · Todas as ligas
+        </p>
       </div>
 
       {/* Seletor de liga */}
-      <div className="relative mb-6">
+      <div className="relative mb-8">
         <button
           onClick={() => setSeletorAberto((v) => !v)}
-          className="flex items-center gap-3 bg-white border border-brand-gray rounded-xl px-4 py-3 hover:border-navy/30 transition-colors w-full sm:w-auto"
+          className="flex items-center gap-3 bg-white border border-navy/15 px-4 py-3 hover:border-navy/30 transition-colors w-full sm:w-auto"
         >
-          <div className="h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ background: "linear-gradient(135deg, #10284E, #546484)" }}>
+          <div
+            className="h-8 w-8 flex items-center justify-center text-white font-plex-mono text-[11px] shrink-0"
+            style={{ background: "linear-gradient(135deg, #10284E, #546484)" }}
+          >
             {liga.nome.charAt(0)}
           </div>
           <div className="text-left">
-            <p className="text-sm font-semibold text-navy">{liga.nome}</p>
-            <p className="text-xs text-muted-foreground">{liga.info.area || "Sem área definida"}</p>
+            <p className="font-plex-sans font-semibold text-[13px] text-navy">{liga.nome}</p>
+            <p className="font-plex-mono text-[10px] text-navy/50">
+              {liga.info.area || "Sem área definida"}
+            </p>
           </div>
-          <ChevronDown className={cn("h-4 w-4 text-muted-foreground ml-auto transition-transform", seletorAberto && "rotate-180")} />
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 text-navy/40 ml-auto transition-transform",
+              seletorAberto && "rotate-180",
+            )}
+          />
         </button>
 
         {seletorAberto && (
-          <div className="absolute top-full left-0 mt-1 z-20 bg-white border border-brand-gray rounded-xl shadow-lg overflow-hidden w-full sm:w-80">
+          <div className="absolute top-full left-0 mt-1 z-20 bg-white border border-navy/15 overflow-hidden w-full sm:w-80">
             {ligas.map((l) => (
               <button
                 key={l.id}
                 onClick={() => selecionarLiga(l.id)}
-                className={cn("flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-50 transition-colors text-left", l.id === ligaSelecionadaId && "bg-navy/5")}
+                className={cn(
+                  "flex items-center gap-3 w-full px-4 py-3 hover:bg-navy/[0.03] transition-colors text-left border-b border-navy/10 last:border-0",
+                  l.id === ligaSelecionadaId && "bg-navy/5",
+                )}
               >
-                <div className="h-7 w-7 rounded-md flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ background: "linear-gradient(135deg, #10284E, #546484)" }}>
+                <div
+                  className="h-7 w-7 flex items-center justify-center text-white font-plex-mono text-[10px] shrink-0"
+                  style={{ background: "linear-gradient(135deg, #10284E, #546484)" }}
+                >
                   {l.nome.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={cn("text-sm font-semibold truncate", l.id === ligaSelecionadaId ? "text-navy" : "text-gray-700")}>{l.nome}</p>
-                  <p className="text-xs text-muted-foreground truncate">{l.info.area || "Sem área"}</p>
+                  <p
+                    className={cn(
+                      "font-plex-sans font-semibold text-[13px] truncate",
+                      l.id === ligaSelecionadaId ? "text-navy" : "text-navy/70",
+                    )}
+                  >
+                    {l.nome}
+                  </p>
+                  <p className="font-plex-mono text-[10px] text-navy/50 truncate">
+                    {l.info.area || "Sem área"}
+                  </p>
                 </div>
               </button>
             ))}
           </div>
         )}
 
-        {seletorAberto && <div className="fixed inset-0 z-10" onClick={() => setSeletorAberto(false)} />}
+        {seletorAberto && (
+          <div className="fixed inset-0 z-10" onClick={() => setSeletorAberto(false)} />
+        )}
       </div>
 
       {/* Abas */}
-      <div className="border-b border-brand-gray mb-6">
-        <div className="flex gap-1">
+      <div className="border-b border-navy/15 mb-8">
+        <div className="flex">
           {ABAS.map((aba) => (
             <button
               key={aba}
               onClick={() => setAbaAtiva(aba)}
               className={cn(
-                "px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px",
-                abaAtiva === aba ? "border-[#7C3AED] text-[#7C3AED]" : "border-transparent text-muted-foreground hover:text-navy"
+                "px-5 py-3 font-plex-mono text-[10px] uppercase tracking-[0.14em] transition-colors border-b-2 -mb-px",
+                abaAtiva === aba
+                  ? "border-navy text-navy"
+                  : "border-transparent text-navy/40 hover:text-navy",
               )}
             >
               {aba}
@@ -861,14 +1143,15 @@ export function GerenciamentoStaffPage() {
 
       {/* Conteúdo */}
       {abaAtiva === "Informações" && (
-        <AbaInformacoes key={liga.id} ligaId={liga.id} initialInfo={liga.info} onArquivar={arquivarLiga} />
+        <AbaInformacoes
+          key={liga.id}
+          ligaId={liga.id}
+          initialInfo={liga.info}
+          onArquivar={arquivarLiga}
+        />
       )}
-      {abaAtiva === "Recursos" && (
-        <AbaRecursos key={liga.id} ligaId={liga.id} />
-      )}
-      {abaAtiva === "Desempenho" && (
-        <AbaDesempenho liga={liga} todasLigas={ligas} />
-      )}
+      {abaAtiva === "Recursos" && <AbaRecursos key={liga.id} ligaId={liga.id} />}
+      {abaAtiva === "Desempenho" && <AbaDesempenho liga={liga} todasLigas={ligas} />}
     </div>
   );
 }

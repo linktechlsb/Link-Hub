@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
-import type { Liga, UserRole } from "@link-leagues/types";
+import { Search, MoreVertical, Pencil, Trash2, Users, Archive } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { Search, Users, Building2, FolderOpen, BarChart2, X, CheckCircle2, XCircle, CalendarDays } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EditorialTable, KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
 import { LigaSheet } from "@/pages/ligas/LigaSheet";
-import { UsuarioSheet } from "./UsuarioSheet";
+
 import { LigaMembrosSheet } from "./LigaMembrosSheet";
+import { UsuarioSheet } from "./UsuarioSheet";
+
+import type { Liga, UserRole } from "@link-leagues/types";
 
 // ─── Tipos locais ──────────────────────────────────────────────────────────────
 
@@ -22,33 +24,39 @@ interface UsuarioAdmin {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function primeiroUltimoNome(nome: string): string {
+  const partes = nome.trim().split(/\s+/);
+  if (partes.length <= 2) return nome;
+  return `${partes[0]} ${partes[partes.length - 1]}`;
+}
+
 async function getToken(): Promise<string> {
   const { data } = await supabase.auth.getSession();
   return data.session?.access_token ?? "";
 }
 
-const ROLE_BADGE: Record<UserRole, string> = {
+const ROLE_BADGE_CLASS: Record<UserRole, string> = {
   staff: "bg-brand-yellow text-navy",
   diretor: "bg-navy/10 text-navy",
-  membro: "bg-link-blue/10 text-link-blue",
+  membro: "bg-navy/[0.05] text-navy/60",
   professor: "bg-blue-100 text-blue-700",
-  estudante: "bg-gray-100 text-gray-600",
+  estudante: "bg-navy/[0.03] text-navy/50",
 };
 
 const ROLE_LABEL: Record<UserRole, string> = {
-  staff: "staff",
-  diretor: "diretor",
-  membro: "membro",
-  professor: "professor",
-  estudante: "estudante",
+  staff: "Staff",
+  diretor: "Diretor",
+  membro: "Membro",
+  professor: "Professor",
+  estudante: "Estudante",
 };
 
 function RoleBadge({ role }: { role: UserRole }) {
   return (
     <span
       className={cn(
-        "inline-block text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide",
-        ROLE_BADGE[role]
+        "font-plex-mono text-[9px] uppercase tracking-[0.14em] px-2 py-0.5",
+        ROLE_BADGE_CLASS[role],
       )}
     >
       {ROLE_LABEL[role]}
@@ -58,7 +66,10 @@ function RoleBadge({ role }: { role: UserRole }) {
 
 // ─── Componente principal ──────────────────────────────────────────────────────
 
+type Aba = "ligas" | "aprovacoes" | "usuarios";
+
 export function SuperAdminPage() {
+  const [abaAtiva, setAbaAtiva] = useState<Aba>("ligas");
   const [usuarios, setUsuarios] = useState<UsuarioAdmin[]>([]);
   const [ligas, setLigas] = useState<Liga[]>([]);
   const [presencaMedia, setPresencaMedia] = useState<number | null>(null);
@@ -67,6 +78,10 @@ export function SuperAdminPage() {
   const [busca, setBusca] = useState("");
   const [confirmarRemocaoId, setConfirmarRemocaoId] = useState<string | null>(null);
   const [confirmarArquivoId, setConfirmarArquivoId] = useState<string | null>(null);
+  const [dropdownLigaId, setDropdownLigaId] = useState<string | null>(null);
+  const [dropdownUsuarioId, setDropdownUsuarioId] = useState<string | null>(null);
+  const dropdownLigaRef = useRef<HTMLDivElement>(null);
+  const dropdownUsuarioRef = useRef<HTMLDivElement>(null);
 
   const [sheetUsuarioOpen, setSheetUsuarioOpen] = useState(false);
   const [usuarioParaEditar, setUsuarioParaEditar] = useState<UsuarioAdmin | undefined>(undefined);
@@ -79,7 +94,13 @@ export function SuperAdminPage() {
 
   const [pendentes, setPendentes] = useState<{
     projetos: { id: string; titulo: string; liga?: { nome: string }; criado_em: string }[];
-    eventos: { id: string; titulo: string; liga?: { nome: string }; criado_em: string; categoria: string }[];
+    eventos: {
+      id: string;
+      titulo: string;
+      liga?: { nome: string };
+      criado_em: string;
+      categoria: string;
+    }[];
   }>({ projetos: [], eventos: [] });
   const [aprovando, setAprovando] = useState<string | null>(null);
 
@@ -104,8 +125,10 @@ export function SuperAdminPage() {
         const comPresenca = visao.filter((u) => u.presenca_pct != null);
         setPresencaMedia(
           comPresenca.length > 0
-            ? Math.round(comPresenca.reduce((acc, u) => acc + (u.presenca_pct ?? 0), 0) / comPresenca.length)
-            : null
+            ? Math.round(
+                comPresenca.reduce((acc, u) => acc + (u.presenca_pct ?? 0), 0) / comPresenca.length,
+              )
+            : null,
         );
       }
     } finally {
@@ -162,7 +185,25 @@ export function SuperAdminPage() {
   }
 
   useEffect(() => {
-    carregarDados();
+    void carregarDados();
+  }, []);
+
+  useEffect(() => {
+    function fechar(e: MouseEvent) {
+      if (dropdownLigaRef.current && !dropdownLigaRef.current.contains(e.target as Node))
+        setDropdownLigaId(null);
+    }
+    document.addEventListener("mousedown", fechar);
+    return () => document.removeEventListener("mousedown", fechar);
+  }, []);
+
+  useEffect(() => {
+    function fechar(e: MouseEvent) {
+      if (dropdownUsuarioRef.current && !dropdownUsuarioRef.current.contains(e.target as Node))
+        setDropdownUsuarioId(null);
+    }
+    document.addEventListener("mousedown", fechar);
+    return () => document.removeEventListener("mousedown", fechar);
   }, []);
 
   async function removerUsuario(id: string) {
@@ -185,378 +226,378 @@ export function SuperAdminPage() {
     setConfirmarArquivoId(null);
   }
 
-  // ─── Stats ─────────────────────────────────────────────────────────────────
-
   const totalProjetos = ligas.reduce((acc, l) => acc + (l.projetos_ativos ?? 0), 0);
-
-  // ─── Filtro de usuários ────────────────────────────────────────────────────
+  const totalPendentes = pendentes.projetos.length + pendentes.eventos.length;
 
   const usuariosFiltrados = usuarios.filter(
     (u) =>
       u.nome.toLowerCase().includes(busca.toLowerCase()) ||
-      u.email.toLowerCase().includes(busca.toLowerCase())
+      u.email.toLowerCase().includes(busca.toLowerCase()),
   );
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  const kpis = [
+    { label: "Usuários", valor: carregando ? "—" : String(usuarios.length) },
+    { label: "Ligas Ativas", valor: carregando ? "—" : String(ligas.length) },
+    { label: "Projetos Ativos", valor: carregando ? "—" : String(totalProjetos) },
+    {
+      label: "Presença Geral",
+      valor: carregando ? "—" : presencaMedia != null ? `${presencaMedia}%` : "—",
+    },
+  ];
+
+  const ABAS: { id: Aba; label: string }[] = [
+    { id: "ligas", label: "Ligas" },
+    { id: "aprovacoes", label: "Aprovações" },
+    { id: "usuarios", label: "Usuários" },
+  ];
 
   return (
-    <div className="p-8 space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="font-display font-bold text-2xl text-navy">Super Admin</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Gerenciamento de usuários, ligas e visão geral da plataforma
+    <div className="max-w-5xl mx-auto px-8 py-10">
+      {/* Cabeçalho */}
+      <div className="mb-10">
+        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
+          Super Admin
+        </h1>
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
+          Gestão de usuários, ligas e visão geral da plataforma
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Usuários", value: carregando ? "—" : usuarios.length, icon: Users },
-          { label: "Ligas Ativas", value: carregando ? "—" : ligas.length, icon: Building2 },
-          { label: "Projetos Ativos", value: carregando ? "—" : totalProjetos, icon: FolderOpen },
-          { label: "Presença Geral", value: carregando ? "—" : presencaMedia != null ? `${presencaMedia}%` : "—", icon: BarChart2 },
-        ].map(({ label, value, icon: Icon }) => (
-          <div key={label} className="bg-white border border-brand-gray rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Icon className="h-4 w-4 text-link-blue" strokeWidth={1.5} />
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                {label}
-              </p>
+      <div className="space-y-10">
+        <KpiRow items={kpis} />
+
+        <div>
+          {/* Navegação de abas */}
+          <div className="border-b border-[#DBDFE4]">
+            <div className="flex">
+              {ABAS.map((aba) => (
+                <button
+                  key={aba.id}
+                  onClick={() => setAbaAtiva(aba.id)}
+                  className={cn(
+                    "px-5 py-3 font-plex-mono text-[10px] uppercase tracking-[0.14em] transition-colors border-b-2 -mb-px flex items-center gap-2",
+                    abaAtiva === aba.id
+                      ? "border-navy text-navy"
+                      : "border-transparent text-navy/40 hover:text-navy",
+                  )}
+                >
+                  {aba.label}
+                  {aba.id === "aprovacoes" && totalPendentes > 0 && (
+                    <span className="font-plex-mono text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5">
+                      {totalPendentes}
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
-            <p className="text-3xl font-display font-bold text-navy">{value}</p>
           </div>
-        ))}
-      </div>
 
-      {/* ── Tabs de gestão ──────────────────────────────────────────────────── */}
-      <Tabs defaultValue="ligas" className="space-y-4">
-        <TabsList className="bg-brand-gray/60 border border-brand-gray">
-          <TabsTrigger value="ligas" className="data-[state=active]:bg-white data-[state=active]:text-navy font-semibold">
-            Ligas
-          </TabsTrigger>
-          <TabsTrigger value="aprovacoes" className="data-[state=active]:bg-white data-[state=active]:text-navy font-semibold">
-            Aprovações
-            {(pendentes.projetos.length + pendentes.eventos.length) > 0 && (
-              <span className="ml-1.5 text-[10px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
-                {pendentes.projetos.length + pendentes.eventos.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="usuarios" className="data-[state=active]:bg-white data-[state=active]:text-navy font-semibold">
-            Usuários
-          </TabsTrigger>
-        </TabsList>
+          {/* Aba: Ligas */}
+          {abaAtiva === "ligas" && (
+            <div>
+              <SectionHeader
+                numero="01"
+                eyebrow="Gestão"
+                titulo="Ligas"
+                acao={
+                  <button
+                    onClick={() => {
+                      setLigaParaEditar(undefined);
+                      setSheetLigaOpen(true);
+                    }}
+                    className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors"
+                  >
+                    + Nova Liga
+                  </button>
+                }
+              />
 
-        {/* ── Tab: Ligas ─────────────────────────────────────────────────────── */}
-        <TabsContent value="ligas">
-          <div className="bg-white border border-brand-gray rounded-xl overflow-hidden">
-            <div className="p-6 border-b border-brand-gray flex items-center justify-between gap-4">
-              <div>
-                <h2 className="font-display font-bold text-lg text-navy">Gestão de Ligas</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">Criar, editar, arquivar ligas e gerenciar membros</p>
-              </div>
-              <Button
-                className="bg-navy hover:bg-navy/90 text-white font-semibold flex-shrink-0"
-                onClick={() => {
-                  setLigaParaEditar(undefined);
-                  setSheetLigaOpen(true);
-                }}
-              >
-                + Nova Liga
-              </Button>
-            </div>
-
-            {carregando ? (
-              <p className="text-sm text-muted-foreground p-6">Carregando...</p>
-            ) : ligas.length === 0 ? (
-              <p className="text-sm text-muted-foreground p-6">Nenhuma liga cadastrada.</p>
-            ) : (
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-brand-gray/40 border-b border-brand-gray">
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Liga</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Líder</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Projetos</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Status</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ligas.map((l) => (
-                    <tr key={l.id} className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors">
-                      <td className="px-6 py-3 text-sm font-semibold text-navy">{l.nome}</td>
-                      <td className="px-6 py-3 text-sm text-muted-foreground">{l.lider_email ?? "—"}</td>
-                      <td className="px-6 py-3 text-sm text-muted-foreground">{l.projetos_ativos ?? 0}</td>
-                      <td className="px-6 py-3">
-                        <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide bg-navy/10 text-navy">
-                          ativa
-                        </span>
-                      </td>
-                      <td className="px-6 py-3">
-                        {confirmarArquivoId === l.id ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-red-600 font-medium">Arquivar?</span>
-                            <button
-                              onClick={() => arquivarLiga(l.id)}
-                              className="text-xs font-semibold text-red-600 border border-red-200 px-2 py-1 rounded hover:bg-red-50"
-                            >
-                              Sim
-                            </button>
-                            <button
-                              onClick={() => setConfirmarArquivoId(null)}
-                              className="text-xs text-muted-foreground hover:text-navy"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
+              {carregando ? (
+                <p className="font-plex-sans text-[13px] text-navy/50">Carregando...</p>
+              ) : ligas.length === 0 ? (
+                <p className="font-plex-sans text-[13px] text-navy/50">Nenhuma liga cadastrada.</p>
+              ) : (
+                <EditorialTable
+                  columns={["Liga", "Líder", "Projetos", "Status", "Ações"]}
+                  rows={ligas.map((l) => [
+                    <span key="n" className="font-medium">
+                      {l.nome}
+                    </span>,
+                    l.diretores && l.diretores.length > 0
+                      ? l.diretores.map((d) => primeiroUltimoNome(d.nome)).join(", ")
+                      : "—",
+                    String(l.projetos_ativos ?? 0),
+                    <span
+                      key="s"
+                      className="font-plex-mono text-[9px] uppercase tracking-[0.14em] px-2 py-0.5 bg-navy/10 text-navy"
+                    >
+                      ativa
+                    </span>,
+                    confirmarArquivoId === l.id ? (
+                      <div key="conf" className="flex items-center gap-3">
+                        <span className="font-plex-sans text-[12px] text-red-600">Arquivar?</span>
+                        <button
+                          onClick={() => void arquivarLiga(l.id)}
+                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-600 hover:text-red-800 transition-colors"
+                        >
+                          Sim
+                        </button>
+                        <button
+                          onClick={() => setConfirmarArquivoId(null)}
+                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
+                        >
+                          Não
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        key="acoes"
+                        className="relative"
+                        ref={dropdownLigaId === l.id ? dropdownLigaRef : null}
+                      >
+                        <button
+                          onClick={() => setDropdownLigaId(dropdownLigaId === l.id ? null : l.id)}
+                          className="text-navy/40 hover:text-navy transition-colors p-1"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                        {dropdownLigaId === l.id && (
+                          <div className="absolute right-0 top-7 z-50 bg-white border border-navy/15 min-w-[130px] shadow-sm">
                             <button
                               onClick={() => {
                                 setLigaParaEditar(l);
                                 setSheetLigaOpen(true);
+                                setDropdownLigaId(null);
                               }}
-                              className="text-xs font-medium text-link-blue border border-brand-gray px-2.5 py-1 rounded hover:border-link-blue/40 transition-colors"
+                              className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-navy hover:bg-navy/5 transition-colors flex items-center gap-2"
                             >
+                              <Pencil className="h-3.5 w-3.5" />
                               Editar
                             </button>
                             <button
                               onClick={() => {
                                 setLigaMembros(l);
                                 setSheetMembrosOpen(true);
+                                setDropdownLigaId(null);
                               }}
-                              className="text-xs font-medium text-link-blue border border-brand-gray px-2.5 py-1 rounded hover:border-link-blue/40 transition-colors"
+                              className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-navy hover:bg-navy/5 transition-colors flex items-center gap-2"
                             >
+                              <Users className="h-3.5 w-3.5" />
                               Membros
                             </button>
                             <button
-                              onClick={() => setConfirmarArquivoId(l.id)}
-                              className="text-xs font-medium text-red-500 border border-red-100 px-2.5 py-1 rounded hover:bg-red-50 transition-colors"
+                              onClick={() => {
+                                setConfirmarArquivoId(l.id);
+                                setDropdownLigaId(null);
+                              }}
+                              className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2"
                             >
+                              <Archive className="h-3.5 w-3.5" />
                               Arquivar
                             </button>
                           </div>
                         )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* ── Tab: Aprovações ────────────────────────────────────────────────── */}
-        <TabsContent value="aprovacoes">
-          <div className="bg-white border border-brand-gray rounded-xl overflow-hidden">
-            <div className="p-6 border-b border-brand-gray">
-              <h2 className="font-display font-bold text-lg text-navy flex items-center gap-2">
-                Aprovações Pendentes
-                {(pendentes.projetos.length + pendentes.eventos.length) > 0 && (
-                  <span className="text-sm font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                    {pendentes.projetos.length + pendentes.eventos.length}
-                  </span>
-                )}
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Projetos e eventos que aguardam aprovação do staff</p>
+                      </div>
+                    ),
+                  ])}
+                />
+              )}
             </div>
+          )}
 
-            {pendentes.projetos.length === 0 && pendentes.eventos.length === 0 ? (
-              <div className="px-6 py-12 flex flex-col items-center gap-2 text-center">
-                <CheckCircle2 className="w-8 h-8 text-muted-foreground/30" />
-                <p className="text-sm font-medium text-navy">Nenhuma aprovação pendente</p>
-                <p className="text-xs text-muted-foreground">Tudo em dia!</p>
-              </div>
-            ) : (
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-brand-gray/40 border-b border-brand-gray">
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Tipo</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Nome</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Liga</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Enviado em</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendentes.projetos.map((p) => (
-                    <tr key={`proj-${p.id}`} className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors">
-                      <td className="px-6 py-3">
-                        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-navy/10 text-navy uppercase tracking-wide">
-                          <FolderOpen className="h-3 w-3" />
-                          Projeto
-                        </span>
-                      </td>
-                      <td className="px-6 py-3 text-sm font-semibold text-navy">{p.titulo}</td>
-                      <td className="px-6 py-3 text-sm text-muted-foreground">{p.liga?.nome ?? "—"}</td>
-                      <td className="px-6 py-3 text-sm text-muted-foreground">
-                        {new Date(p.criado_em).toLocaleDateString("pt-BR")}
-                      </td>
-                      <td className="px-6 py-3">
-                        <div className="flex items-center gap-2">
-                          <button
-                            disabled={aprovando === p.id}
-                            onClick={() => aprovarProjeto(p.id)}
-                            className="flex items-center gap-1 text-xs font-semibold text-green-700 border border-green-200 px-2.5 py-1 rounded hover:bg-green-50 transition-colors disabled:opacity-50"
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Aprovar
-                          </button>
-                          <button
-                            disabled={aprovando === p.id}
-                            onClick={() => rejeitarProjeto(p.id)}
-                            className="flex items-center gap-1 text-xs font-semibold text-red-600 border border-red-100 px-2.5 py-1 rounded hover:bg-red-50 transition-colors disabled:opacity-50"
-                          >
-                            <XCircle className="h-3.5 w-3.5" />
-                            Rejeitar
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {pendentes.eventos.map((e) => (
-                    <tr key={`evt-${e.id}`} className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors">
-                      <td className="px-6 py-3">
-                        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-link-blue/10 text-link-blue uppercase tracking-wide">
-                          <CalendarDays className="h-3 w-3" />
-                          {e.categoria}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3 text-sm font-semibold text-navy">{e.titulo}</td>
-                      <td className="px-6 py-3 text-sm text-muted-foreground">{e.liga?.nome ?? "—"}</td>
-                      <td className="px-6 py-3 text-sm text-muted-foreground">
-                        {new Date(e.criado_em).toLocaleDateString("pt-BR")}
-                      </td>
-                      <td className="px-6 py-3">
-                        <div className="flex items-center gap-2">
-                          <button
-                            disabled={aprovando === e.id}
-                            onClick={() => aprovarEvento(e.id)}
-                            className="flex items-center gap-1 text-xs font-semibold text-green-700 border border-green-200 px-2.5 py-1 rounded hover:bg-green-50 transition-colors disabled:opacity-50"
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Aprovar
-                          </button>
-                          <button
-                            disabled={aprovando === e.id}
-                            onClick={() => rejeitarEvento(e.id)}
-                            className="flex items-center gap-1 text-xs font-semibold text-red-600 border border-red-100 px-2.5 py-1 rounded hover:bg-red-50 transition-colors disabled:opacity-50"
-                          >
-                            <XCircle className="h-3.5 w-3.5" />
-                            Rejeitar
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </TabsContent>
+          {/* Aba: Aprovações */}
+          {abaAtiva === "aprovacoes" && (
+            <div>
+              <SectionHeader numero="02" eyebrow="Pendências" titulo="Aprovações Pendentes" />
 
-        {/* ── Tab: Usuários ──────────────────────────────────────────────────── */}
-        <TabsContent value="usuarios">
-          <div className="bg-white border border-brand-gray rounded-xl overflow-hidden">
-            <div className="p-6 border-b border-brand-gray flex items-center justify-between gap-4">
-              <div>
-                <h2 className="font-display font-bold text-lg text-navy">Gestão de Usuários</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">Criar, editar e remover usuários da plataforma</p>
-              </div>
-              <Button
-                className="bg-navy hover:bg-navy/90 text-white font-semibold flex-shrink-0"
-                onClick={() => {
-                  setUsuarioParaEditar(undefined);
-                  setSheetUsuarioOpen(true);
-                }}
-              >
-                + Novo Usuário
-              </Button>
+              {pendentes.projetos.length === 0 && pendentes.eventos.length === 0 ? (
+                <p className="font-plex-sans text-[13px] text-navy/50">
+                  Nenhuma aprovação pendente. Tudo em dia!
+                </p>
+              ) : (
+                <EditorialTable
+                  columns={["Tipo", "Nome", "Liga", "Enviado em", "Ações"]}
+                  rows={[
+                    ...pendentes.projetos.map((p) => [
+                      <span
+                        key="t"
+                        className="font-plex-mono text-[9px] uppercase tracking-[0.14em] px-2 py-0.5 bg-navy/10 text-navy"
+                      >
+                        Projeto
+                      </span>,
+                      <span key="n" className="font-medium">
+                        {p.titulo}
+                      </span>,
+                      p.liga?.nome ?? "—",
+                      new Date(p.criado_em).toLocaleDateString("pt-BR"),
+                      <div key="a" className="flex items-center gap-4">
+                        <button
+                          disabled={aprovando === p.id}
+                          onClick={() => void aprovarProjeto(p.id)}
+                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-green-700 hover:text-green-900 transition-colors disabled:opacity-40"
+                        >
+                          Aprovar
+                        </button>
+                        <button
+                          disabled={aprovando === p.id}
+                          onClick={() => void rejeitarProjeto(p.id)}
+                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-500 hover:text-red-700 transition-colors disabled:opacity-40"
+                        >
+                          Rejeitar
+                        </button>
+                      </div>,
+                    ]),
+                    ...pendentes.eventos.map((e) => [
+                      <span
+                        key="t"
+                        className="font-plex-mono text-[9px] uppercase tracking-[0.14em] px-2 py-0.5 bg-navy/[0.05] text-navy/70"
+                      >
+                        {e.categoria}
+                      </span>,
+                      <span key="n" className="font-medium">
+                        {e.titulo}
+                      </span>,
+                      e.liga?.nome ?? "—",
+                      new Date(e.criado_em).toLocaleDateString("pt-BR"),
+                      <div key="a" className="flex items-center gap-4">
+                        <button
+                          disabled={aprovando === e.id}
+                          onClick={() => void aprovarEvento(e.id)}
+                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-green-700 hover:text-green-900 transition-colors disabled:opacity-40"
+                        >
+                          Aprovar
+                        </button>
+                        <button
+                          disabled={aprovando === e.id}
+                          onClick={() => void rejeitarEvento(e.id)}
+                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-500 hover:text-red-700 transition-colors disabled:opacity-40"
+                        >
+                          Rejeitar
+                        </button>
+                      </div>,
+                    ]),
+                  ]}
+                />
+              )}
             </div>
+          )}
 
-            <div className="px-6 py-4 border-b border-brand-gray">
-              <div className="relative max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          {/* Aba: Usuários */}
+          {abaAtiva === "usuarios" && (
+            <div>
+              <SectionHeader
+                numero="03"
+                eyebrow="Gestão"
+                titulo="Usuários"
+                acao={
+                  <button
+                    onClick={() => {
+                      setUsuarioParaEditar(undefined);
+                      setSheetUsuarioOpen(true);
+                    }}
+                    className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors"
+                  >
+                    + Novo Usuário
+                  </button>
+                }
+              />
+
+              {/* Busca */}
+              <div className="relative max-w-sm mb-6">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-navy/30" />
                 <input
                   type="text"
                   placeholder="Buscar por nome ou email..."
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 text-sm border border-brand-gray rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-navy/20"
+                  className="w-full pl-9 pr-4 border border-navy/20 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
                 />
               </div>
-            </div>
 
-            {carregando ? (
-              <p className="text-sm text-muted-foreground p-6">Carregando...</p>
-            ) : usuariosFiltrados.length === 0 ? (
-              <p className="text-sm text-muted-foreground p-6">Nenhum usuário encontrado.</p>
-            ) : (
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-brand-gray/40 border-b border-brand-gray">
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Nome</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Email</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Role</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Liga</th>
-                    <th className="text-left text-xs font-bold text-link-blue uppercase tracking-wider px-6 py-3">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {usuariosFiltrados.map((u) => (
-                    <tr key={u.id} className="border-b border-brand-gray last:border-0 hover:bg-muted/20 transition-colors">
-                      <td className="px-6 py-3 text-sm font-semibold text-navy">{u.nome}</td>
-                      <td className="px-6 py-3 text-sm text-link-blue">{u.email}</td>
-                      <td className="px-6 py-3"><RoleBadge role={u.role} /></td>
-                      <td className="px-6 py-3 text-sm text-muted-foreground">{u.liga_nome ?? "—"}</td>
-                      <td className="px-6 py-3">
-                        {confirmarRemocaoId === u.id ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-red-600 font-medium">Confirmar?</span>
-                            <button
-                              onClick={() => removerUsuario(u.id)}
-                              className="text-xs font-semibold text-red-600 border border-red-200 px-2 py-1 rounded hover:bg-red-50"
-                            >
-                              Sim
-                            </button>
-                            <button
-                              onClick={() => setConfirmarRemocaoId(null)}
-                              className="text-xs text-muted-foreground hover:text-navy"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
+              {carregando ? (
+                <p className="font-plex-sans text-[13px] text-navy/50">Carregando...</p>
+              ) : usuariosFiltrados.length === 0 ? (
+                <p className="font-plex-sans text-[13px] text-navy/50">
+                  Nenhum usuário encontrado.
+                </p>
+              ) : (
+                <EditorialTable
+                  columns={["Nome", "Email", "Role", "Liga", "Ações"]}
+                  rows={usuariosFiltrados.map((u) => [
+                    <span key="n" className="font-medium">
+                      {u.nome}
+                    </span>,
+                    <span key="e" className="text-navy/60">
+                      {u.email}
+                    </span>,
+                    <RoleBadge key="r" role={u.role} />,
+                    u.liga_nome ?? "—",
+                    confirmarRemocaoId === u.id ? (
+                      <div key="conf" className="flex items-center gap-3">
+                        <span className="font-plex-sans text-[12px] text-red-600">Confirmar?</span>
+                        <button
+                          onClick={() => void removerUsuario(u.id)}
+                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-600 hover:text-red-800 transition-colors"
+                        >
+                          Sim
+                        </button>
+                        <button
+                          onClick={() => setConfirmarRemocaoId(null)}
+                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
+                        >
+                          Não
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        key="acoes"
+                        className="relative"
+                        ref={dropdownUsuarioId === u.id ? dropdownUsuarioRef : null}
+                      >
+                        <button
+                          onClick={() =>
+                            setDropdownUsuarioId(dropdownUsuarioId === u.id ? null : u.id)
+                          }
+                          className="text-navy/40 hover:text-navy transition-colors p-1"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                        {dropdownUsuarioId === u.id && (
+                          <div className="absolute right-0 top-7 z-50 bg-white border border-navy/15 min-w-[130px] shadow-sm">
                             <button
                               onClick={() => {
                                 setUsuarioParaEditar(u);
                                 setSheetUsuarioOpen(true);
+                                setDropdownUsuarioId(null);
                               }}
-                              className="text-xs font-medium text-link-blue border border-brand-gray px-2.5 py-1 rounded hover:border-link-blue/40 transition-colors"
+                              className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-navy hover:bg-navy/5 transition-colors flex items-center gap-2"
                             >
+                              <Pencil className="h-3.5 w-3.5" />
                               Editar
                             </button>
                             <button
-                              onClick={() => setConfirmarRemocaoId(u.id)}
-                              className="text-xs font-medium text-red-500 border border-red-100 px-2.5 py-1 rounded hover:bg-red-50 transition-colors"
+                              onClick={() => {
+                                setConfirmarRemocaoId(u.id);
+                                setDropdownUsuarioId(null);
+                              }}
+                              className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2"
                             >
+                              <Trash2 className="h-3.5 w-3.5" />
                               Remover
                             </button>
                           </div>
                         )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
+                      </div>
+                    ),
+                  ])}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
-      {/* ── Sheets ────────────────────────────────────────────────────────────── */}
+      {/* Sheets */}
       <UsuarioSheet
         open={sheetUsuarioOpen}
         onOpenChange={setSheetUsuarioOpen}

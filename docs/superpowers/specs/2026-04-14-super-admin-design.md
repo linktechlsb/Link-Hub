@@ -35,15 +35,17 @@ Página única com scroll (sem sub-rotas). Estrutura vertical:
 ## Componentes Frontend
 
 ### Novos
-| Arquivo | Descrição |
-|---------|-----------|
-| `apps/web/src/pages/super-admin/SuperAdminPage.tsx` | Página principal (substitui placeholder) |
-| `apps/web/src/pages/super-admin/UsuarioSheet.tsx` | Sheet lateral para criar/editar usuário |
+
+| Arquivo                                               | Descrição                                        |
+| ----------------------------------------------------- | ------------------------------------------------ |
+| `apps/web/src/pages/super-admin/SuperAdminPage.tsx`   | Página principal (substitui placeholder)         |
+| `apps/web/src/pages/super-admin/UsuarioSheet.tsx`     | Sheet lateral para criar/editar usuário          |
 | `apps/web/src/pages/super-admin/LigaMembrosSheet.tsx` | Sheet lateral para gerenciar membros de uma liga |
 
 ### Reutilizados
-| Arquivo | Uso |
-|---------|-----|
+
+| Arquivo                                  | Uso                              |
+| ---------------------------------------- | -------------------------------- |
 | `apps/web/src/pages/ligas/LigaSheet.tsx` | Criar/editar liga (já funcional) |
 
 ---
@@ -51,6 +53,7 @@ Página única com scroll (sem sub-rotas). Estrutura vertical:
 ## UsuarioSheet
 
 Campos:
+
 - **Nome completo** — text input
 - **Email estudantil** — email input (desabilitado ao editar)
 - **Role** — select: `membro | lider | professor | admin`
@@ -77,28 +80,32 @@ Remover: `DELETE /ligas/:id/membros/:userId`
 Todos em `apps/api/src/routes/usuarios.ts` e `apps/api/src/routes/ligas.ts`.
 
 ### usuarios.ts
-| Método | Rota | Auth | Descrição |
-|--------|------|------|-----------|
-| `GET` | `/usuarios` | admin | Lista todos os usuários |
-| `POST` | `/usuarios` | admin | Cria usuário no Supabase Auth + tabela |
-| `PATCH` | `/usuarios/:id` | admin | Atualiza nome e/ou role |
-| `DELETE` | `/usuarios/:id` | admin | Remove do Supabase Auth + tabela |
-| `GET` | `/usuarios/visao-geral` | admin | Usuários com liga e % de presença |
+
+| Método   | Rota                    | Auth  | Descrição                              |
+| -------- | ----------------------- | ----- | -------------------------------------- |
+| `GET`    | `/usuarios`             | admin | Lista todos os usuários                |
+| `POST`   | `/usuarios`             | admin | Cria usuário no Supabase Auth + tabela |
+| `PATCH`  | `/usuarios/:id`         | admin | Atualiza nome e/ou role                |
+| `DELETE` | `/usuarios/:id`         | admin | Remove do Supabase Auth + tabela       |
+| `GET`    | `/usuarios/visao-geral` | admin | Usuários com liga e % de presença      |
 
 ### ligas.ts
-| Método | Rota | Auth | Descrição |
-|--------|------|------|-----------|
-| `POST` | `/ligas/:id/membros` | admin | Adiciona membro à liga |
-| `DELETE` | `/ligas/:id/membros/:userId` | admin | Remove membro da liga |
+
+| Método   | Rota                         | Auth  | Descrição              |
+| -------- | ---------------------------- | ----- | ---------------------- |
+| `POST`   | `/ligas/:id/membros`         | admin | Adiciona membro à liga |
+| `DELETE` | `/ligas/:id/membros/:userId` | admin | Remove membro da liga  |
 
 ---
 
 ## Presença na Visão Geral
 
 Calculada por usuário:
+
 ```sql
 COUNT(p) FILTER (WHERE p.status = 'presente') * 100 / NULLIF(COUNT(p), 0)
 ```
+
 Coloração: verde `#16a34a` ≥ 80%, amarelo `#d97706` 60–79%, vermelho `#dc2626` < 60%
 
 ---
@@ -106,6 +113,7 @@ Coloração: verde `#16a34a` ≥ 80%, amarelo `#d97706` 60–79%, vermelho `#dc2
 ## Stats Cards
 
 Calculados via queries na rota `GET /usuarios/visao-geral` ou separadamente:
+
 - **Usuários:** `COUNT(*) FROM usuarios`
 - **Ligas Ativas:** `COUNT(*) FROM ligas WHERE ativo = true`
 - **Projetos:** `COUNT(*) FROM projetos`

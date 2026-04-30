@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
+
 import { supabase } from "@/lib/supabase";
+
 import type { UserRole } from "@link-leagues/types";
 
 export function useUser() {
   const [role, setRole] = useState<UserRole | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [usuarioId, setUsuarioId] = useState<string | null>(null);
 
   useEffect(() => {
     // Timeout de segurança: se algo travar, não fica preso em loading
@@ -23,11 +26,12 @@ export function useUser() {
       try {
         const { data: usuario, error } = await supabase
           .from("usuarios")
-          .select("role")
+          .select("id, role")
           .eq("email", session.user.email)
           .single();
         if (error) throw error;
         setRole((usuario?.role as UserRole) ?? "membro");
+        setUsuarioId((usuario?.id as string | undefined) ?? null);
       } catch {
         setRole(null);
       } finally {
@@ -38,5 +42,5 @@ export function useUser() {
     return () => clearTimeout(timeout);
   }, []);
 
-  return { role, userId };
+  return { role, userId, usuarioId };
 }

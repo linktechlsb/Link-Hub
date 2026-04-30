@@ -1,7 +1,10 @@
+import { Camera, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { cn } from "@/lib/utils";
-import { Eye, EyeOff, Save, Lock, User, X, Camera } from "lucide-react";
+
 import { carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
+import { cn } from "@/lib/utils";
+import { TrocarSenhaSection } from "@/pages/conta/TrocarSenhaSection";
+import { SectionHeader } from "@/pages/home/v1/primitives";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -24,18 +27,14 @@ function gerarIniciais(nome: string) {
     .join("");
 }
 
-// ─── Componentes base ─────────────────────────────────────────────────────────
+// ─── Primitivos ───────────────────────────────────────────────────────────────
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block text-xs font-bold text-link-blue uppercase tracking-wider mb-1">
+    <label className="block font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/60 mb-1.5">
       {children}
     </label>
   );
-}
-
-function Dica({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs text-muted-foreground mt-1">{children}</p>;
 }
 
 function Campo({
@@ -51,16 +50,16 @@ function Campo({
     <div>
       <Label>{label}</Label>
       {children}
-      {dica && <Dica>{dica}</Dica>}
+      {dica && <p className="font-plex-sans text-[11px] text-navy/40 mt-1">{dica}</p>}
     </div>
   );
 }
 
 function Toast({ mensagem, onFechar }: { mensagem: string; onFechar: () => void }) {
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-navy text-white text-sm font-medium px-4 py-3 rounded-lg shadow-lg">
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-navy text-white font-plex-sans text-[13px] px-4 py-3 shadow-lg">
       {mensagem}
-      <button onClick={onFechar} className="text-white/70 hover:text-white transition-colors">
+      <button onClick={onFechar} className="text-white/60 hover:text-white transition-colors">
         <X className="h-4 w-4" />
       </button>
     </div>
@@ -89,17 +88,15 @@ function AbaPerfil({
 
   return (
     <div className="space-y-6">
+      <SectionHeader numero="01" eyebrow="Conta" titulo="Perfil" />
+
       <div className="flex items-center gap-4">
         <div
           className="relative group cursor-pointer shrink-0"
           onClick={() => fileRef.current?.click()}
         >
           {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt="Avatar"
-              className="h-16 w-16 rounded-full object-cover"
-            />
+            <img src={avatarUrl} alt="Avatar" className="h-16 w-16 rounded-full object-cover" />
           ) : (
             <div className="h-16 w-16 rounded-full bg-navy text-white text-xl font-bold flex items-center justify-center">
               {iniciais}
@@ -125,8 +122,10 @@ function AbaPerfil({
           }}
         />
         <div>
-          <p className="text-sm font-bold text-navy">{dados.nome}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Clique na foto para alterar</p>
+          <p className="font-plex-sans font-medium text-[14px] text-navy">{dados.nome}</p>
+          <p className="font-plex-sans text-[12px] text-navy/40 mt-0.5">
+            Clique na foto para alterar
+          </p>
         </div>
       </div>
 
@@ -137,7 +136,7 @@ function AbaPerfil({
             value={dados.nome}
             onChange={(e) => onChange("nome", e.target.value)}
             placeholder="Seu nome completo"
-            className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-navy/20"
+            className="w-full px-3 py-2.5 border border-navy/20 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 placeholder:text-navy/30"
           />
         </Campo>
         <Campo label="E-mail institucional" dica="Somente leitura">
@@ -145,27 +144,29 @@ function AbaPerfil({
             type="text"
             value={dados.email}
             readOnly
-            className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md bg-gray-50 text-muted-foreground cursor-default focus:outline-none"
+            className="w-full px-3 py-2.5 border border-navy/20 bg-navy/[0.02] font-plex-sans text-[13px] text-navy/40 cursor-default focus:outline-none"
           />
         </Campo>
       </div>
 
-      <Campo label={`Bio — ${dados.bio.length}/160 caracteres`} dica="Aparece no seu perfil da plataforma">
+      <Campo
+        label={`Bio — ${dados.bio.length}/160 caracteres`}
+        dica="Aparece no seu perfil da plataforma"
+      >
         <textarea
           value={dados.bio}
           onChange={(e) => onChange("bio", e.target.value)}
           maxLength={160}
           rows={3}
           placeholder="Conte um pouco sobre você..."
-          className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-navy/20 resize-none"
+          className="w-full px-3 py-2.5 border border-navy/20 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 resize-none placeholder:text-navy/30"
         />
       </Campo>
 
       <button
         onClick={onSalvar}
-        className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-md bg-navy text-white hover:bg-navy/90 transition-colors"
+        className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors"
       >
-        <Save className="h-4 w-4" />
         Salvar alterações
       </button>
     </div>
@@ -175,89 +176,19 @@ function AbaPerfil({
 // ─── Aba: Segurança ───────────────────────────────────────────────────────────
 
 function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
-  const [senhaAtual, setSenhaAtual] = useState("");
-  const [novaSenha, setNovaSenha] = useState("");
-  const [confirmar, setConfirmar] = useState("");
-  const [mostrar, setMostrar] = useState(false);
-
-  const senhasValidas =
-    senhaAtual.length > 0 && novaSenha.length >= 6 && novaSenha === confirmar;
-
-  function handleAtualizarSenha() {
-    setSenhaAtual(""); setNovaSenha(""); setConfirmar("");
-    onToast("Senha atualizada com sucesso.");
-  }
-
   return (
-    <div>
-      <h3 className="font-display font-bold text-base text-navy mb-4">Trocar senha</h3>
-      <div className="space-y-4">
-        <Campo label="Senha atual">
-          <div className="relative">
-            <input
-              type={mostrar ? "text" : "password"}
-              value={senhaAtual}
-              onChange={(e) => setSenhaAtual(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-3 py-2 pr-10 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-navy/20"
-            />
-            <button
-              type="button"
-              onClick={() => setMostrar(!mostrar)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-navy transition-colors"
-            >
-              {mostrar ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-        </Campo>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Campo label="Nova senha" dica="Mínimo 6 caracteres">
-            <input
-              type={mostrar ? "text" : "password"}
-              value={novaSenha}
-              onChange={(e) => setNovaSenha(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-3 py-2 text-sm border border-brand-gray rounded-md focus:outline-none focus:ring-2 focus:ring-navy/20"
-            />
-          </Campo>
-          <Campo label="Confirmar nova senha">
-            <input
-              type={mostrar ? "text" : "password"}
-              value={confirmar}
-              onChange={(e) => setConfirmar(e.target.value)}
-              placeholder="••••••••"
-              className={cn(
-                "w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2",
-                confirmar && novaSenha !== confirmar
-                  ? "border-red-400 focus:ring-red-200"
-                  : "border-brand-gray focus:ring-navy/20"
-              )}
-            />
-            {confirmar && novaSenha !== confirmar && (
-              <p className="text-xs text-red-500 mt-1">As senhas não coincidem</p>
-            )}
-          </Campo>
-        </div>
-
-        <button
-          onClick={handleAtualizarSenha}
-          disabled={!senhasValidas}
-          className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-md bg-navy text-white hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <Lock className="h-4 w-4" />
-          Atualizar senha
-        </button>
-      </div>
+    <div className="space-y-6">
+      <SectionHeader numero="02" eyebrow="Conta" titulo="Segurança" />
+      <TrocarSenhaSection onToast={onToast} />
     </div>
   );
 }
 
 // ─── View principal ───────────────────────────────────────────────────────────
 
-const ABAS: { key: Aba; label: string; icon: React.ElementType }[] = [
-  { key: "perfil",    label: "Perfil",    icon: User },
-  { key: "seguranca", label: "Segurança", icon: Lock },
+const ABAS: { key: Aba; label: string }[] = [
+  { key: "perfil", label: "Perfil" },
+  { key: "seguranca", label: "Segurança" },
 ];
 
 const DADOS_INICIAIS: DadosUsuario = {
@@ -313,43 +244,46 @@ export function ContaStaffView() {
   }
 
   return (
-    <div className="p-8 max-w-3xl">
-      <div className="mb-6">
-        <h1 className="font-display font-bold text-2xl text-navy">Minha conta</h1>
-        <p className="text-muted-foreground text-sm mt-1">Gerencie suas informações e preferências</p>
+    <div className="max-w-3xl mx-auto px-8 py-10">
+      <div className="mb-10">
+        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
+          Minha conta
+        </h1>
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
+          Gerencie suas informações e preferências
+        </p>
       </div>
 
-      <div className="flex gap-1 border-b border-brand-gray mb-6">
-        {ABAS.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setAbaAtiva(key)}
-            className={cn(
-              "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-colors",
-              abaAtiva === key
-                ? "border-navy text-navy"
-                : "border-transparent text-muted-foreground hover:text-navy"
-            )}
-          >
-            <Icon className="h-3.5 w-3.5" />
-            {label}
-          </button>
-        ))}
+      <div className="border-b border-[#DBDFE4]">
+        <div className="flex">
+          {ABAS.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setAbaAtiva(key)}
+              className={cn(
+                "px-5 py-3 font-plex-mono text-[10px] uppercase tracking-[0.14em] transition-colors border-b-2 -mb-px",
+                abaAtiva === key
+                  ? "border-navy text-navy"
+                  : "border-transparent text-navy/40 hover:text-navy",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="bg-white border border-brand-gray rounded-lg p-6">
-        {abaAtiva === "perfil" && (
-          <AbaPerfil
-            dados={dados}
-            avatarUrl={avatarUrl}
-            uploadandoAvatar={uploadandoAvatar}
-            onChange={(campo, valor) => setDados((prev) => ({ ...prev, [campo]: valor }))}
-            onSalvar={salvarPerfil}
-            onAvatarChange={handleAvatarChange}
-          />
-        )}
-        {abaAtiva === "seguranca" && <AbaSeguranca onToast={exibirToast} />}
-      </div>
+      {abaAtiva === "perfil" && (
+        <AbaPerfil
+          dados={dados}
+          avatarUrl={avatarUrl}
+          uploadandoAvatar={uploadandoAvatar}
+          onChange={(campo, valor) => setDados((prev) => ({ ...prev, [campo]: valor }))}
+          onSalvar={salvarPerfil}
+          onAvatarChange={handleAvatarChange}
+        />
+      )}
+      {abaAtiva === "seguranca" && <AbaSeguranca onToast={exibirToast} />}
 
       {toast && <Toast mensagem={toast} onFechar={() => setToast(null)} />}
     </div>

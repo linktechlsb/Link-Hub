@@ -1,9 +1,10 @@
 import { supabase } from "./supabase";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
-
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
     super(message);
     this.name = "ApiError";
   }
@@ -29,7 +30,7 @@ export interface UsuarioMe {
 export async function carregarUsuarioMe(): Promise<UsuarioMe | null> {
   const token = await getToken();
   if (!token) return null;
-  const res = await fetch(`${API_URL}/usuarios/me`, {
+  const res = await fetch(`/api/usuarios/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) {
@@ -48,7 +49,7 @@ export async function salvarPerfilMe(data: {
 }): Promise<UsuarioMe | null> {
   const token = await getToken();
   if (!token) return null;
-  const res = await fetch(`${API_URL}/usuarios/me`, {
+  const res = await fetch(`/api/usuarios/me`, {
     method: "PATCH",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -63,12 +64,29 @@ export async function salvarPerfilMe(data: {
   return res.json() as Promise<UsuarioMe>;
 }
 
+export interface MinhaLiga {
+  id: string;
+  nome: string;
+}
+
+export async function carregarMinhaLiga(): Promise<MinhaLiga | null> {
+  const token = await getToken();
+  if (!token) return null;
+  const res = await fetch(`/api/ligas/minha`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) return null;
+  const liga = (await res.json()) as MinhaLiga;
+  return { id: liga.id, nome: liga.nome };
+}
+
 export async function uploadAvatarMe(file: File): Promise<UsuarioMe | null> {
   const token = await getToken();
   if (!token) return null;
   const formData = new FormData();
   formData.append("imagem", file);
-  const res = await fetch(`${API_URL}/usuarios/me/avatar`, {
+  const res = await fetch(`/api/usuarios/me/avatar`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: formData,

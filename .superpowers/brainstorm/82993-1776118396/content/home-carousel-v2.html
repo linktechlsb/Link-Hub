@@ -1,8 +1,24 @@
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Montserrat', sans-serif; background: #f5f5f5; }
-  h2 { font-size: 1.3rem; font-weight: 700; color: #10284E; margin-bottom: 4px; }
-  .subtitle { color: #666; font-size: 0.85rem; margin-bottom: 20px; }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: "Montserrat", sans-serif;
+    background: #f5f5f5;
+  }
+  h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #10284e;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    color: #666;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+  }
 
   .screen-wrapper {
     background: #f8f9fb;
@@ -16,7 +32,7 @@
   /* Sidebar */
   .sidebar {
     width: 56px;
-    background: #10284E;
+    background: #10284e;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -24,44 +40,161 @@
     gap: 18px;
     flex-shrink: 0;
   }
-  .sidebar-logo { width: 30px; height: 30px; background: #FEC641; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 900; color: #10284E; }
-  .sidebar-icon { width: 26px; height: 26px; background: rgba(255,255,255,0.18); border-radius: 6px; }
-  .sidebar-icon.active { background: rgba(255,255,255,0.55); }
+  .sidebar-logo {
+    width: 30px;
+    height: 30px;
+    background: #fec641;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 900;
+    color: #10284e;
+  }
+  .sidebar-icon {
+    width: 26px;
+    height: 26px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 6px;
+  }
+  .sidebar-icon.active {
+    background: rgba(255, 255, 255, 0.55);
+  }
 
   /* Main scroll area */
-  .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
 
   /* Page header */
-  .page-header { padding: 16px 20px 10px; background: #f8f9fb; flex-shrink: 0; }
-  .page-header h3 { font-size: 0.95rem; font-weight: 800; color: #10284E; }
-  .page-header p { font-size: 0.68rem; color: #888; margin-top: 2px; }
+  .page-header {
+    padding: 16px 20px 10px;
+    background: #f8f9fb;
+    flex-shrink: 0;
+  }
+  .page-header h3 {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #10284e;
+  }
+  .page-header p {
+    font-size: 0.68rem;
+    color: #888;
+    margin-top: 2px;
+  }
 
   /* ── 1. CARROSSEL ── */
-  .carousel-container { margin: 0 20px; border-radius: 14px; overflow: hidden; flex-shrink: 0; }
+  .carousel-container {
+    margin: 0 20px;
+    border-radius: 14px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
   .liga-slide {
     height: 200px;
-    background: linear-gradient(135deg, #10284E 0%, #546484 100%);
+    background: linear-gradient(135deg, #10284e 0%, #546484 100%);
     position: relative;
     display: flex;
     align-items: flex-end;
   }
-  .liga-slide-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(16,40,78,0.92) 0%, rgba(16,40,78,0.15) 55%, transparent 100%); }
-  .arrow { position: absolute; top: 50%; transform: translateY(-60%); z-index: 3; width: 26px; height: 26px; background: rgba(255,255,255,0.18); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; }
-  .arrow-left { left: 10px; }
-  .arrow-right { right: 10px; }
-  .liga-slide-content { position: relative; z-index: 2; padding: 14px 16px; width: 100%; display: flex; align-items: flex-end; justify-content: space-between; }
-  .liga-slide-info h4 { font-size: 0.95rem; font-weight: 800; color: white; margin-bottom: 2px; }
-  .liga-slide-info p { font-size: 0.65rem; color: rgba(255,255,255,0.7); }
-  .liga-slide-stats { display: flex; gap: 7px; }
-  .liga-stat { background: rgba(255,255,255,0.14); border-radius: 8px; padding: 5px 9px; text-align: center; }
-  .liga-stat .v { font-size: 0.85rem; font-weight: 800; color: #FEC641; }
-  .liga-stat .l { font-size: 0.53rem; color: rgba(255,255,255,0.65); margin-top: 1px; }
-  .carousel-dots { display: flex; justify-content: center; gap: 5px; padding: 8px 0 0; background: #f8f9fb; }
-  .dot { width: 5px; height: 5px; border-radius: 50%; background: #ccc; }
-  .dot.active { width: 16px; border-radius: 3px; background: #10284E; }
+  .liga-slide-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(16, 40, 78, 0.92) 0%,
+      rgba(16, 40, 78, 0.15) 55%,
+      transparent 100%
+    );
+  }
+  .arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-60%);
+    z-index: 3;
+    width: 26px;
+    height: 26px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.8rem;
+  }
+  .arrow-left {
+    left: 10px;
+  }
+  .arrow-right {
+    right: 10px;
+  }
+  .liga-slide-content {
+    position: relative;
+    z-index: 2;
+    padding: 14px 16px;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .liga-slide-info h4 {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 2px;
+  }
+  .liga-slide-info p {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .liga-slide-stats {
+    display: flex;
+    gap: 7px;
+  }
+  .liga-stat {
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    padding: 5px 9px;
+    text-align: center;
+  }
+  .liga-stat .v {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #fec641;
+  }
+  .liga-stat .l {
+    font-size: 0.53rem;
+    color: rgba(255, 255, 255, 0.65);
+    margin-top: 1px;
+  }
+  .carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 0 0;
+    background: #f8f9fb;
+  }
+  .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #ccc;
+  }
+  .dot.active {
+    width: 16px;
+    border-radius: 3px;
+    background: #10284e;
+  }
 
   /* ── 2. MINHA LIGA ── */
-  .minha-liga { margin: 14px 20px 0; flex-shrink: 0; }
+  .minha-liga {
+    margin: 14px 20px 0;
+    flex-shrink: 0;
+  }
   .section-label {
     font-size: 0.68rem;
     font-weight: 700;
@@ -73,7 +206,12 @@
     align-items: center;
     gap: 6px;
   }
-  .section-label::after { content: ''; flex: 1; height: 1px; background: #eaeaea; }
+  .section-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #eaeaea;
+  }
 
   .minha-liga-card {
     background: white;
@@ -82,27 +220,62 @@
     overflow: hidden;
   }
   .minha-liga-header {
-    background: linear-gradient(90deg, #10284E, #546484);
+    background: linear-gradient(90deg, #10284e, #546484);
     padding: 10px 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
   }
-  .minha-liga-header h4 { font-size: 0.82rem; font-weight: 800; color: white; }
-  .minha-liga-header p { font-size: 0.6rem; color: rgba(255,255,255,0.7); margin-top: 1px; }
-  .ver-liga { background: #FEC641; color: #10284E; border-radius: 5px; padding: 4px 10px; font-size: 0.62rem; font-weight: 700; white-space: nowrap; }
+  .minha-liga-header h4 {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: white;
+  }
+  .minha-liga-header p {
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 1px;
+  }
+  .ver-liga {
+    background: #fec641;
+    color: #10284e;
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
 
-  .minha-liga-metrics { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .minha-liga-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
   .metric-item {
     padding: 12px 10px;
     text-align: center;
     border-right: 1px solid #eaeaea;
   }
-  .metric-item:last-child { border-right: none; }
-  .metric-val { font-size: 1.1rem; font-weight: 800; color: #10284E; }
-  .metric-val.yellow { color: #f59e0b; }
-  .metric-val.green { color: #16a34a; }
-  .metric-lbl { font-size: 0.55rem; color: #888; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .metric-item:last-child {
+    border-right: none;
+  }
+  .metric-val {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #10284e;
+  }
+  .metric-val.yellow {
+    color: #f59e0b;
+  }
+  .metric-val.green {
+    color: #16a34a;
+  }
+  .metric-lbl {
+    font-size: 0.55rem;
+    color: #888;
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
 
   .minha-liga-footer {
     padding: 8px 14px;
@@ -112,23 +285,85 @@
     align-items: center;
     gap: 6px;
   }
-  .evento-pill { background: #fff3cd; color: #856404; border-radius: 6px; padding: 3px 8px; font-size: 0.6rem; font-weight: 700; }
-  .evento-text { font-size: 0.62rem; color: #555; }
+  .evento-pill {
+    background: #fff3cd;
+    color: #856404;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.6rem;
+    font-weight: 700;
+  }
+  .evento-text {
+    font-size: 0.62rem;
+    color: #555;
+  }
 
   /* ── 3. DESTAQUES ── */
-  .destaques { margin: 14px 20px 16px; flex-shrink: 0; }
-  .quick-row { display: flex; gap: 8px; }
-  .quick-card { background: white; border-radius: 8px; border: 1.5px solid #eaeaea; padding: 10px 11px; flex: 1; }
-  .quick-card .qi { font-size: 0.6rem; color: #FEC641; font-weight: 700; margin-bottom: 3px; }
-  .quick-card .qv { font-size: 0.7rem; font-weight: 700; color: #10284E; }
-  .quick-card .ql { font-size: 0.58rem; color: #888; margin-top: 2px; }
+  .destaques {
+    margin: 14px 20px 16px;
+    flex-shrink: 0;
+  }
+  .quick-row {
+    display: flex;
+    gap: 8px;
+  }
+  .quick-card {
+    background: white;
+    border-radius: 8px;
+    border: 1.5px solid #eaeaea;
+    padding: 10px 11px;
+    flex: 1;
+  }
+  .quick-card .qi {
+    font-size: 0.6rem;
+    color: #fec641;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+  .quick-card .qv {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #10284e;
+  }
+  .quick-card .ql {
+    font-size: 0.58rem;
+    color: #888;
+    margin-top: 2px;
+  }
 
   /* Annotation */
-  .annotation { margin-top: 16px; background: white; border: 1.5px solid #eaeaea; border-radius: 10px; padding: 14px 18px; font-size: 0.78rem; color: #444; line-height: 1.7; }
-  .annotation strong { color: #10284E; }
-  .annotation ul { margin: 6px 0 0 16px; }
-  .annotation li { margin-bottom: 4px; }
-  .num-badge { display: inline-block; background: #10284E; color: white; border-radius: 50%; width: 18px; height: 18px; text-align: center; line-height: 18px; font-size: 0.65rem; font-weight: 700; margin-right: 5px; }
+  .annotation {
+    margin-top: 16px;
+    background: white;
+    border: 1.5px solid #eaeaea;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 0.78rem;
+    color: #444;
+    line-height: 1.7;
+  }
+  .annotation strong {
+    color: #10284e;
+  }
+  .annotation ul {
+    margin: 6px 0 0 16px;
+  }
+  .annotation li {
+    margin-bottom: 4px;
+  }
+  .num-badge {
+    display: inline-block;
+    background: #10284e;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    text-align: center;
+    line-height: 18px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    margin-right: 5px;
+  }
 </style>
 
 <h2>Home Page — Layout Final</h2>
@@ -161,9 +396,18 @@
             <p>Líder: Ana Souza · 14 membros</p>
           </div>
           <div class="liga-slide-stats">
-            <div class="liga-stat"><div class="v">92</div><div class="l">Score</div></div>
-            <div class="liga-stat"><div class="v">3</div><div class="l">Projetos</div></div>
-            <div class="liga-stat"><div class="v">87%</div><div class="l">Presença</div></div>
+            <div class="liga-stat">
+              <div class="v">92</div>
+              <div class="l">Score</div>
+            </div>
+            <div class="liga-stat">
+              <div class="v">3</div>
+              <div class="l">Projetos</div>
+            </div>
+            <div class="liga-stat">
+              <div class="v">87%</div>
+              <div class="l">Presença</div>
+            </div>
           </div>
         </div>
       </div>
@@ -233,15 +477,24 @@
         </div>
       </div>
     </div>
-
   </div>
 </div>
 
 <div class="annotation">
   <strong>Estrutura das 3 zonas:</strong>
   <ul>
-    <li><span class="num-badge">1</span><strong>Carrossel</strong> — todas as ligas, full-width, auto-avanço 1,5s. Clicar → <code>/ligas/:id</code></li>
-    <li><span class="num-badge">2</span><strong>Minha Liga</strong> — card dedicado à liga do membro: score, projetos ativos, % presença, próximo evento com data/hora/sala. Botão "Ver detalhes" → <code>/ligas/:id</code> da liga dele</li>
-    <li><span class="num-badge">3</span><strong>Destaques da semana</strong> — notícias rápidas da plataforma: variação de score, projetos concluídos, mudanças no ranking</li>
+    <li>
+      <span class="num-badge">1</span><strong>Carrossel</strong> — todas as ligas, full-width,
+      auto-avanço 1,5s. Clicar → <code>/ligas/:id</code>
+    </li>
+    <li>
+      <span class="num-badge">2</span><strong>Minha Liga</strong> — card dedicado à liga do membro:
+      score, projetos ativos, % presença, próximo evento com data/hora/sala. Botão "Ver detalhes" →
+      <code>/ligas/:id</code> da liga dele
+    </li>
+    <li>
+      <span class="num-badge">3</span><strong>Destaques da semana</strong> — notícias rápidas da
+      plataforma: variação de score, projetos concluídos, mudanças no ranking
+    </li>
   </ul>
 </div>

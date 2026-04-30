@@ -1,16 +1,28 @@
 import { Router, type Router as IRouter } from "express";
-import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
+
 import { sql } from "../config/db.js";
+import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
+import { usuarioEhDiretorDaLiga, usuarioPertenceALiga } from "../middleware/authorization.js";
 
 export const recursosRouter: IRouter = Router();
 
-// GET /recursos?liga_id= — lista recursos de uma liga
+// GET /recursos?liga_id= — lista recursos de uma liga (somente membros, staff ou professor)
 recursosRouter.get("/", authenticate, async (req, res, next) => {
   try {
+    const user = (req as AuthenticatedRequest).user!;
     const liga_id = req.query["liga_id"] as string | undefined;
 
     if (!liga_id) {
       res.status(400).json({ error: "liga_id é obrigatório." });
+      return;
+    }
+
+    if (
+      user.role !== "staff" &&
+      user.role !== "professor" &&
+      !(await usuarioPertenceALiga(user.email, liga_id))
+    ) {
+      res.status(403).json({ error: "Acesso restrito aos membros desta liga." });
       return;
     }
 
@@ -30,7 +42,7 @@ recursosRouter.get("/", authenticate, async (req, res, next) => {
 // POST /recursos — cria um recurso (lider da liga ou staff)
 recursosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
-    const email = (req as AuthenticatedRequest).user!.email;
+    const user = (req as AuthenticatedRequest).user!;
     const { liga_id, titulo, tipo, url, icone, cor } = req.body as {
       liga_id: string;
       titulo: string;
@@ -45,7 +57,12 @@ recursosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (r
       return;
     }
 
-    const [criador] = await sql`SELECT id FROM usuarios WHERE email = ${email} LIMIT 1`;
+    if (user.role === "diretor" && !(await usuarioEhDiretorDaLiga(user.email, liga_id))) {
+      res.status(403).json({ error: "Você só pode criar recursos da sua própria liga." });
+      return;
+    }
+
+    const [criador] = await sql`SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1`;
 
     const [recurso] = await sql`
       INSERT INTO recursos (liga_id, titulo, tipo, url, icone, cor, criado_por)
@@ -68,18 +85,35 @@ recursosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (r
 });
 
 // PATCH /recursos/:id — atualiza um recurso (lider ou staff)
-recursosRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
-  try {
-    const id = req.params["id"] as string;
-    const { titulo, tipo, url, icone, cor } = req.body as {
-      titulo?: string;
-      tipo?: string;
-      url?: string;
-      icone?: string;
-      cor?: string;
-    };
+recursosRouter.patch(
+  "/:id",
+  authenticate,
+  requireRole("staff", "diretor"),
+  async (req, res, next) => {
+    try {
+      const id = req.params["id"] as string;
+      const user = (req as AuthenticatedRequest).user!;
+      const { titulo, tipo, url, icone, cor } = req.body as {
+        titulo?: string;
+        tipo?: string;
+        url?: string;
+        icone?: string;
+        cor?: string;
+      };
 
-    const [recurso] = await sql`
+      if (user.role === "diretor") {
+        const [alvo] = await sql`SELECT liga_id FROM recursos WHERE id = ${id} LIMIT 1`;
+        if (!alvo) {
+          res.status(404).json({ error: "Recurso não encontrado." });
+          return;
+        }
+        if (!(await usuarioEhDiretorDaLiga(user.email, alvo.liga_id as string))) {
+          res.status(403).json({ error: "Você só pode editar recursos da sua própria liga." });
+          return;
+        }
+      }
+
+      const [recurso] = await sql`
       UPDATE recursos
       SET
         titulo = COALESCE(${titulo ?? null}, titulo),
@@ -91,26 +125,45 @@ recursosRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), asyn
       RETURNING id, liga_id, titulo, tipo, url, icone, cor, criado_por, criado_em
     `;
 
-    if (!recurso) {
-      res.status(404).json({ error: "Recurso não encontrado." });
-      return;
-    }
+      if (!recurso) {
+        res.status(404).json({ error: "Recurso não encontrado." });
+        return;
+      }
 
-    res.json(recurso);
-  } catch (err) {
-    next(err);
-  }
-});
+      res.json(recurso);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // DELETE /recursos/:id — remove um recurso (lider ou staff)
-recursosRouter.delete("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
-  try {
-    const id = req.params["id"] as string;
+recursosRouter.delete(
+  "/:id",
+  authenticate,
+  requireRole("staff", "diretor"),
+  async (req, res, next) => {
+    try {
+      const id = req.params["id"] as string;
+      const user = (req as AuthenticatedRequest).user!;
 
-    await sql`DELETE FROM recursos WHERE id = ${id}`;
+      if (user.role === "diretor") {
+        const [alvo] = await sql`SELECT liga_id FROM recursos WHERE id = ${id} LIMIT 1`;
+        if (!alvo) {
+          res.status(404).json({ error: "Recurso não encontrado." });
+          return;
+        }
+        if (!(await usuarioEhDiretorDaLiga(user.email, alvo.liga_id as string))) {
+          res.status(403).json({ error: "Você só pode remover recursos da sua própria liga." });
+          return;
+        }
+      }
 
-    res.status(204).send();
-  } catch (err) {
-    next(err);
-  }
-});
+      await sql`DELETE FROM recursos WHERE id = ${id}`;
+
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  },
+);

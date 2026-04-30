@@ -12,22 +12,23 @@
 
 ## Mapa de arquivos
 
-| Arquivo | Ação |
-|---------|------|
-| `migrations/003_ligas_imagem.sql` | Criar — ADD COLUMN imagem_url |
-| `packages/types/src/liga.ts` | Modificar — add imagem_url, diretores, projetos_ativos, cargo |
-| `apps/api/src/routes/ligas.ts` | Modificar — GET enriquecido, POST /:id/imagem, POST/PATCH com diretores |
-| `apps/api/src/routes/usuarios.ts` | Criar — GET /usuarios/busca |
-| `apps/api/src/routes/index.ts` | Modificar — montar usuariosRouter |
-| `apps/web/src/pages/ligas/LigaCard.tsx` | Criar — card individual |
-| `apps/web/src/pages/ligas/LigaSheet.tsx` | Criar — sheet criar/editar |
-| `apps/web/src/pages/ligas/LigasPage.tsx` | Reescrever — página completa |
+| Arquivo                                  | Ação                                                                    |
+| ---------------------------------------- | ----------------------------------------------------------------------- |
+| `migrations/003_ligas_imagem.sql`        | Criar — ADD COLUMN imagem_url                                           |
+| `packages/types/src/liga.ts`             | Modificar — add imagem_url, diretores, projetos_ativos, cargo           |
+| `apps/api/src/routes/ligas.ts`           | Modificar — GET enriquecido, POST /:id/imagem, POST/PATCH com diretores |
+| `apps/api/src/routes/usuarios.ts`        | Criar — GET /usuarios/busca                                             |
+| `apps/api/src/routes/index.ts`           | Modificar — montar usuariosRouter                                       |
+| `apps/web/src/pages/ligas/LigaCard.tsx`  | Criar — card individual                                                 |
+| `apps/web/src/pages/ligas/LigaSheet.tsx` | Criar — sheet criar/editar                                              |
+| `apps/web/src/pages/ligas/LigasPage.tsx` | Reescrever — página completa                                            |
 
 ---
 
 ## Task 1: Migration — adicionar imagem_url à tabela ligas
 
 **Files:**
+
 - Criar: `migrations/003_ligas_imagem.sql`
 
 - [ ] **Step 1: Criar o arquivo de migration**
@@ -42,15 +43,18 @@ ALTER TABLE ligas ADD COLUMN IF NOT EXISTS imagem_url TEXT;
 Acesse o painel do Supabase → SQL Editor e execute o conteúdo do arquivo acima.
 
 Confirme rodando:
+
 ```sql
 SELECT column_name FROM information_schema.columns
 WHERE table_name = 'ligas' AND column_name = 'imagem_url';
 ```
+
 Esperado: 1 linha retornada.
 
 - [ ] **Step 3: Criar bucket no Supabase Storage**
 
 No painel do Supabase → Storage → New bucket:
+
 - Nome: `ligas-imagens`
 - Público: ✅ (leitura pública)
 - Clique em "Save"
@@ -67,6 +71,7 @@ git commit -m "feat: add imagem_url column to ligas table"
 ## Task 2: Atualizar tipos compartilhados
 
 **Files:**
+
 - Modificar: `packages/types/src/liga.ts`
 
 - [ ] **Step 1: Atualizar o arquivo de tipos**
@@ -121,6 +126,7 @@ export interface UpdateLigaInput {
 ```bash
 cd /path/to/project && pnpm typecheck
 ```
+
 Esperado: sem erros.
 
 - [ ] **Step 3: Commit**
@@ -135,6 +141,7 @@ git commit -m "feat: add imagem_url, diretores, projetos_ativos to Liga type"
 ## Task 3: Instalar multer na API
 
 **Files:**
+
 - Modificar: `apps/api/package.json` (via pnpm)
 
 - [ ] **Step 1: Instalar multer e tipos**
@@ -148,6 +155,7 @@ cd apps/api && pnpm add multer && pnpm add -D @types/multer
 ```bash
 node -e "import('multer').then(() => console.log('ok'))"
 ```
+
 Esperado: `ok`
 
 - [ ] **Step 3: Commit**
@@ -162,11 +170,13 @@ git commit -m "chore: add multer to api dependencies"
 ## Task 4: Atualizar GET /ligas com query enriquecida
 
 **Files:**
+
 - Modificar: `apps/api/src/routes/ligas.ts` (linhas 8-15)
 
 - [ ] **Step 1: Substituir o handler GET / em `apps/api/src/routes/ligas.ts`**
 
 Substitua o bloco:
+
 ```ts
 // GET /ligas — lista todas as ligas
 ligasRouter.get("/", authenticate, async (_req, res, next) => {
@@ -180,6 +190,7 @@ ligasRouter.get("/", authenticate, async (_req, res, next) => {
 ```
 
 Por:
+
 ```ts
 // GET /ligas — lista todas as ligas com diretores e contagem de projetos
 ligasRouter.get("/", authenticate, async (_req, res, next) => {
@@ -218,6 +229,7 @@ ligasRouter.get("/", authenticate, async (_req, res, next) => {
 ```bash
 curl -H "Authorization: Bearer <token>" http://localhost:3001/ligas
 ```
+
 Esperado: array de ligas com campos `diretores` (array), `projetos_ativos` (number) e `lider_email` (string).
 
 - [ ] **Step 3: Commit**
@@ -232,16 +244,19 @@ git commit -m "feat: enrich GET /ligas with directors and active project count"
 ## Task 5: Adicionar endpoint de upload de imagem
 
 **Files:**
+
 - Modificar: `apps/api/src/routes/ligas.ts`
 
 - [ ] **Step 1: Adicionar imports de multer, supabaseAdmin e AuthenticatedRequest no topo de `ligas.ts`**
 
 Substitua a linha de import existente de `authenticate`:
+
 ```ts
 import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 ```
 
 Adicione após os imports existentes:
+
 ```ts
 import multer from "multer";
 import { supabaseAdmin } from "../config/supabase.js";
@@ -262,6 +277,7 @@ const upload = multer({
 - [ ] **Step 2: Adicionar o endpoint POST /:id/imagem após o GET /:id**
 
 Adicione antes do bloco `// POST /ligas`:
+
 ```ts
 // POST /ligas/:id/imagem — upload de imagem da liga
 ligasRouter.post(
@@ -290,9 +306,7 @@ ligasRouter.post(
 
       if (storageError) throw storageError;
 
-      const { data: urlData } = supabaseAdmin.storage
-        .from("ligas-imagens")
-        .getPublicUrl(filename);
+      const { data: urlData } = supabaseAdmin.storage.from("ligas-imagens").getPublicUrl(filename);
 
       const imagem_url = urlData.publicUrl;
 
@@ -302,12 +316,15 @@ ligasRouter.post(
         RETURNING *
       `;
 
-      if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
+      if (!liga) {
+        res.status(404).json({ error: "Liga não encontrada." });
+        return;
+      }
       res.json(liga);
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 ```
 
@@ -318,6 +335,7 @@ curl -X POST http://localhost:3001/ligas/<liga-id>/imagem \
   -H "Authorization: Bearer <token>" \
   -F "imagem=@/path/to/test.jpg"
 ```
+
 Esperado: objeto liga com `imagem_url` preenchida.
 
 - [ ] **Step 4: Commit**
@@ -332,11 +350,13 @@ git commit -m "feat: add image upload endpoint for ligas"
 ## Task 6: Atualizar POST/PATCH /ligas para gerenciar diretores
 
 **Files:**
+
 - Modificar: `apps/api/src/routes/ligas.ts`
 
 - [ ] **Step 1: Substituir o handler POST /ligas**
 
 Substitua o bloco `// POST /ligas — criar liga`:
+
 ```ts
 // POST /ligas — criar liga (admin)
 // lider_id é resolvido automaticamente pelo usuário logado (admin que cria vira lider inicial)
@@ -352,7 +372,10 @@ ligasRouter.post("/", authenticate, requireRole("admin"), async (req, res, next)
     const [adminUsuario] = await sql`
       SELECT id FROM usuarios WHERE email = ${(req as AuthenticatedRequest).user!.email}
     `;
-    if (!adminUsuario) { res.status(404).json({ error: "Usuário não encontrado." }); return; }
+    if (!adminUsuario) {
+      res.status(404).json({ error: "Usuário não encontrado." });
+      return;
+    }
     const lider_id = adminUsuario.id as string;
 
     const [liga] = await sql`
@@ -385,6 +408,7 @@ ligasRouter.post("/", authenticate, requireRole("admin"), async (req, res, next)
 - [ ] **Step 2: Substituir o handler PATCH /ligas/:id**
 
 Substitua o bloco `// PATCH /ligas/:id — editar liga`:
+
 ```ts
 // PATCH /ligas/:id — editar liga (admin ou lider)
 ligasRouter.patch("/:id", authenticate, requireRole("admin", "lider"), async (req, res, next) => {
@@ -405,7 +429,10 @@ ligasRouter.patch("/:id", authenticate, requireRole("admin", "lider"), async (re
       liga = existing;
     }
 
-    if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
+    if (!liga) {
+      res.status(404).json({ error: "Liga não encontrada." });
+      return;
+    }
 
     if (diretores !== undefined) {
       // Remove diretores anteriores
@@ -446,6 +473,7 @@ git commit -m "feat: handle directors in POST/PATCH ligas"
 ## Task 7: Adicionar endpoint GET /usuarios/busca
 
 **Files:**
+
 - Criar: `apps/api/src/routes/usuarios.ts`
 - Modificar: `apps/api/src/routes/index.ts`
 
@@ -459,31 +487,37 @@ import { sql } from "../config/db.js";
 export const usuariosRouter: IRouter = Router();
 
 // GET /usuarios/busca?email= — busca usuários por e-mail (autocomplete de diretores)
-usuariosRouter.get("/busca", authenticate, requireRole("admin", "lider"), async (req, res, next) => {
-  try {
-    const email = (req.query["email"] as string) ?? "";
+usuariosRouter.get(
+  "/busca",
+  authenticate,
+  requireRole("admin", "lider"),
+  async (req, res, next) => {
+    try {
+      const email = (req.query["email"] as string) ?? "";
 
-    if (email.length < 2) {
-      res.json([]);
-      return;
-    }
+      if (email.length < 2) {
+        res.json([]);
+        return;
+      }
 
-    const usuarios = await sql`
+      const usuarios = await sql`
       SELECT id, nome, email FROM usuarios
       WHERE email ILIKE ${"%" + email + "%"}
       LIMIT 10
     `;
 
-    res.json(usuarios);
-  } catch (err) {
-    next(err);
-  }
-});
+      res.json(usuarios);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 ```
 
 - [ ] **Step 2: Montar o router em `apps/api/src/routes/index.ts`**
 
 Adicione o import e o mount:
+
 ```ts
 import { Router, type Router as IRouter } from "express";
 import { ligasRouter } from "./ligas.js";
@@ -511,6 +545,7 @@ router.use("/usuarios", usuariosRouter);
 curl "http://localhost:3001/usuarios/busca?email=ana" \
   -H "Authorization: Bearer <token>"
 ```
+
 Esperado: array de `{ id, nome, email }`.
 
 - [ ] **Step 4: Commit**
@@ -525,6 +560,7 @@ git commit -m "feat: add GET /usuarios/busca endpoint for director autocomplete"
 ## Task 8: Criar componente LigaCard
 
 **Files:**
+
 - Criar: `apps/web/src/pages/ligas/LigaCard.tsx`
 
 - [ ] **Step 1: Criar o arquivo**
@@ -547,31 +583,21 @@ export function LigaCard({ liga }: LigaCardProps) {
       {/* Área da imagem */}
       <div className="relative h-32 w-full">
         {temImagem ? (
-          <img
-            src={liga.imagem_url!}
-            alt={liga.nome}
-            className="h-full w-full object-cover"
-          />
+          <img src={liga.imagem_url!} alt={liga.nome} className="h-full w-full object-cover" />
         ) : (
           <div className="h-full w-full bg-brand-yellow flex items-center justify-content-center justify-center">
-            <span className="font-display font-bold text-5xl text-navy">
-              {inicial}
-            </span>
+            <span className="font-display font-bold text-5xl text-navy">{inicial}</span>
           </div>
         )}
       </div>
 
       {/* Conteúdo */}
       <div className="p-4 space-y-2">
-        <h3 className="font-display font-bold text-base text-navy leading-tight">
-          {liga.nome}
-        </h3>
+        <h3 className="font-display font-bold text-base text-navy leading-tight">{liga.nome}</h3>
 
         <p className="text-xs text-link-blue">
           <span className="font-semibold">Diretores:</span>{" "}
-          {diretores.length > 0
-            ? diretores.map((d) => d.nome).join(", ")
-            : "—"}
+          {diretores.length > 0 ? diretores.map((d) => d.nome).join(", ") : "—"}
         </p>
 
         {projetosAtivos > 0 ? (
@@ -594,6 +620,7 @@ export function LigaCard({ liga }: LigaCardProps) {
 ```bash
 pnpm typecheck
 ```
+
 Esperado: sem erros.
 
 - [ ] **Step 3: Commit**
@@ -608,6 +635,7 @@ git commit -m "feat: add LigaCard component"
 ## Task 9: Criar componente LigaSheet
 
 **Files:**
+
 - Criar: `apps/web/src/pages/ligas/LigaSheet.tsx`
 
 O sheet usa os componentes shadcn `Sheet` e `DropdownMenu` já instalados em `apps/web/src/components/ui/`.
@@ -661,9 +689,7 @@ export function LigaSheet({ open, onOpenChange, liga, onSalvo }: LigaSheetProps)
   useEffect(() => {
     if (open) {
       setNome(liga?.nome ?? "");
-      setDiretores(
-        (liga?.diretores ?? []).map((d) => ({ id: d.id, nome: d.nome, email: "" }))
-      );
+      setDiretores((liga?.diretores ?? []).map((d) => ({ id: d.id, nome: d.nome, email: "" })));
       setImagePreview(liga?.imagem_url ?? null);
       setImageFile(null);
       setBusca("");
@@ -673,7 +699,10 @@ export function LigaSheet({ open, onOpenChange, liga, onSalvo }: LigaSheetProps)
 
   // Busca usuários por e-mail
   useEffect(() => {
-    if (busca.length < 2) { setResultados([]); return; }
+    if (busca.length < 2) {
+      setResultados([]);
+      return;
+    }
     const timer = setTimeout(async () => {
       const token = await getToken();
       const res = await fetch(`/api/usuarios/busca?email=${encodeURIComponent(busca)}`, {
@@ -805,7 +834,9 @@ export function LigaSheet({ open, onOpenChange, liga, onSalvo }: LigaSheetProps)
 
           {/* Nome */}
           <div className="space-y-2">
-            <Label htmlFor="nome" className="text-navy font-semibold">Nome da liga</Label>
+            <Label htmlFor="nome" className="text-navy font-semibold">
+              Nome da liga
+            </Label>
             <Input
               id="nome"
               value={nome}
@@ -886,6 +917,7 @@ export function LigaSheet({ open, onOpenChange, liga, onSalvo }: LigaSheetProps)
 ```bash
 pnpm typecheck
 ```
+
 Esperado: sem erros.
 
 - [ ] **Step 3: Commit**
@@ -900,6 +932,7 @@ git commit -m "feat: add LigaSheet component for create/edit liga"
 ## Task 10: Reescrever LigasPage
 
 **Files:**
+
 - Modificar: `apps/web/src/pages/ligas/LigasPage.tsx`
 
 - [ ] **Step 1: Reescrever o arquivo**
@@ -994,14 +1027,10 @@ export function LigasPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {role === "lider" && (
-                <DropdownMenuItem onClick={abrirEditar}>
-                  Editar liga
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={abrirEditar}>Editar liga</DropdownMenuItem>
               )}
               {role === "admin" && (
-                <DropdownMenuItem onClick={abrirAdicionar}>
-                  Adicionar liga
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={abrirAdicionar}>Adicionar liga</DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -1038,6 +1067,7 @@ export function LigasPage() {
 ```bash
 pnpm typecheck
 ```
+
 Esperado: sem erros.
 
 - [ ] **Step 3: Testar manualmente**
@@ -1047,6 +1077,7 @@ pnpm dev
 ```
 
 Abra http://localhost:3000/ligas e verifique:
+
 1. Grid de cards com dados reais
 2. Como `membro`: botão `···` não aparece
 3. Como `lider`: aparece "Editar liga" no dropdown

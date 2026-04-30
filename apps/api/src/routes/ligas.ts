@@ -1,8 +1,10 @@
 import { Router, type Router as IRouter } from "express";
-import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
+import multer from "multer";
+
 import { sql } from "../config/db.js";
 import { supabaseAdmin } from "../config/supabase.js";
-import multer from "multer";
+import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
+import { requireLigaMembership, requireLigaOwnership } from "../middleware/authorization.js";
 
 export const ligasRouter: IRouter = Router();
 
@@ -25,22 +27,29 @@ ligasRouter.get("/", authenticate, async (_req, res, next) => {
       SELECT
         l.*,
         lu.email AS lider_email,
-        COALESCE(
-          json_agg(
-            json_build_object('id', u.id, 'nome', u.nome)
-          ) FILTER (WHERE (lm.cargo = 'Diretor' OR u.role = 'diretor') AND lm.id IS NOT NULL),
-          '[]'
-        ) AS diretores,
-        COUNT(p.id) FILTER (
-          WHERE p.status IN ('aprovado', 'em_andamento')
-        )::int AS projetos_ativos
+        COALESCE((
+          SELECT json_agg(
+            json_build_object('id', u.id, 'nome', u.nome, 'avatar_url', u.avatar_url)
+          )
+          FROM liga_membros lm
+          JOIN usuarios u ON u.id = lm.usuario_id
+          WHERE lm.liga_id = l.id
+            AND (lm.cargo = 'Diretor' OR u.role = 'diretor')
+        ), '[]') AS diretores,
+        (
+          SELECT COUNT(*)::int
+          FROM projetos p
+          WHERE p.liga_id = l.id
+            AND p.status IN ('aprovado', 'em_andamento')
+        ) AS projetos_ativos,
+        (
+          SELECT COUNT(*)::int
+          FROM liga_membros lm2
+          WHERE lm2.liga_id = l.id
+        ) AS total_membros
       FROM ligas l
       LEFT JOIN usuarios lu ON lu.id = l.lider_id
-      LEFT JOIN liga_membros lm ON lm.liga_id = l.id
-      LEFT JOIN usuarios u ON u.id = lm.usuario_id
-      LEFT JOIN projetos p ON p.liga_id = l.id
       WHERE l.ativo = true
-      GROUP BY l.id, lu.email
       ORDER BY l.nome
     `;
     res.json(ligas);
@@ -59,7 +68,7 @@ ligasRouter.get("/minha", authenticate, async (req, res, next) => {
         lu.email AS lider_email,
         COALESCE(
           json_agg(
-            json_build_object('id', u.id, 'nome', u.nome)
+            json_build_object('id', u.id, 'nome', u.nome, 'avatar_url', u.avatar_url)
           ) FILTER (WHERE (lm.cargo = 'Diretor' OR u.role = 'diretor') AND lm.id IS NOT NULL),
           '[]'
         ) AS diretores
@@ -79,7 +88,10 @@ ligasRouter.get("/minha", authenticate, async (req, res, next) => {
       GROUP BY l.id, lu.email
       LIMIT 1
     `;
-    if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
+    if (!liga) {
+      res.status(404).json({ error: "Liga não encontrada." });
+      return;
+    }
     res.json(liga);
   } catch (err) {
     next(err);
@@ -106,7 +118,7 @@ ligasRouter.get("/:id", authenticate, async (req, res, next) => {
         ) AS membros,
         COALESCE(
           json_agg(
-            json_build_object('id', u.id, 'nome', u.nome)
+            json_build_object('id', u.id, 'nome', u.nome, 'avatar_url', u.avatar_url)
           ) FILTER (WHERE (lm.cargo = 'Diretor' OR u.role = 'diretor') AND lm.id IS NOT NULL),
           '[]'
         ) AS diretores
@@ -117,7 +129,10 @@ ligasRouter.get("/:id", authenticate, async (req, res, next) => {
       GROUP BY l.id
     `;
 
-    if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
+    if (!liga) {
+      res.status(404).json({ error: "Liga não encontrada." });
+      return;
+    }
     res.json(liga);
   } catch (err) {
     next(err);
@@ -131,7 +146,7 @@ ligasRouter.get("/:id/membros", authenticate, async (req, res, next) => {
     const membros = await sql`
       SELECT
         lm.id, lm.usuario_id, lm.cargo, lm.ingressou_em,
-        u.nome, u.email, u.role
+        u.nome, u.email, u.role, u.avatar_url
       FROM liga_membros lm
       JOIN usuarios u ON u.id = lm.usuario_id
       WHERE lm.liga_id = ${id}
@@ -143,28 +158,53 @@ ligasRouter.get("/:id/membros", authenticate, async (req, res, next) => {
   }
 });
 
-// GET /ligas/:id/projetos — projetos da liga
-ligasRouter.get("/:id/projetos", authenticate, async (req, res, next) => {
+// GET /ligas/:id/professor — professor responsável pela liga
+ligasRouter.get("/:id/professor", authenticate, async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
-    const projetos = await sql`
-      SELECT p.*, u.nome AS responsavel_nome
-      FROM projetos p
-      LEFT JOIN usuarios u ON u.id = p.responsavel_id
-      WHERE p.liga_id = ${id}
-      ORDER BY p.criado_em DESC
+    const [row] = await sql`
+      SELECT u.id, u.nome, u.email
+      FROM ligas l
+      LEFT JOIN usuarios u ON u.id = l.professor_id
+      WHERE l.id = ${id}
     `;
-    res.json(projetos);
+    res.json(row?.["id"] ? row : null);
   } catch (err) {
     next(err);
   }
 });
 
-// GET /ligas/:id/presenca — registros de presença agrupados por evento
-ligasRouter.get("/:id/presenca", authenticate, async (req, res, next) => {
-  try {
-    const id = req.params["id"] as string;
-    const registros = await sql`
+// GET /ligas/:id/projetos — projetos da liga (somente membros, staff ou professor)
+ligasRouter.get(
+  "/:id/projetos",
+  authenticate,
+  requireLigaMembership("id"),
+  async (req, res, next) => {
+    try {
+      const id = req.params["id"] as string;
+      const projetos = await sql`
+      SELECT p.*, p.nome AS titulo, u.nome AS responsavel_nome
+      FROM projetos p
+      LEFT JOIN usuarios u ON u.id = p.responsavel_id
+      WHERE p.liga_id = ${id}
+      ORDER BY p.criado_em DESC
+    `;
+      res.json(projetos);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// GET /ligas/:id/presenca — registros de presença agrupados por evento (somente membros)
+ligasRouter.get(
+  "/:id/presenca",
+  authenticate,
+  requireLigaMembership("id"),
+  async (req, res, next) => {
+    try {
+      const id = req.params["id"] as string;
+      const registros = await sql`
       SELECT
         e.id AS evento_id,
         e.titulo AS evento_titulo,
@@ -180,11 +220,12 @@ ligasRouter.get("/:id/presenca", authenticate, async (req, res, next) => {
       WHERE e.liga_id = ${id}
       ORDER BY e.data DESC
     `;
-    res.json(registros);
-  } catch (err) {
-    next(err);
-  }
-});
+      res.json(registros);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // GET /ligas/:id/eventos/proximo — próximo evento futuro da liga
 ligasRouter.get("/:id/eventos/proximo", authenticate, async (req, res, next) => {
@@ -196,7 +237,10 @@ ligasRouter.get("/:id/eventos/proximo", authenticate, async (req, res, next) => 
       ORDER BY data ASC
       LIMIT 1
     `;
-    if (!evento) { res.status(404).json({ error: "Nenhum evento futuro." }); return; }
+    if (!evento) {
+      res.status(404).json({ error: "Nenhum evento futuro." });
+      return;
+    }
     res.json(evento);
   } catch (err) {
     next(err);
@@ -207,24 +251,11 @@ ligasRouter.get("/:id/eventos/proximo", authenticate, async (req, res, next) => 
 ligasRouter.post(
   "/:id/imagem",
   authenticate,
-  requireRole("staff", "diretor"),
+  requireLigaOwnership("id"),
   upload.single("imagem"),
   async (req, res, next) => {
     try {
       const id = req.params["id"] as string;
-      const user = (req as AuthenticatedRequest).user!;
-
-      if (user.role === "diretor") {
-        const [membro] = await sql`
-          SELECT 1 FROM liga_membros lm
-          JOIN usuarios u ON u.id = lm.usuario_id
-          WHERE lm.liga_id = ${id} AND u.email = ${user.email} AND lm.cargo = 'Diretor'
-        `;
-        if (!membro) {
-          res.status(403).json({ error: "Você só pode editar a sua própria liga." });
-          return;
-        }
-      }
 
       if (!req.file) {
         res.status(400).json({ error: "Arquivo de imagem obrigatório." });
@@ -243,9 +274,7 @@ ligasRouter.post(
 
       if (storageError) throw storageError;
 
-      const { data: urlData } = supabaseAdmin.storage
-        .from("ligas-imagens")
-        .getPublicUrl(filename);
+      const { data: urlData } = supabaseAdmin.storage.from("ligas-imagens").getPublicUrl(filename);
 
       const imagem_url = urlData.publicUrl;
 
@@ -255,12 +284,15 @@ ligasRouter.post(
         RETURNING *
       `;
 
-      if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
+      if (!liga) {
+        res.status(404).json({ error: "Liga não encontrada." });
+        return;
+      }
       res.json(liga);
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /ligas — criar liga (staff)
@@ -281,7 +313,10 @@ ligasRouter.post("/", authenticate, requireRole("staff"), async (req, res, next)
     const [adminUsuario] = await sql`
       SELECT id FROM usuarios WHERE email = ${(req as AuthenticatedRequest).user!.email}
     `;
-    if (!adminUsuario) { res.status(404).json({ error: "Usuário não encontrado." }); return; }
+    if (!adminUsuario) {
+      res.status(404).json({ error: "Usuário não encontrado." });
+      return;
+    }
     const lider_id = adminUsuario.id as string;
 
     const [liga] = await sql`
@@ -311,28 +346,26 @@ ligasRouter.post("/", authenticate, requireRole("staff"), async (req, res, next)
 });
 
 // PATCH /ligas/:id — editar liga (staff ou lider)
-ligasRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
+ligasRouter.patch("/:id", authenticate, requireLigaOwnership("id"), async (req, res, next) => {
   try {
     const id = req.params["id"] as string;
     const user = (req as AuthenticatedRequest).user!;
-
-    if (user.role === "diretor") {
-      const [membro] = await sql`
-        SELECT 1 FROM liga_membros lm
-        JOIN usuarios u ON u.id = lm.usuario_id
-        WHERE lm.liga_id = ${id} AND u.email = ${user.email} AND lm.cargo = 'Diretor'
-      `;
-      if (!membro) {
-        res.status(403).json({ error: "Você só pode editar a sua própria liga." });
-        return;
-      }
-    }
 
     const { diretores, ...rawUpdates } = req.body as Record<string, unknown> & {
       diretores?: string[];
     };
 
-    const camposPermitidos = ["nome", "descricao", "categoria", "ativo"] as const;
+    if (user.role === "diretor" && diretores !== undefined) {
+      res.status(403).json({ error: "Apenas staff pode alterar diretores da liga." });
+      return;
+    }
+
+    if (user.role === "diretor" && "professor_id" in rawUpdates) {
+      res.status(403).json({ error: "Apenas staff pode alterar o professor da liga." });
+      return;
+    }
+
+    const camposPermitidos = ["nome", "descricao", "categoria", "ativo", "professor_id"] as const;
     const updates: Record<string, unknown> = {};
     for (const campo of camposPermitidos) {
       if (campo in rawUpdates) updates[campo] = rawUpdates[campo];
@@ -349,7 +382,10 @@ ligasRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (
       liga = existing;
     }
 
-    if (!liga) { res.status(404).json({ error: "Liga não encontrada." }); return; }
+    if (!liga) {
+      res.status(404).json({ error: "Liga não encontrada." });
+      return;
+    }
 
     if (diretores !== undefined) {
       // Get current directors and revoke role for those being removed
@@ -388,41 +424,119 @@ ligasRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (
   }
 });
 
-// POST /ligas/:id/membros — adiciona membro à liga (staff)
-ligasRouter.post("/:id/membros", authenticate, requireRole("staff"), async (req, res, next) => {
-  try {
-    const liga_id = req.params["id"] as string;
-    const { usuario_id, cargo } = req.body as { usuario_id: string; cargo?: string };
+// POST /ligas/:id/membros — adiciona membro à liga por email ou usuario_id
+ligasRouter.post(
+  "/:id/membros",
+  authenticate,
+  requireLigaOwnership("id"),
+  async (req, res, next) => {
+    try {
+      const liga_id = req.params["id"] as string;
+      const { usuario_id, email, cargo } = req.body as {
+        usuario_id?: string;
+        email?: string;
+        cargo?: string;
+      };
 
-    await sql`
-      INSERT INTO liga_membros (liga_id, usuario_id, cargo)
-      VALUES (${liga_id}, ${usuario_id}, ${cargo ?? null})
-      ON CONFLICT (liga_id, usuario_id)
-      DO UPDATE SET cargo = EXCLUDED.cargo
-    `;
+      if (!usuario_id && !email) {
+        res.status(400).json({ error: "Informe email ou usuario_id." });
+        return;
+      }
 
-    res.status(201).json({ ok: true });
-  } catch (err) {
-    next(err);
-  }
-});
+      let resolvedId = usuario_id;
+      if (!resolvedId && email) {
+        const [usuario] = await sql`SELECT id FROM usuarios WHERE email = ${email} LIMIT 1`;
+        if (!usuario) {
+          res.status(404).json({ error: "Usuário não cadastrado no sistema." });
+          return;
+        }
+        resolvedId = usuario.id as string;
+      }
 
-// DELETE /ligas/:id/membros/:userId — remove membro da liga (staff)
-ligasRouter.delete("/:id/membros/:userId", authenticate, requireRole("staff"), async (req, res, next) => {
-  try {
-    const liga_id = req.params["id"] as string;
-    const usuario_id = req.params["userId"] as string;
+      const [membro] = await sql`
+        INSERT INTO liga_membros (liga_id, usuario_id, cargo)
+        VALUES (${liga_id}, ${resolvedId!}, ${cargo ?? null})
+        ON CONFLICT (liga_id, usuario_id)
+        DO UPDATE SET cargo = EXCLUDED.cargo
+        RETURNING id, liga_id, usuario_id, cargo, ingressou_em
+      `;
 
-    await sql`
-      DELETE FROM liga_membros
-      WHERE liga_id = ${liga_id} AND usuario_id = ${usuario_id}
-    `;
+      const [usuarioInfo] = await sql`
+        SELECT id, nome, email, role FROM usuarios WHERE id = ${resolvedId!} LIMIT 1
+      `;
 
-    res.status(204).send();
-  } catch (err) {
-    next(err);
-  }
-});
+      res.status(201).json({
+        id: membro?.id,
+        usuario_id: resolvedId,
+        cargo: membro?.cargo,
+        ingressou_em: membro?.ingressou_em,
+        nome: usuarioInfo?.nome,
+        email: usuarioInfo?.email,
+        role: usuarioInfo?.role,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// PATCH /ligas/:id/membros/:userId — altera cargo (staff ou diretor da liga)
+ligasRouter.patch(
+  "/:id/membros/:userId",
+  authenticate,
+  requireLigaOwnership("id"),
+  async (req, res, next) => {
+    try {
+      const liga_id = req.params["id"] as string;
+      const usuario_id = req.params["userId"] as string;
+      const { cargo } = req.body as { cargo?: string | null };
+
+      const [membro] = await sql`
+        UPDATE liga_membros SET cargo = ${cargo ?? null}
+        WHERE liga_id = ${liga_id} AND usuario_id = ${usuario_id}
+        RETURNING id, liga_id, usuario_id, cargo, ingressou_em
+      `;
+
+      if (!membro) {
+        res.status(404).json({ error: "Membro não encontrado." });
+        return;
+      }
+
+      res.json(membro);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// DELETE /ligas/:id/membros/:userId — remove membro (staff ou diretor da liga)
+ligasRouter.delete(
+  "/:id/membros/:userId",
+  authenticate,
+  requireLigaOwnership("id"),
+  async (req, res, next) => {
+    try {
+      const liga_id = req.params["id"] as string;
+      const usuario_id = req.params["userId"] as string;
+      const user = (req as AuthenticatedRequest).user!;
+
+      const [alvo] = await sql`SELECT email FROM usuarios WHERE id = ${usuario_id} LIMIT 1`;
+      if (alvo?.email === user.email) {
+        res.status(400).json({ error: "Você não pode remover a si mesmo da liga." });
+        return;
+      }
+
+      await sql`
+        DELETE FROM liga_membros
+        WHERE liga_id = ${liga_id} AND usuario_id = ${usuario_id}
+      `;
+
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // DELETE /ligas/:id — arquivar liga (staff)
 ligasRouter.delete("/:id", authenticate, requireRole("staff"), async (req, res, next) => {

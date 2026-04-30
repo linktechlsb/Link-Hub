@@ -12,27 +12,28 @@
 
 ## File Map
 
-| Action | File | Responsibility |
-|--------|------|----------------|
-| Install | `apps/web/src/components/ui/table.tsx` | shadcn Table |
-| Install | `apps/web/src/components/ui/pagination.tsx` | shadcn Pagination |
-| Install | `apps/web/src/components/ui/progress.tsx` | shadcn Progress |
-| Install | `apps/web/src/components/ui/badge.tsx` | shadcn Badge |
-| Create | `apps/web/src/pages/home/KpiCard.tsx` | Reusable KPI metric card with skeleton |
-| Create | `apps/web/src/pages/home/LigasCarousel.tsx` | Ligas carousel (extracted + redesigned) |
-| Create | `apps/web/src/pages/home/MinhaLigaCard.tsx` | "Minha Liga" status card (redesigned) |
-| Create | `apps/web/src/pages/home/RankingLigas.tsx` | Shared ranking widget (Diretor + Membro) |
-| Create | `apps/web/src/pages/home/HomeStaffView.tsx` | Full Staff view |
-| Create | `apps/web/src/pages/home/HomeDiretorView.tsx` | Full Diretor view |
-| Create | `apps/web/src/pages/home/HomeProfessorView.tsx` | Full Professor view |
-| Create | `apps/web/src/pages/home/HomeMembroView.tsx` | Full Membro view |
-| Rewrite | `apps/web/src/pages/home/HomePage.tsx` | Data fetching + role router |
+| Action  | File                                            | Responsibility                           |
+| ------- | ----------------------------------------------- | ---------------------------------------- |
+| Install | `apps/web/src/components/ui/table.tsx`          | shadcn Table                             |
+| Install | `apps/web/src/components/ui/pagination.tsx`     | shadcn Pagination                        |
+| Install | `apps/web/src/components/ui/progress.tsx`       | shadcn Progress                          |
+| Install | `apps/web/src/components/ui/badge.tsx`          | shadcn Badge                             |
+| Create  | `apps/web/src/pages/home/KpiCard.tsx`           | Reusable KPI metric card with skeleton   |
+| Create  | `apps/web/src/pages/home/LigasCarousel.tsx`     | Ligas carousel (extracted + redesigned)  |
+| Create  | `apps/web/src/pages/home/MinhaLigaCard.tsx`     | "Minha Liga" status card (redesigned)    |
+| Create  | `apps/web/src/pages/home/RankingLigas.tsx`      | Shared ranking widget (Diretor + Membro) |
+| Create  | `apps/web/src/pages/home/HomeStaffView.tsx`     | Full Staff view                          |
+| Create  | `apps/web/src/pages/home/HomeDiretorView.tsx`   | Full Diretor view                        |
+| Create  | `apps/web/src/pages/home/HomeProfessorView.tsx` | Full Professor view                      |
+| Create  | `apps/web/src/pages/home/HomeMembroView.tsx`    | Full Membro view                         |
+| Rewrite | `apps/web/src/pages/home/HomePage.tsx`          | Data fetching + role router              |
 
 ---
 
 ## Task 1: Install shadcn components
 
 **Files:**
+
 - Create: `apps/web/src/components/ui/table.tsx`
 - Create: `apps/web/src/components/ui/pagination.tsx`
 - Create: `apps/web/src/components/ui/progress.tsx`
@@ -57,6 +58,7 @@ ls apps/web/src/components/ui/ | grep -E "table|pagination|progress|badge"
 ```
 
 Expected output:
+
 ```
 badge.tsx
 pagination.tsx
@@ -76,6 +78,7 @@ git commit -m "feat: install shadcn table, pagination, progress, badge for home 
 ## Task 2: KpiCard component
 
 **Files:**
+
 - Create: `apps/web/src/pages/home/KpiCard.tsx`
 
 - [ ] **Step 1: Create the component**
@@ -83,17 +86,17 @@ git commit -m "feat: install shadcn table, pagination, progress, badge for home 
 Create `apps/web/src/pages/home/KpiCard.tsx` with this exact content:
 
 ```tsx
-import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 interface KpiCardProps {
-  label: string
-  value: string
-  trend?: string
-  trendType?: "up" | "down" | "neutral"
-  icon?: React.ReactNode
-  loading?: boolean
+  label: string;
+  value: string;
+  trend?: string;
+  trendType?: "up" | "down" | "neutral";
+  icon?: React.ReactNode;
+  loading?: boolean;
 }
 
 export function KpiCard({
@@ -112,15 +115,15 @@ export function KpiCard({
           <Skeleton className="h-3 w-28 mt-2" />
         </CardContent>
       </Card>
-    )
+    );
   }
 
   const trendClass =
     trendType === "up"
       ? "text-green-600"
       : trendType === "down"
-      ? "text-red-500"
-      : "text-amber-500"
+        ? "text-red-500"
+        : "text-amber-500";
 
   return (
     <Card className="shadow-sm">
@@ -131,15 +134,11 @@ export function KpiCard({
           </div>
         )}
         <div className="text-3xl font-bold text-navy leading-none">{value}</div>
-        <div className="text-xs text-muted-foreground uppercase tracking-wide mt-2">
-          {label}
-        </div>
-        {trend && (
-          <div className={cn("text-xs mt-1.5 font-medium", trendClass)}>{trend}</div>
-        )}
+        <div className="text-xs text-muted-foreground uppercase tracking-wide mt-2">{label}</div>
+        {trend && <div className={cn("text-xs mt-1.5 font-medium", trendClass)}>{trend}</div>}
       </CardContent>
     </Card>
-  )
+  );
 }
 ```
 
@@ -163,6 +162,7 @@ git commit -m "feat: add KpiCard component with skeleton loading state"
 ## Task 3: LigasCarousel component
 
 **Files:**
+
 - Create: `apps/web/src/pages/home/LigasCarousel.tsx`
 
 Extracted from `HomePage.tsx` + redesigned: `backdrop-blur-sm` on controls, `border border-border` on carousel container, cleaner dot indicators, 4s auto-rotation.
@@ -172,39 +172,39 @@ Extracted from `HomePage.tsx` + redesigned: `backdrop-blur-sm` on controls, `bor
 Create `apps/web/src/pages/home/LigasCarousel.tsx`:
 
 ```tsx
-import { useEffect, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import type { Liga } from "@link-leagues/types"
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { Liga } from "@link-leagues/types";
 
 interface LigasCarouselProps {
-  ligas: Liga[]
+  ligas: Liga[];
 }
 
 export function LigasCarousel({ ligas }: LigasCarouselProps) {
-  const navigate = useNavigate()
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const timerRef = useRef<ReturnType<typeof setInterval>>()
+  const navigate = useNavigate();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
-    if (ligas.length === 0) return
+    if (ligas.length === 0) return;
     timerRef.current = setInterval(() => {
-      setCurrentIndex((i) => (i + 1) % ligas.length)
-    }, 4000)
-    return () => clearInterval(timerRef.current)
-  }, [ligas.length])
+      setCurrentIndex((i) => (i + 1) % ligas.length);
+    }, 4000);
+    return () => clearInterval(timerRef.current);
+  }, [ligas.length]);
 
   function irPara(index: number) {
-    clearInterval(timerRef.current)
-    setCurrentIndex((index + ligas.length) % ligas.length)
+    clearInterval(timerRef.current);
+    setCurrentIndex((index + ligas.length) % ligas.length);
     timerRef.current = setInterval(() => {
-      setCurrentIndex((i) => (i + 1) % ligas.length)
-    }, 4000)
+      setCurrentIndex((i) => (i + 1) % ligas.length);
+    }, 4000);
   }
 
-  if (ligas.length === 0) return null
+  if (ligas.length === 0) return null;
 
-  const liga = ligas[currentIndex]
+  const liga = ligas[currentIndex];
 
   return (
     <div className="rounded-xl overflow-hidden border border-border shadow-sm">
@@ -225,7 +225,10 @@ export function LigasCarousel({ ligas }: LigasCarouselProps) {
 
         {/* Seta esquerda */}
         <button
-          onClick={(e) => { e.stopPropagation(); irPara(currentIndex - 1) }}
+          onClick={(e) => {
+            e.stopPropagation();
+            irPara(currentIndex - 1);
+          }}
           className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 rounded-full p-1.5 text-white transition-colors backdrop-blur-sm"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -233,7 +236,10 @@ export function LigasCarousel({ ligas }: LigasCarouselProps) {
 
         {/* Seta direita */}
         <button
-          onClick={(e) => { e.stopPropagation(); irPara(currentIndex + 1) }}
+          onClick={(e) => {
+            e.stopPropagation();
+            irPara(currentIndex + 1);
+          }}
           className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 rounded-full p-1.5 text-white transition-colors backdrop-blur-sm"
         >
           <ChevronRight className="h-4 w-4" />
@@ -242,9 +248,7 @@ export function LigasCarousel({ ligas }: LigasCarouselProps) {
         {/* Conteúdo */}
         <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
           <div>
-            <h2 className="font-display font-bold text-white text-lg leading-tight">
-              {liga.nome}
-            </h2>
+            <h2 className="font-display font-bold text-white text-lg leading-tight">{liga.nome}</h2>
             <p className="text-white/60 text-xs mt-0.5">
               Diretor:{" "}
               {liga.diretores && liga.diretores.length > 0
@@ -258,9 +262,7 @@ export function LigasCarousel({ ligas }: LigasCarouselProps) {
               <div className="text-white/70 text-xs">Score</div>
             </div>
             <div className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 text-center">
-              <div className="text-brand-yellow font-bold text-sm">
-                {liga.projetos_ativos ?? 0}
-              </div>
+              <div className="text-brand-yellow font-bold text-sm">{liga.projetos_ativos ?? 0}</div>
               <div className="text-white/70 text-xs">Projetos</div>
             </div>
           </div>
@@ -274,15 +276,13 @@ export function LigasCarousel({ ligas }: LigasCarouselProps) {
             key={i}
             onClick={() => irPara(i)}
             className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === currentIndex
-                ? "w-4 bg-navy"
-                : "w-1.5 bg-slate-200 hover:bg-slate-300"
+              i === currentIndex ? "w-4 bg-navy" : "w-1.5 bg-slate-200 hover:bg-slate-300"
             }`}
           />
         ))}
       </div>
     </div>
-  )
+  );
 }
 ```
 
@@ -298,6 +298,7 @@ git commit -m "feat: extract LigasCarousel component with refined visual design"
 ## Task 4: MinhaLigaCard component
 
 **Files:**
+
 - Create: `apps/web/src/pages/home/MinhaLigaCard.tsx`
 
 - [ ] **Step 1: Create the component**
@@ -305,23 +306,23 @@ git commit -m "feat: extract LigasCarousel component with refined visual design"
 Create `apps/web/src/pages/home/MinhaLigaCard.tsx`:
 
 ```tsx
-import { useNavigate } from "react-router-dom"
-import { Card } from "@/components/ui/card"
-import type { Liga } from "@link-leagues/types"
+import { useNavigate } from "react-router-dom";
+import { Card } from "@/components/ui/card";
+import type { Liga } from "@link-leagues/types";
 
 interface MinhaLigaCardProps {
-  liga: Liga
+  liga: Liga;
 }
 
 export function MinhaLigaCard({ liga }: MinhaLigaCardProps) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const stats = [
     { valor: "78", label: "Score", cor: "text-amber-500" },
     { valor: String(liga.projetos_ativos ?? 0), label: "Projetos", cor: "text-navy" },
     { valor: "—", label: "Presença", cor: "text-green-600" },
     { valor: "—", label: "Próx. Evento", cor: "text-navy" },
-  ]
+  ];
 
   return (
     <Card className="overflow-hidden shadow-sm">
@@ -356,7 +357,7 @@ export function MinhaLigaCard({ liga }: MinhaLigaCardProps) {
         ))}
       </div>
     </Card>
-  )
+  );
 }
 ```
 
@@ -372,6 +373,7 @@ git commit -m "feat: add MinhaLigaCard component with refined stats display"
 ## Task 5: RankingLigas component
 
 **Files:**
+
 - Create: `apps/web/src/pages/home/RankingLigas.tsx`
 
 Shared between `HomeDiretorView` and `HomeMembroView`. Uses `Progress` from shadcn. Normalizes progress bar against `maxScore`.
@@ -381,24 +383,24 @@ Shared between `HomeDiretorView` and `HomeMembroView`. Uses `Progress` from shad
 Create `apps/web/src/pages/home/RankingLigas.tsx`:
 
 ```tsx
-import { Trophy } from "lucide-react"
-import { Card } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { cn } from "@/lib/utils"
+import { Trophy } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 export interface RankingItem {
-  id: string
-  nome: string
-  score: number
-  minhaLiga: boolean
+  id: string;
+  nome: string;
+  score: number;
+  minhaLiga: boolean;
 }
 
 interface RankingLigasProps {
-  ranking: RankingItem[]
+  ranking: RankingItem[];
 }
 
 export function RankingLigas({ ranking }: RankingLigasProps) {
-  const maxScore = Math.max(...ranking.map((r) => r.score), 1)
+  const maxScore = Math.max(...ranking.map((r) => r.score), 1);
 
   return (
     <Card className="overflow-hidden shadow-sm">
@@ -408,13 +410,13 @@ export function RankingLigas({ ranking }: RankingLigasProps) {
           className={cn(
             "flex items-center gap-3 px-4 py-3",
             i < ranking.length - 1 && "border-b border-border",
-            r.minhaLiga && "bg-navy/5"
+            r.minhaLiga && "bg-navy/5",
           )}
         >
           <span
             className={cn(
               "text-xs font-bold w-5 text-center shrink-0",
-              r.minhaLiga ? "text-navy" : "text-muted-foreground"
+              r.minhaLiga ? "text-navy" : "text-muted-foreground",
             )}
           >
             {i + 1}º
@@ -424,7 +426,7 @@ export function RankingLigas({ ranking }: RankingLigasProps) {
               <span
                 className={cn(
                   "text-sm font-semibold truncate",
-                  r.minhaLiga ? "text-navy" : "text-slate-700"
+                  r.minhaLiga ? "text-navy" : "text-slate-700",
                 )}
               >
                 {r.nome}
@@ -435,22 +437,17 @@ export function RankingLigas({ ranking }: RankingLigasProps) {
                   </span>
                 )}
               </span>
-              <span className="text-xs font-bold text-navy/70 ml-3 shrink-0">
-                {r.score} pts
-              </span>
+              <span className="text-xs font-bold text-navy/70 ml-3 shrink-0">{r.score} pts</span>
             </div>
             <Progress
               value={Math.round((r.score / maxScore) * 100)}
-              className={cn(
-                "h-1.5",
-                r.minhaLiga ? "[&>div]:bg-navy" : "[&>div]:bg-slate-300"
-              )}
+              className={cn("h-1.5", r.minhaLiga ? "[&>div]:bg-navy" : "[&>div]:bg-slate-300")}
             />
           </div>
         </div>
       ))}
     </Card>
-  )
+  );
 }
 ```
 
@@ -466,6 +463,7 @@ git commit -m "feat: add shared RankingLigas component using shadcn Progress"
 ## Task 6: HomeStaffView
 
 **Files:**
+
 - Create: `apps/web/src/pages/home/HomeStaffView.tsx`
 
 Sections (in order): Destaques da semana → Métricas globais → Alertas → Ranking de presença → Engajamento global.
@@ -475,67 +473,116 @@ Sections (in order): Destaques da semana → Métricas globais → Alertas → R
 Create `apps/web/src/pages/home/HomeStaffView.tsx`:
 
 ```tsx
-import { useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom";
 import {
-  Users, UserCheck, FolderKanban, Activity,
-  AlertTriangle, CalendarX, Clock,
-  TrendingUp, CheckCircle2, Medal,
-} from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+  Users,
+  UserCheck,
+  FolderKanban,
+  Activity,
+  AlertTriangle,
+  CalendarX,
+  Clock,
+  TrendingUp,
+  CheckCircle2,
+  Medal,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
-  Table, TableBody, TableCell, TableHead,
-  TableHeader, TableRow,
-} from "@/components/ui/table"
-import { Progress } from "@/components/ui/progress"
-import { KpiCard } from "./KpiCard"
-import { cn } from "@/lib/utils"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
+import { KpiCard } from "./KpiCard";
+import { cn } from "@/lib/utils";
 
 // ─── mock data ────────────────────────────────────────────────────────────────
 
 const METRICAS_STAFF = [
-  { label: "Ligas ativas",      valor: "4",   Icon: Users,         trend: "↑ +1 este mês",  trendType: "up"      },
-  { label: "Membros",           valor: "96",  Icon: UserCheck,     trend: "↑ +5 este mês",  trendType: "up"      },
-  { label: "Projetos ativos",   valor: "8",   Icon: FolderKanban,  trend: "↔ estável",       trendType: "neutral" },
-  { label: "Engajamento geral", valor: "78%", Icon: Activity,      trend: "↑ +3%",           trendType: "up"      },
-] as const
+  { label: "Ligas ativas", valor: "4", Icon: Users, trend: "↑ +1 este mês", trendType: "up" },
+  { label: "Membros", valor: "96", Icon: UserCheck, trend: "↑ +5 este mês", trendType: "up" },
+  {
+    label: "Projetos ativos",
+    valor: "8",
+    Icon: FolderKanban,
+    trend: "↔ estável",
+    trendType: "neutral",
+  },
+  { label: "Engajamento geral", valor: "78%", Icon: Activity, trend: "↑ +3%", trendType: "up" },
+] as const;
 
 const METRICAS_ENGAJAMENTO = [
-  { label: "Média de presença", valor: "71%",       trendType: "neutral" as const },
-  { label: "Reuniões no mês",   valor: "14",         trendType: "up"      as const },
-  { label: "Eventos ativos",    valor: "3",          trendType: "up"      as const },
-  { label: "Receita total",     valor: "R$ 8.700",   trendType: "up"      as const },
-]
+  { label: "Média de presença", valor: "71%", trendType: "neutral" as const },
+  { label: "Reuniões no mês", valor: "14", trendType: "up" as const },
+  { label: "Eventos ativos", valor: "3", trendType: "up" as const },
+  { label: "Receita total", valor: "R$ 8.700", trendType: "up" as const },
+];
 
 const ALERTAS_STAFF = [
-  { id: "s1", titulo: "Liga RH",       descricao: "Engajamento em 32% — abaixo do mínimo",  rota: "/gerenciamento", Icon: Activity,  tipo: "urgente" },
-  { id: "s3", titulo: "Liga Marketing", descricao: "Sem reunião registrada há 2 semanas",   rota: "/gerenciamento", Icon: CalendarX, tipo: "atencao" },
-]
+  {
+    id: "s1",
+    titulo: "Liga RH",
+    descricao: "Engajamento em 32% — abaixo do mínimo",
+    rota: "/gerenciamento",
+    Icon: Activity,
+    tipo: "urgente",
+  },
+  {
+    id: "s3",
+    titulo: "Liga Marketing",
+    descricao: "Sem reunião registrada há 2 semanas",
+    rota: "/gerenciamento",
+    Icon: CalendarX,
+    tipo: "atencao",
+  },
+];
 
 const RANKING_PRESENCA = [
-  { id: "p1", nome: "Liga Tech",    presenca: 94 },
+  { id: "p1", nome: "Liga Tech", presenca: 94 },
   { id: "p2", nome: "Link Finance", presenca: 87 },
-  { id: "p3", nome: "Marketing",    presenca: 72 },
-  { id: "p4", nome: "RH",           presenca: 32 },
-]
+  { id: "p3", nome: "Marketing", presenca: 72 },
+  { id: "p4", nome: "RH", presenca: 32 },
+];
 
 const DESTAQUES_MOCK = [
-  { id: "1", Icon: TrendingUp,   label: "SCORE",   titulo: "Liga de Marketing", sub: "+12pts essa semana" },
-  { id: "2", Icon: CheckCircle2, label: "PROJETO", titulo: "Análise de Mercado", sub: "Concluído ontem" },
-  { id: "3", Icon: Medal,        label: "RANKING", titulo: "#1 Liga de Finanças", sub: "Lidera a temporada" },
-]
+  {
+    id: "1",
+    Icon: TrendingUp,
+    label: "SCORE",
+    titulo: "Liga de Marketing",
+    sub: "+12pts essa semana",
+  },
+  {
+    id: "2",
+    Icon: CheckCircle2,
+    label: "PROJETO",
+    titulo: "Análise de Mercado",
+    sub: "Concluído ontem",
+  },
+  {
+    id: "3",
+    Icon: Medal,
+    label: "RANKING",
+    titulo: "#1 Liga de Finanças",
+    sub: "Lidera a temporada",
+  },
+];
 
 // ─── component ────────────────────────────────────────────────────────────────
 
 interface HomeStaffViewProps {
   pendentes: {
-    projetos: { id: string; titulo: string; liga?: { nome: string } }[]
-    eventos:  { id: string; titulo: string; liga?: { nome: string } }[]
-  }
+    projetos: { id: string; titulo: string; liga?: { nome: string } }[];
+    eventos: { id: string; titulo: string; liga?: { nome: string } }[];
+  };
 }
 
 export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-6">
@@ -616,7 +663,8 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
               <Clock className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-navy">
-                  {pendentes.projetos.length} projeto{pendentes.projetos.length > 1 ? "s" : ""} aguardando aprovação
+                  {pendentes.projetos.length} projeto{pendentes.projetos.length > 1 ? "s" : ""}{" "}
+                  aguardando aprovação
                 </p>
                 <p className="text-xs text-amber-700 mt-0.5">Clique para revisar e aprovar</p>
               </div>
@@ -630,7 +678,8 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
               <CalendarX className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-navy">
-                  {pendentes.eventos.length} evento{pendentes.eventos.length > 1 ? "s" : ""} aguardando aprovação
+                  {pendentes.eventos.length} evento{pendentes.eventos.length > 1 ? "s" : ""}{" "}
+                  aguardando aprovação
                 </p>
                 <p className="text-xs text-amber-700 mt-0.5">Clique para revisar e aprovar</p>
               </div>
@@ -661,13 +710,13 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
             </TableHeader>
             <TableBody>
               {RANKING_PRESENCA.map((r, i) => {
-                const baixa = r.presenca < 50
-                const media = r.presenca < 70
+                const baixa = r.presenca < 50;
+                const media = r.presenca < 70;
                 const barClass = baixa
                   ? "[&>div]:bg-red-500"
                   : media
-                  ? "[&>div]:bg-amber-500"
-                  : "[&>div]:bg-green-500"
+                    ? "[&>div]:bg-amber-500"
+                    : "[&>div]:bg-green-500";
                 return (
                   <TableRow key={r.id} className={baixa ? "bg-red-50" : undefined}>
                     <TableCell>
@@ -675,7 +724,7 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
                         <span
                           className={cn(
                             "text-xs font-bold w-5 text-center",
-                            baixa ? "text-red-500" : "text-muted-foreground"
+                            baixa ? "text-red-500" : "text-muted-foreground",
                           )}
                         >
                           {i + 1}º
@@ -683,7 +732,7 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
                         <span
                           className={cn(
                             "text-sm font-semibold",
-                            baixa ? "text-red-600" : "text-slate-700"
+                            baixa ? "text-red-600" : "text-slate-700",
                           )}
                         >
                           {r.nome}
@@ -702,7 +751,7 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
                       <span
                         className={cn(
                           "text-sm font-bold",
-                          baixa ? "text-red-600" : media ? "text-amber-600" : "text-green-600"
+                          baixa ? "text-red-600" : media ? "text-amber-600" : "text-green-600",
                         )}
                       >
                         {r.presenca}%
@@ -712,7 +761,7 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
                       <Progress value={r.presenca} className={cn("h-1.5 w-28", barClass)} />
                     </TableCell>
                   </TableRow>
-                )
+                );
               })}
             </TableBody>
           </Table>
@@ -726,17 +775,12 @@ export function HomeStaffView({ pendentes }: HomeStaffViewProps) {
         </p>
         <div className="grid grid-cols-4 gap-3">
           {METRICAS_ENGAJAMENTO.map((m) => (
-            <KpiCard
-              key={m.label}
-              label={m.label}
-              value={m.valor}
-              trendType={m.trendType}
-            />
+            <KpiCard key={m.label} label={m.label} value={m.valor} trendType={m.trendType} />
           ))}
         </div>
       </div>
     </div>
-  )
+  );
 }
 ```
 
@@ -760,6 +804,7 @@ git commit -m "feat: add HomeStaffView with Card, Table, Progress, and Badge com
 ## Task 7: HomeDiretorView
 
 **Files:**
+
 - Create: `apps/web/src/pages/home/HomeDiretorView.tsx`
 
 Uses `Tabs` (shadcn) as the Minha Liga / Visão Global toggle. Visao state is local to this view.
@@ -769,51 +814,51 @@ Uses `Tabs` (shadcn) as the Minha Liga / Visão Global toggle. Visao state is lo
 Create `apps/web/src/pages/home/HomeDiretorView.tsx`:
 
 ```tsx
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { AlertTriangle, MapPin } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { KpiCard } from "./KpiCard"
-import { RankingLigas, type RankingItem } from "./RankingLigas"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AlertTriangle, MapPin } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { KpiCard } from "./KpiCard";
+import { RankingLigas, type RankingItem } from "./RankingLigas";
 
 // ─── mock data ────────────────────────────────────────────────────────────────
 
 const METRICAS_MINHA_LIGA = [
   { label: "Projetos ativos", valor: "3", trend: "↑ +1", trendType: "up" as const },
-  { label: "Receita",         valor: "R$ 2.000", trend: "↑ este mês", trendType: "up" as const },
-  { label: "Membros",         valor: "24", trend: "↔ estável", trendType: "neutral" as const },
-  { label: "Score",           valor: "840 pts", trend: "↑ +12pts", trendType: "up" as const },
-]
+  { label: "Receita", valor: "R$ 2.000", trend: "↑ este mês", trendType: "up" as const },
+  { label: "Membros", valor: "24", trend: "↔ estável", trendType: "neutral" as const },
+  { label: "Score", valor: "840 pts", trend: "↑ +12pts", trendType: "up" as const },
+];
 
 const METRICAS_GLOBAL = [
   { label: "Projetos ativos", valor: "12", trend: "↑ +3", trendType: "up" as const },
-  { label: "Receita total",   valor: "R$ 8.700", trend: "↑ este mês", trendType: "up" as const },
-  { label: "Membros",         valor: "94", trend: "↑ +5", trendType: "up" as const },
-  { label: "Score médio",     valor: "663 pts", trend: "↔ estável", trendType: "neutral" as const },
-]
+  { label: "Receita total", valor: "R$ 8.700", trend: "↑ este mês", trendType: "up" as const },
+  { label: "Membros", valor: "94", trend: "↑ +5", trendType: "up" as const },
+  { label: "Score médio", valor: "663 pts", trend: "↔ estável", trendType: "neutral" as const },
+];
 
 const ALERTAS_MOCK = [
-  { id: "a1", projeto: "App de presenças",      motivo: "recusado pelo professor" },
-  { id: "a2", projeto: "Dashboard financeiro",  motivo: "aguardando Staff há 3 dias" },
-]
+  { id: "a1", projeto: "App de presenças", motivo: "recusado pelo professor" },
+  { id: "a2", projeto: "Dashboard financeiro", motivo: "aguardando Staff há 3 dias" },
+];
 
-const SALA_MOCK = { sala: "Sala 204", data: "Sex 18/04", horario: "19h" }
+const SALA_MOCK = { sala: "Sala 204", data: "Sex 18/04", horario: "19h" };
 
 const RANKING_MOCK: RankingItem[] = [
-  { id: "r1", nome: "Liga Tech",    score: 840, minhaLiga: true },
+  { id: "r1", nome: "Liga Tech", score: 840, minhaLiga: true },
   { id: "r2", nome: "Link Finance", score: 710, minhaLiga: false },
-  { id: "r3", nome: "Marketing",    score: 620, minhaLiga: false },
-  { id: "r4", nome: "RH",           score: 480, minhaLiga: false },
-]
+  { id: "r3", nome: "Marketing", score: 620, minhaLiga: false },
+  { id: "r4", nome: "RH", score: 480, minhaLiga: false },
+];
 
 // ─── component ────────────────────────────────────────────────────────────────
 
 export function HomeDiretorView() {
-  const navigate = useNavigate()
-  const [visao, setVisao] = useState<"minha" | "global">("minha")
+  const navigate = useNavigate();
+  const [visao, setVisao] = useState<"minha" | "global">("minha");
 
-  const metricas = visao === "minha" ? METRICAS_MINHA_LIGA : METRICAS_GLOBAL
+  const metricas = visao === "minha" ? METRICAS_MINHA_LIGA : METRICAS_GLOBAL;
 
   return (
     <div className="space-y-6">
@@ -866,9 +911,7 @@ export function HomeDiretorView() {
                 <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
                 <div>
                   <p className="text-sm font-semibold text-navy">{a.projeto}</p>
-                  <p className="text-xs text-amber-700 mt-0.5 first-letter:uppercase">
-                    {a.motivo}
-                  </p>
+                  <p className="text-xs text-amber-700 mt-0.5 first-letter:uppercase">{a.motivo}</p>
                 </div>
               </button>
             ))}
@@ -909,7 +952,7 @@ export function HomeDiretorView() {
         <RankingLigas ranking={RANKING_MOCK} />
       </div>
     </div>
-  )
+  );
 }
 ```
 
@@ -925,6 +968,7 @@ git commit -m "feat: add HomeDiretorView with Tabs toggle and RankingLigas"
 ## Task 8: HomeProfessorView
 
 **Files:**
+
 - Create: `apps/web/src/pages/home/HomeProfessorView.tsx`
 
 Includes paginated approval queue table (5 per page) and upcoming events list.
@@ -934,52 +978,60 @@ Includes paginated approval queue table (5 per page) and upcoming events list.
 Create `apps/web/src/pages/home/HomeProfessorView.tsx`:
 
 ```tsx
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { Clock, CalendarDays } from "lucide-react"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Clock, CalendarDays } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  Table, TableBody, TableCell, TableHead,
-  TableHeader, TableRow,
-} from "@/components/ui/table"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
-  Pagination, PaginationContent, PaginationItem,
-  PaginationLink, PaginationNext, PaginationPrevious,
-} from "@/components/ui/pagination"
-import { KpiCard } from "./KpiCard"
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { KpiCard } from "./KpiCard";
 
 // ─── mock data ────────────────────────────────────────────────────────────────
 
 const METRICAS_PROFESSOR = [
-  { label: "Score",           valor: "840 pts", trend: "↑ +12pts", trendType: "up"      as const },
-  { label: "Projetos ativos", valor: "5",        trend: "↔ estável", trendType: "neutral" as const },
-  { label: "Membros",         valor: "24",       trend: "↑ +2",      trendType: "up"      as const },
-  { label: "Frequência",      valor: "87%",      trend: "↑ +3%",     trendType: "up"      as const },
-]
+  { label: "Score", valor: "840 pts", trend: "↑ +12pts", trendType: "up" as const },
+  { label: "Projetos ativos", valor: "5", trend: "↔ estável", trendType: "neutral" as const },
+  { label: "Membros", valor: "24", trend: "↑ +2", trendType: "up" as const },
+  { label: "Frequência", valor: "87%", trend: "↑ +3%", trendType: "up" as const },
+];
 
 const FILA_PROFESSOR = [
-  { id: "f1", nome: "App de presenças",     diasAguardando: 9 },
-  { id: "f2", nome: "API de integração",    diasAguardando: 2 },
-  { id: "f3", nome: "Sistema de feedback",  diasAguardando: 1 },
-]
+  { id: "f1", nome: "App de presenças", diasAguardando: 9 },
+  { id: "f2", nome: "API de integração", diasAguardando: 2 },
+  { id: "f3", nome: "Sistema de feedback", diasAguardando: 1 },
+];
 
 const EVENTOS_PROFESSOR = [
-  { id: "e1", nome: "Reunião semanal",      data: "Sex 18/04", hora: "19h" },
-  { id: "e2", nome: "Workshop de produto",  data: "Ter 22/04", hora: "18h" },
-]
+  { id: "e1", nome: "Reunião semanal", data: "Sex 18/04", hora: "19h" },
+  { id: "e2", nome: "Workshop de produto", data: "Ter 22/04", hora: "18h" },
+];
 
-const PER_PAGE = 5
+const PER_PAGE = 5;
 
 // ─── component ────────────────────────────────────────────────────────────────
 
 export function HomeProfessorView() {
-  const navigate = useNavigate()
-  const [page, setPage] = useState(1)
+  const navigate = useNavigate();
+  const [page, setPage] = useState(1);
 
-  const totalPages = Math.ceil(FILA_PROFESSOR.length / PER_PAGE)
-  const filaPaginada = FILA_PROFESSOR.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const totalPages = Math.ceil(FILA_PROFESSOR.length / PER_PAGE);
+  const filaPaginada = FILA_PROFESSOR.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
     <div className="space-y-6">
@@ -1031,8 +1083,8 @@ export function HomeProfessorView() {
             </TableHeader>
             <TableBody>
               {filaPaginada.map((p) => {
-                const urgente = p.diasAguardando > 7
-                const medio   = p.diasAguardando >= 4
+                const urgente = p.diasAguardando > 7;
+                const medio = p.diasAguardando >= 4;
                 return (
                   <TableRow key={p.id}>
                     <TableCell>
@@ -1052,8 +1104,8 @@ export function HomeProfessorView() {
                             urgente
                               ? "border-red-300 text-red-600 bg-red-50 text-[10px]"
                               : medio
-                              ? "border-amber-300 text-amber-700 bg-amber-50 text-[10px]"
-                              : "border-slate-300 text-slate-500 bg-slate-50 text-[10px]"
+                                ? "border-amber-300 text-amber-700 bg-amber-50 text-[10px]"
+                                : "border-slate-300 text-slate-500 bg-slate-50 text-[10px]"
                           }
                         >
                           {urgente ? "Urgente" : medio ? "Atenção" : "Aguardando"}
@@ -1071,7 +1123,7 @@ export function HomeProfessorView() {
                       </Button>
                     </TableCell>
                   </TableRow>
-                )
+                );
               })}
             </TableBody>
           </Table>
@@ -1099,7 +1151,9 @@ export function HomeProfessorView() {
                   <PaginationItem>
                     <PaginationNext
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      className={
+                        page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"
+                      }
                     />
                   </PaginationItem>
                 </PaginationContent>
@@ -1134,7 +1188,7 @@ export function HomeProfessorView() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
 ```
 
@@ -1150,6 +1204,7 @@ git commit -m "feat: add HomeProfessorView with paginated approval table"
 ## Task 9: HomeMembroView
 
 **Files:**
+
 - Create: `apps/web/src/pages/home/HomeMembroView.tsx`
 
 - [ ] **Step 1: Create the view**
@@ -1157,24 +1212,29 @@ git commit -m "feat: add HomeProfessorView with paginated approval table"
 Create `apps/web/src/pages/home/HomeMembroView.tsx`:
 
 ```tsx
-import { KpiCard } from "./KpiCard"
-import { RankingLigas, type RankingItem } from "./RankingLigas"
+import { KpiCard } from "./KpiCard";
+import { RankingLigas, type RankingItem } from "./RankingLigas";
 
 // ─── mock data ────────────────────────────────────────────────────────────────
 
 const METRICAS_MEMBRO = [
-  { label: "Meu score",             valor: "72 pts",  trend: "↑ +5pts",   trendType: "up"      as const },
-  { label: "Minha frequência",      valor: "87%",     trend: "↑ +2%",     trendType: "up"      as const },
-  { label: "Projetos que participo",valor: "2",       trend: "↔ estável", trendType: "neutral" as const },
-  { label: "Próxima reunião",       valor: "Sex 18/04", trend: "às 19h",  trendType: "neutral" as const },
-]
+  { label: "Meu score", valor: "72 pts", trend: "↑ +5pts", trendType: "up" as const },
+  { label: "Minha frequência", valor: "87%", trend: "↑ +2%", trendType: "up" as const },
+  {
+    label: "Projetos que participo",
+    valor: "2",
+    trend: "↔ estável",
+    trendType: "neutral" as const,
+  },
+  { label: "Próxima reunião", valor: "Sex 18/04", trend: "às 19h", trendType: "neutral" as const },
+];
 
 const RANKING_MEMBRO: RankingItem[] = [
-  { id: "r1", nome: "Liga Tech",    score: 840, minhaLiga: true  },
+  { id: "r1", nome: "Liga Tech", score: 840, minhaLiga: true },
   { id: "r2", nome: "Link Finance", score: 710, minhaLiga: false },
-  { id: "r3", nome: "Marketing",    score: 620, minhaLiga: false },
-  { id: "r4", nome: "RH",           score: 480, minhaLiga: false },
-]
+  { id: "r3", nome: "Marketing", score: 620, minhaLiga: false },
+  { id: "r4", nome: "RH", score: 480, minhaLiga: false },
+];
 
 // ─── component ────────────────────────────────────────────────────────────────
 
@@ -1207,7 +1267,7 @@ export function HomeMembroView() {
         <RankingLigas ranking={RANKING_MEMBRO} />
       </div>
     </div>
-  )
+  );
 }
 ```
 
@@ -1223,6 +1283,7 @@ git commit -m "feat: add HomeMembroView with KPI cards and league ranking"
 ## Task 10: Rewrite HomePage.tsx
 
 **Files:**
+
 - Modify: `apps/web/src/pages/home/HomePage.tsx`
 
 Thin coordinator: data fetching + header + global sections (Carrossel, MinhaLigaCard) + role dispatch.
@@ -1232,85 +1293,85 @@ Thin coordinator: data fetching + header + global sections (Carrossel, MinhaLiga
 Replace `apps/web/src/pages/home/HomePage.tsx` with:
 
 ```tsx
-import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import type { Liga } from "@link-leagues/types"
-import { supabase } from "@/lib/supabase"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import { LigasCarousel } from "./LigasCarousel"
-import { MinhaLigaCard } from "./MinhaLigaCard"
-import { HomeStaffView } from "./HomeStaffView"
-import { HomeDiretorView } from "./HomeDiretorView"
-import { HomeProfessorView } from "./HomeProfessorView"
-import { HomeMembroView } from "./HomeMembroView"
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import type { Liga } from "@link-leagues/types";
+import { supabase } from "@/lib/supabase";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { LigasCarousel } from "./LigasCarousel";
+import { MinhaLigaCard } from "./MinhaLigaCard";
+import { HomeStaffView } from "./HomeStaffView";
+import { HomeDiretorView } from "./HomeDiretorView";
+import { HomeProfessorView } from "./HomeProfessorView";
+import { HomeMembroView } from "./HomeMembroView";
 
 async function getToken(): Promise<string> {
-  const { data } = await supabase.auth.getSession()
-  return data.session?.access_token ?? ""
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? "";
 }
 
 const ROLE_LABELS: Record<string, string> = {
-  staff:     "Staff",
-  diretor:   "Diretor",
+  staff: "Staff",
+  diretor: "Diretor",
   professor: "Professor",
-  membro:    "Membro",
+  membro: "Membro",
   estudante: "Estudante",
-}
+};
 
 export function HomePage() {
-  const [ligas, setLigas]           = useState<Liga[]>([])
-  const [minhaLiga, setMinhaLiga]   = useState<Liga | null>(null)
-  const [nomeUsuario, setNomeUsuario] = useState<string>("")
-  const [role, setRole]             = useState<string | null>(null)
-  const [loadingUser, setLoadingUser] = useState(true)
-  const [pendentes, setPendentes]   = useState<{
-    projetos: { id: string; titulo: string; liga?: { nome: string } }[]
-    eventos:  { id: string; titulo: string; liga?: { nome: string } }[]
-  }>({ projetos: [], eventos: [] })
+  const [ligas, setLigas] = useState<Liga[]>([]);
+  const [minhaLiga, setMinhaLiga] = useState<Liga | null>(null);
+  const [nomeUsuario, setNomeUsuario] = useState<string>("");
+  const [role, setRole] = useState<string | null>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [pendentes, setPendentes] = useState<{
+    projetos: { id: string; titulo: string; liga?: { nome: string } }[];
+    eventos: { id: string; titulo: string; liga?: { nome: string } }[];
+  }>({ projetos: [], eventos: [] });
 
   useEffect(() => {
     async function carregar() {
-      const token = await getToken()
-      const headers = { Authorization: `Bearer ${token}` }
+      const token = await getToken();
+      const headers = { Authorization: `Bearer ${token}` };
 
-      const { data: sessionData } = await supabase.auth.getSession()
-      const email = sessionData.session?.user.email ?? ""
+      const { data: sessionData } = await supabase.auth.getSession();
+      const email = sessionData.session?.user.email ?? "";
 
       if (email) {
         const { data: usuario } = await supabase
           .from("usuarios")
           .select("nome, role")
           .eq("email", email)
-          .single()
-        if (usuario?.nome) setNomeUsuario(usuario.nome as string)
-        else setNomeUsuario(email.split("@")[0] ?? "Usuário")
-        if (usuario?.role) setRole(usuario.role as string)
+          .single();
+        if (usuario?.nome) setNomeUsuario(usuario.nome as string);
+        else setNomeUsuario(email.split("@")[0] ?? "Usuário");
+        if (usuario?.role) setRole(usuario.role as string);
 
         if (usuario?.role === "staff") {
-          const res = await fetch("/api/pendentes", { headers })
-          if (res.ok) setPendentes(await res.json())
+          const res = await fetch("/api/pendentes", { headers });
+          if (res.ok) setPendentes(await res.json());
         }
       }
-      setLoadingUser(false)
+      setLoadingUser(false);
 
       const [ligasRes, minhaRes] = await Promise.all([
         fetch("/api/ligas", { headers }),
         fetch("/api/ligas/minha", { headers }),
-      ])
-      if (ligasRes.ok) setLigas(await ligasRes.json())
-      if (minhaRes.ok) setMinhaLiga(await minhaRes.json())
+      ]);
+      if (ligasRes.ok) setLigas(await ligasRes.json());
+      if (minhaRes.ok) setMinhaLiga(await minhaRes.json());
     }
-    carregar()
-  }, [])
+    carregar();
+  }, []);
 
   const hoje = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
-    day:     "numeric",
-    month:   "long",
-  })
+    day: "numeric",
+    month: "long",
+  });
   // Capitalize first letter
-  const dataFormatada = hoje.charAt(0).toUpperCase() + hoje.slice(1)
+  const dataFormatada = hoje.charAt(0).toUpperCase() + hoje.slice(1);
 
   return (
     <div className="p-8 space-y-6">
@@ -1324,9 +1385,7 @@ export function HomePage() {
             </>
           ) : (
             <>
-              <h1 className="font-display font-bold text-2xl text-navy">
-                Olá, {nomeUsuario}
-              </h1>
+              <h1 className="font-display font-bold text-2xl text-navy">Olá, {nomeUsuario}</h1>
               <p className="text-muted-foreground text-sm mt-1">{dataFormatada}</p>
             </>
           )}
@@ -1355,12 +1414,12 @@ export function HomePage() {
       )}
 
       {/* View por papel */}
-      {role === "staff"     && <HomeStaffView pendentes={pendentes} />}
-      {role === "diretor"   && <HomeDiretorView />}
+      {role === "staff" && <HomeStaffView pendentes={pendentes} />}
+      {role === "diretor" && <HomeDiretorView />}
       {role === "professor" && <HomeProfessorView />}
-      {role === "membro"    && <HomeMembroView />}
+      {role === "membro" && <HomeMembroView />}
     </div>
-  )
+  );
 }
 ```
 
@@ -1393,13 +1452,13 @@ pnpm dev
 
 Visually check for each role (switch role via Supabase or mock if needed):
 
-| Role | Check |
-|------|-------|
-| staff | KPI cards 4 cols, Destaques 3 cols, Alertas com ícones, Tabela de presença com Progress, Badge "baixa" |
-| diretor | Tabs toggle funciona, KPI cards mudam, Alertas/Sala visíveis só em "Minha", Ranking aparece |
-| professor | KPI 4 cols, Tabela de aprovação com badges de urgência, Botão "Revisar", Eventos |
-| membro | KPI 4 cols, Ranking com destaque da liga própria |
-| loading | Header mostra Skeleton nos campos de nome e subtítulo |
+| Role      | Check                                                                                                  |
+| --------- | ------------------------------------------------------------------------------------------------------ |
+| staff     | KPI cards 4 cols, Destaques 3 cols, Alertas com ícones, Tabela de presença com Progress, Badge "baixa" |
+| diretor   | Tabs toggle funciona, KPI cards mudam, Alertas/Sala visíveis só em "Minha", Ranking aparece            |
+| professor | KPI 4 cols, Tabela de aprovação com badges de urgência, Botão "Revisar", Eventos                       |
+| membro    | KPI 4 cols, Ranking com destaque da liga própria                                                       |
+| loading   | Header mostra Skeleton nos campos de nome e subtítulo                                                  |
 
 - [ ] **Step 3: Check carousel auto-advance**
 

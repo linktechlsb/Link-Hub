@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+**/dist
+**/build
+**/coverage
+**/.turbo
+**/*.tsbuildinfo
+package-lock.json
+apps/web/src/components/ui
+.claude
+.superpowers
+migrations

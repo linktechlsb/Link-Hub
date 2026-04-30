@@ -6,7 +6,7 @@
   :root {
     /* Link brand: Azul Marinho como primary */
     --background: 0 0% 100%;
-    --foreground: 215 65% 18%;       /* #10284E */
+    --foreground: 215 65% 18%; /* #10284E */
 
     --card: 0 0% 100%;
     --card-foreground: 215 65% 18%;
@@ -14,42 +14,35 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 65% 18%;
 
-    --primary: 215 65% 18%;          /* #10284E - Azul Marinho */
+    --primary: 215 65% 18%; /* #10284E - Azul Marinho */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 22% 40%;        /* #546484 - Azul Link */
+    --secondary: 215 22% 40%; /* #546484 - Azul Link */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 92%;               /* #EAEAEA */
+    --muted: 0 0% 92%; /* #EAEAEA */
     --muted-foreground: 215 22% 40%;
 
-    --accent: 43 99% 63%;            /* #FEC641 - Amarelo */
+    --accent: 43 99% 63%; /* #FEC641 - Amarelo */
     --accent-foreground: 215 65% 18%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 92%;              /* #EAEAEA */
+    --border: 0 0% 92%; /* #EAEAEA */
     --input: 0 0% 92%;
     --ring: 215 65% 18%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 214 68% 19%;  /* #10284F */
-
+    --sidebar-background: 215 66% 18%; /* #10284F navy */
     --sidebar-foreground: 0 0% 100%;
-
-    --sidebar-primary: 0 0% 100%;
-
-    --sidebar-primary-foreground: 214 68% 19%;
-
-    --sidebar-accent: 214 68% 25%;
-
+    --sidebar-primary: 43 99% 63%; /* #FEC641 brand-yellow */
+    --sidebar-primary-foreground: 215 66% 18%;
+    --sidebar-accent: 215 50% 26%;
     --sidebar-accent-foreground: 0 0% 100%;
-
-    --sidebar-border: 214 68% 25%;
-
-    --sidebar-ring: 214 68% 40%;
+    --sidebar-border: 215 30% 30%;
+    --sidebar-ring: 43 99% 63%;
   }
 
   * {
@@ -60,7 +53,12 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-display;
   }
   .dark {

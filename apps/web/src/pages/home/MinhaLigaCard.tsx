@@ -1,20 +1,22 @@
-import { useNavigate } from "react-router-dom"
-import { Card } from "@/components/ui/card"
-import type { Liga } from "@link-leagues/types"
+import { useNavigate } from "react-router-dom";
+
+import { Card } from "@/components/ui/card";
+
+import type { Liga } from "@link-leagues/types";
 
 interface MinhaLigaCardProps {
-  liga: Liga
+  liga: Liga;
 }
 
 export function MinhaLigaCard({ liga }: MinhaLigaCardProps) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const stats = [
     { valor: "78", label: "Score", cor: "text-amber-500" },
     { valor: String(liga.projetos_ativos ?? 0), label: "Projetos", cor: "text-navy" },
     { valor: "—", label: "Presença", cor: "text-green-600" },
     { valor: "—", label: "Próx. Evento", cor: "text-navy" },
-  ]
+  ];
 
   return (
     <Card className="overflow-hidden shadow-sm">
@@ -49,5 +51,5 @@ export function MinhaLigaCard({ liga }: MinhaLigaCardProps) {
         ))}
       </div>
     </Card>
-  )
+  );
 }

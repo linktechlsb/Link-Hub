@@ -3,9 +3,7 @@ export function DashboardPage() {
     <div className="p-8">
       <div className="mb-6">
         <h1 className="font-display font-bold text-2xl text-navy">Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Visão geral das ligas e projetos
-        </p>
+        <p className="text-muted-foreground text-sm mt-1">Visão geral das ligas e projetos</p>
       </div>
 
       {/* Stats placeholder */}

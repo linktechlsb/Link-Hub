@@ -1,52 +1,79 @@
-import { KpiCard } from "./KpiCard"
-import { RankingLigas, type RankingItem } from "./RankingLigas"
+import { useCachedFetch } from "@/hooks/use-cached-fetch";
 
-// ─── mock data ────────────────────────────────────────────────────────────────
+import { KpiCard } from "./KpiCard";
+import { RankingLigas, type RankingItem } from "./RankingLigas";
 
-const METRICAS_MEMBRO = [
-  { label: "Meu score",              valor: "72 pts",    trend: "↑ +5pts",   trendType: "up"      as const },
-  { label: "Minha frequência",       valor: "87%",       trend: "↑ +2%",     trendType: "up"      as const },
-  { label: "Projetos que participo", valor: "2",         trend: "↔ estável", trendType: "neutral" as const },
-  { label: "Próxima reunião",        valor: "Sex 18/04", trend: "às 19h",    trendType: "neutral" as const },
-]
+import type { Evento, Liga, Projeto, RankingLiga } from "@link-leagues/types";
 
-const RANKING_MEMBRO: RankingItem[] = [
-  { id: "r1", nome: "Liga Tech",    score: 840, minhaLiga: true  },
-  { id: "r2", nome: "Link Finance", score: 710, minhaLiga: false },
-  { id: "r3", nome: "Marketing",    score: 620, minhaLiga: false },
-  { id: "r4", nome: "RH",           score: 480, minhaLiga: false },
-]
+interface HomeMembroViewProps {
+  minhaLiga: Liga;
+  ranking: RankingLiga[];
+  usuarioId: string | null;
+}
 
-// ─── component ────────────────────────────────────────────────────────────────
+function formatarProximoEvento(evento: Evento | null): string {
+  if (!evento) return "—";
+  const data = new Date(evento.data);
+  const dataStr = data.toLocaleDateString("pt-BR", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+  });
+  return evento.hora_inicio ? `${dataStr} às ${evento.hora_inicio.slice(0, 5)}` : dataStr;
+}
 
-export function HomeMembroView() {
+export function HomeMembroView({ minhaLiga, ranking, usuarioId }: HomeMembroViewProps) {
+  const { data: projetosData } = useCachedFetch<Projeto[]>(`/api/projetos?liga_id=${minhaLiga.id}`);
+  const { data: proximoEvento } = useCachedFetch<Evento>(
+    `/api/ligas/${minhaLiga.id}/eventos/proximo`,
+  );
+
+  const projetos = projetosData ?? [];
+  const meusProjetos = usuarioId
+    ? projetos.filter(
+        (p) =>
+          p.responsavel_id === usuarioId &&
+          p.status !== "rascunho" &&
+          p.status !== "rejeitado" &&
+          p.status !== "cancelado",
+      )
+    : [];
+
+  const metricas = [
+    { label: "Meu score", valor: "—" },
+    { label: "Minha frequência", valor: "—" },
+    { label: "Projetos que participo", valor: String(meusProjetos.length) },
+    { label: "Próxima reunião", valor: formatarProximoEvento(proximoEvento ?? null) },
+  ];
+
+  const rankingItems: RankingItem[] = ranking.map((r) => ({
+    id: r.liga_id,
+    nome: r.nome,
+    score: r.pontuacao,
+    minhaLiga: r.liga_id === minhaLiga.id,
+  }));
+
   return (
     <div className="space-y-6">
-      {/* KPI cards */}
       <div>
         <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
           Meu Desempenho
         </p>
         <div className="grid grid-cols-4 gap-3">
-          {METRICAS_MEMBRO.map((m) => (
-            <KpiCard
-              key={m.label}
-              label={m.label}
-              value={m.valor}
-              trend={m.trend}
-              trendType={m.trendType}
-            />
+          {metricas.map((m) => (
+            <KpiCard key={m.label} label={m.label} value={m.valor} trendType="neutral" />
           ))}
         </div>
       </div>
 
-      {/* Ranking geral */}
-      <div>
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
-          Ranking Geral
-        </p>
-        <RankingLigas ranking={RANKING_MEMBRO} />
-      </div>
+      {rankingItems.length > 0 && (
+        <div>
+          <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+            Ranking Geral
+          </p>
+          <RankingLigas ranking={rankingItems} />
+        </div>
+      )}
     </div>
-  )
+  );
 }

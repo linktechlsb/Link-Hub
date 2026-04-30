@@ -1,6 +1,8 @@
-import { Request, Response, NextFunction } from "express";
-import { supabaseAnon } from "../config/supabase.js";
+import { type Request, type Response, type NextFunction } from "express";
+
 import { sql } from "../config/db.js";
+import { supabaseAnon } from "../config/supabase.js";
+
 import type { UserRole } from "@link-leagues/types";
 
 export interface AuthenticatedRequest extends Request {
@@ -21,12 +23,15 @@ interface CachedSession {
 const sessionCache = new Map<string, CachedSession>();
 const pendingAuth = new Map<string, Promise<CachedSession | null>>();
 
-setInterval(() => {
-  const agora = Date.now();
-  for (const [token, cached] of sessionCache.entries()) {
-    if (cached.expiresAt <= agora) sessionCache.delete(token);
-  }
-}, 15 * 60 * 1000);
+setInterval(
+  () => {
+    const agora = Date.now();
+    for (const [token, cached] of sessionCache.entries()) {
+      if (cached.expiresAt <= agora) sessionCache.delete(token);
+    }
+  },
+  15 * 60 * 1000,
+);
 
 async function resolveSession(token: string): Promise<CachedSession | null> {
   const { data, error } = await supabaseAnon.auth.getUser(token);
@@ -52,11 +57,7 @@ async function resolveSession(token: string): Promise<CachedSession | null> {
   return session;
 }
 
-export async function authenticate(
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) {
+export async function authenticate(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith("Bearer ")) {

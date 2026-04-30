@@ -1,94 +1,76 @@
-import { useEffect, useState } from "react"
-import type { Liga } from "@link-leagues/types"
-import { supabase } from "@/lib/supabase"
-import { useUser } from "@/hooks/use-user"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import { LigasCarousel } from "./LigasCarousel"
-import { MinhaLigaCard } from "./MinhaLigaCard"
-import { HomeStaffView } from "./HomeStaffView"
-import { HomeDiretorView } from "./HomeDiretorView"
-import { HomeProfessorView } from "./HomeProfessorView"
-import { HomeMembroView } from "./HomeMembroView"
+import { useEffect, useState } from "react";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001"
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCachedFetch } from "@/hooks/use-cached-fetch";
+import { useUser } from "@/hooks/use-user";
+import { supabase } from "@/lib/supabase";
 
-async function getToken(): Promise<string | null> {
-  const { data } = await supabase.auth.getSession()
-  return data.session?.access_token ?? null
-}
+import { HomeDiretorView } from "./HomeDiretorView";
+import { HomeMembroView } from "./HomeMembroView";
+import { HomeProfessorView } from "./HomeProfessorView";
+import { HomeStaffView } from "./HomeStaffView";
+import { LigasCarousel } from "./LigasCarousel";
+import { MinhaLigaCard } from "./MinhaLigaCard";
+
+import type { Liga, RankingLiga } from "@link-leagues/types";
 
 const ROLE_LABELS: Record<string, string> = {
-  staff:     "Staff",
-  diretor:   "Diretor",
+  staff: "Staff",
+  diretor: "Diretor",
   professor: "Professor",
-  membro:    "Membro",
+  membro: "Membro",
   estudante: "Estudante",
-}
+};
 
 export function HomePage() {
-  const { role } = useUser()
-  const [ligas, setLigas]             = useState<Liga[]>([])
-  const [minhaLiga, setMinhaLiga]     = useState<Liga | null>(null)
-  const [nomeUsuario, setNomeUsuario] = useState<string>("")
-  const [loadingUser, setLoadingUser] = useState(true)
-  const [pendentes, setPendentes]     = useState<{
-    projetos: { id: string; titulo: string; liga?: { nome: string } }[]
-    eventos:  { id: string; titulo: string; liga?: { nome: string } }[]
-  }>({ projetos: [], eventos: [] })
+  const { role, usuarioId } = useUser();
+  const { data: ligasData } = useCachedFetch<Liga[]>("/api/ligas");
+  const { data: minhaLigaData } = useCachedFetch<Liga>(
+    role !== null && role !== "staff" ? "/api/ligas/minha" : null,
+  );
+  const { data: pendentesData } = useCachedFetch<{
+    projetos: { id: string; titulo: string; liga?: { nome: string } }[];
+    eventos: { id: string; titulo: string; liga?: { nome: string } }[];
+  }>(role === "staff" ? "/api/pendentes" : null);
+  const { data: rankingData } = useCachedFetch<RankingLiga[]>("/api/ranking");
+
+  const ligas = ligasData ?? [];
+  const minhaLiga = minhaLigaData ?? null;
+  const pendentes = pendentesData ?? { projetos: [], eventos: [] };
+  const ranking = rankingData ?? [];
+  const [nomeUsuario, setNomeUsuario] = useState<string>("");
+  const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
     async function carregar() {
       try {
-        const token = await getToken()
-        if (!token) { setLoadingUser(false); return; }
-        const headers = { Authorization: `Bearer ${token}` }
-
-        const { data: sessionData } = await supabase.auth.getSession()
-        const email = sessionData.session?.user.email ?? ""
-
+        const { data: sessionData } = await supabase.auth.getSession();
+        const email = sessionData.session?.user.email ?? "";
         if (email) {
           const { data: usuario } = await supabase
             .from("usuarios")
             .select("nome")
             .eq("email", email)
-            .single()
-          if (usuario?.nome) setNomeUsuario(usuario.nome as string)
-          else setNomeUsuario(email.split("@")[0] ?? "Usuário")
+            .single();
+          if (usuario?.nome) setNomeUsuario(usuario.nome as string);
+          else setNomeUsuario(email.split("@")[0] ?? "Usuário");
         }
-
-        const [ligasRes, minhaRes] = await Promise.all([
-          fetch(`${API_URL}/ligas`, { headers }),
-          fetch(`${API_URL}/ligas/minha`, { headers }),
-        ])
-        if (ligasRes.ok) setLigas(await ligasRes.json())
-        if (minhaRes.ok) setMinhaLiga(await minhaRes.json())
       } catch {
-        // Falha silenciosa — apenas para de carregar
+        // Falha silenciosa
       } finally {
-        setLoadingUser(false)
+        setLoadingUser(false);
       }
     }
-    carregar()
-  }, [])
-
-  useEffect(() => {
-    if (role !== "staff") return;
-    async function carregarPendentes() {
-      const token = await getToken()
-      if (!token) return;
-      const res = await fetch(`${API_URL}/pendentes`, { headers: { Authorization: `Bearer ${token}` } })
-      if (res.ok) setPendentes(await res.json())
-    }
-    void carregarPendentes()
-  }, [role])
+    void carregar();
+  }, []);
 
   const hoje = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
-    day:     "numeric",
-    month:   "long",
-  })
-  const dataFormatada = hoje.charAt(0).toUpperCase() + hoje.slice(1)
+    day: "numeric",
+    month: "long",
+  });
+  const dataFormatada = hoje.charAt(0).toUpperCase() + hoje.slice(1);
 
   return (
     <div className="p-8 space-y-6">
@@ -102,9 +84,7 @@ export function HomePage() {
             </>
           ) : (
             <>
-              <h1 className="font-display font-bold text-2xl text-navy">
-                Olá, {nomeUsuario}
-              </h1>
+              <h1 className="font-display font-bold text-2xl text-navy">Olá, {nomeUsuario}</h1>
               <p className="text-muted-foreground text-sm mt-1">{dataFormatada}</p>
             </>
           )}
@@ -120,7 +100,7 @@ export function HomePage() {
       </div>
 
       {/* Carrossel de ligas */}
-      {ligas.length > 0 && <LigasCarousel ligas={ligas} />}
+      {ligas.length > 0 && <LigasCarousel ligas={ligas} ranking={ranking} />}
 
       {/* Minha Liga */}
       {minhaLiga && (
@@ -133,10 +113,16 @@ export function HomePage() {
       )}
 
       {/* View por papel */}
-      {role === "staff"     && <HomeStaffView pendentes={pendentes} />}
-      {role === "diretor"   && <HomeDiretorView />}
-      {role === "professor" && <HomeProfessorView />}
-      {role === "membro"    && <HomeMembroView />}
+      {role === "staff" && <HomeStaffView pendentes={pendentes} ligas={ligas} ranking={ranking} />}
+      {role === "diretor" && minhaLiga && (
+        <HomeDiretorView minhaLiga={minhaLiga} ligas={ligas} ranking={ranking} />
+      )}
+      {role === "professor" && minhaLiga && (
+        <HomeProfessorView minhaLiga={minhaLiga} ranking={ranking} />
+      )}
+      {role === "membro" && minhaLiga && (
+        <HomeMembroView minhaLiga={minhaLiga} ranking={ranking} usuarioId={usuarioId} />
+      )}
     </div>
-  )
+  );
 }

@@ -1,7 +1,3 @@
-import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
-import { GerenciamentoStaffPage } from "./GerenciamentoStaffPage";
 import {
   Check,
   X,
@@ -20,19 +16,24 @@ import {
   Star,
   Upload,
   Loader2,
+  MoreVertical,
   type LucideIcon,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+
+import { useCachedFetch } from "@/hooks/use-cached-fetch";
+import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
+
+import { AbaPresenca } from "./AbaPresenca";
+import { GerenciamentoStaffPage } from "./GerenciamentoStaffPage";
+
+import type { Liga, RankingLiga } from "@link-leagues/types";
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
 type Cargo = "Membro" | "Diretor" | "Admin";
-
-interface ConvitePendente {
-  id: string;
-  email: string;
-  cargo: Cargo;
-  diasAtras: number;
-}
 
 interface MembroAtivo {
   id: string;
@@ -41,6 +42,7 @@ interface MembroAtivo {
   cargo: Cargo;
   iniciais: string;
   cor: string;
+  avatarUrl?: string | null;
   novo?: boolean;
 }
 
@@ -56,27 +58,27 @@ interface Recurso {
 // ─── picker de ícone/cor ──────────────────────────────────────────────────────
 
 const ICONES: { id: string; componente: LucideIcon }[] = [
-  { id: "link",      componente: Link },
+  { id: "link", componente: Link },
   { id: "file-text", componente: FileText },
-  { id: "image",     componente: Image },
-  { id: "globe",     componente: Globe },
-  { id: "folder",    componente: Folder },
+  { id: "image", componente: Image },
+  { id: "globe", componente: Globe },
+  { id: "folder", componente: Folder },
   { id: "book-open", componente: BookOpen },
-  { id: "code2",     componente: Code2 },
-  { id: "video",     componente: Video },
-  { id: "music",     componente: Music },
-  { id: "star",      componente: Star },
+  { id: "code2", componente: Code2 },
+  { id: "video", componente: Video },
+  { id: "music", componente: Music },
+  { id: "star", componente: Star },
 ];
 
 const CORES_PICKER = [
-  "#10284E", // navy
-  "#546484", // link-blue
-  "#7C3AED", // purple
-  "#16A34A", // green
-  "#D97706", // amber
-  "#DC2626", // red
-  "#DB2777", // pink
-  "#0D9488", // teal
+  "#10284E",
+  "#546484",
+  "#7C3AED",
+  "#16A34A",
+  "#D97706",
+  "#DC2626",
+  "#DB2777",
+  "#0D9488",
 ];
 
 function iconeComponente(id: string): LucideIcon {
@@ -113,7 +115,7 @@ function IconeCor({
       <button
         type="button"
         onClick={() => setAberto((v) => !v)}
-        className="h-9 w-9 rounded-lg flex items-center justify-center border-2 border-transparent hover:border-navy/20 transition-colors"
+        className="h-9 w-9 flex items-center justify-center border-2 border-transparent hover:border-navy/20 transition-colors"
         style={{ backgroundColor: cor }}
         title="Escolher ícone e cor"
       >
@@ -121,8 +123,10 @@ function IconeCor({
       </button>
 
       {aberto && (
-        <div className="absolute left-0 top-11 z-50 bg-white border border-brand-gray rounded-xl shadow-lg p-3 w-56">
-          <p className="text-[10px] font-bold text-link-blue uppercase tracking-wider mb-2">Ícone</p>
+        <div className="absolute left-0 top-11 z-50 bg-white border border-navy/15 p-3 w-56">
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
+            Ícone
+          </p>
           <div className="grid grid-cols-5 gap-1.5 mb-3">
             {ICONES.map((ic) => {
               const Comp = ic.componente;
@@ -132,10 +136,10 @@ function IconeCor({
                   type="button"
                   onClick={() => onChange(ic.id, cor)}
                   className={cn(
-                    "h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
+                    "h-8 w-8 flex items-center justify-center transition-colors",
                     icone === ic.id
                       ? "bg-navy text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200",
                   )}
                 >
                   <Comp className="h-4 w-4" />
@@ -143,7 +147,9 @@ function IconeCor({
               );
             })}
           </div>
-          <p className="text-[10px] font-bold text-link-blue uppercase tracking-wider mb-2">Cor</p>
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
+            Cor
+          </p>
           <div className="flex flex-wrap gap-1.5">
             {CORES_PICKER.map((c) => (
               <button
@@ -152,7 +158,7 @@ function IconeCor({
                 onClick={() => onChange(icone, c)}
                 className={cn(
                   "h-6 w-6 rounded-full border-2 transition-colors",
-                  cor === c ? "border-navy scale-110" : "border-transparent"
+                  cor === c ? "border-navy scale-110" : "border-transparent",
                 )}
                 style={{ backgroundColor: c }}
               />
@@ -177,11 +183,6 @@ interface InfoLiga {
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-const INFO_VAZIO: InfoLiga = {
-  nome: "", area: "", descricao: "", semestre: "",
-  emailContato: "", instagram: "", linkedin: "", bannerUrl: "",
-};
-
 const CORES = ["#10284E", "#546484", "#FEC641", "#6366f1", "#14b8a6", "#f97316"];
 
 function corPorNome(nome: string): string {
@@ -195,6 +196,7 @@ interface MembroAPI {
   email: string;
   cargo: string | null;
   role: string | null;
+  avatar_url?: string | null;
 }
 
 function apiParaMembro(m: MembroAPI): MembroAtivo {
@@ -209,37 +211,67 @@ function apiParaMembro(m: MembroAPI): MembroAtivo {
     cargo = "Membro";
   }
   const nome = m.nome ?? m.email;
-  const iniciais = nome.split(" ").slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("");
-  return { id: m.usuario_id, nome, email: m.email, cargo, iniciais, cor: corPorNome(nome) };
+  const iniciais = nome
+    .split(" ")
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
+  return {
+    id: m.usuario_id,
+    nome,
+    email: m.email,
+    cargo,
+    iniciais,
+    cor: corPorNome(nome),
+    avatarUrl: m.avatar_url,
+  };
 }
 
 function cargoBadgeClass(cargo: Cargo) {
   if (cargo === "Diretor") return "bg-purple-100 text-purple-700";
-if (cargo === "Admin") return "bg-red-100 text-red-700";
+  if (cargo === "Admin") return "bg-red-100 text-red-700";
   return "bg-gray-100 text-gray-600";
 }
-
 
 async function getToken() {
   const { data } = await supabase.auth.getSession();
   return data.session?.access_token ?? "";
 }
 
+const inputClass =
+  "w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60";
+
 // ─── sub-componentes de aba ───────────────────────────────────────────────────
 
 // ── Membros ──
 function AbaMembros({ ligaId }: { ligaId: string | null }) {
-  const [convites, setConvites] = useState<ConvitePendente[]>([]);
   const [membros, setMembros] = useState<MembroAtivo[]>([]);
   const [emailConvite, setEmailConvite] = useState("");
   const [cargoConvite, setCargoConvite] = useState<Cargo>("Membro");
+  const [enviandoConvite, setEnviandoConvite] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [novoCargoEdit, setNovoCargoEdit] = useState<Cargo>("Membro");
+  const [salvandoEdicaoId, setSalvandoEdicaoId] = useState<string | null>(null);
   const [confirmandoRemoverId, setConfirmandoRemoverId] = useState<string | null>(null);
+  const [removendoId, setRemovendoId] = useState<string | null>(null);
+  const [dropdownAbertoId, setDropdownAbertoId] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    if (!ligaId) { setCarregando(false); return; }
+    function fechar(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
+        setDropdownAbertoId(null);
+    }
+    document.addEventListener("mousedown", fechar);
+    return () => document.removeEventListener("mousedown", fechar);
+  }, []);
+
+  useEffect(() => {
+    if (!ligaId) {
+      setCarregando(false);
+      return;
+    }
     async function carregar() {
       try {
         const token = await getToken();
@@ -247,7 +279,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const data = await res.json() as MembroAPI[];
+          const data = (await res.json()) as MembroAPI[];
           setMembros(data.map(apiParaMembro));
         }
       } finally {
@@ -257,22 +289,52 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
     void carregar();
   }, [ligaId]);
 
-  if (carregando) return <p className="text-sm text-muted-foreground">Carregando membros…</p>;
+  if (carregando)
+    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando membros…</p>;
 
-  function convidar() {
-    if (!emailConvite.trim()) return;
-    const novo: ConvitePendente = {
-      id: crypto.randomUUID(),
-      email: emailConvite.trim(),
-      cargo: cargoConvite,
-      diasAtras: 0,
-    };
-    setConvites((prev) => [...prev, novo]);
-    setEmailConvite("");
-  }
-
-  function cancelarConvite(id: string) {
-    setConvites((prev) => prev.filter((c) => c.id !== id));
+  async function convidar() {
+    if (!ligaId) {
+      toast.error("Liga não identificada.");
+      return;
+    }
+    const email = emailConvite.trim();
+    if (!email) {
+      toast.error("Informe o e-mail institucional.");
+      return;
+    }
+    setEnviandoConvite(true);
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/ligas/${ligaId}/membros`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          email,
+          cargo: cargoConvite === "Diretor" ? "Diretor" : null,
+        }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { error?: string } & MembroAPI;
+      if (!res.ok) {
+        toast.error(body.error ?? "Erro ao adicionar membro.");
+        return;
+      }
+      const novo = apiParaMembro({
+        id: body.id,
+        usuario_id: body.usuario_id,
+        nome: body.nome ?? email,
+        email: body.email ?? email,
+        cargo: body.cargo ?? (cargoConvite === "Diretor" ? "Diretor" : null),
+        role: body.role ?? null,
+      });
+      setMembros((prev) => {
+        const semDuplicata = prev.filter((m) => m.id !== novo.id);
+        return [{ ...novo, novo: true }, ...semDuplicata];
+      });
+      setEmailConvite("");
+      toast.success("Membro adicionado.");
+    } finally {
+      setEnviandoConvite(false);
+    }
   }
 
   function iniciarEdicao(membro: MembroAtivo) {
@@ -280,179 +342,223 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
     setNovoCargoEdit(membro.cargo);
   }
 
-  function salvarEdicao(id: string) {
-    setMembros((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, cargo: novoCargoEdit } : m))
-    );
-    setEditandoId(null);
+  async function salvarEdicao(id: string) {
+    if (!ligaId) return;
+    setSalvandoEdicaoId(id);
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/ligas/${ligaId}/membros/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          cargo: novoCargoEdit === "Diretor" ? "Diretor" : null,
+        }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        toast.error(body.error ?? "Erro ao salvar cargo.");
+        return;
+      }
+      setMembros((prev) => prev.map((m) => (m.id === id ? { ...m, cargo: novoCargoEdit } : m)));
+      setEditandoId(null);
+      toast.success("Cargo atualizado.");
+    } finally {
+      setSalvandoEdicaoId(null);
+    }
   }
 
-  function remover(id: string) {
-    setMembros((prev) => prev.filter((m) => m.id !== id));
-    setConfirmandoRemoverId(null);
+  async function remover(id: string) {
+    if (!ligaId) return;
+    setRemovendoId(id);
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/ligas/${ligaId}/membros/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok && res.status !== 204) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        toast.error(body.error ?? "Erro ao remover membro.");
+        return;
+      }
+      setMembros((prev) => prev.filter((m) => m.id !== id));
+      toast.success("Membro removido.");
+    } finally {
+      setRemovendoId(null);
+      setConfirmandoRemoverId(null);
+    }
   }
 
   const diretor = membros.find((m) => m.cargo === "Diretor");
 
   return (
     <div className="space-y-8">
-      {/* Convidar */}
-      <section className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
-          Convidar Novo Membro
+      {/* Adicionar */}
+      <section className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
+          Adicionar Novo Membro
         </p>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <input
             type="email"
-            placeholder="E-mail institucional..."
+            placeholder="E-mail institucional…"
             value={emailConvite}
             onChange={(e) => setEmailConvite(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && convidar()}
-            className="flex-1 border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !enviandoConvite) void convidar();
+            }}
+            className="flex-1 min-w-[200px] border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
           />
           <select
             value={cargoConvite}
             onChange={(e) => setCargoConvite(e.target.value as Cargo)}
-            className="border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 bg-white"
+            className="w-36 border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60"
           >
-            <option>Membro</option>
-            <option>Diretor</option>
+            <option value="Membro">Membro</option>
+            <option value="Diretor">Diretor</option>
           </select>
           <button
-            onClick={convidar}
-            className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+            onClick={() => void convidar()}
+            disabled={enviandoConvite}
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-2.5 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            Convidar
+            {enviandoConvite ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Adicionar"}
           </button>
         </div>
+        <p className="font-plex-sans text-[12px] text-navy/40 mt-2">
+          O usuário precisa já estar cadastrado no sistema (e-mail institucional).
+        </p>
       </section>
 
-      {/* Pendentes */}
-      {convites.length > 0 && (
-        <section className="bg-white border border-brand-gray rounded-xl p-5">
-          <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
-            Pendentes ({convites.length})
-          </p>
-          <div className="divide-y divide-brand-gray">
-            {convites.map((c) => (
-              <div key={c.id} className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-brand-gray flex items-center justify-center text-link-blue font-bold text-sm">
-                    ?
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-navy">{c.email}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {c.diasAtras === 0 ? "Enviado agora" : `Enviado há ${c.diasAtras} dia${c.diasAtras > 1 ? "s" : ""}`}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", cargoBadgeClass(c.cargo))}>
-                    {c.cargo}
-                  </span>
-                  <button
-                    onClick={() => cancelarConvite(c.id)}
-                    className="text-xs border border-red-300 text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* Membros ativos */}
-      <section className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+      <section className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Membros Ativos ({membros.length})
         </p>
-        <div className="divide-y divide-brand-gray">
+        <div className="border-t border-navy/15">
           {membros.map((m) => (
-            <div key={m.id} className="flex items-center justify-between py-3">
+            <div
+              key={m.id}
+              className="flex items-center justify-between py-3 border-b border-navy/10"
+            >
               <div className="flex items-center gap-3">
                 <div
-                  className="h-9 w-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
-                  style={{ backgroundColor: m.cor }}
+                  className="h-9 w-9 shrink-0 overflow-hidden flex items-center justify-center text-white font-plex-mono text-[11px]"
+                  style={m.avatarUrl ? undefined : { backgroundColor: m.cor }}
                 >
-                  {m.iniciais}
+                  {m.avatarUrl ? (
+                    <img src={m.avatarUrl} alt={m.nome} className="h-full w-full object-cover" />
+                  ) : (
+                    m.iniciais
+                  )}
                 </div>
                 <div>
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-semibold text-navy">{m.nome}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-plex-sans font-semibold text-[13px] text-navy">{m.nome}</p>
                     {m.novo && (
-                      <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                      <span className="font-plex-mono text-[9px] uppercase tracking-[0.10em] bg-green-100 text-green-700 px-1.5 py-0.5">
                         Novo
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">{m.email}</p>
+                  <p className="font-plex-mono text-[10px] text-navy/50">{m.email}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 {editandoId === m.id ? (
                   <>
                     <select
                       value={novoCargoEdit}
                       onChange={(e) => setNovoCargoEdit(e.target.value as Cargo)}
-                      className="border border-brand-gray rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-navy/20 bg-white"
+                      className="border border-navy/20 px-2 py-1.5 bg-white font-plex-sans text-[12px] text-navy focus:outline-none focus:border-navy/60"
                     >
-                      <option>Membro</option>
-                      <option>Diretor</option>
+                      <option value="Membro">Membro</option>
+                      <option value="Diretor">Diretor</option>
                     </select>
                     <button
-                      onClick={() => salvarEdicao(m.id)}
-                      className="text-green-600 hover:bg-green-50 p-1.5 rounded-md transition-colors"
+                      onClick={() => void salvarEdicao(m.id)}
+                      disabled={salvandoEdicaoId === m.id}
+                      className="text-green-600 hover:text-green-800 transition-colors disabled:opacity-40"
                     >
-                      <Check className="h-4 w-4" />
+                      {salvandoEdicaoId === m.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Check className="h-4 w-4" />
+                      )}
                     </button>
                     <button
                       onClick={() => setEditandoId(null)}
-                      className="text-gray-400 hover:bg-gray-50 p-1.5 rounded-md transition-colors"
+                      className="text-navy/40 hover:text-navy transition-colors"
                     >
                       <X className="h-4 w-4" />
                     </button>
                   </>
+                ) : confirmandoRemoverId === m.id ? (
+                  <div className="flex items-center gap-3">
+                    <span className="font-plex-sans text-[12px] text-red-600">Remover?</span>
+                    <button
+                      onClick={() => void remover(m.id)}
+                      disabled={removendoId === m.id}
+                      className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-600 hover:text-red-800 transition-colors disabled:opacity-40"
+                    >
+                      {removendoId === m.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        "Sim"
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setConfirmandoRemoverId(null)}
+                      className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
+                    >
+                      Não
+                    </button>
+                  </div>
                 ) : (
                   <>
-                    <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", cargoBadgeClass(m.cargo))}>
+                    <span
+                      className={cn(
+                        "font-plex-mono text-[9px] uppercase tracking-[0.10em] px-2 py-0.5",
+                        cargoBadgeClass(m.cargo),
+                      )}
+                    >
                       {m.cargo}
                     </span>
-                    <button
-                      onClick={() => iniciarEdicao(m)}
-                      className="text-xs border border-brand-gray text-link-blue hover:bg-gray-50 px-3 py-1 rounded-lg transition-colors"
-                    >
-                      Editar cargo
-                    </button>
-                    {m.id !== diretor?.id && (
-                      confirmandoRemoverId === m.id ? (
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs text-red-500">Confirmar?</span>
+                    <div className="relative" ref={dropdownAbertoId === m.id ? dropdownRef : null}>
+                      <button
+                        onClick={() => setDropdownAbertoId(dropdownAbertoId === m.id ? null : m.id)}
+                        className="text-navy/40 hover:text-navy transition-colors p-1"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                      {dropdownAbertoId === m.id && (
+                        <div className="absolute right-0 top-7 z-50 bg-white border border-navy/15 min-w-[130px] shadow-sm">
                           <button
-                            onClick={() => remover(m.id)}
-                            className="text-xs bg-red-500 text-white px-2 py-1 rounded-md hover:bg-red-600 transition-colors"
+                            onClick={() => {
+                              iniciarEdicao(m);
+                              setDropdownAbertoId(null);
+                            }}
+                            className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-navy hover:bg-navy/5 transition-colors flex items-center gap-2"
                           >
-                            Sim
+                            <Pencil className="h-3.5 w-3.5" />
+                            Editar
                           </button>
-                          <button
-                            onClick={() => setConfirmandoRemoverId(null)}
-                            className="text-xs border border-gray-300 px-2 py-1 rounded-md hover:bg-gray-50 transition-colors"
-                          >
-                            Não
-                          </button>
+                          {m.id !== diretor?.id && (
+                            <button
+                              onClick={() => {
+                                setConfirmandoRemoverId(m.id);
+                                setDropdownAbertoId(null);
+                              }}
+                              className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Remover
+                            </button>
+                          )}
                         </div>
-                      ) : (
-                        <button
-                          onClick={() => setConfirmandoRemoverId(m.id)}
-                          className="text-xs border border-red-300 text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg transition-colors"
-                        >
-                          Remover
-                        </button>
-                      )
-                    )}
+                      )}
+                    </div>
                   </>
                 )}
               </div>
@@ -489,7 +595,10 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           headers: { Authorization: `Bearer ${token}` },
           body: fd,
         });
-        if (!imgRes.ok) { setErro("Erro ao enviar imagem."); return; }
+        if (!imgRes.ok) {
+          setErro("Erro ao enviar imagem.");
+          return;
+        }
         setBannerFile(null);
       }
       const res = await fetch(`/api/ligas/${ligaId}`, {
@@ -505,7 +614,10 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           linkedin: form.linkedin,
         }),
       });
-      if (!res.ok) { setErro("Erro ao salvar informações."); return; }
+      if (!res.ok) {
+        setErro("Erro ao salvar informações.");
+        return;
+      }
       setSalvo(true);
       setTimeout(() => setSalvo(false), 2000);
     } finally {
@@ -520,25 +632,37 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
     setBannerPreview(URL.createObjectURL(file));
   }
 
-  const inputClass = "w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20";
-
   return (
     <div className="space-y-4">
       {/* Dados gerais */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5 space-y-4">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">
+      <div className="border border-navy/15 p-5 space-y-4">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
           Dados Gerais
         </p>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">Nome da liga</label>
-          <input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className={inputClass} />
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            Nome da liga
+          </label>
+          <input
+            value={form.nome}
+            onChange={(e) => setForm({ ...form, nome: e.target.value })}
+            className={inputClass}
+          />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">Área de atuação</label>
-          <input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} className={inputClass} />
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            Área de atuação
+          </label>
+          <input
+            value={form.area}
+            onChange={(e) => setForm({ ...form, area: e.target.value })}
+            className={inputClass}
+          />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">Descrição</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            Descrição
+          </label>
           <textarea
             value={form.descricao}
             onChange={(e) => setForm({ ...form, descricao: e.target.value })}
@@ -547,34 +671,44 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">Semestre de fundação</label>
-          <input value={form.semestre} onChange={(e) => setForm({ ...form, semestre: e.target.value })} placeholder="ex: 2023.1" className={inputClass} />
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            Semestre de fundação
+          </label>
+          <input
+            value={form.semestre}
+            onChange={(e) => setForm({ ...form, semestre: e.target.value })}
+            placeholder="ex: 2023.1"
+            className={inputClass}
+          />
         </div>
       </div>
 
       {/* Foto / Banner */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5 space-y-3">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">
+      <div className="border border-navy/15 p-5 space-y-3">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
           Foto / Banner da Liga
         </p>
         {bannerPreview ? (
-          <div className="relative rounded-lg overflow-hidden border border-brand-gray h-36">
+          <div className="relative overflow-hidden border border-navy/15 h-36">
             <img src={bannerPreview} alt="Banner da liga" className="w-full h-full object-cover" />
             <button
-              onClick={() => { setBannerPreview(""); setForm((prev) => ({ ...prev, bannerUrl: "" })); }}
-              className="absolute top-2 right-2 bg-white/80 hover:bg-white text-red-500 rounded-full p-1 transition-colors"
+              onClick={() => {
+                setBannerPreview("");
+                setForm((prev) => ({ ...prev, bannerUrl: "" }));
+              }}
+              className="absolute top-2 right-2 bg-white/80 hover:bg-white text-red-500 p-1 transition-colors"
               title="Remover imagem"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
         ) : (
-          <div className="border-2 border-dashed border-brand-gray rounded-lg h-36 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+          <div className="border border-dashed border-navy/20 h-36 flex flex-col items-center justify-center gap-2 text-navy/40">
             <Image className="h-6 w-6" />
-            <span className="text-xs">Nenhuma imagem selecionada</span>
+            <span className="font-plex-sans text-[12px]">Nenhuma imagem selecionada</span>
           </div>
         )}
-        <label className="inline-flex items-center gap-2 cursor-pointer bg-gray-50 hover:bg-gray-100 border border-brand-gray text-navy text-xs font-semibold px-3 py-2 rounded-lg transition-colors">
+        <label className="inline-flex items-center gap-2 cursor-pointer font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors">
           <Plus className="h-3.5 w-3.5" />
           {bannerPreview ? "Trocar imagem" : "Selecionar imagem"}
           <input type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
@@ -582,12 +716,14 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
       </div>
 
       {/* Contatos */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5 space-y-4">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider">
+      <div className="border border-navy/15 p-5 space-y-4">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
           Contatos da Liga
         </p>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">E-mail de contato</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            E-mail de contato
+          </label>
           <input
             type="email"
             value={form.emailContato}
@@ -597,7 +733,9 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">Instagram</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            Instagram
+          </label>
           <input
             value={form.instagram}
             onChange={(e) => setForm({ ...form, instagram: e.target.value })}
@@ -606,7 +744,9 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-navy mb-1 block">LinkedIn</label>
+          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
+            LinkedIn
+          </label>
           <input
             value={form.linkedin}
             onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
@@ -622,12 +762,14 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           <button
             onClick={() => void salvar()}
             disabled={salvando}
-            className="bg-navy hover:bg-navy/90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {salvando ? "Salvando…" : "Salvar alterações"}
           </button>
-          {salvo && <span className="text-sm text-green-600">Salvo com sucesso!</span>}
-          {erro && <span className="text-sm text-red-500">{erro}</span>}
+          {salvo && (
+            <span className="font-plex-sans text-[12px] text-green-600">Salvo com sucesso!</span>
+          )}
+          {erro && <span className="font-plex-sans text-[12px] text-red-600">{erro}</span>}
         </div>
       )}
     </div>
@@ -637,10 +779,24 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
 // ── Recursos ──
 const TIPOS_COM_ARQUIVO = ["Apresentação", "Vídeo", "Documento"] as const;
 
-type RecursoAPI = { id: string; titulo: string; tipo: string; url: string; icone: string; cor: string };
+type RecursoAPI = {
+  id: string;
+  titulo: string;
+  tipo: string;
+  url: string;
+  icone: string;
+  cor: string;
+};
 
 function apiParaRecurso(r: RecursoAPI): Recurso {
-  return { id: r.id, nome: r.titulo, tipo: r.tipo, url: r.url, icone: r.icone ?? "link", cor: r.cor ?? "#546484" };
+  return {
+    id: r.id,
+    nome: r.titulo,
+    tipo: r.tipo,
+    url: r.url,
+    icone: r.icone ?? "link",
+    cor: r.cor ?? "#546484",
+  };
 }
 
 function AbaRecursos({ ligaId }: { ligaId: string | null }) {
@@ -662,10 +818,13 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
     setUrl: (url: string) => void,
     setEnviando: (v: boolean) => void,
   ) {
-    // Validação no cliente antes do upload
     const tiposPermitidos = [
-      "image/jpeg", "image/png", "image/gif",
-      "application/pdf", "text/plain", "application/zip",
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "application/pdf",
+      "text/plain",
+      "application/zip",
     ];
     const tamanhoMaximoMB = 5;
     if (!tiposPermitidos.includes(file.type)) {
@@ -703,7 +862,7 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const data = await res.json() as RecursoAPI[];
+          const data = (await res.json()) as RecursoAPI[];
           setRecursos(data.map(apiParaRecurso));
         }
       } finally {
@@ -715,24 +874,40 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
 
   async function adicionar() {
     setErro(null);
-    if (!novoNome.trim()) { setErro("Informe o nome do recurso."); return; }
-    if (!novoUrl.trim())  { setErro("Informe a URL."); return; }
-    if (!ligaId)          { setErro("Liga não identificada. Recarregue a página."); return; }
+    if (!novoNome.trim()) {
+      setErro("Informe o nome do recurso.");
+      return;
+    }
+    if (!novoUrl.trim()) {
+      setErro("Informe a URL.");
+      return;
+    }
+    if (!ligaId) {
+      setErro("Liga não identificada. Recarregue a página.");
+      return;
+    }
     const token = await getToken();
     const res = await fetch("/api/recursos", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ liga_id: ligaId, titulo: novoNome.trim(), tipo: novoTipo, url: novoUrl.trim(), icone: novoIcone, cor: novoCor }),
+      body: JSON.stringify({
+        liga_id: ligaId,
+        titulo: novoNome.trim(),
+        tipo: novoTipo,
+        url: novoUrl.trim(),
+        icone: novoIcone,
+        cor: novoCor,
+      }),
     });
     if (res.ok) {
-      const criado = await res.json() as RecursoAPI;
+      const criado = (await res.json()) as RecursoAPI;
       setRecursos((prev) => [apiParaRecurso(criado), ...prev]);
       setNovoNome("");
       setNovoUrl("");
       setNovoIcone("link");
       setNovoCor("#546484");
     } else {
-      const body = await res.json().catch(() => ({})) as { error?: string };
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
       setErro(body.error ?? `Erro ${res.status} ao salvar.`);
     }
   }
@@ -758,32 +933,40 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
     const res = await fetch(`/api/recursos/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ titulo: editForm.nome, tipo: editForm.tipo, url: editForm.url, icone: editForm.icone, cor: editForm.cor }),
+      body: JSON.stringify({
+        titulo: editForm.nome,
+        tipo: editForm.tipo,
+        url: editForm.url,
+        icone: editForm.icone,
+        cor: editForm.cor,
+      }),
     });
     if (res.ok) {
-      const atualizado = await res.json() as RecursoAPI;
+      const atualizado = (await res.json()) as RecursoAPI;
       setRecursos((prev) => prev.map((r) => (r.id === id ? apiParaRecurso(atualizado) : r)));
     }
     setEditandoId(null);
   }
 
   if (carregando) {
-    return <p className="text-sm text-muted-foreground">Carregando recursos…</p>;
+    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando recursos…</p>;
   }
 
   return (
     <div className="space-y-4">
       {/* Lista */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Recursos ({recursos.length})
         </p>
         {recursos.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum recurso cadastrado ainda.</p>
+          <p className="font-plex-sans text-[13px] text-navy/50">
+            Nenhum recurso cadastrado ainda.
+          </p>
         ) : (
-          <div className="divide-y divide-brand-gray">
+          <div className="border-t border-navy/15">
             {recursos.map((r) => (
-              <div key={r.id} className="py-3">
+              <div key={r.id} className="border-b border-navy/10 py-3">
                 {editandoId === r.id ? (
                   <div className="flex flex-col gap-2">
                     <div className="flex gap-2 items-center">
@@ -796,14 +979,14 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                         value={editForm.nome ?? ""}
                         onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
                         placeholder="Nome"
-                        className="flex-1 border border-brand-gray rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+                        className="flex-1 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
                       />
                     </div>
                     <div className="flex gap-2">
                       <select
                         value={editForm.tipo ?? "URL"}
                         onChange={(e) => setEditForm({ ...editForm, tipo: e.target.value })}
-                        className="w-36 border border-brand-gray rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 bg-white"
+                        className="w-36 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
                       >
                         <option>URL</option>
                         <option>Documento</option>
@@ -816,21 +999,25 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                     </div>
                     {(TIPOS_COM_ARQUIVO as readonly string[]).includes(editForm.tipo ?? "") ? (
                       <div>
-                        <label className={cn(
-                          "flex items-center gap-2 w-full border-2 border-dashed rounded-lg px-3 py-2 cursor-pointer transition-colors text-sm",
-                          editEnviando
-                            ? "border-navy/30 bg-navy/5 text-navy/60 cursor-not-allowed"
-                            : "border-brand-gray hover:border-navy/30 text-muted-foreground hover:text-navy",
-                        )}>
-                          {editEnviando
-                            ? <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                            : <Upload className="h-4 w-4 shrink-0" />}
-                          <span className="truncate text-xs">
+                        <label
+                          className={cn(
+                            "flex items-center gap-2 w-full border border-dashed px-3 py-2 cursor-pointer transition-colors font-plex-sans text-[13px]",
+                            editEnviando
+                              ? "border-navy/30 bg-navy/5 text-navy/60 cursor-not-allowed"
+                              : "border-navy/20 hover:border-navy/40 text-navy/50 hover:text-navy",
+                          )}
+                        >
+                          {editEnviando ? (
+                            <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                          ) : (
+                            <Upload className="h-4 w-4 shrink-0" />
+                          )}
+                          <span className="truncate text-[12px]">
                             {editEnviando
                               ? "Enviando…"
                               : editForm.url
-                              ? "Arquivo enviado — clique para substituir"
-                              : "Clique para enviar arquivo"}
+                                ? "Arquivo enviado — clique para substituir"
+                                : "Clique para enviar arquivo"}
                           </span>
                           <input
                             type="file"
@@ -838,17 +1025,20 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                             disabled={editEnviando}
                             onChange={(e) => {
                               const file = e.target.files?.[0];
-                              if (file) void uploadArquivo(
-                                file,
-                                (url) => setEditForm((f) => ({ ...f, url })),
-                                setEditEnviando,
-                              );
+                              if (file)
+                                void uploadArquivo(
+                                  file,
+                                  (url) => setEditForm((f) => ({ ...f, url })),
+                                  setEditEnviando,
+                                );
                               e.target.value = "";
                             }}
                           />
                         </label>
                         {editForm.url && (
-                          <p className="mt-1 text-xs text-green-600 truncate">✓ {editForm.url}</p>
+                          <p className="mt-1 font-plex-sans text-[12px] text-green-600 truncate">
+                            ✓ {editForm.url}
+                          </p>
                         )}
                       </div>
                     ) : (
@@ -856,20 +1046,20 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                         value={editForm.url ?? ""}
                         onChange={(e) => setEditForm({ ...editForm, url: e.target.value })}
                         placeholder="URL"
-                        className="w-full border border-brand-gray rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+                        className="w-full border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
                       />
                     )}
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <button
                         onClick={() => void salvarEdicao(r.id)}
                         disabled={editEnviando}
-                        className="bg-navy text-white text-xs px-3 py-1.5 rounded-lg hover:bg-navy/90 transition-colors disabled:opacity-50"
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-white bg-navy px-3 py-1.5 hover:bg-navy/90 transition-colors disabled:opacity-40"
                       >
                         Salvar
                       </button>
                       <button
                         onClick={() => setEditandoId(null)}
-                        className="border border-brand-gray text-xs px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
                       >
                         Cancelar
                       </button>
@@ -879,30 +1069,32 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div
-                        className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+                        className="h-9 w-9 flex items-center justify-center shrink-0"
                         style={{ backgroundColor: r.cor }}
                       >
                         <RecursoIcone id={r.icone} />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-navy">{r.nome}</p>
-                        <p className="text-xs text-muted-foreground">{r.tipo}</p>
+                        <p className="font-plex-sans font-semibold text-[13px] text-navy">
+                          {r.nome}
+                        </p>
+                        <p className="font-plex-mono text-[10px] text-navy/50">{r.tipo}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <button
                         onClick={() => iniciarEdicao(r)}
-                        className="text-link-blue hover:bg-gray-50 p-1.5 rounded-md transition-colors"
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
                         title="Editar"
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => void remover(r.id)}
-                        className="text-red-400 hover:bg-red-50 p-1.5 rounded-md transition-colors"
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-400 hover:text-red-600 transition-colors"
                         title="Remover"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
@@ -914,26 +1106,29 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
       </div>
 
       {/* Adicionar novo recurso */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Adicionar Recurso
         </p>
         <div className="flex gap-2 flex-wrap items-center">
           <IconeCor
             icone={novoIcone}
             cor={novoCor}
-            onChange={(ic, c) => { setNovoIcone(ic); setNovoCor(c); }}
+            onChange={(ic, c) => {
+              setNovoIcone(ic);
+              setNovoCor(c);
+            }}
           />
           <input
             value={novoNome}
             onChange={(e) => setNovoNome(e.target.value)}
             placeholder="Nome do recurso"
-            className="flex-1 min-w-[140px] border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+            className="flex-1 min-w-[140px] border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
           />
           <select
             value={novoTipo}
             onChange={(e) => setNovoTipo(e.target.value)}
-            className="w-36 border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 bg-white"
+            className="w-36 border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
           >
             <option>URL</option>
             <option>Documento</option>
@@ -946,29 +1141,33 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
           <button
             onClick={() => void adicionar()}
             disabled={novoEnviando}
-            className="flex items-center gap-1.5 bg-navy hover:bg-navy/90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-2.5 hover:bg-navy/90 transition-colors disabled:opacity-40"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
             Adicionar
           </button>
         </div>
         <div className="mt-3">
           {(TIPOS_COM_ARQUIVO as readonly string[]).includes(novoTipo) ? (
-            <label className={cn(
-              "flex items-center gap-2 w-full border-2 border-dashed rounded-lg px-4 py-3 cursor-pointer transition-colors text-sm",
-              novoEnviando
-                ? "border-navy/30 bg-navy/5 text-navy/60 cursor-not-allowed"
-                : "border-brand-gray hover:border-navy/30 text-muted-foreground hover:text-navy",
-            )}>
-              {novoEnviando
-                ? <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                : <Upload className="h-4 w-4 shrink-0" />}
+            <label
+              className={cn(
+                "flex items-center gap-2 w-full border border-dashed px-4 py-3 cursor-pointer transition-colors font-plex-sans text-[13px]",
+                novoEnviando
+                  ? "border-navy/30 bg-navy/5 text-navy/60 cursor-not-allowed"
+                  : "border-navy/20 hover:border-navy/40 text-navy/50 hover:text-navy",
+              )}
+            >
+              {novoEnviando ? (
+                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+              ) : (
+                <Upload className="h-4 w-4 shrink-0" />
+              )}
               <span className="truncate">
                 {novoEnviando
                   ? "Enviando arquivo…"
                   : novoUrl
-                  ? "Arquivo enviado — clique para substituir"
-                  : "Clique para selecionar arquivo"}
+                    ? "Arquivo enviado — clique para substituir"
+                    : "Clique para selecionar arquivo"}
               </span>
               <input
                 type="file"
@@ -986,11 +1185,11 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
               value={novoUrl}
               onChange={(e) => setNovoUrl(e.target.value)}
               placeholder="URL do recurso"
-              className="w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+              className="w-full border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
             />
           )}
         </div>
-        {erro && <p className="mt-2 text-sm text-red-500">{erro}</p>}
+        {erro && <p className="font-plex-sans text-[12px] text-red-600 mt-2">{erro}</p>}
       </div>
     </div>
   );
@@ -1039,7 +1238,6 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  // form novo registro
   const [novoTipo, setNovoTipo] = useState<"receita" | "custo">("receita");
   const [novaRecorrencia, setNovaRecorrencia] = useState<"unico" | "recorrente">("unico");
   const [novaDescricao, setNovaDescricao] = useState("");
@@ -1049,7 +1247,10 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
-    if (!ligaId) { setCarregando(false); return; }
+    if (!ligaId) {
+      setCarregando(false);
+      return;
+    }
     async function carregar() {
       try {
         const token = await getToken();
@@ -1057,7 +1258,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const data = await res.json() as RegistroFinanceiroAPI[];
+          const data = (await res.json()) as RegistroFinanceiroAPI[];
           setRegistros(data.map(apiParaRegistro));
         }
       } finally {
@@ -1069,10 +1270,19 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
 
   async function adicionar() {
     setErro(null);
-    if (!novaDescricao.trim()) { setErro("Informe a descrição."); return; }
+    if (!novaDescricao.trim()) {
+      setErro("Informe a descrição.");
+      return;
+    }
     const valorNum = parseFloat(novoValor.replace(",", "."));
-    if (isNaN(valorNum) || valorNum < 0) { setErro("Informe um valor válido."); return; }
-    if (!ligaId) { setErro("Liga não identificada. Recarregue a página."); return; }
+    if (isNaN(valorNum) || valorNum < 0) {
+      setErro("Informe um valor válido.");
+      return;
+    }
+    if (!ligaId) {
+      setErro("Liga não identificada. Recarregue a página.");
+      return;
+    }
     setEnviando(true);
     try {
       const token = await getToken();
@@ -1090,7 +1300,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
         }),
       });
       if (res.ok) {
-        const criado = await res.json() as RegistroFinanceiroAPI;
+        const criado = (await res.json()) as RegistroFinanceiroAPI;
         setRegistros((prev) => [apiParaRegistro(criado), ...prev]);
         setNovaDescricao("");
         setNovaObs("");
@@ -1098,7 +1308,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
         setNovaRecorrencia("unico");
         setNovaData(new Date().toISOString().slice(0, 10));
       } else {
-        const body = await res.json().catch(() => ({})) as { error?: string };
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
         setErro(body.error ?? `Erro ${res.status} ao salvar.`);
       }
     } finally {
@@ -1117,69 +1327,93 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
     }
   }
 
-  const totalReceitas = registros.filter((r) => r.tipo === "receita").reduce((s, r) => s + r.valor, 0);
+  const totalReceitas = registros
+    .filter((r) => r.tipo === "receita")
+    .reduce((s, r) => s + r.valor, 0);
   const totalCustos = registros.filter((r) => r.tipo === "custo").reduce((s, r) => s + r.valor, 0);
   const saldo = totalReceitas - totalCustos;
 
   if (carregando) {
-    return <p className="text-sm text-muted-foreground">Carregando financeiro…</p>;
+    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando financeiro…</p>;
   }
 
   return (
     <div className="space-y-4">
-      {/* Resumo */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white border border-brand-gray rounded-xl p-4">
-          <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-1">Receitas</p>
-          <p className="font-display font-bold text-xl text-green-600">{formatarMoeda(totalReceitas)}</p>
+      {/* Resumo KPI */}
+      <div className="grid grid-cols-3">
+        <div className="border border-navy/15 p-5 border-r-0">
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
+            Receitas
+          </p>
+          <p className="font-display font-bold text-[22px] tracking-[-0.02em] text-green-600">
+            {formatarMoeda(totalReceitas)}
+          </p>
         </div>
-        <div className="bg-white border border-brand-gray rounded-xl p-4">
-          <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-1">Custos</p>
-          <p className="font-display font-bold text-xl text-red-500">{formatarMoeda(totalCustos)}</p>
+        <div className="border border-navy/15 p-5 border-r-0">
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
+            Custos
+          </p>
+          <p className="font-display font-bold text-[22px] tracking-[-0.02em] text-red-500">
+            {formatarMoeda(totalCustos)}
+          </p>
         </div>
-        <div className="bg-white border border-brand-gray rounded-xl p-4">
-          <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-1">Saldo</p>
-          <p className={cn("font-display font-bold text-xl", saldo >= 0 ? "text-navy" : "text-red-500")}>
+        <div className="border border-navy/15 p-5">
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
+            Saldo
+          </p>
+          <p
+            className={cn(
+              "font-display font-bold text-[22px] tracking-[-0.02em]",
+              saldo >= 0 ? "text-navy" : "text-red-500",
+            )}
+          >
             {formatarMoeda(saldo)}
           </p>
         </div>
       </div>
 
       {/* Lista */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Lançamentos ({registros.length})
         </p>
         {registros.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum lançamento ainda.</p>
+          <p className="font-plex-sans text-[13px] text-navy/50">Nenhum lançamento ainda.</p>
         ) : (
-          <div className="divide-y divide-brand-gray">
+          <div className="border-t border-navy/15">
             {registros.map((r) => (
-              <div key={r.id} className="py-3 flex items-start justify-between gap-3">
+              <div
+                key={r.id}
+                className="border-b border-navy/10 py-3 flex items-start justify-between gap-3"
+              >
                 <div className="flex items-start gap-3">
                   <div
                     className={cn(
-                      "h-8 w-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 text-white text-xs font-bold",
-                      r.tipo === "receita" ? "bg-green-500" : "bg-red-400"
+                      "h-7 w-7 flex items-center justify-center shrink-0 mt-0.5 text-white font-plex-mono text-[11px]",
+                      r.tipo === "receita" ? "bg-green-500" : "bg-red-400",
                     )}
                   >
                     {r.tipo === "receita" ? "+" : "−"}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-navy">{r.descricao}</p>
+                    <p className="font-plex-sans font-semibold text-[13px] text-navy">
+                      {r.descricao}
+                    </p>
                     {r.observacao && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{r.observacao}</p>
+                      <p className="font-plex-sans text-[12px] text-navy/50 mt-0.5">
+                        {r.observacao}
+                      </p>
                     )}
                     <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-xs text-muted-foreground">
+                      <p className="font-plex-mono text-[10px] text-navy/50">
                         {new Date(r.data + "T00:00:00").toLocaleDateString("pt-BR")}
                       </p>
                       <span
                         className={cn(
-                          "text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
+                          "font-plex-mono text-[9px] uppercase tracking-[0.10em] px-1.5 py-0.5",
                           r.recorrencia === "recorrente"
                             ? "bg-blue-100 text-blue-600"
-                            : "bg-gray-100 text-gray-500"
+                            : "bg-gray-100 text-gray-500",
                         )}
                       >
                         {r.recorrencia === "recorrente" ? "Recorrente" : "Único"}
@@ -1187,21 +1421,22 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-3 shrink-0">
                   <span
                     className={cn(
-                      "text-sm font-bold",
-                      r.tipo === "receita" ? "text-green-600" : "text-red-500"
+                      "font-plex-mono text-[12px]",
+                      r.tipo === "receita" ? "text-green-600" : "text-red-500",
                     )}
                   >
-                    {r.tipo === "receita" ? "+" : "−"}{formatarMoeda(r.valor)}
+                    {r.tipo === "receita" ? "+" : "−"}
+                    {formatarMoeda(r.valor)}
                   </span>
                   <button
                     onClick={() => void remover(r.id)}
-                    className="text-red-400 hover:bg-red-50 p-1.5 rounded-md transition-colors"
+                    className="text-red-400 hover:text-red-600 transition-colors"
                     title="Remover"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
@@ -1211,8 +1446,8 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
       </div>
 
       {/* Adicionar */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Adicionar Lançamento
         </p>
         <div className="space-y-3">
@@ -1222,10 +1457,10 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
               type="button"
               onClick={() => setNovoTipo("receita")}
               className={cn(
-                "flex-1 py-2 text-sm font-semibold rounded-lg border-2 transition-colors",
+                "flex-1 py-2 font-plex-mono text-[10px] tracking-[0.14em] uppercase border-2 transition-colors",
                 novoTipo === "receita"
                   ? "border-green-500 bg-green-50 text-green-700"
-                  : "border-brand-gray text-muted-foreground hover:border-green-300"
+                  : "border-navy/15 text-navy/40 hover:border-green-300",
               )}
             >
               + Receita
@@ -1234,10 +1469,10 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
               type="button"
               onClick={() => setNovoTipo("custo")}
               className={cn(
-                "flex-1 py-2 text-sm font-semibold rounded-lg border-2 transition-colors",
+                "flex-1 py-2 font-plex-mono text-[10px] tracking-[0.14em] uppercase border-2 transition-colors",
                 novoTipo === "custo"
                   ? "border-red-400 bg-red-50 text-red-600"
-                  : "border-brand-gray text-muted-foreground hover:border-red-300"
+                  : "border-navy/15 text-navy/40 hover:border-red-300",
               )}
             >
               − Custo
@@ -1248,7 +1483,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
           <select
             value={novaRecorrencia}
             onChange={(e) => setNovaRecorrencia(e.target.value as "unico" | "recorrente")}
-            className="w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 bg-white text-navy"
+            className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60"
           >
             <option value="unico">Único</option>
             <option value="recorrente">Recorrente</option>
@@ -1259,7 +1494,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
             value={novaDescricao}
             onChange={(e) => setNovaDescricao(e.target.value)}
             placeholder="Descrição"
-            className="w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+            className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
           />
 
           {/* Observação */}
@@ -1267,42 +1502,43 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
             value={novaObs}
             onChange={(e) => setNovaObs(e.target.value)}
             placeholder="Observação (opcional)"
-            className="w-full border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+            className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
           />
 
           {/* Valor + Data */}
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">R$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-plex-sans text-[13px] text-navy/50 pointer-events-none">
+                R$
+              </span>
               <input
                 type="text"
                 inputMode="decimal"
                 value={novoValor}
                 onChange={(e) => {
-                  // aceita apenas dígitos, vírgula e ponto
                   const v = e.target.value.replace(/[^0-9.,]/g, "");
                   setNovoValor(v);
                 }}
                 placeholder="0,00"
-                className="w-full border border-brand-gray rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+                className="w-full border border-navy/20 pl-9 pr-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
               />
             </div>
             <input
               type="date"
               value={novaData}
               onChange={(e) => setNovaData(e.target.value)}
-              className="w-40 border border-brand-gray rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 bg-white"
+              className="w-40 border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60"
             />
           </div>
 
-          {erro && <p className="text-sm text-red-500">{erro}</p>}
+          {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
 
           <button
             onClick={() => void adicionar()}
             disabled={enviando}
-            className="flex items-center gap-1.5 bg-navy hover:bg-navy/90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
             {enviando ? "Salvando…" : "Adicionar"}
           </button>
         </div>
@@ -1312,54 +1548,92 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
 }
 
 // ── Desempenho ──
-function AbaDesempenho() {
-  const score = 840;
-  const scoreMax = 1000;
+function AbaDesempenho({ ligaId }: { ligaId: string | null }) {
+  const { data: rankingData } = useCachedFetch<RankingLiga[]>("/api/ranking");
+  const { data: ligasData } = useCachedFetch<Liga[]>("/api/ligas");
+
+  const ranking = rankingData ?? [];
+  const ligas = ligasData ?? [];
+  const minha = ligaId ? ranking.find((r) => r.liga_id === ligaId) : null;
+  const ligaInfo = ligaId ? ligas.find((l) => l.id === ligaId) : null;
+
+  const score = minha?.pontuacao ?? 0;
+  const scoreMaxRanking = ranking.reduce((acc, r) => Math.max(acc, r.pontuacao ?? 0), 0);
+  const scoreMax = Math.max(scoreMaxRanking, 1);
   const porcentagem = Math.round((score / scoreMax) * 100);
+  const posicao = minha?.posicao ?? null;
+
+  const formatarMoeda = (valor: number) =>
+    valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
   const resumo = [
-    { label: "Projetos concluídos", valor: "4", cor: "text-green-600" },
-    { label: "Em andamento", valor: "2", cor: "text-blue-600" },
-    { label: "Receita total", valor: "R$ 3.200", cor: "text-amber-600" },
-    { label: "Frequência média", valor: "87%", cor: "text-purple-600" },
-    { label: "Membros ativos", valor: "5", cor: "text-navy" },
+    {
+      label: "Projetos concluídos",
+      valor: String(minha?.projetos_concluidos ?? 0),
+      cor: "text-green-600",
+    },
+    {
+      label: "Em andamento",
+      valor: String(minha?.projetos_em_andamento ?? 0),
+      cor: "text-blue-600",
+    },
+    {
+      label: "Receita total",
+      valor: formatarMoeda(Number(minha?.receita_total ?? 0)),
+      cor: "text-amber-600",
+    },
+    { label: "Presenças", valor: String(minha?.presencas ?? 0), cor: "text-purple-600" },
+    {
+      label: "Membros ativos",
+      valor: String(ligaInfo?.total_membros ?? 0),
+      cor: "text-navy",
+    },
   ];
 
   const composicao = [
-    { label: "Projetos", formula: "4 projetos × 50 pts", valor: 200, cor: "bg-green-500" },
-    { label: "Presenças", formula: "32 presenças × 10 pts", valor: 320, cor: "bg-blue-500" },
-    { label: "Receita", formula: "R$ 3.200 × 0,015 pts", valor: 48, cor: "bg-amber-500" },
-    { label: "Feed", formula: "54 publicações × 5 pts", valor: 272, cor: "bg-purple-500" },
+    {
+      label: "Projetos concluídos",
+      valor: minha?.projetos_concluidos ?? 0,
+      cor: "bg-green-500",
+    },
+    { label: "Presenças", valor: minha?.presencas ?? 0, cor: "bg-blue-500" },
+    {
+      label: "Receita (R$)",
+      valor: Math.round(Number(minha?.receita_total ?? 0)),
+      cor: "bg-amber-500",
+    },
+    { label: "Publicações", valor: minha?.posts ?? 0, cor: "bg-purple-500" },
   ];
+  const composicaoMax = Math.max(...composicao.map((c) => c.valor), 1);
 
   return (
     <div className="space-y-4">
-      {/* Score e ranking */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-4">
+      {/* Score */}
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-4">
           Score Atual
         </p>
         <div className="flex items-end justify-between mb-3">
           <div>
             <span className="font-display font-bold text-4xl text-navy">{score}</span>
-            <span className="text-lg text-muted-foreground ml-1">pts</span>
+            <span className="font-plex-sans text-lg text-navy/40 ml-1">pts</span>
           </div>
-          <div className="text-right">
-            <span className="bg-brand-yellow text-navy text-xs font-bold px-2.5 py-1 rounded-full">
-              🏆 1º lugar
+          {posicao !== null && (
+            <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-brand-yellow text-navy px-2 py-0.5">
+              {posicao}º lugar
             </span>
-          </div>
+          )}
         </div>
-        <div className="w-full bg-brand-gray rounded-full h-3 overflow-hidden">
+        <div className="w-full bg-navy/10 h-px overflow-hidden">
           <div
-            className="h-3 rounded-full transition-all duration-500"
+            className="h-px transition-all duration-500"
             style={{
               width: `${porcentagem}%`,
               background: "linear-gradient(90deg, #10284E, #546484)",
             }}
           />
         </div>
-        <div className="flex justify-between mt-1.5 text-xs text-muted-foreground">
+        <div className="flex justify-between mt-2 font-plex-mono text-[10px] text-navy/40">
           <span>0 pts</span>
           <span>{porcentagem}% do máximo</span>
           <span>{scoreMax} pts</span>
@@ -1367,39 +1641,38 @@ function AbaDesempenho() {
       </div>
 
       {/* Resumo */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
           Resumo
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {resumo.map((r) => (
-            <div key={r.label} className="bg-gray-50 rounded-lg p-3">
+            <div key={r.label} className="border border-navy/10 p-3">
               <p className={cn("font-display font-bold text-xl", r.cor)}>{r.valor}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{r.label}</p>
+              <p className="font-plex-sans text-[12px] text-navy/50 mt-0.5">{r.label}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Composição do score */}
-      <div className="bg-white border border-brand-gray rounded-xl p-5">
-        <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-3">
-          Composição do Score
+      {/* Indicadores que compõem o score */}
+      <div className="border border-navy/15 p-5">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
+          Indicadores
         </p>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {composicao.map((c) => (
             <div key={c.label}>
-              <div className="flex items-center justify-between mb-1">
-                <div>
-                  <span className="text-sm font-semibold text-navy">{c.label}</span>
-                  <span className="text-xs text-muted-foreground ml-2">{c.formula}</span>
-                </div>
-                <span className="text-sm font-bold text-navy">{c.valor} pts</span>
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-plex-sans font-semibold text-[13px] text-navy">
+                  {c.label}
+                </span>
+                <span className="font-plex-mono text-[12px] text-navy">{c.valor}</span>
               </div>
-              <div className="w-full bg-brand-gray rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-navy/10 h-px overflow-hidden">
                 <div
-                  className={cn("h-2 rounded-full", c.cor)}
-                  style={{ width: `${Math.round((c.valor / score) * 100)}%` }}
+                  className={cn("h-px", c.cor)}
+                  style={{ width: `${Math.round((c.valor / composicaoMax) * 100)}%` }}
                 />
               </div>
             </div>
@@ -1412,11 +1685,20 @@ function AbaDesempenho() {
 
 // ─── página principal ─────────────────────────────────────────────────────────
 
-type Aba = "Membros" | "Informações" | "Recursos" | "Receita" | "Desempenho";
+type Aba = "Membros" | "Informações" | "Recursos" | "Receita" | "Presença" | "Desempenho";
 
-const ABAS: Aba[] = ["Membros", "Informações", "Recursos", "Receita", "Desempenho"];
+const ABAS: Aba[] = ["Membros", "Informações", "Recursos", "Receita", "Presença", "Desempenho"];
 
-const INFO_VAZIA: InfoLiga = { nome: "", area: "", descricao: "", semestre: "", emailContato: "", instagram: "", linkedin: "", bannerUrl: "" };
+const INFO_VAZIA: InfoLiga = {
+  nome: "",
+  area: "",
+  descricao: "",
+  semestre: "",
+  emailContato: "",
+  instagram: "",
+  linkedin: "",
+  bannerUrl: "",
+};
 
 export function GerenciamentoPage() {
   const [abaAtiva, setAbaAtiva] = useState<Aba>("Membros");
@@ -1446,7 +1728,7 @@ export function GerenciamentoPage() {
 
         const res = await fetch("/api/ligas/minha", { headers });
         if (res.ok) {
-          const l = await res.json() as Record<string, unknown>;
+          const l = (await res.json()) as Record<string, unknown>;
           if (l.id) setLigaId(l.id as string);
           if (l.nome) setLigaNome(l.nome as string);
           setDiretorNome((l.lider_email as string) ?? "");
@@ -1468,31 +1750,33 @@ export function GerenciamentoPage() {
     void carregarDados();
   }, []);
 
-  // perfil Staff (admin) → página própria com todas as ligas
   if (role === "staff") return <GerenciamentoStaffPage />;
 
   return (
-    <div className="p-8">
+    <div className="max-w-5xl mx-auto px-8 py-10">
       {/* Cabeçalho */}
-      <div className="mb-6">
-        <h1 className="font-display font-bold text-2xl text-navy">Gerenciamento</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {ligaNome || "Carregando…"}{diretorNome ? ` · ${diretorNome}` : ""}
+      <div className="mb-10">
+        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
+          Gerenciamento
+        </h1>
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
+          {ligaNome || "Carregando…"}
+          {diretorNome ? ` · ${diretorNome}` : ""}
         </p>
       </div>
 
       {/* Abas */}
-      <div className="border-b border-brand-gray mb-6">
-        <div className="flex gap-1">
+      <div className="border-b border-navy/15 mb-8">
+        <div className="flex">
           {ABAS.map((aba) => (
             <button
               key={aba}
               onClick={() => setAbaAtiva(aba)}
               className={cn(
-                "px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px",
+                "px-5 py-3 font-plex-mono text-[10px] uppercase tracking-[0.14em] transition-colors border-b-2 -mb-px",
                 abaAtiva === aba
-                  ? "border-[#7C3AED] text-[#7C3AED]"
-                  : "border-transparent text-muted-foreground hover:text-navy"
+                  ? "border-navy text-navy"
+                  : "border-transparent text-navy/40 hover:text-navy",
               )}
             >
               {aba}
@@ -1506,7 +1790,8 @@ export function GerenciamentoPage() {
       {abaAtiva === "Informações" && <AbaInformacoes ligaId={ligaId} initialInfo={ligaInfo} />}
       {abaAtiva === "Recursos" && <AbaRecursos ligaId={ligaId} />}
       {abaAtiva === "Receita" && <AbaReceita ligaId={ligaId} />}
-      {abaAtiva === "Desempenho" && <AbaDesempenho />}
+      {abaAtiva === "Presença" && <AbaPresenca ligaId={ligaId} />}
+      {abaAtiva === "Desempenho" && <AbaDesempenho ligaId={ligaId} />}
     </div>
   );
 }
