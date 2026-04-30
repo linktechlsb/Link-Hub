@@ -58,7 +58,7 @@ export function HomeV1Page() {
 
         {ligas.length > 0 && (
           <div className="mt-6">
-            <EditorialHero ligas={ligas} />
+            <EditorialHero ligas={ligas} ranking={ranking} />
           </div>
         )}
 

@@ -2,13 +2,14 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import type { Liga } from "@link-leagues/types";
+import type { Liga, RankingLiga } from "@link-leagues/types";
 
 interface LigasCarouselProps {
   ligas: Liga[];
+  ranking?: RankingLiga[];
 }
 
-export function LigasCarousel({ ligas }: LigasCarouselProps) {
+export function LigasCarousel({ ligas, ranking = [] }: LigasCarouselProps) {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
@@ -33,6 +34,8 @@ export function LigasCarousel({ ligas }: LigasCarouselProps) {
 
   const liga = ligas[currentIndex];
   if (!liga) return null;
+
+  const score = ranking.find((r) => r.liga_id === liga.id)?.pontuacao ?? 0;
 
   return (
     <div className="rounded-xl overflow-hidden border border-border shadow-sm">
@@ -86,7 +89,7 @@ export function LigasCarousel({ ligas }: LigasCarouselProps) {
           </div>
           <div className="flex gap-2">
             <div className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 text-center">
-              <div className="text-brand-yellow font-bold text-sm">78</div>
+              <div className="text-brand-yellow font-bold text-sm">{score}</div>
               <div className="text-white/70 text-xs">Score</div>
             </div>
             <div className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 text-center">

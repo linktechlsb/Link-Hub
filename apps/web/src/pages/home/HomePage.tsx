@@ -100,7 +100,7 @@ export function HomePage() {
       </div>
 
       {/* Carrossel de ligas */}
-      {ligas.length > 0 && <LigasCarousel ligas={ligas} />}
+      {ligas.length > 0 && <LigasCarousel ligas={ligas} ranking={ranking} />}
 
       {/* Minha Liga */}
       {minhaLiga && (

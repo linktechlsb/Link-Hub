@@ -6,10 +6,11 @@ import { useNavigate } from "react-router-dom";
 
 import { splitLigaTitle } from "./splitLigaTitle";
 
-import type { Liga } from "@link-leagues/types";
+import type { Liga, RankingLiga } from "@link-leagues/types";
 
 interface EditorialHeroProps {
   ligas: Liga[];
+  ranking?: RankingLiga[];
 }
 
 function prefersReducedMotion(): boolean {
@@ -17,7 +18,7 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export function EditorialHero({ ligas }: EditorialHeroProps) {
+export function EditorialHero({ ligas, ranking = [] }: EditorialHeroProps) {
   const navigate = useNavigate();
   const reduced = prefersReducedMotion();
   const autoplay = useRef(
@@ -53,6 +54,7 @@ export function EditorialHero({ ligas }: EditorialHeroProps) {
         <div className="flex">
           {ligas.map((liga) => {
             const segs = splitLigaTitle(liga.nome);
+            const score = ranking.find((r) => r.liga_id === liga.id)?.pontuacao ?? 0;
             return (
               <div key={liga.id} className="min-w-0 flex-[0_0_100%]">
                 <div
@@ -127,7 +129,7 @@ export function EditorialHero({ ligas }: EditorialHeroProps) {
                   </div>
 
                   <div className="mt-5 pt-4 border-t border-navy grid grid-cols-3 gap-0">
-                    <Stat label="Score" value="78" />
+                    <Stat label="Score" value={String(score)} />
                     <Stat label="Projetos" value={String(liga.projetos_ativos ?? 0)} />
                     <Stat label="Membros" value={String(liga.total_membros ?? "—")} />
                   </div>
