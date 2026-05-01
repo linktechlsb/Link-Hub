@@ -97,6 +97,45 @@ function formVazio(data: string): EventoForm {
   };
 }
 
+interface EventoCriadoData {
+  titulo: string;
+  data: string;
+  hora_inicio: string;
+  hora_fim: string;
+  ligaNome: string;
+  categoria: string;
+}
+
+function buildGoogleCalendarUrl(
+  titulo: string,
+  data: string,
+  horaInicio: string,
+  horaFim: string,
+  ligaNome: string,
+  categoria: string,
+): string {
+  const dateOnly = data.split("T")[0]!.replace(/-/g, "");
+  const startTime = horaInicio ? horaInicio.replace(":", "") + "00" : "000000";
+  const endTime = horaFim ? horaFim.replace(":", "") + "00" : "235900";
+  const text = encodeURIComponent(titulo);
+  const details = encodeURIComponent(`${ligaNome} - ${categoria}`);
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dateOnly}T${startTime}/${dateOnly}T${endTime}&details=${details}&location=Link+School+of+Business`;
+}
+
+function GoogleCalendarIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M17 3h-1V1h-2v2H8V1H6v2H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"
+        fill="#4285F4"
+      />
+      <path d="M7 10h5v5H7z" fill="#34A853" />
+      <path d="M12 10h5v2h-5z" fill="#FBBC05" />
+      <path d="M12 13h5v2h-5z" fill="#EA4335" />
+    </svg>
+  );
+}
+
 export function AgendaPage() {
   const today = new Date();
   const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
@@ -122,6 +161,7 @@ export function AgendaPage() {
   // Exclusão
   const [confirmarDeletar, setConfirmarDeletar] = useState<EventoComLiga | null>(null);
   const [deletando, setDeletando] = useState(false);
+  const [eventoRecenteCriado, setEventoRecenteCriado] = useState<EventoCriadoData | null>(null);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -259,6 +299,16 @@ export function AgendaPage() {
           const err = await res.json().catch(() => ({}));
           throw new Error((err as { error?: string }).error ?? "Erro ao criar evento");
         }
+        const ligaNome = ligas.find((l) => l.id === form.liga_id)?.nome ?? "";
+        setEventoRecenteCriado({
+          titulo: form.titulo,
+          data: form.data,
+          hora_inicio: precisaSala ? form.hora_inicio : "",
+          hora_fim: precisaSala ? form.hora_fim : "",
+          ligaNome,
+          categoria: form.categoria,
+        });
+        await recarregarEventos(token);
       } else if (eventoEditando) {
         const res = await fetch(`/api/eventos/${eventoEditando.id}`, {
           method: "PATCH",
@@ -278,9 +328,9 @@ export function AgendaPage() {
           throw new Error((err as { error?: string }).error ?? "Erro ao editar evento");
         }
         setSelectedEvento(null);
+        setSheetAberto(null);
+        await recarregarEventos(token);
       }
-      setSheetAberto(null);
-      await recarregarEventos(token);
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro desconhecido");
     } finally {
@@ -378,6 +428,7 @@ export function AgendaPage() {
           if (!o) {
             setSheetAberto(null);
             setErro(null);
+            setEventoRecenteCriado(null);
           }
         }}
       >
@@ -399,219 +450,260 @@ export function AgendaPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
-            {/* Liga — apenas ao criar */}
-            {sheetAberto === "criar" && (
-              <div>
-                <label
-                  htmlFor="ev-liga"
-                  className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+            {eventoRecenteCriado ? (
+              <div className="flex flex-col items-center gap-6 py-8 text-center">
+                <p className="font-plex-sans text-[14px] font-medium text-navy">
+                  Evento criado com sucesso!
+                </p>
+                <button
+                  onClick={() => {
+                    window.open(
+                      buildGoogleCalendarUrl(
+                        eventoRecenteCriado.titulo,
+                        eventoRecenteCriado.data,
+                        eventoRecenteCriado.hora_inicio,
+                        eventoRecenteCriado.hora_fim,
+                        eventoRecenteCriado.ligaNome,
+                        eventoRecenteCriado.categoria,
+                      ),
+                      "_blank",
+                    );
+                  }}
+                  className="border border-gray-200 rounded-lg px-4 py-2 flex items-center gap-2 hover:shadow-sm transition-shadow text-sm text-navy cursor-pointer"
                 >
-                  Liga
-                </label>
-                {role === "diretor" && ligasDisponiveis.length === 1 ? (
-                  <div className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-navy/[0.03]">
-                    {ligasDisponiveis[0]!.nome}
-                  </div>
-                ) : (
-                  <select
-                    id="ev-liga"
-                    value={form.liga_id}
-                    onChange={(e) => setForm((f) => ({ ...f, liga_id: e.target.value }))}
-                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
-                  >
-                    <option value="">Selecionar liga...</option>
-                    {ligasDisponiveis.map((liga) => (
-                      <option key={liga.id} value={liga.id}>
-                        {liga.nome}
-                      </option>
-                    ))}
-                  </select>
-                )}
+                  <GoogleCalendarIcon />
+                  Adicionar ao Google Calendar
+                </button>
               </div>
-            )}
-
-            {/* Categoria */}
-            <div>
-              <label
-                htmlFor="ev-categoria"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
-              >
-                Categoria
-              </label>
-              <select
-                id="ev-categoria"
-                value={form.categoria}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    categoria: e.target.value as CategoriaEvento,
-                    sala_id: "",
-                    hora_inicio: "",
-                    hora_fim: "",
-                  }))
-                }
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
-              >
-                <option value="encontro">Encontro</option>
-                <option value="aula">Aula</option>
-                <option value="cowork">Cowork</option>
-                <option value="evento">Evento</option>
-                <option value="hub">Hub</option>
-              </select>
-            </div>
-
-            {/* Título */}
-            <div>
-              <label
-                htmlFor="ev-titulo"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
-              >
-                Título
-              </label>
-              <input
-                id="ev-titulo"
-                type="text"
-                value={form.titulo}
-                onChange={(e) => setForm((f) => ({ ...f, titulo: e.target.value }))}
-                placeholder="Nome do evento"
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
-              />
-            </div>
-
-            {/* Data */}
-            <div>
-              <label
-                htmlFor="ev-data"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
-              >
-                Data
-              </label>
-              <input
-                id="ev-data"
-                type="date"
-                value={form.data}
-                onChange={(e) => setForm((f) => ({ ...f, data: e.target.value }))}
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
-              />
-            </div>
-
-            {/* Horário + Sala */}
-            {precisaSala && (
+            ) : (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                {/* Liga — apenas ao criar */}
+                {sheetAberto === "criar" && (
                   <div>
                     <label
-                      htmlFor="ev-inicio"
+                      htmlFor="ev-liga"
                       className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
                     >
-                      Horário início
+                      Liga
                     </label>
-                    <input
-                      id="ev-inicio"
-                      type="time"
-                      value={form.hora_inicio}
-                      onChange={(e) => setForm((f) => ({ ...f, hora_inicio: e.target.value }))}
-                      className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
-                    />
+                    {role === "diretor" && ligasDisponiveis.length === 1 ? (
+                      <div className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-navy/[0.03]">
+                        {ligasDisponiveis[0]!.nome}
+                      </div>
+                    ) : (
+                      <select
+                        id="ev-liga"
+                        value={form.liga_id}
+                        onChange={(e) => setForm((f) => ({ ...f, liga_id: e.target.value }))}
+                        className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                      >
+                        <option value="">Selecionar liga...</option>
+                        {ligasDisponiveis.map((liga) => (
+                          <option key={liga.id} value={liga.id}>
+                            {liga.nome}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
-                  <div>
-                    <label
-                      htmlFor="ev-fim"
-                      className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
-                    >
-                      Horário fim
-                    </label>
-                    <input
-                      id="ev-fim"
-                      type="time"
-                      value={form.hora_fim}
-                      onChange={(e) => setForm((f) => ({ ...f, hora_fim: e.target.value }))}
-                      className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
-                    />
-                  </div>
-                </div>
+                )}
+
+                {/* Categoria */}
                 <div>
                   <label
-                    htmlFor="ev-sala"
+                    htmlFor="ev-categoria"
                     className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
                   >
-                    Sala
+                    Categoria
                   </label>
                   <select
-                    id="ev-sala"
-                    value={form.sala_id}
-                    onChange={(e) => setForm((f) => ({ ...f, sala_id: e.target.value }))}
+                    id="ev-categoria"
+                    value={form.categoria}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        categoria: e.target.value as CategoriaEvento,
+                        sala_id: "",
+                        hora_inicio: "",
+                        hora_fim: "",
+                      }))
+                    }
                     className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
                   >
-                    <option value="">Selecionar sala...</option>
-                    {salasDisponiveis.map((sala) => (
-                      <option key={sala.id} value={sala.id}>
-                        {sala.nome}
-                      </option>
-                    ))}
+                    <option value="encontro">Encontro</option>
+                    <option value="aula">Aula</option>
+                    <option value="cowork">Cowork</option>
+                    <option value="evento">Evento</option>
+                    <option value="hub">Hub</option>
                   </select>
-                  {alertaHorarioSala && (
-                    <p className="font-plex-mono text-[10px] tracking-[0.08em] text-amber-600 mt-2">
-                      {alertaHorarioSala}
+                </div>
+
+                {/* Título */}
+                <div>
+                  <label
+                    htmlFor="ev-titulo"
+                    className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                  >
+                    Título
+                  </label>
+                  <input
+                    id="ev-titulo"
+                    type="text"
+                    value={form.titulo}
+                    onChange={(e) => setForm((f) => ({ ...f, titulo: e.target.value }))}
+                    placeholder="Nome do evento"
+                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+                  />
+                </div>
+
+                {/* Data */}
+                <div>
+                  <label
+                    htmlFor="ev-data"
+                    className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                  >
+                    Data
+                  </label>
+                  <input
+                    id="ev-data"
+                    type="date"
+                    value={form.data}
+                    onChange={(e) => setForm((f) => ({ ...f, data: e.target.value }))}
+                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                  />
+                </div>
+
+                {/* Horário + Sala */}
+                {precisaSala && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label
+                          htmlFor="ev-inicio"
+                          className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                        >
+                          Horário início
+                        </label>
+                        <input
+                          id="ev-inicio"
+                          type="time"
+                          value={form.hora_inicio}
+                          onChange={(e) => setForm((f) => ({ ...f, hora_inicio: e.target.value }))}
+                          className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="ev-fim"
+                          className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                        >
+                          Horário fim
+                        </label>
+                        <input
+                          id="ev-fim"
+                          type="time"
+                          value={form.hora_fim}
+                          onChange={(e) => setForm((f) => ({ ...f, hora_fim: e.target.value }))}
+                          className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="ev-sala"
+                        className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                      >
+                        Sala
+                      </label>
+                      <select
+                        id="ev-sala"
+                        value={form.sala_id}
+                        onChange={(e) => setForm((f) => ({ ...f, sala_id: e.target.value }))}
+                        className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                      >
+                        <option value="">Selecionar sala...</option>
+                        {salasDisponiveis.map((sala) => (
+                          <option key={sala.id} value={sala.id}>
+                            {sala.nome}
+                          </option>
+                        ))}
+                      </select>
+                      {alertaHorarioSala && (
+                        <p className="font-plex-mono text-[10px] tracking-[0.08em] text-amber-600 mt-2">
+                          {alertaHorarioSala}
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {/* Aviso resubmissão ao editar evento já aprovado */}
+                {sheetAberto === "editar" &&
+                  eventoEditando?.status_aprovacao === "aprovado" &&
+                  ["evento", "hub"].includes(form.categoria) && (
+                    <p className="font-plex-mono text-[10px] tracking-[0.08em] text-navy/50">
+                      Esta edição irá resubmeter o evento para aprovação do staff.
                     </p>
                   )}
+
+                {/* Aviso aprovação */}
+                {["evento", "hub"].includes(form.categoria) && (
+                  <p className="font-plex-mono text-[10px] tracking-[0.08em] text-amber-600">
+                    Este evento requer aprovação do staff antes de ser publicado.
+                  </p>
+                )}
+
+                {/* Descrição */}
+                <div>
+                  <label
+                    htmlFor="ev-descricao"
+                    className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                  >
+                    Descrição (opcional)
+                  </label>
+                  <textarea
+                    id="ev-descricao"
+                    value={form.descricao}
+                    onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))}
+                    placeholder="Detalhes do evento..."
+                    rows={3}
+                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60 resize-none"
+                  />
                 </div>
+
+                {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
               </>
             )}
-
-            {/* Aviso resubmissão ao editar evento já aprovado */}
-            {sheetAberto === "editar" &&
-              eventoEditando?.status_aprovacao === "aprovado" &&
-              ["evento", "hub"].includes(form.categoria) && (
-                <p className="font-plex-mono text-[10px] tracking-[0.08em] text-navy/50">
-                  Esta edição irá resubmeter o evento para aprovação do staff.
-                </p>
-              )}
-
-            {/* Aviso aprovação */}
-            {["evento", "hub"].includes(form.categoria) && (
-              <p className="font-plex-mono text-[10px] tracking-[0.08em] text-amber-600">
-                Este evento requer aprovação do staff antes de ser publicado.
-              </p>
-            )}
-
-            {/* Descrição */}
-            <div>
-              <label
-                htmlFor="ev-descricao"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
-              >
-                Descrição (opcional)
-              </label>
-              <textarea
-                id="ev-descricao"
-                value={form.descricao}
-                onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))}
-                placeholder="Detalhes do evento..."
-                rows={3}
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60 resize-none"
-              />
-            </div>
-
-            {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
           </div>
 
           <div className="flex-shrink-0">
             <div className="h-px bg-navy/15" />
             <div className="px-8 py-6">
-              <button
-                onClick={() => void handleSalvar()}
-                disabled={
-                  salvando || !form.titulo.trim() || (sheetAberto === "criar" && !form.liga_id)
-                }
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {salvando
-                  ? "Salvando..."
-                  : sheetAberto === "criar"
-                    ? "Criar evento"
-                    : "Salvar alterações"}
-              </button>
+              {eventoRecenteCriado ? (
+                <button
+                  onClick={() => {
+                    setSheetAberto(null);
+                    setEventoRecenteCriado(null);
+                  }}
+                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-4 py-3 hover:bg-navy hover:text-white transition-colors"
+                >
+                  Fechar
+                </button>
+              ) : (
+                <button
+                  onClick={() => void handleSalvar()}
+                  disabled={
+                    salvando || !form.titulo.trim() || (sheetAberto === "criar" && !form.liga_id)
+                  }
+                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {salvando
+                    ? "Salvando..."
+                    : sheetAberto === "criar"
+                      ? "Criar evento"
+                      : "Salvar alterações"}
+                </button>
+              )}
             </div>
           </div>
         </SheetContent>
@@ -942,6 +1034,30 @@ export function AgendaPage() {
                             </div>
                           </div>
                         </button>
+
+                        {isOpen && (
+                          <div className="pl-5 pb-2">
+                            <button
+                              onClick={() => {
+                                window.open(
+                                  buildGoogleCalendarUrl(
+                                    evento.titulo,
+                                    evento.data.split("T")[0] ?? evento.data,
+                                    evento.hora_inicio ?? "",
+                                    evento.hora_fim ?? "",
+                                    evento.liga?.nome ?? "",
+                                    evento.categoria,
+                                  ),
+                                  "_blank",
+                                );
+                              }}
+                              className="border border-gray-200 rounded-lg px-4 py-2 flex items-center gap-2 hover:shadow-sm transition-shadow text-sm text-navy cursor-pointer"
+                            >
+                              <GoogleCalendarIcon />
+                              Adicionar ao Google Calendar
+                            </button>
+                          </div>
+                        )}
 
                         {podeGerir && (
                           <div className="flex items-center gap-4 pb-3 pl-5">
