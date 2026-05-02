@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { useUser } from "@/hooks/use-user";
 import { EditorialTable, KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
@@ -22,6 +24,8 @@ type ProjetoAPI = {
   criado_em: string;
 };
 
+type LigaAPI = { id: string; nome: string };
+
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   rascunho: { label: "Rascunho", className: "text-navy/50" },
   em_aprovacao: { label: "Em aprovação", className: "text-amber-600" },
@@ -35,6 +39,9 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 export function ProjetosPage() {
   const { role } = useUser();
   const { data: projetos, carregando } = useCachedFetch<ProjetoAPI[]>("/api/projetos");
+  const { data: ligasData } = useCachedFetch<LigaAPI[]>("/api/ligas");
+  const [filtroLiga, setFiltroLiga] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState("");
 
   if (role === null) {
     return (
@@ -64,9 +71,15 @@ export function ProjetosPage() {
     );
   }
 
-  // Visão do membro / estudante
-  const lista = projetos ?? [];
-  const ativos = lista.filter((p) => ["aprovado", "em_andamento"].includes(p.status));
+  // Visão do membro / estudante — diretório completo (rascunhos ficam ocultos pela API)
+  const lista = (projetos ?? []).filter((p) => p.status !== "rascunho");
+  const ligas = ligasData ?? [];
+
+  const filtrados = lista.filter((p) => {
+    if (filtroLiga && p.liga?.id !== filtroLiga) return false;
+    if (filtroStatus && p.status !== filtroStatus) return false;
+    return true;
+  });
 
   const kpis = [
     { label: "Total projetos", valor: String(lista.length) },
@@ -85,7 +98,7 @@ export function ProjetosPage() {
           Projetos
         </h1>
         <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
-          Minha Liga
+          Diretório
         </p>
       </div>
 
@@ -93,23 +106,54 @@ export function ProjetosPage() {
         {!carregando && <KpiRow items={kpis} />}
 
         <div>
-          <SectionHeader numero="01" eyebrow="Iniciativas" titulo="Projetos Ativos" />
+          <SectionHeader numero="01" eyebrow="Diretório" titulo="Todos os Projetos" />
+
+          <div className="flex gap-3 mb-6">
+            <select
+              value={filtroLiga}
+              onChange={(e) => setFiltroLiga(e.target.value)}
+              className="font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2 bg-white focus:outline-none focus:border-navy/60"
+            >
+              <option value="">Todas as ligas</option>
+              {ligas.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.nome}
+                </option>
+              ))}
+            </select>
+            <select
+              value={filtroStatus}
+              onChange={(e) => setFiltroStatus(e.target.value)}
+              className="font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2 bg-white focus:outline-none focus:border-navy/60"
+            >
+              <option value="">Todos os status</option>
+              {Object.entries(STATUS_CONFIG)
+                .filter(([k]) => k !== "rascunho")
+                .map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v.label}
+                  </option>
+                ))}
+            </select>
+          </div>
+
           {carregando ? (
             <p className="font-plex-sans text-[13px] text-navy/50">Carregando projetos...</p>
-          ) : ativos.length === 0 ? (
-            <p className="font-plex-sans text-[13px] text-navy/50">Nenhum projeto ativo.</p>
+          ) : filtrados.length === 0 ? (
+            <p className="font-plex-sans text-[13px] text-navy/50">Nenhum projeto encontrado.</p>
           ) : (
             <EditorialTable
-              columns={["Projeto", "Liga", "Prazo", "Status", "%"]}
-              rows={ativos.map((p) => {
+              columns={["Projeto", "Liga", "Responsável", "Prazo", "Status", "%"]}
+              rows={filtrados.map((p) => {
                 const s = STATUS_CONFIG[p.status] ?? { label: p.status, className: "text-navy/50" };
                 return [
                   <span key="t" className="font-medium">
                     {p.titulo}
                   </span>,
                   p.liga?.nome ?? "—",
+                  p.responsavel_nome ?? "—",
                   p.prazo
-                    ? new Date(p.prazo + "T00:00:00").toLocaleDateString("pt-BR", {
+                    ? new Date(p.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString("pt-BR", {
                         day: "2-digit",
                         month: "short",
                       })
@@ -125,33 +169,6 @@ export function ProjetosPage() {
             />
           )}
         </div>
-
-        {lista.filter((p) => !["aprovado", "em_andamento"].includes(p.status)).length > 0 && (
-          <div>
-            <SectionHeader numero="02" eyebrow="Histórico" titulo="Outros Projetos" />
-            <EditorialTable
-              columns={["Projeto", "Liga", "Status", "%"]}
-              rows={lista
-                .filter((p) => !["aprovado", "em_andamento"].includes(p.status))
-                .map((p) => {
-                  const s = STATUS_CONFIG[p.status] ?? {
-                    label: p.status,
-                    className: "text-navy/50",
-                  };
-                  return [
-                    p.titulo,
-                    p.liga?.nome ?? "—",
-                    <span key="s" className={`font-medium ${s.className}`}>
-                      {s.label}
-                    </span>,
-                    <span key="pct" className="font-plex-mono text-navy/70">
-                      {p.percentual_concluido}%
-                    </span>,
-                  ];
-                })}
-            />
-          </div>
-        )}
       </div>
     </div>
   );

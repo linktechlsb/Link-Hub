@@ -18,6 +18,7 @@ type ProjetoAPI = {
   responsavel_id?: string;
   responsavel_nome?: string;
   responsavel?: { nome: string };
+  liga?: { id: string; nome: string };
 };
 
 type MembroAPI = { id: string; usuario_id: string; nome: string };
@@ -25,6 +26,8 @@ type MembroAPI = { id: string; usuario_id: string; nome: string };
 type ProfessorAPI = { id: string; nome: string; email: string } | null;
 
 type MinhaLiga = { id: string; nome: string };
+
+type LigaAPI = { id: string; nome: string };
 
 type ProjetoForm = {
   titulo: string;
@@ -74,8 +77,21 @@ export function ProjetosLiderView() {
   const { data: membrosData } = useCachedFetch<MembroAPI[]>(
     ligaId ? `/api/ligas/${ligaId}/membros` : null,
   );
+  const { data: todosProjetosData } = useCachedFetch<ProjetoAPI[]>("/api/projetos");
+  const { data: ligasData } = useCachedFetch<LigaAPI[]>("/api/ligas");
   const projetos = projetosData ?? [];
   const membros = membrosData ?? [];
+  const todosProjetos = (todosProjetosData ?? []).filter((p) => p.status !== "rascunho");
+  const ligas = ligasData ?? [];
+  const [filtroLiga, setFiltroLiga] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState("");
+  const [aba, setAba] = useState<"liga" | "todos">("liga");
+
+  const filtrados = todosProjetos.filter((p) => {
+    if (filtroLiga && p.liga?.id !== filtroLiga) return false;
+    if (filtroStatus && p.status !== filtroStatus) return false;
+    return true;
+  });
   const [sheetProjeto, setSheetProjeto] = useState<ProjetoAPI | "novo" | null>(null);
   const [form, setForm] = useState<ProjetoForm>(FORM_VAZIO);
   const [salvando, setSalvando] = useState(false);
@@ -213,67 +229,158 @@ export function ProjetosLiderView() {
           <SectionHeader
             numero="01"
             eyebrow="Iniciativas"
-            titulo="Projetos da Liga"
+            titulo={aba === "liga" ? "Projetos da Liga" : "Todos os Projetos"}
             acao={
-              <button
-                onClick={abrirNovo}
-                className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors"
-              >
-                + Novo Projeto
-              </button>
+              aba === "liga" ? (
+                <button
+                  onClick={abrirNovo}
+                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors"
+                >
+                  + Novo Projeto
+                </button>
+              ) : null
             }
           />
 
-          {projetos.length === 0 ? (
-            <p className="font-plex-sans text-[13px] text-navy/50">Nenhum projeto cadastrado.</p>
-          ) : (
-            <EditorialTable
-              columns={["Projeto", "Responsável", "Prazo", "Status", ""]}
-              rows={projetos.map((p) => {
-                const s = STATUS_CONFIG[p.status] ?? {
-                  label: p.status,
-                  className: "text-navy/50",
-                };
-                const podSubmeter = p.status === "rascunho" || p.status === "rejeitado";
-                return [
-                  <div key="t">
-                    <span className="font-medium">{p.titulo}</span>
-                    {p.status === "rejeitado" && p.motivo_recusa && (
-                      <p className="font-plex-mono text-[10px] text-red-600 mt-0.5">
-                        {p.motivo_recusa}
-                      </p>
-                    )}
-                  </div>,
-                  responsavelNome(p),
-                  p.prazo
-                    ? new Date(p.prazo + "T00:00:00").toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "short",
-                      })
-                    : "—",
-                  <span key="s" className={`font-medium ${s.className}`}>
-                    {s.label}
-                  </span>,
-                  <div key="acoes" className="flex items-center gap-3">
-                    <button
-                      onClick={() => abrirEditar(p)}
-                      className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors"
-                    >
-                      Editar
-                    </button>
-                    {podSubmeter && (
+          <div className="flex gap-6 mb-6 border-b border-navy/15">
+            <button
+              onClick={() => setAba("liga")}
+              className={`font-plex-mono text-[11px] tracking-[0.14em] uppercase pb-3 -mb-px border-b-2 transition-colors ${
+                aba === "liga"
+                  ? "text-navy border-navy"
+                  : "text-navy/50 border-transparent hover:text-navy"
+              }`}
+            >
+              Da Liga
+            </button>
+            <button
+              onClick={() => setAba("todos")}
+              className={`font-plex-mono text-[11px] tracking-[0.14em] uppercase pb-3 -mb-px border-b-2 transition-colors ${
+                aba === "todos"
+                  ? "text-navy border-navy"
+                  : "text-navy/50 border-transparent hover:text-navy"
+              }`}
+            >
+              Todos os Projetos
+            </button>
+          </div>
+
+          {aba === "liga" &&
+            (projetos.length === 0 ? (
+              <p className="font-plex-sans text-[13px] text-navy/50">Nenhum projeto cadastrado.</p>
+            ) : (
+              <EditorialTable
+                columns={["Projeto", "Responsável", "Prazo", "Status", ""]}
+                rows={projetos.map((p) => {
+                  const s = STATUS_CONFIG[p.status] ?? {
+                    label: p.status,
+                    className: "text-navy/50",
+                  };
+                  const podSubmeter = p.status === "rascunho" || p.status === "rejeitado";
+                  return [
+                    <div key="t">
+                      <span className="font-medium">{p.titulo}</span>
+                      {p.status === "rejeitado" && p.motivo_recusa && (
+                        <p className="font-plex-mono text-[10px] text-red-600 mt-0.5">
+                          {p.motivo_recusa}
+                        </p>
+                      )}
+                    </div>,
+                    responsavelNome(p),
+                    p.prazo
+                      ? new Date(p.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "short",
+                        })
+                      : "—",
+                    <span key="s" className={`font-medium ${s.className}`}>
+                      {s.label}
+                    </span>,
+                    <div key="acoes" className="flex items-center gap-3">
                       <button
-                        onClick={() => handleSubmeter(p.id)}
-                        disabled={submetendo === p.id}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors disabled:opacity-40"
+                        onClick={() => abrirEditar(p)}
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors"
                       >
-                        {submetendo === p.id ? "..." : "Submeter →"}
+                        Editar
                       </button>
-                    )}
-                  </div>,
-                ];
-              })}
-            />
+                      {podSubmeter && (
+                        <button
+                          onClick={() => handleSubmeter(p.id)}
+                          disabled={submetendo === p.id}
+                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors disabled:opacity-40"
+                        >
+                          {submetendo === p.id ? "..." : "Submeter →"}
+                        </button>
+                      )}
+                    </div>,
+                  ];
+                })}
+              />
+            ))}
+
+          {aba === "todos" && (
+            <>
+              <div className="flex gap-3 mb-6">
+                <select
+                  value={filtroLiga}
+                  onChange={(e) => setFiltroLiga(e.target.value)}
+                  className="font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2 bg-white focus:outline-none focus:border-navy/60"
+                >
+                  <option value="">Todas as ligas</option>
+                  {ligas.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.nome}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={filtroStatus}
+                  onChange={(e) => setFiltroStatus(e.target.value)}
+                  className="font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2 bg-white focus:outline-none focus:border-navy/60"
+                >
+                  <option value="">Todos os status</option>
+                  {Object.entries(STATUS_CONFIG)
+                    .filter(([k]) => k !== "rascunho")
+                    .map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v.label}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {filtrados.length === 0 ? (
+                <p className="font-plex-sans text-[13px] text-navy/50">
+                  Nenhum projeto encontrado.
+                </p>
+              ) : (
+                <EditorialTable
+                  columns={["Projeto", "Liga", "Responsável", "Prazo", "Status"]}
+                  rows={filtrados.map((p) => {
+                    const s = STATUS_CONFIG[p.status] ?? {
+                      label: p.status,
+                      className: "text-navy/50",
+                    };
+                    return [
+                      <span key="t" className="font-medium">
+                        {p.titulo}
+                      </span>,
+                      p.liga?.nome ?? "—",
+                      responsavelNome(p),
+                      p.prazo
+                        ? new Date(p.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString("pt-BR", {
+                            day: "2-digit",
+                            month: "short",
+                          })
+                        : "—",
+                      <span key="s" className={`font-medium ${s.className}`}>
+                        {s.label}
+                      </span>,
+                    ];
+                  })}
+                />
+              )}
+            </>
           )}
         </div>
       </div>
