@@ -104,6 +104,14 @@ interface EventoCriadoData {
   hora_fim: string;
   ligaNome: string;
   categoria: string;
+  liga_id: string;
+}
+
+interface MembroLiga {
+  usuario_id: string;
+  nome: string;
+  email: string;
+  avatar_url?: string | null;
 }
 
 function buildGoogleCalendarUrl(
@@ -113,13 +121,16 @@ function buildGoogleCalendarUrl(
   horaFim: string,
   ligaNome: string,
   categoria: string,
+  convidadosEmails: string[] = [],
 ): string {
   const dateOnly = data.split("T")[0]!.replace(/-/g, "");
   const startTime = horaInicio ? horaInicio.replace(":", "") + "00" : "000000";
   const endTime = horaFim ? horaFim.replace(":", "") + "00" : "235900";
   const text = encodeURIComponent(titulo);
   const details = encodeURIComponent(`${ligaNome} - ${categoria}`);
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dateOnly}T${startTime}/${dateOnly}T${endTime}&details=${details}&location=Link+School+of+Business`;
+  const addParam =
+    convidadosEmails.length > 0 ? `&add=${encodeURIComponent(convidadosEmails.join(","))}` : "";
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dateOnly}T${startTime}/${dateOnly}T${endTime}&details=${details}&location=Link+School+of+Business${addParam}`;
 }
 
 function GoogleCalendarIcon() {
@@ -162,6 +173,9 @@ export function AgendaPage() {
   const [confirmarDeletar, setConfirmarDeletar] = useState<EventoComLiga | null>(null);
   const [deletando, setDeletando] = useState(false);
   const [eventoRecenteCriado, setEventoRecenteCriado] = useState<EventoCriadoData | null>(null);
+  const [membrosLiga, setMembrosLiga] = useState<MembroLiga[]>([]);
+  const [modoConvidados, setModoConvidados] = useState<"todos" | "selecionar">("todos");
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -224,6 +238,38 @@ export function AgendaPage() {
     }
     void carregarSalas();
   }, [podeGerenciar]);
+
+  useEffect(() => {
+    if (!eventoRecenteCriado) {
+      setMembrosLiga([]);
+      setModoConvidados("todos");
+      setSelecionados(new Set());
+      return;
+    }
+    async function carregarMembros(ligaId: string) {
+      const token = await getToken();
+      const res = await fetch(`/api/ligas/${ligaId}/membros`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as Array<{
+        usuario_id: string;
+        nome: string;
+        email: string;
+        avatar_url?: string | null;
+      }>;
+      const filtrados = data
+        .filter((m) => m.usuario_id !== usuarioId && m.email)
+        .map((m) => ({
+          usuario_id: m.usuario_id,
+          nome: m.nome,
+          email: m.email,
+          avatar_url: m.avatar_url,
+        }));
+      setMembrosLiga(filtrados);
+    }
+    void carregarMembros(eventoRecenteCriado.liga_id);
+  }, [eventoRecenteCriado, usuarioId]);
 
   const ligasDisponiveis = useMemo(
     () =>
@@ -307,6 +353,7 @@ export function AgendaPage() {
           hora_fim: precisaSala ? form.hora_fim : "",
           ligaNome,
           categoria: form.categoria,
+          liga_id: form.liga_id,
         });
         await recarregarEventos(token);
       } else if (eventoEditando) {
@@ -451,12 +498,89 @@ export function AgendaPage() {
 
           <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
             {eventoRecenteCriado ? (
-              <div className="flex flex-col items-center gap-6 py-8 text-center">
-                <p className="font-plex-sans text-[14px] font-medium text-navy">
+              <div className="flex flex-col items-center gap-6 py-8">
+                <p className="font-plex-sans text-[14px] font-medium text-navy text-center">
                   Evento criado com sucesso!
                 </p>
+
+                <div className="w-full">
+                  <label
+                    htmlFor="ev-convidados-modo"
+                    className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                  >
+                    Convidar membros
+                  </label>
+                  <select
+                    id="ev-convidados-modo"
+                    value={modoConvidados}
+                    onChange={(e) => {
+                      const v = e.target.value as "todos" | "selecionar";
+                      setModoConvidados(v);
+                      if (v === "todos") setSelecionados(new Set());
+                    }}
+                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                  >
+                    <option value="todos">Todos os membros</option>
+                    <option value="selecionar">Selecionar membros</option>
+                  </select>
+
+                  {modoConvidados === "selecionar" && (
+                    <div className="mt-3 border border-navy/20 max-h-56 overflow-y-auto">
+                      {membrosLiga.length === 0 ? (
+                        <p className="font-plex-sans text-[13px] text-navy/50 px-3 py-3">
+                          Nenhum membro disponível.
+                        </p>
+                      ) : (
+                        membrosLiga.map((m) => {
+                          const checked = selecionados.has(m.usuario_id);
+                          return (
+                            <label
+                              key={m.usuario_id}
+                              className="flex items-center gap-3 px-3 py-2 border-b border-navy/10 last:border-b-0 cursor-pointer hover:bg-navy/[0.03]"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => {
+                                  setSelecionados((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(m.usuario_id)) next.delete(m.usuario_id);
+                                    else next.add(m.usuario_id);
+                                    return next;
+                                  });
+                                }}
+                                className="accent-navy"
+                              />
+                              <div className="flex flex-col text-left flex-1 min-w-0">
+                                <span className="font-plex-sans text-[13px] text-navy truncate">
+                                  {m.nome}
+                                </span>
+                                <span className="font-plex-mono text-[10px] text-navy/50 truncate">
+                                  {m.email}
+                                </span>
+                              </div>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+
+                  {modoConvidados === "selecionar" && membrosLiga.length > 0 && (
+                    <p className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-navy/50 mt-2">
+                      {selecionados.size} selecionado{selecionados.size === 1 ? "" : "s"}
+                    </p>
+                  )}
+                </div>
+
                 <button
                   onClick={() => {
+                    const emails =
+                      modoConvidados === "todos"
+                        ? membrosLiga.map((m) => m.email)
+                        : membrosLiga
+                            .filter((m) => selecionados.has(m.usuario_id))
+                            .map((m) => m.email);
                     window.open(
                       buildGoogleCalendarUrl(
                         eventoRecenteCriado.titulo,
@@ -465,6 +589,7 @@ export function AgendaPage() {
                         eventoRecenteCriado.hora_fim,
                         eventoRecenteCriado.ligaNome,
                         eventoRecenteCriado.categoria,
+                        emails,
                       ),
                       "_blank",
                     );
@@ -1035,7 +1160,7 @@ export function AgendaPage() {
                           </div>
                         </button>
 
-                        {isOpen && (
+                        {isOpen && podeGerir && (
                           <div className="pl-5 pb-2">
                             <button
                               onClick={() => {
