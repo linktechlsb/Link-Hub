@@ -6,6 +6,7 @@ import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { splitLigaTitle } from "@/pages/home/v1/splitLigaTitle";
 
+import { CrmTab } from "./tabs/CrmTab";
 import { MembrosTab } from "./tabs/MembrosTab";
 import { PresencaTab } from "./tabs/PresencaTab";
 import { ProjetosTab } from "./tabs/ProjetosTab";
@@ -14,7 +15,7 @@ import { VisaoGeralTab } from "./tabs/VisaoGeralTab";
 
 import type { Liga } from "@link-leagues/types";
 
-type AbaId = "visao-geral" | "membros" | "presenca" | "projetos" | "recursos";
+type AbaId = "visao-geral" | "membros" | "presenca" | "projetos" | "recursos" | "crm";
 
 function primeiroUltimoNome(nome: string): string {
   const partes = nome.trim().split(/\s+/);
@@ -28,6 +29,7 @@ const ABAS_COMPLETAS: { id: AbaId; label: string }[] = [
   { id: "presenca", label: "Presença" },
   { id: "projetos", label: "Projetos" },
   { id: "recursos", label: "Recursos" },
+  { id: "crm", label: "CRM" },
 ];
 
 const ABAS_RESTRITAS: { id: AbaId; label: string }[] = [
@@ -91,6 +93,8 @@ export function LigaDetailPage() {
   }
 
   const podeEditarImagem =
+    role === "staff" || (role === "diretor" && minhaLigaId === ligaExibida?.id);
+  const podeEditarCrm =
     role === "staff" || (role === "diretor" && minhaLigaId === ligaExibida?.id);
 
   if (carregando) {
@@ -220,6 +224,9 @@ export function LigaDetailPage() {
           )}
           {abaAtualVisivel === "recursos" && temAcessoCompleto && (
             <RecursosTab ligaId={ligaExibida.id} />
+          )}
+          {abaAtualVisivel === "crm" && temAcessoCompleto && (
+            <CrmTab ligaId={ligaExibida.id} podeEditar={podeEditarCrm} />
           )}
         </div>
       </div>
