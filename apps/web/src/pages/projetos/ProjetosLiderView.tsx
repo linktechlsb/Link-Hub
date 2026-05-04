@@ -1,5 +1,15 @@
 import { useEffect, useState } from "react";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
@@ -96,6 +106,8 @@ export function ProjetosLiderView() {
   const [form, setForm] = useState<ProjetoForm>(FORM_VAZIO);
   const [salvando, setSalvando] = useState(false);
   const [submetendo, setSubmetendo] = useState<string | null>(null);
+  const [concluindo, setConcluindo] = useState<string | null>(null);
+  const [confirmarConclusao, setConfirmarConclusao] = useState<ProjetoAPI | null>(null);
   const [professorDaLiga, setProfessorDaLiga] = useState<ProfessorAPI>(null);
 
   useEffect(() => {
@@ -112,17 +124,18 @@ export function ProjetosLiderView() {
   }, [ligaId]);
 
   const kpis = [
-    { label: "Total projetos", valor: String(projetos.length) },
-    { label: "Rascunhos", valor: String(projetos.filter((p) => p.status === "rascunho").length) },
+    { label: "Total da liga", valor: String(projetos.length) },
     {
       label: "Em aprovação",
       valor: String(projetos.filter((p) => p.status === "em_aprovacao").length),
     },
     {
-      label: "Aprovados",
-      valor: String(
-        projetos.filter((p) => ["aprovado", "em_andamento", "concluido"].includes(p.status)).length,
-      ),
+      label: "Concluídos (liga)",
+      valor: String(projetos.filter((p) => p.status === "concluido").length),
+    },
+    {
+      label: "Concluídos (total)",
+      valor: String(todosProjetos.filter((p) => p.status === "concluido").length),
     },
   ];
 
@@ -198,6 +211,23 @@ export function ProjetosLiderView() {
       refetchProjetos();
     } finally {
       setSubmetendo(null);
+    }
+  }
+
+  async function handleConcluir(id: string) {
+    if (!liga) return;
+    setConcluindo(id);
+    try {
+      const token = await getToken();
+      await fetch(`/api/projetos/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: "concluido" }),
+      });
+      refetchProjetos();
+    } finally {
+      setConcluindo(null);
+      setConfirmarConclusao(null);
     }
   }
 
@@ -277,6 +307,7 @@ export function ProjetosLiderView() {
                     className: "text-navy/50",
                   };
                   const podSubmeter = p.status === "rascunho" || p.status === "rejeitado";
+                  const podConcluir = p.status === "aprovado" || p.status === "em_andamento";
                   return [
                     <div key="t">
                       <span className="font-medium">{p.titulo}</span>
@@ -310,6 +341,15 @@ export function ProjetosLiderView() {
                           className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors disabled:opacity-40"
                         >
                           {submetendo === p.id ? "..." : "Submeter →"}
+                        </button>
+                      )}
+                      {podConcluir && (
+                        <button
+                          onClick={() => setConfirmarConclusao(p)}
+                          disabled={concluindo === p.id}
+                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-green-700 hover:text-green-800 transition-colors disabled:opacity-40"
+                        >
+                          {concluindo === p.id ? "..." : "Concluir →"}
                         </button>
                       )}
                     </div>,
@@ -384,6 +424,35 @@ export function ProjetosLiderView() {
           )}
         </div>
       </div>
+
+      <AlertDialog
+        open={confirmarConclusao !== null}
+        onOpenChange={(o) => {
+          if (!o) setConfirmarConclusao(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Concluir projeto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Confirmar a conclusão de <strong>{confirmarConclusao?.titulo}</strong>? O projeto será
+              contabilizado no ranking da liga e não exigirá aprovação de professor ou staff.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={concluindo !== null}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={concluindo !== null}
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmarConclusao) handleConcluir(confirmarConclusao.id);
+              }}
+            >
+              {concluindo ? "Concluindo..." : "Confirmar conclusão"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Sheet — criar / editar projeto */}
       <Sheet
