@@ -132,7 +132,14 @@ projetosRouter.patch(
     try {
       const user = (req as AuthenticatedRequest).user!;
       const { status } = req.body as { status: StatusProjeto };
-      const statusValidos: StatusProjeto[] = ["rascunho", "em_aprovacao", "aprovado", "rejeitado"];
+      const statusValidos: StatusProjeto[] = [
+        "rascunho",
+        "em_aprovacao",
+        "aprovado",
+        "rejeitado",
+        "em_andamento",
+        "concluido",
+      ];
 
       if (!statusValidos.includes(status)) {
         res.status(400).json({ error: "Status inválido." });
@@ -152,6 +159,16 @@ projetosRouter.patch(
       if (user.role === "diretor") {
         if (!(await usuarioEhDiretorDaLiga(user.email, alvo.liga_id as string))) {
           res.status(403).json({ error: "Você só pode alterar projetos da sua própria liga." });
+          return;
+        }
+      }
+
+      if (status === "concluido") {
+        const statusAtual = alvo["status"] as StatusProjeto;
+        if (statusAtual !== "aprovado" && statusAtual !== "em_andamento") {
+          res.status(400).json({
+            error: "Só é possível concluir projetos aprovados ou em andamento.",
+          });
           return;
         }
       }
