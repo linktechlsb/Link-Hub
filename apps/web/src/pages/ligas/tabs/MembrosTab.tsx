@@ -58,7 +58,7 @@ export function MembrosTab({ ligaId }: Props) {
 
   return (
     <div>
-      <SectionHeader numero="01" eyebrow="Composição" titulo="Membros" acao={contadorAcao} />
+      <SectionHeader numero="02" eyebrow="Composição" titulo="Membros" acao={contadorAcao} />
       {membros.length === 0 ? (
         <p className="font-plex-sans text-[13px] text-navy/50">Nenhum membro cadastrado.</p>
       ) : (

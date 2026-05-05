@@ -40,8 +40,14 @@ ligasRouter.get("/", authenticate, async (_req, res, next) => {
           SELECT COUNT(*)::int
           FROM projetos p
           WHERE p.liga_id = l.id
-            AND p.status IN ('aprovado', 'em_andamento')
+            AND p.status IN ('aprovado', 'em_andamento', 'concluido')
         ) AS projetos_ativos,
+        (
+          SELECT COUNT(*)::int
+          FROM projetos p
+          WHERE p.liga_id = l.id
+            AND p.status = 'concluido'
+        ) AS projetos_concluidos,
         (
           SELECT COUNT(*)::int
           FROM liga_membros lm2
@@ -210,15 +216,16 @@ ligasRouter.get(
         e.titulo AS evento_titulo,
         e.data AS evento_data,
         pr.id,
-        pr.usuario_id,
+        lm.usuario_id,
         pr.status,
         pr.justificativa,
         u.nome AS usuario_nome
-      FROM eventos e
-      LEFT JOIN presencas pr ON pr.evento_id = e.id
-      LEFT JOIN usuarios u ON u.id = pr.usuario_id
-      WHERE e.liga_id = ${id}
-      ORDER BY e.data DESC
+      FROM liga_membros lm
+      JOIN usuarios u ON u.id = lm.usuario_id
+      CROSS JOIN eventos e
+      LEFT JOIN presencas pr ON pr.evento_id = e.id AND pr.usuario_id = lm.usuario_id
+      WHERE lm.liga_id = ${id} AND e.liga_id = ${id}
+      ORDER BY e.data DESC, u.nome ASC
     `;
       res.json(registros);
     } catch (err) {

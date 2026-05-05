@@ -94,8 +94,7 @@ export function LigaDetailPage() {
 
   const podeEditarImagem =
     role === "staff" || (role === "diretor" && minhaLigaId === ligaExibida?.id);
-  const podeEditarCrm =
-    role === "staff" || (role === "diretor" && minhaLigaId === ligaExibida?.id);
+  const podeEditarCrm = role === "staff" || (role === "diretor" && minhaLigaId === ligaExibida?.id);
 
   if (carregando) {
     return (
@@ -194,26 +193,28 @@ export function LigaDetailPage() {
         </div>
 
         {/* Abas */}
-        <div className="max-w-5xl mx-auto px-8 flex overflow-x-auto">
-          {abasVisiveis.map((aba) => (
-            <button
-              key={aba.id}
-              onClick={() => setAbaAtiva(aba.id)}
-              className={
-                abaAtualVisivel === aba.id
-                  ? "px-4 py-3 font-plex-mono text-[11px] tracking-[0.18em] uppercase text-navy border-b-2 border-navy whitespace-nowrap"
-                  : "px-4 py-3 font-plex-mono text-[11px] tracking-[0.18em] uppercase text-navy/40 hover:text-navy/70 whitespace-nowrap border-b-2 border-transparent transition-colors"
-              }
-            >
-              {aba.label}
-            </button>
-          ))}
+        <div className="max-w-5xl mx-auto px-8 overflow-x-auto">
+          <div className="flex gap-6 border-b border-navy/15">
+            {abasVisiveis.map((aba) => (
+              <button
+                key={aba.id}
+                onClick={() => setAbaAtiva(aba.id)}
+                className={`font-plex-mono text-[11px] tracking-[0.14em] uppercase pt-2 pb-3 -mb-px border-b-2 whitespace-nowrap transition-colors ${
+                  abaAtualVisivel === aba.id
+                    ? "text-navy border-navy"
+                    : "text-navy/50 border-transparent hover:text-navy"
+                }`}
+              >
+                {aba.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Conteúdo da aba */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-8 pb-10 space-y-12">
+        <div className="max-w-5xl mx-auto px-8 pt-6 pb-10 space-y-12">
           {abaAtualVisivel === "visao-geral" && <VisaoGeralTab ligaId={ligaExibida.id} />}
           {abaAtualVisivel === "membros" && <MembrosTab ligaId={ligaExibida.id} />}
           {abaAtualVisivel === "presenca" && temAcessoCompleto && (

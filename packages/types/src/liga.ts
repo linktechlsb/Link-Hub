@@ -13,6 +13,7 @@ export interface Liga {
   atualizado_em: string;
   diretores?: { id: string; nome: string; avatar_url?: string | null }[];
   projetos_ativos?: number;
+  projetos_concluidos?: number;
   total_membros?: number;
   professor_id?: string;
 }

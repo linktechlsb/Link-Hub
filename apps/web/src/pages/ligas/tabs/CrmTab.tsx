@@ -1,16 +1,9 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/lib/supabase";
 import { EditorialTable, SectionHeader } from "@/pages/home/v1/primitives";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 import type { CrmContato, CreateCrmContatoInput, UpdateCrmContatoInput } from "@link-leagues/types";
 
@@ -27,7 +20,7 @@ interface Props {
 export function CrmTab({ ligaId, podeEditar }: Props) {
   const [contatos, setContatos] = useState<CrmContato[]>([]);
   const [carregando, setCarregando] = useState(true);
-  const [modalAberto, setModalAberto] = useState(false);
+  const [sheetAberto, setSheetAberto] = useState(false);
   const [contatoEditando, setContatoEditando] = useState<CrmContato | null>(null);
   const [confirmandoDeletar, setConfirmandoDeletar] = useState<string | null>(null);
 
@@ -36,6 +29,7 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
   const [formEmpresa, setFormEmpresa] = useState("");
   const [formTelefone, setFormTelefone] = useState("");
   const [formEmail, setFormEmail] = useState("");
+  const [formLinkedin, setFormLinkedin] = useState("");
   const [salvando, setSalvando] = useState(false);
 
   async function carregar() {
@@ -58,7 +52,8 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
     setFormEmpresa("");
     setFormTelefone("");
     setFormEmail("");
-    setModalAberto(true);
+    setFormLinkedin("");
+    setSheetAberto(true);
   }
 
   function abrirEditar(contato: CrmContato) {
@@ -68,7 +63,8 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
     setFormEmpresa(contato.empresa ?? "");
     setFormTelefone(contato.telefone ?? "");
     setFormEmail(contato.email ?? "");
-    setModalAberto(true);
+    setFormLinkedin(contato.linkedin ?? "");
+    setSheetAberto(true);
   }
 
   async function salvar() {
@@ -83,6 +79,7 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
         empresa: formEmpresa.trim() || undefined,
         telefone: formTelefone.trim() || undefined,
         email: formEmail.trim() || undefined,
+        linkedin: formLinkedin.trim() || undefined,
       };
       await fetch(`/api/crm/${contatoEditando.id}`, {
         method: "PATCH",
@@ -97,6 +94,7 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
         empresa: formEmpresa.trim() || undefined,
         telefone: formTelefone.trim() || undefined,
         email: formEmail.trim() || undefined,
+        linkedin: formLinkedin.trim() || undefined,
       };
       await fetch("/api/crm", {
         method: "POST",
@@ -105,7 +103,7 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
       });
     }
 
-    setModalAberto(false);
+    setSheetAberto(false);
     setSalvando(false);
     carregar();
   }
@@ -141,8 +139,8 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
   );
 
   const colunas = podeEditar
-    ? ["Nome", "Emprego", "Empresa", "Telefone", "E-mail", ""]
-    : ["Nome", "Emprego", "Empresa", "Telefone", "E-mail"];
+    ? ["Nome", "Emprego", "Empresa", "Telefone", "E-mail", "LinkedIn", ""]
+    : ["Nome", "Emprego", "Empresa", "Telefone", "E-mail", "LinkedIn"];
 
   return (
     <div>
@@ -155,11 +153,26 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
           columns={colunas}
           rows={contatos.map((c) => {
             const cells = [
-              <span key="nome" className="font-medium">{c.nome}</span>,
+              <span key="nome" className="font-medium">
+                {c.nome}
+              </span>,
               c.emprego ?? "—",
               c.empresa ?? "—",
               c.telefone ?? "—",
               c.email ?? "—",
+              c.linkedin ? (
+                <a
+                  key="linkedin"
+                  href={c.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-navy underline underline-offset-2 hover:text-navy/70 transition-colors"
+                >
+                  Abrir
+                </a>
+              ) : (
+                "—"
+              ),
             ];
 
             if (podeEditar) {
@@ -205,90 +218,138 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
         />
       )}
 
-      <Dialog open={modalAberto} onOpenChange={setModalAberto}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-plex-sans font-bold text-navy text-[18px]">
-              {contatoEditando ? "Editar contato" : "Novo contato"}
-            </DialogTitle>
-          </DialogHeader>
+      <Sheet open={sheetAberto} onOpenChange={setSheetAberto}>
+        <SheetContent
+          side="right"
+          className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-white"
+        >
+          <div className="flex-shrink-0">
+            <div className="h-px bg-navy/90" />
+            <div className="px-8 pt-8 pb-6">
+              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50">
+                {contatoEditando ? "Editar" : "Novo"}
+              </p>
+              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy mt-1">
+                {contatoEditando ? "Editar contato" : "Novo contato"}
+              </h2>
+            </div>
+            <div className="h-px bg-navy/15" />
+          </div>
 
-          <div className="space-y-4 mt-2">
+          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
             <div>
-              <Label className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-navy/60">
+              <label
+                htmlFor="crm-nome"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+              >
                 Nome *
-              </Label>
-              <Input
+              </label>
+              <input
+                id="crm-nome"
                 value={formNome}
                 onChange={(e) => setFormNome(e.target.value)}
                 placeholder="Nome completo"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-navy/60">
-                Cargo / Emprego
-              </Label>
-              <Input
-                value={formEmprego}
-                onChange={(e) => setFormEmprego(e.target.value)}
-                placeholder="Ex: Gerente de Parcerias"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-navy/60">
-                Empresa
-              </Label>
-              <Input
-                value={formEmpresa}
-                onChange={(e) => setFormEmpresa(e.target.value)}
-                placeholder="Nome da empresa"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-navy/60">
-                Telefone
-              </Label>
-              <Input
-                value={formTelefone}
-                onChange={(e) => setFormTelefone(e.target.value)}
-                placeholder="(11) 99999-9999"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-navy/60">
-                E-mail
-              </Label>
-              <Input
-                value={formEmail}
-                onChange={(e) => setFormEmail(e.target.value)}
-                placeholder="email@empresa.com"
-                type="email"
-                className="mt-1"
+                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                onClick={() => setModalAberto(false)}
-                className="font-plex-mono text-[11px] uppercase tracking-[0.14em] text-navy/60 hover:text-navy transition-colors px-4 py-2"
+            <div>
+              <label
+                htmlFor="crm-emprego"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
               >
-                Cancelar
-              </button>
+                Cargo / Emprego
+              </label>
+              <input
+                id="crm-emprego"
+                value={formEmprego}
+                onChange={(e) => setFormEmprego(e.target.value)}
+                placeholder="Ex: Gerente de Parcerias"
+                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="crm-empresa"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+              >
+                Empresa
+              </label>
+              <input
+                id="crm-empresa"
+                value={formEmpresa}
+                onChange={(e) => setFormEmpresa(e.target.value)}
+                placeholder="Nome da empresa"
+                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="crm-telefone"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+              >
+                Telefone
+              </label>
+              <input
+                id="crm-telefone"
+                value={formTelefone}
+                onChange={(e) => setFormTelefone(e.target.value)}
+                placeholder="(11) 99999-9999"
+                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="crm-email"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+              >
+                E-mail
+              </label>
+              <input
+                id="crm-email"
+                type="email"
+                value={formEmail}
+                onChange={(e) => setFormEmail(e.target.value)}
+                placeholder="email@empresa.com"
+                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="crm-linkedin"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+              >
+                LinkedIn
+              </label>
+              <input
+                id="crm-linkedin"
+                type="url"
+                value={formLinkedin}
+                onChange={(e) => setFormLinkedin(e.target.value)}
+                placeholder="https://linkedin.com/in/usuario"
+                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+              />
+            </div>
+          </div>
+
+          <div className="flex-shrink-0">
+            <div className="h-px bg-navy/15" />
+            <div className="px-8 py-6">
               <button
                 onClick={salvar}
                 disabled={!formNome.trim() || salvando}
-                className="font-plex-mono text-[11px] uppercase tracking-[0.14em] bg-navy text-white px-4 py-2 hover:bg-navy/80 transition-colors disabled:opacity-40"
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {salvando ? "Salvando..." : "Salvar"}
+                {salvando ? "Salvando..." : contatoEditando ? "Salvar contato" : "Criar contato"}
               </button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

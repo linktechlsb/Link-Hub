@@ -6,6 +6,7 @@ export interface CrmContato {
   empresa?: string;
   telefone?: string;
   email?: string;
+  linkedin?: string;
   criado_por?: string;
   criado_em: string;
 }
@@ -17,6 +18,7 @@ export interface CreateCrmContatoInput {
   empresa?: string;
   telefone?: string;
   email?: string;
+  linkedin?: string;
 }
 
 export interface UpdateCrmContatoInput {
@@ -25,4 +27,5 @@ export interface UpdateCrmContatoInput {
   empresa?: string;
   telefone?: string;
   email?: string;
+  linkedin?: string;
 }

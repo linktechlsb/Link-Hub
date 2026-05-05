@@ -3,6 +3,7 @@ import { Router, type Router as IRouter } from "express";
 import { sql } from "../config/db.js";
 import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 import { usuarioEhDiretorDaLiga, usuarioPertenceALiga } from "../middleware/authorization.js";
+
 import type { CreateCrmContatoInput, UpdateCrmContatoInput } from "@link-leagues/types";
 
 export const crmRouter: IRouter = Router();
@@ -28,7 +29,7 @@ crmRouter.get("/", authenticate, async (req, res, next) => {
     }
 
     const contatos = await sql`
-      SELECT id, liga_id, nome, emprego, empresa, telefone, email, criado_por, criado_em
+      SELECT id, liga_id, nome, emprego, empresa, telefone, email, linkedin, criado_por, criado_em
       FROM crm_contatos
       WHERE liga_id = ${liga_id}
       ORDER BY nome ASC
@@ -44,7 +45,7 @@ crmRouter.get("/", authenticate, async (req, res, next) => {
 crmRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
     const user = (req as AuthenticatedRequest).user!;
-    const { liga_id, nome, emprego, empresa, telefone, email } =
+    const { liga_id, nome, emprego, empresa, telefone, email, linkedin } =
       req.body as CreateCrmContatoInput;
 
     if (!liga_id || !nome) {
@@ -60,7 +61,7 @@ crmRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, r
     const [criador] = await sql`SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1`;
 
     const [contato] = await sql`
-      INSERT INTO crm_contatos (liga_id, nome, emprego, empresa, telefone, email, criado_por)
+      INSERT INTO crm_contatos (liga_id, nome, emprego, empresa, telefone, email, linkedin, criado_por)
       VALUES (
         ${liga_id},
         ${nome},
@@ -68,9 +69,10 @@ crmRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, r
         ${empresa ?? null},
         ${telefone ?? null},
         ${email ?? null},
+        ${linkedin ?? null},
         ${criador?.id ?? null}
       )
-      RETURNING id, liga_id, nome, emprego, empresa, telefone, email, criado_por, criado_em
+      RETURNING id, liga_id, nome, emprego, empresa, telefone, email, linkedin, criado_por, criado_em
     `;
 
     res.status(201).json(contato);
@@ -80,81 +82,72 @@ crmRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, r
 });
 
 // PATCH /crm/:id — atualiza um contato (diretor da liga ou staff)
-crmRouter.patch(
-  "/:id",
-  authenticate,
-  requireRole("staff", "diretor"),
-  async (req, res, next) => {
-    try {
-      const id = req.params["id"] as string;
-      const user = (req as AuthenticatedRequest).user!;
-      const { nome, emprego, empresa, telefone, email } = req.body as UpdateCrmContatoInput;
+crmRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
+  try {
+    const id = req.params["id"] as string;
+    const user = (req as AuthenticatedRequest).user!;
+    const { nome, emprego, empresa, telefone, email, linkedin } = req.body as UpdateCrmContatoInput;
 
-      if (user.role === "diretor") {
-        const [alvo] = await sql`SELECT liga_id FROM crm_contatos WHERE id = ${id} LIMIT 1`;
-        if (!alvo) {
-          res.status(404).json({ error: "Contato não encontrado." });
-          return;
-        }
-        if (!(await usuarioEhDiretorDaLiga(user.email, alvo.liga_id as string))) {
-          res.status(403).json({ error: "Você só pode editar contatos da sua própria liga." });
-          return;
-        }
+    if (user.role === "diretor") {
+      const [alvo] = await sql`SELECT liga_id FROM crm_contatos WHERE id = ${id} LIMIT 1`;
+      if (!alvo) {
+        res.status(404).json({ error: "Contato não encontrado." });
+        return;
       }
+      if (!(await usuarioEhDiretorDaLiga(user.email, alvo.liga_id as string))) {
+        res.status(403).json({ error: "Você só pode editar contatos da sua própria liga." });
+        return;
+      }
+    }
 
-      const [contato] = await sql`
+    const [contato] = await sql`
         UPDATE crm_contatos
         SET
           nome     = COALESCE(${nome ?? null},     nome),
           emprego  = COALESCE(${emprego ?? null},  emprego),
           empresa  = COALESCE(${empresa ?? null},  empresa),
           telefone = COALESCE(${telefone ?? null}, telefone),
-          email    = COALESCE(${email ?? null},    email)
+          email    = COALESCE(${email ?? null},    email),
+          linkedin = COALESCE(${linkedin ?? null}, linkedin)
         WHERE id = ${id}
-        RETURNING id, liga_id, nome, emprego, empresa, telefone, email, criado_por, criado_em
+        RETURNING id, liga_id, nome, emprego, empresa, telefone, email, linkedin, criado_por, criado_em
       `;
 
-      if (!contato) {
+    if (!contato) {
+      res.status(404).json({ error: "Contato não encontrado." });
+      return;
+    }
+
+    res.json(contato);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /crm/:id — remove um contato (diretor da liga ou staff)
+crmRouter.delete("/:id", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
+  try {
+    const id = req.params["id"] as string;
+    const user = (req as AuthenticatedRequest).user!;
+
+    if (user.role === "diretor") {
+      const [alvo] = await sql`SELECT liga_id FROM crm_contatos WHERE id = ${id} LIMIT 1`;
+      if (!alvo) {
         res.status(404).json({ error: "Contato não encontrado." });
         return;
       }
-
-      res.json(contato);
-    } catch (err) {
-      next(err);
-    }
-  },
-);
-
-// DELETE /crm/:id — remove um contato (diretor da liga ou staff)
-crmRouter.delete(
-  "/:id",
-  authenticate,
-  requireRole("staff", "diretor"),
-  async (req, res, next) => {
-    try {
-      const id = req.params["id"] as string;
-      const user = (req as AuthenticatedRequest).user!;
-
-      if (user.role === "diretor") {
-        const [alvo] = await sql`SELECT liga_id FROM crm_contatos WHERE id = ${id} LIMIT 1`;
-        if (!alvo) {
-          res.status(404).json({ error: "Contato não encontrado." });
-          return;
-        }
-        if (!(await usuarioEhDiretorDaLiga(user.email, alvo.liga_id as string))) {
-          res.status(403).json({
-            error: "Você só pode remover contatos da sua própria liga.",
-          });
-          return;
-        }
+      if (!(await usuarioEhDiretorDaLiga(user.email, alvo.liga_id as string))) {
+        res.status(403).json({
+          error: "Você só pode remover contatos da sua própria liga.",
+        });
+        return;
       }
-
-      await sql`DELETE FROM crm_contatos WHERE id = ${id}`;
-
-      res.status(204).send();
-    } catch (err) {
-      next(err);
     }
-  },
-);
+
+    await sql`DELETE FROM crm_contatos WHERE id = ${id}`;
+
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});

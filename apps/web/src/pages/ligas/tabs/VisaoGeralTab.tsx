@@ -47,9 +47,8 @@ export function VisaoGeralTab({ ligaId }: Props) {
   }, [ligaId]);
 
   const projetosAtivos = projetos.filter((p) => p.status === "em_andamento").length;
-  // Valores fictícios — substituir quando campos forem implementados
-  const score = 78;
-  const faturamentoPorMembro = "R$420";
+  const score = 0;
+  const faturamentoPorMembro = "R$0";
 
   return (
     <div className="space-y-12">
@@ -57,14 +56,14 @@ export function VisaoGeralTab({ ligaId }: Props) {
         <SectionHeader numero="01" eyebrow="Desempenho" titulo="Métricas da Liga" />
         <KpiRow
           items={[
-            { label: "Score", valor: String(score), trend: "valor fictício" },
+            { label: "Score", valor: String(score) },
             { label: "Projetos ativos", valor: String(projetosAtivos), unidade: "em andamento" },
             {
               label: "Presença",
-              valor: presencaPercent !== null ? String(presencaPercent) : "—",
-              unidade: presencaPercent !== null ? "%" : undefined,
+              valor: presencaPercent !== null ? String(presencaPercent) : "0",
+              unidade: "%",
             },
-            { label: "Fat. / Membro", valor: faturamentoPorMembro, trend: "valor fictício" },
+            { label: "Fat. / Membro", valor: faturamentoPorMembro },
           ]}
         />
       </div>
