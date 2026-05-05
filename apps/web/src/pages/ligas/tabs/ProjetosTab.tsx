@@ -50,7 +50,7 @@ export function ProjetosTab({ ligaId }: Props) {
 
   return (
     <div>
-      <SectionHeader numero="01" eyebrow="Iniciativas" titulo="Projetos da Liga" />
+      <SectionHeader numero="04" eyebrow="Iniciativas" titulo="Projetos da Liga" />
       {projetos.length === 0 ? (
         <p className="font-plex-sans text-[13px] text-navy/50">Nenhum projeto cadastrado.</p>
       ) : (

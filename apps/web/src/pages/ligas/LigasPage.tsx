@@ -57,6 +57,7 @@ export function LigasPage() {
   }
 
   const totalProjetosAtivos = ligas.reduce((acc, l) => acc + (l.projetos_ativos ?? 0), 0);
+  const totalMembros = ligas.reduce((acc, l) => acc + (l.total_membros ?? 0), 0);
   const minhaLiga = ligas.find(
     (l) => l.lider_email === userEmail || (userId && l.diretores?.some((d) => d.id === userId)),
   );
@@ -91,9 +92,11 @@ export function LigasPage() {
         <section>
           <SectionHeader numero="01" eyebrow="Resumo" titulo="Panorama das Ligas" />
           <KpiRow
+            centered
             items={[
               { label: "Ligas ativas", valor: String(ligas.length) },
-              { label: "Projetos em andamento", valor: String(totalProjetosAtivos) },
+              { label: "Projetos totais", valor: String(totalProjetosAtivos) },
+              { label: "Membros totais", valor: String(totalMembros) },
             ]}
           />
         </section>

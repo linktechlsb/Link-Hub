@@ -49,13 +49,19 @@ export function SectionHeader({ numero, eyebrow, titulo, acao }: SectionHeaderPr
 
 interface KpiRowProps {
   items: KpiItem[];
-  cols?: 2 | 4;
+  cols?: 2 | 3 | 4;
   borderBottom?: boolean;
+  centered?: boolean;
 }
 
-export function KpiRow({ items, cols, borderBottom = true }: KpiRowProps) {
-  const resolvedCols = cols ?? (items.length <= 2 ? 2 : 4);
-  const gridClass = resolvedCols === 2 ? "grid-cols-2" : "grid-cols-2 md:grid-cols-4";
+export function KpiRow({ items, cols, borderBottom = true, centered = false }: KpiRowProps) {
+  const resolvedCols = cols ?? (items.length <= 2 ? 2 : items.length === 3 ? 3 : 4);
+  const gridClass =
+    resolvedCols === 2
+      ? "grid-cols-2"
+      : resolvedCols === 3
+        ? "grid-cols-1 md:grid-cols-3"
+        : "grid-cols-2 md:grid-cols-4";
   return (
     <div
       className={`grid ${gridClass} gap-0 border-t border-navy/15 ${borderBottom ? "border-b" : ""}`}
@@ -63,7 +69,7 @@ export function KpiRow({ items, cols, borderBottom = true }: KpiRowProps) {
       {items.map((m, i) => (
         <div
           key={m.label}
-          className={`py-5 px-4 ${i < items.length - 1 ? "border-r border-navy/15" : ""}`}
+          className={`py-5 px-4 ${centered ? "text-center" : ""} ${i < items.length - 1 ? "border-r border-navy/15" : ""}`}
         >
           <div className="font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/60">
             {m.label}
