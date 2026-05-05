@@ -6,3 +6,4 @@ export * from "./sala.js";
 export * from "./recurso.js";
 export * from "./mural.js";
 export * from "./ranking.js";
+export * from "./crm.js";
