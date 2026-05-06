@@ -47,7 +47,7 @@ export function CriarSenhaPage() {
         setErroToken(true);
         setVerificando(false);
       }
-    }, 8000);
+    }, 15000);
 
     return () => {
       subscription.unsubscribe();

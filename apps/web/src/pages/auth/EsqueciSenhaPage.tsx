@@ -17,8 +17,10 @@ export function EsqueciSenhaPage() {
     setErro(null);
     setLoading(true);
 
+    const appUrl =
+      (import.meta.env["VITE_APP_URL"] as string | undefined) ?? window.location.origin;
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/redefinir-senha`,
+      redirectTo: `${appUrl}/redefinir-senha`,
     });
 
     setLoading(false);

@@ -18,16 +18,18 @@ export function VisaoGeralTab({ ligaId }: Props) {
   const [projetos, setProjetos] = useState<Projeto[]>([]);
   const [presencaPercent, setPresencaPercent] = useState<number | null>(null);
   const [proximoEvento, setProximoEvento] = useState<Evento | null>(null);
+  const [score, setScore] = useState<number>(0);
 
   useEffect(() => {
     async function carregar() {
       const token = await getToken();
       const headers = { Authorization: `Bearer ${token}` };
 
-      const [projetosRes, presencaRes, eventoRes] = await Promise.all([
+      const [projetosRes, presencaRes, eventoRes, scoreRes] = await Promise.all([
         fetch(`/api/ligas/${ligaId}/projetos`, { headers }),
         fetch(`/api/ligas/${ligaId}/presenca`, { headers }),
         fetch(`/api/ligas/${ligaId}/eventos/proximo`, { headers }),
+        fetch(`/api/ligas/${ligaId}/score`, { headers }),
       ]);
 
       if (projetosRes.ok) setProjetos(await projetosRes.json());
@@ -42,12 +44,16 @@ export function VisaoGeralTab({ ligaId }: Props) {
       }
 
       if (eventoRes.ok) setProximoEvento(await eventoRes.json());
+
+      if (scoreRes.ok) {
+        const data = (await scoreRes.json()) as { pontuacao?: number };
+        setScore(data.pontuacao ?? 0);
+      }
     }
     carregar();
   }, [ligaId]);
 
   const projetosAtivos = projetos.filter((p) => p.status === "em_andamento").length;
-  const score = 0;
   const faturamentoPorMembro = "R$0";
 
   return (

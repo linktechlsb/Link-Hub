@@ -16,8 +16,26 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const [recoveryMode, setRecoveryMode] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
+    let cancelled = false;
+    let recoveryDetected = false;
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        recoveryDetected = true;
+        setRecoveryMode(true);
+      } else if (event === "USER_UPDATED" || event === "SIGNED_OUT") {
+        setRecoveryMode(false);
+      }
+    });
+
+    // Aguarda um tick para o evento PASSWORD_RECOVERY ser emitido antes de liberar o Outlet
+    const timer = setTimeout(async () => {
+      const { data } = await supabase.auth.getSession();
       const session = data.session;
+      if (cancelled) return;
+
       if (!session) {
         setLoading(false);
         return;
@@ -25,32 +43,26 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
 
       setAuthenticated(true);
 
-      try {
-        const res = await fetch(`/api/usuarios/me`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-        if (res.ok) {
-          const usuario = (await res.json()) as { role: UserRole };
-          setRole(usuario.role);
+      if (!recoveryDetected) {
+        try {
+          const res = await fetch(`/api/usuarios/me`, {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          });
+          if (!cancelled && res.ok) {
+            const usuario = (await res.json()) as { role: UserRole };
+            setRole(usuario.role);
+          }
+        } catch {
+          // fallback silencioso — acesso ainda permitido, role não definido
         }
-      } catch {
-        // fallback silencioso — acesso ainda permitido, role não definido
       }
 
-      setLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setRecoveryMode(true);
-      } else if (event === "USER_UPDATED" || event === "SIGNED_OUT") {
-        setRecoveryMode(false);
-      }
-    });
+      if (!cancelled) setLoading(false);
+    }, 50);
 
     return () => {
+      cancelled = true;
+      clearTimeout(timer);
       subscription.unsubscribe();
     };
   }, []);

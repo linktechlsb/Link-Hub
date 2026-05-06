@@ -2,7 +2,11 @@ import { Router, type Router as IRouter } from "express";
 
 import { sql } from "../config/db.js";
 import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
-import { usuarioEhDiretorDaLiga, usuarioEhProfessorDaLiga } from "../middleware/authorization.js";
+import {
+  usuarioEhDiretorDaLiga,
+  usuarioEhProfessorDaLiga,
+  usuarioPertenceALiga,
+} from "../middleware/authorization.js";
 
 import type { StatusProjeto } from "@link-leagues/types";
 
@@ -17,20 +21,9 @@ projetosRouter.get("/", authenticate, async (req, res, next) => {
     const [usuarioAtual] = await sql`SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1`;
     const usuarioId = (usuarioAtual?.["id"] as string | undefined) ?? null;
 
-    // Rascunhos só aparecem para o criador
-    const projetos = ligaId
-      ? await sql`
-          SELECT p.*, p.nome AS titulo,
-            json_build_object('id', l.id, 'nome', l.nome) AS liga,
-            u.nome AS responsavel_nome
-          FROM projetos p
-          LEFT JOIN ligas l ON l.id = p.liga_id
-          LEFT JOIN usuarios u ON u.id = p.responsavel_id
-          WHERE p.liga_id = ${ligaId}
-            AND (p.status <> 'rascunho' OR p.criado_por = ${usuarioId})
-          ORDER BY p.criado_em DESC
-        `
-      : await sql`
+    // Listagem global — todos os usuários autenticados veem projetos não-rascunho
+    if (!ligaId) {
+      const projetos = await sql`
           SELECT p.*, p.nome AS titulo,
             json_build_object('id', l.id, 'nome', l.nome) AS liga,
             u.nome AS responsavel_nome
@@ -40,6 +33,33 @@ projetosRouter.get("/", authenticate, async (req, res, next) => {
           WHERE p.status <> 'rascunho' OR p.criado_por = ${usuarioId}
           ORDER BY p.criado_em DESC
         `;
+      res.json(projetos);
+      return;
+    }
+
+    if (user.role === "professor") {
+      if (!(await usuarioEhProfessorDaLiga(user.id, ligaId))) {
+        res.status(403).json({ error: "Acesso restrito ao professor responsável desta liga." });
+        return;
+      }
+    } else if (user.role !== "staff") {
+      if (!(await usuarioPertenceALiga(user.email, ligaId))) {
+        res.status(403).json({ error: "Acesso restrito aos membros desta liga." });
+        return;
+      }
+    }
+
+    const projetos = await sql`
+        SELECT p.*, p.nome AS titulo,
+          json_build_object('id', l.id, 'nome', l.nome) AS liga,
+          u.nome AS responsavel_nome
+        FROM projetos p
+        LEFT JOIN ligas l ON l.id = p.liga_id
+        LEFT JOIN usuarios u ON u.id = p.responsavel_id
+        WHERE p.liga_id = ${ligaId}
+          AND (p.status <> 'rascunho' OR p.criado_por = ${usuarioId})
+        ORDER BY p.criado_em DESC
+      `;
 
     res.json(projetos);
   } catch (err) {
@@ -306,7 +326,6 @@ projetosRouter.patch(
         descricao,
         responsavel_id,
         prazo,
-        status,
         impacto,
         professor_id,
         empresa_parceira,
@@ -316,7 +335,6 @@ projetosRouter.patch(
         descricao?: string;
         responsavel_id?: string;
         prazo?: string;
-        status?: StatusProjeto;
         impacto?: string;
         professor_id?: string;
         empresa_parceira?: string;
@@ -343,7 +361,6 @@ projetosRouter.patch(
       if (descricao !== undefined) updates["descricao"] = descricao;
       if (responsavel_id !== undefined) updates["responsavel_id"] = responsavel_id;
       if (prazo !== undefined) updates["prazo"] = prazo;
-      if (status !== undefined) updates["status"] = status;
       if (impacto !== undefined) updates["impacto"] = impacto;
       if (professor_id !== undefined) updates["professor_id"] = professor_id;
       if (empresa_parceira !== undefined) updates["empresa_parceira"] = empresa_parceira;

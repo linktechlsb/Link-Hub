@@ -7,7 +7,7 @@ export async function usuarioEhProfessorDaLiga(userId: string, ligaId: string): 
   const [match] = await sql`
     SELECT 1 FROM ligas
     WHERE id = ${ligaId}
-      AND (professor_id IS NULL OR professor_id = ${userId})
+      AND professor_id = ${userId}
     LIMIT 1
   `;
   return Boolean(match);
@@ -68,8 +68,7 @@ export function requireLigaOwnership(paramName = "id") {
       return;
     }
 
-    const ligaIdRaw =
-      req.params[paramName] ?? (req.body as { liga_id?: string } | undefined)?.liga_id;
+    const ligaIdRaw = req.params[paramName];
     const ligaId = typeof ligaIdRaw === "string" ? ligaIdRaw : undefined;
     if (!ligaId) {
       res.status(400).json({ error: "Liga não informada." });
@@ -93,7 +92,7 @@ export function requireLigaMembership(paramName = "id") {
       return;
     }
 
-    if (user.role === "staff" || user.role === "professor") {
+    if (user.role === "staff") {
       next();
       return;
     }
@@ -102,6 +101,16 @@ export function requireLigaMembership(paramName = "id") {
     const ligaId = typeof ligaIdRaw === "string" ? ligaIdRaw : undefined;
     if (!ligaId) {
       res.status(400).json({ error: "Liga não informada." });
+      return;
+    }
+
+    if (user.role === "professor") {
+      const ehProfessor = await usuarioEhProfessorDaLiga(user.id, ligaId);
+      if (!ehProfessor) {
+        res.status(403).json({ error: "Acesso restrito ao professor responsável desta liga." });
+        return;
+      }
+      next();
       return;
     }
 

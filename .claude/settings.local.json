@@ -94,7 +94,8 @@
       "Bash(grep -E \"flex.*ABAS|<div.*mb-[0-9].*>$\")",
       "Bash(grep -n \"^        <div>$\" /Users/diogochiapetagarcia/Cursor/Link-Hub/apps/web/src/pages/super-admin/SuperAdminPage.tsx /Users/diogochiapetagarcia/Cursor/Link-Hub/apps/web/src/pages/conta/ContaLiderView.tsx /Users/diogochiapetagarcia/Cursor/Link-Hub/apps/web/src/pages/conta/ContaMembroView.tsx /Users/diogochiapetagarcia/Cursor/Link-Hub/apps/web/src/pages/conta/ContaProfessorView.tsx /Users/diogochiapetagarcia/Cursor/Link-Hub/apps/web/src/pages/conta/ContaStaffView.tsx)",
       "Bash(kill -9 11172 21792 8188 11020)",
-      "Bash(netstat -ano)"
+      "Bash(netstat -ano)",
+      "Bash(npm run dev:api > /tmp/api.log 2>&1 & *)"
     ],
     "deny": [
       "Bash(git commit *)",
@@ -102,6 +103,9 @@
       "Bash(rm -rf *)",
       "Read(./.env)",
       "Read(./.env.*)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
     ]
   },
   "hooks": {

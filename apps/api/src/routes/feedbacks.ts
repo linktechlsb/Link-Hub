@@ -26,6 +26,11 @@ feedbacksRouter.post("/", authenticate, async (req, res, next) => {
       return;
     }
 
+    if (titulo.length > 200 || mensagem.length > 5000) {
+      res.status(400).json({ error: "Título ou mensagem excede o tamanho máximo permitido." });
+      return;
+    }
+
     await sql`
       INSERT INTO feedbacks (usuario_email, titulo, tipo, mensagem)
       VALUES (${user.email}, ${titulo.trim()}, ${tipo}, ${mensagem.trim()})

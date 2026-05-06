@@ -2,6 +2,7 @@ import { Router, type Router as IRouter } from "express";
 
 import { sql } from "../config/db.js";
 import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
+import { usuarioEhDiretorDaLiga } from "../middleware/authorization.js";
 
 export const salasRouter: IRouter = Router();
 
@@ -18,19 +19,40 @@ salasRouter.get("/", authenticate, async (_req, res, next) => {
 // GET /salas/reservas?sala_id=&data_inicio=&data_fim=
 salasRouter.get("/reservas", authenticate, async (req, res, next) => {
   try {
+    const user = (req as AuthenticatedRequest).user!;
     const { sala_id, data_inicio, data_fim } = req.query as Record<string, string>;
 
-    const reservas = await sql`
-      SELECT r.*, row_to_json(s.*) AS sala, json_build_object('id', l.id, 'nome', l.nome) AS liga
-      FROM reservas_salas r
-      LEFT JOIN salas s ON s.id = r.sala_id
-      LEFT JOIN ligas l ON l.id = r.liga_id
-      WHERE TRUE
-        ${sala_id ? sql`AND r.sala_id = ${sala_id}` : sql``}
-        ${data_inicio ? sql`AND r.inicio >= ${data_inicio}` : sql``}
-        ${data_fim ? sql`AND r.fim <= ${data_fim}` : sql``}
-      ORDER BY r.inicio
-    `;
+    const restringirPorLiga = user.role !== "staff" && user.role !== "professor";
+
+    const reservas = restringirPorLiga
+      ? await sql`
+          SELECT r.*, row_to_json(s.*) AS sala, json_build_object('id', l.id, 'nome', l.nome) AS liga
+          FROM reservas_salas r
+          LEFT JOIN salas s ON s.id = r.sala_id
+          LEFT JOIN ligas l ON l.id = r.liga_id
+          WHERE r.liga_id IN (
+            SELECT lm.liga_id FROM liga_membros lm
+            JOIN usuarios u ON u.id = lm.usuario_id
+            WHERE u.email = ${user.email}
+            UNION
+            SELECT id FROM ligas WHERE lider_id = (SELECT id FROM usuarios WHERE email = ${user.email})
+          )
+            ${sala_id ? sql`AND r.sala_id = ${sala_id}` : sql``}
+            ${data_inicio ? sql`AND r.inicio >= ${data_inicio}` : sql``}
+            ${data_fim ? sql`AND r.fim <= ${data_fim}` : sql``}
+          ORDER BY r.inicio
+        `
+      : await sql`
+          SELECT r.*, row_to_json(s.*) AS sala, json_build_object('id', l.id, 'nome', l.nome) AS liga
+          FROM reservas_salas r
+          LEFT JOIN salas s ON s.id = r.sala_id
+          LEFT JOIN ligas l ON l.id = r.liga_id
+          WHERE TRUE
+            ${sala_id ? sql`AND r.sala_id = ${sala_id}` : sql``}
+            ${data_inicio ? sql`AND r.inicio >= ${data_inicio}` : sql``}
+            ${data_fim ? sql`AND r.fim <= ${data_fim}` : sql``}
+          ORDER BY r.inicio
+        `;
 
     res.json(reservas);
   } catch (err) {
@@ -38,59 +60,85 @@ salasRouter.get("/reservas", authenticate, async (req, res, next) => {
   }
 });
 
-// POST /salas/reservas — criar reserva
-salasRouter.post("/reservas", authenticate, async (req, res, next) => {
-  try {
-    const { sala_id, inicio, fim } = req.body as { sala_id: string; inicio: string; fim: string };
-    const { liga_id, titulo, descricao } = req.body as {
-      liga_id?: string;
-      titulo?: string;
-      descricao?: string;
-    };
+// POST /salas/reservas — criar reserva (staff ou diretor da liga)
+salasRouter.post(
+  "/reservas",
+  authenticate,
+  requireRole("staff", "diretor"),
+  async (req, res, next) => {
+    try {
+      const user = (req as AuthenticatedRequest).user!;
+      const { sala_id, inicio, fim } = req.body as {
+        sala_id: string;
+        inicio: string;
+        fim: string;
+      };
+      const { liga_id, titulo, descricao } = req.body as {
+        liga_id?: string;
+        titulo?: string;
+        descricao?: string;
+      };
 
-    const campos: Record<string, unknown> = { sala_id, inicio, fim };
-    if (liga_id !== undefined) campos["liga_id"] = liga_id;
-    if (titulo !== undefined) campos["titulo"] = titulo;
-    if (descricao !== undefined) campos["descricao"] = descricao;
+      if (!sala_id || !inicio || !fim) {
+        res.status(400).json({ error: "sala_id, inicio e fim são obrigatórios." });
+        return;
+      }
+      if (new Date(inicio).getTime() >= new Date(fim).getTime()) {
+        res.status(400).json({ error: "Início deve ser anterior ao fim." });
+        return;
+      }
 
-    // Verificar conflito e inserir atomicamente via transação com SELECT FOR UPDATE
-    const reserva = await sql.begin(async (tx) => {
-      const t = tx as unknown as typeof sql;
-      // Bloqueia linhas conflitantes para evitar inserções concorrentes
-      await t`
-        SELECT id FROM reservas_salas
-        WHERE sala_id = ${sala_id}
-          AND inicio < ${fim}
-          AND fim > ${inicio}
-        FOR UPDATE
-      `;
+      // Diretor obrigado a vincular liga e ser diretor dela
+      if (user.role === "diretor") {
+        if (!liga_id) {
+          res.status(400).json({ error: "liga_id é obrigatório." });
+          return;
+        }
+        if (!(await usuarioEhDiretorDaLiga(user.email, liga_id))) {
+          res
+            .status(403)
+            .json({ error: "Você só pode reservar salas em nome da sua própria liga." });
+          return;
+        }
+      }
 
-      const [conflito] = await t`
-        SELECT id FROM reservas_salas
-        WHERE sala_id = ${sala_id}
-          AND inicio < ${fim}
-          AND fim > ${inicio}
-        LIMIT 1
-      `;
+      const campos: Record<string, unknown> = { sala_id, inicio, fim };
+      if (liga_id !== undefined) campos["liga_id"] = liga_id;
+      if (titulo !== undefined) campos["titulo"] = titulo;
+      if (descricao !== undefined) campos["descricao"] = descricao;
 
-      if (conflito) return null;
+      // Advisory lock por sala_id evita inserções concorrentes do mesmo slot
+      const reserva = await sql.begin(async (tx) => {
+        const t = tx as unknown as typeof sql;
+        await t`SELECT pg_advisory_xact_lock(hashtextextended(${sala_id}::text, 0))`;
 
-      const [nova] = await t`INSERT INTO reservas_salas ${t(campos)} RETURNING *`;
-      return nova;
-    });
+        const [conflito] = await t`
+          SELECT id FROM reservas_salas
+          WHERE sala_id = ${sala_id}
+            AND inicio < ${fim}
+            AND fim > ${inicio}
+          LIMIT 1
+        `;
 
-    if (!reserva) {
-      res
-        .status(409)
-        .json({ error: "Conflito de horário: a sala já está reservada neste período." });
-      return;
+        if (conflito) return null;
+
+        const [nova] = await t`INSERT INTO reservas_salas ${t(campos)} RETURNING *`;
+        return nova;
+      });
+
+      if (!reserva) {
+        res
+          .status(409)
+          .json({ error: "Conflito de horário: a sala já está reservada neste período." });
+        return;
+      }
+
+      res.status(201).json(reserva);
+    } catch (err) {
+      next(err);
     }
-
-    res.status(201).json(reserva);
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 // DELETE /salas/reservas/:id — cancelar reserva
 salasRouter.delete(
