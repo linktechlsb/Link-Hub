@@ -26,6 +26,7 @@ import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
+import { AbaCRM } from "./AbaCRM";
 import { AbaPresenca } from "./AbaPresenca";
 import { GerenciamentoStaffPage } from "./GerenciamentoStaffPage";
 
@@ -1685,9 +1686,17 @@ function AbaDesempenho({ ligaId }: { ligaId: string | null }) {
 
 // ─── página principal ─────────────────────────────────────────────────────────
 
-type Aba = "Membros" | "Informações" | "Recursos" | "Receita" | "Presença" | "Desempenho";
+type Aba = "Membros" | "Informações" | "Recursos" | "Receita" | "Presença" | "CRM" | "Desempenho";
 
-const ABAS: Aba[] = ["Membros", "Informações", "Recursos", "Receita", "Presença", "Desempenho"];
+const ABAS: Aba[] = [
+  "Membros",
+  "Informações",
+  "Recursos",
+  "Receita",
+  "Presença",
+  "CRM",
+  "Desempenho",
+];
 
 const INFO_VAZIA: InfoLiga = {
   nome: "",
@@ -1791,6 +1800,7 @@ export function GerenciamentoPage() {
       {abaAtiva === "Recursos" && <AbaRecursos ligaId={ligaId} />}
       {abaAtiva === "Receita" && <AbaReceita ligaId={ligaId} />}
       {abaAtiva === "Presença" && <AbaPresenca ligaId={ligaId} />}
+      {abaAtiva === "CRM" && <AbaCRM ligaId={ligaId} />}
       {abaAtiva === "Desempenho" && <AbaDesempenho ligaId={ligaId} />}
     </div>
   );

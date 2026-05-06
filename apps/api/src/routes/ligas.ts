@@ -1,4 +1,10 @@
-import { Router, type Router as IRouter } from "express";
+import {
+  Router,
+  type NextFunction,
+  type Request,
+  type Response,
+  type Router as IRouter,
+} from "express";
 import multer from "multer";
 
 import { sql } from "../config/db.js";
@@ -13,12 +19,33 @@ const upload = multer({
   limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
   fileFilter: (_req, file, cb) => {
     if (!["image/jpeg", "image/png"].includes(file.mimetype)) {
-      cb(new Error("Apenas PNG e JPG são permitidos."));
+      cb(new Error("INVALID_FILE_TYPE"));
       return;
     }
     cb(null, true);
   },
 });
+
+function uploadSingle(field: string) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    upload.single(field)(req, res, (err: unknown) => {
+      if (err instanceof multer.MulterError) {
+        const status = err.code === "LIMIT_FILE_SIZE" ? 413 : 400;
+        res.status(status).json({ error: err.message });
+        return;
+      }
+      if (err instanceof Error && err.message === "INVALID_FILE_TYPE") {
+        res.status(400).json({ error: "Apenas PNG e JPG são permitidos." });
+        return;
+      }
+      if (err) {
+        next(err);
+        return;
+      }
+      next();
+    });
+  };
+}
 
 // GET /ligas — lista todas as ligas com diretores e contagem de projetos
 ligasRouter.get("/", authenticate, async (_req, res, next) => {
@@ -131,7 +158,7 @@ ligasRouter.get("/:id", authenticate, async (req, res, next) => {
       FROM ligas l
       LEFT JOIN liga_membros lm ON lm.liga_id = l.id
       LEFT JOIN usuarios u ON u.id = lm.usuario_id
-      WHERE l.id = ${id}
+      WHERE l.id = ${id} AND l.ativo = true
       GROUP BY l.id
     `;
 
@@ -224,7 +251,7 @@ ligasRouter.get(
       JOIN usuarios u ON u.id = lm.usuario_id
       CROSS JOIN eventos e
       LEFT JOIN presencas pr ON pr.evento_id = e.id AND pr.usuario_id = lm.usuario_id
-      WHERE lm.liga_id = ${id} AND e.liga_id = ${id}
+      WHERE lm.liga_id = ${id} AND e.liga_id = ${id} AND e.data <= NOW()
       ORDER BY e.data DESC, u.nome ASC
     `;
       res.json(registros);
@@ -233,6 +260,21 @@ ligasRouter.get(
     }
   },
 );
+
+// GET /ligas/:id/score — pontuação da liga no ranking
+ligasRouter.get("/:id/score", authenticate, async (req, res, next) => {
+  try {
+    const id = req.params["id"] as string;
+    const [row] = await sql`
+      SELECT pontuacao
+      FROM v_ranking_ligas
+      WHERE liga_id = ${id}
+    `;
+    res.json({ pontuacao: row?.pontuacao ?? 0 });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // GET /ligas/:id/eventos/proximo — próximo evento futuro da liga
 ligasRouter.get("/:id/eventos/proximo", authenticate, async (req, res, next) => {
@@ -259,7 +301,7 @@ ligasRouter.post(
   "/:id/imagem",
   authenticate,
   requireLigaOwnership("id"),
-  upload.single("imagem"),
+  uploadSingle("imagem"),
   async (req, res, next) => {
     try {
       const id = req.params["id"] as string;
@@ -340,8 +382,10 @@ ligasRouter.post("/", authenticate, requireRole("staff"), async (req, res, next)
           ON CONFLICT (liga_id, usuario_id)
           DO UPDATE SET cargo = 'Diretor'
         `;
+        // Promove apenas se for membro — preserva roles staff/professor
         await sql`
-          UPDATE usuarios SET role = 'diretor' WHERE id = ${usuario_id}
+          UPDATE usuarios SET role = 'diretor'
+          WHERE id = ${usuario_id} AND role = 'membro'
         `;
       }
     }
@@ -403,7 +447,11 @@ ligasRouter.patch("/:id", authenticate, requireLigaOwnership("id"), async (req, 
       const idsNovos = new Set(diretores);
       const idsRemovidos = idsAtuais.filter((uid: string) => !idsNovos.has(uid));
       if (idsRemovidos.length > 0) {
-        await sql`UPDATE usuarios SET role = 'membro' WHERE id = ANY(${idsRemovidos})`;
+        // Apenas reverte para 'membro' quem está como 'diretor' — preserva staff/professor
+        await sql`
+          UPDATE usuarios SET role = 'membro'
+          WHERE id = ANY(${idsRemovidos}) AND role = 'diretor'
+        `;
       }
 
       // Remove diretores anteriores
@@ -420,7 +468,8 @@ ligasRouter.patch("/:id", authenticate, requireLigaOwnership("id"), async (req, 
           DO UPDATE SET cargo = 'Diretor'
         `;
         await sql`
-          UPDATE usuarios SET role = 'diretor' WHERE id = ${usuario_id}
+          UPDATE usuarios SET role = 'diretor'
+          WHERE id = ${usuario_id} AND role = 'membro'
         `;
       }
     }

@@ -120,6 +120,16 @@ eventosRouter.patch(
         hora_fim?: string;
       };
 
+      // Diretor não pode mudar categoria — bypassa fluxo de aprovação
+      if (
+        user.role === "diretor" &&
+        categoria !== undefined &&
+        categoria !== eventoAtual.categoria
+      ) {
+        res.status(403).json({ error: "Apenas staff pode alterar a categoria do evento." });
+        return;
+      }
+
       const cat = categoria ?? eventoAtual.categoria;
       const requer_aprovacao = cat === "evento" || cat === "hub";
 
@@ -127,7 +137,9 @@ eventosRouter.patch(
         (titulo !== undefined && titulo !== eventoAtual.titulo) ||
         (data !== undefined && data !== eventoAtual.data) ||
         (descricao !== undefined && descricao !== eventoAtual.descricao) ||
-        (sala_id !== undefined && sala_id !== String(eventoAtual.sala_id ?? ""));
+        (sala_id !== undefined && sala_id !== String(eventoAtual.sala_id ?? "")) ||
+        (hora_inicio !== undefined && hora_inicio !== String(eventoAtual.hora_inicio ?? "")) ||
+        (hora_fim !== undefined && hora_fim !== String(eventoAtual.hora_fim ?? ""));
 
       const status_aprovacao = requer_aprovacao
         ? user.role === "staff"
@@ -196,19 +208,38 @@ eventosRouter.delete(
 // GET /eventos?inicio=&fim=&liga_id=
 eventosRouter.get("/", authenticate, async (req, res, next) => {
   try {
+    const user = (req as AuthenticatedRequest).user!;
     const { inicio, fim, liga_id } = req.query as Record<string, string>;
 
-    const eventos = await sql`
-      SELECT e.*,
-             row_to_json(l.*) AS liga
-      FROM eventos e
-      LEFT JOIN ligas l ON l.id = e.liga_id
-      WHERE TRUE
-        ${liga_id ? sql`AND e.liga_id = ${liga_id}` : sql``}
-        ${inicio ? sql`AND e.data::date >= ${inicio}::date` : sql``}
-        ${fim ? sql`AND e.data::date <= ${fim}::date` : sql``}
-      ORDER BY e.data ASC
-    `;
+    const restringirPorLiga = false;
+
+    const eventos = restringirPorLiga
+      ? await sql`
+          SELECT e.*, row_to_json(l.*) AS liga
+          FROM eventos e
+          LEFT JOIN ligas l ON l.id = e.liga_id
+          WHERE e.liga_id IN (
+            SELECT lm.liga_id FROM liga_membros lm
+            JOIN usuarios u ON u.id = lm.usuario_id
+            WHERE u.email = ${user.email}
+            UNION
+            SELECT id FROM ligas WHERE lider_id = (SELECT id FROM usuarios WHERE email = ${user.email})
+          )
+            ${liga_id ? sql`AND e.liga_id = ${liga_id}` : sql``}
+            ${inicio ? sql`AND e.data::date >= ${inicio}::date` : sql``}
+            ${fim ? sql`AND e.data::date <= ${fim}::date` : sql``}
+          ORDER BY e.data ASC
+        `
+      : await sql`
+          SELECT e.*, row_to_json(l.*) AS liga
+          FROM eventos e
+          LEFT JOIN ligas l ON l.id = e.liga_id
+          WHERE TRUE
+            ${liga_id ? sql`AND e.liga_id = ${liga_id}` : sql``}
+            ${inicio ? sql`AND e.data::date >= ${inicio}::date` : sql``}
+            ${fim ? sql`AND e.data::date <= ${fim}::date` : sql``}
+          ORDER BY e.data ASC
+        `;
 
     res.json(eventos);
   } catch (err) {

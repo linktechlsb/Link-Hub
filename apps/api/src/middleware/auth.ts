@@ -13,7 +13,8 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-const SESSION_TTL_MS = 60 * 60 * 1000; // 1 hora
+const SESSION_TTL_MS = 60 * 1000; // 1 minuto — invalida rapidamente em mudança de role
+const SESSION_CACHE_MAX = 5000;
 
 interface CachedSession {
   user: NonNullable<AuthenticatedRequest["user"]>;
@@ -30,30 +31,39 @@ setInterval(
       if (cached.expiresAt <= agora) sessionCache.delete(token);
     }
   },
-  15 * 60 * 1000,
+  5 * 60 * 1000,
 );
+
+function setCachedSession(token: string, session: CachedSession) {
+  if (sessionCache.size >= SESSION_CACHE_MAX) {
+    const oldest = sessionCache.keys().next().value;
+    if (oldest) sessionCache.delete(oldest);
+  }
+  sessionCache.set(token, session);
+}
 
 async function resolveSession(token: string): Promise<CachedSession | null> {
   const { data, error } = await supabaseAnon.auth.getUser(token);
 
-  if (error || !data.user?.email) return null;
+  if (error || !data.user?.id) return null;
 
-  const email = data.user.email;
-
+  // Lookup obrigatório por id — não confiar apenas no Supabase Auth
   const [usuario] = await sql`
-    SELECT role FROM usuarios WHERE email = ${email} LIMIT 1
+    SELECT id, email, role FROM usuarios WHERE id = ${data.user.id} LIMIT 1
   `;
+
+  if (!usuario) return null;
 
   const session: CachedSession = {
     user: {
-      id: data.user.id,
-      email,
-      role: (usuario?.role as UserRole) ?? "membro",
+      id: usuario["id"] as string,
+      email: usuario["email"] as string,
+      role: usuario["role"] as UserRole,
     },
     expiresAt: Date.now() + SESSION_TTL_MS,
   };
 
-  sessionCache.set(token, session);
+  setCachedSession(token, session);
   return session;
 }
 

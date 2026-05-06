@@ -1,22 +1,49 @@
-import { Router, type Router as IRouter } from "express";
+import {
+  Router,
+  type NextFunction,
+  type Request,
+  type Response,
+  type Router as IRouter,
+} from "express";
 import multer from "multer";
 
 import { sql } from "../config/db.js";
 import { supabaseAdmin } from "../config/supabase.js";
 import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
-import { usuarioEhDiretorDaLiga } from "../middleware/authorization.js";
+import { usuarioEhDiretorDaLiga, usuarioPertenceALiga } from "../middleware/authorization.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 2 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (!["image/jpeg", "image/png"].includes(file.mimetype)) {
-      cb(new Error("Apenas PNG e JPG são permitidos."));
+      cb(new Error("INVALID_FILE_TYPE"));
       return;
     }
     cb(null, true);
   },
 });
+
+function uploadSingle(field: string) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    upload.single(field)(req, res, (err: unknown) => {
+      if (err instanceof multer.MulterError) {
+        const status = err.code === "LIMIT_FILE_SIZE" ? 413 : 400;
+        res.status(status).json({ error: err.message });
+        return;
+      }
+      if (err instanceof Error && err.message === "INVALID_FILE_TYPE") {
+        res.status(400).json({ error: "Apenas PNG e JPG são permitidos." });
+        return;
+      }
+      if (err) {
+        next(err);
+        return;
+      }
+      next();
+    });
+  };
+}
 
 export const muralRouter: IRouter = Router();
 
@@ -25,16 +52,31 @@ muralRouter.post(
   "/upload",
   authenticate,
   requireRole("staff", "diretor"),
-  upload.single("imagem"),
+  uploadSingle("imagem"),
   async (req, res, next) => {
     try {
+      const user = (req as AuthenticatedRequest).user!;
+      const liga_id = (req.body as { liga_id?: string }).liga_id;
+
       if (!req.file) {
         res.status(400).json({ error: "Arquivo de imagem obrigatório." });
         return;
       }
 
+      if (!liga_id) {
+        res.status(400).json({ error: "liga_id é obrigatório." });
+        return;
+      }
+
+      if (user.role === "diretor" && !(await usuarioEhDiretorDaLiga(user.email, liga_id))) {
+        res
+          .status(403)
+          .json({ error: "Você só pode publicar imagens no mural da sua própria liga." });
+        return;
+      }
+
       const ext = req.file.mimetype === "image/png" ? "png" : "jpg";
-      const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const filename = `${liga_id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
       const { error: storageError } = await supabaseAdmin.storage
         .from("posts-imagens")
@@ -63,33 +105,60 @@ muralRouter.get("/", authenticate, async (req, res, next) => {
       SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1
     `;
 
-    const posts = await sql`
-      SELECT
-        p.id,
-        p.liga_id,
-        l.nome AS liga_nome,
-        p.autor_id,
-        u.nome AS autor_nome,
-        u.role AS autor_role,
-        u.avatar_url AS autor_avatar_url,
-        p.conteudo,
-        p.imagem_url,
-        p.criado_em,
-        p.atualizado_em,
-        (SELECT COUNT(*)::int FROM post_curtidas c WHERE c.post_id = p.id) AS curtidas,
-        EXISTS (
-          SELECT 1 FROM post_curtidas c
-          WHERE c.post_id = p.id AND c.usuario_id = ${usuarioAtual?.id ?? null}
-        ) AS curtido_por_mim,
-        (SELECT COUNT(*)::int FROM post_comentarios co WHERE co.post_id = p.id) AS total_comentarios
-      FROM posts p
-      JOIN ligas l ON l.id = p.liga_id
-      JOIN usuarios u ON u.id = p.autor_id
-      WHERE TRUE
-        ${liga_id ? sql`AND p.liga_id = ${liga_id}` : sql``}
-      ORDER BY p.criado_em DESC
-      LIMIT 100
-    `;
+    const restringirPorLiga = user.role !== "staff" && user.role !== "professor";
+
+    if (liga_id && restringirPorLiga) {
+      if (!(await usuarioPertenceALiga(user.email, liga_id))) {
+        res.status(403).json({ error: "Acesso restrito aos membros desta liga." });
+        return;
+      }
+    }
+
+    const posts = restringirPorLiga
+      ? await sql`
+          SELECT
+            p.id, p.liga_id, l.nome AS liga_nome, p.autor_id,
+            u.nome AS autor_nome, u.role AS autor_role, u.avatar_url AS autor_avatar_url,
+            p.conteudo, p.imagem_url, p.criado_em, p.atualizado_em,
+            (SELECT COUNT(*)::int FROM post_curtidas c WHERE c.post_id = p.id) AS curtidas,
+            EXISTS (
+              SELECT 1 FROM post_curtidas c
+              WHERE c.post_id = p.id AND c.usuario_id = ${usuarioAtual?.id ?? null}
+            ) AS curtido_por_mim,
+            (SELECT COUNT(*)::int FROM post_comentarios co WHERE co.post_id = p.id) AS total_comentarios
+          FROM posts p
+          JOIN ligas l ON l.id = p.liga_id
+          JOIN usuarios u ON u.id = p.autor_id
+          WHERE p.liga_id IN (
+            SELECT lm.liga_id FROM liga_membros lm
+            JOIN usuarios u2 ON u2.id = lm.usuario_id
+            WHERE u2.email = ${user.email}
+            UNION
+            SELECT id FROM ligas WHERE lider_id = (SELECT id FROM usuarios WHERE email = ${user.email})
+          )
+            ${liga_id ? sql`AND p.liga_id = ${liga_id}` : sql``}
+          ORDER BY p.criado_em DESC
+          LIMIT 100
+        `
+      : await sql`
+          SELECT
+            p.id, p.liga_id, l.nome AS liga_nome, p.autor_id,
+            u.nome AS autor_nome, u.role AS autor_role, u.avatar_url AS autor_avatar_url,
+            p.conteudo, p.imagem_url, p.criado_em, p.atualizado_em,
+            (SELECT COUNT(*)::int FROM post_curtidas c WHERE c.post_id = p.id) AS curtidas,
+            EXISTS (
+              SELECT 1 FROM post_curtidas c
+              WHERE c.post_id = p.id AND c.usuario_id = ${usuarioAtual?.id ?? null}
+            ) AS curtido_por_mim,
+            (SELECT COUNT(*)::int FROM post_comentarios co WHERE co.post_id = p.id) AS total_comentarios
+          FROM posts p
+          JOIN ligas l ON l.id = p.liga_id
+          JOIN usuarios u ON u.id = p.autor_id
+          WHERE TRUE
+            ${liga_id ? sql`AND p.liga_id = ${liga_id}` : sql``}
+          ORDER BY p.criado_em DESC
+          LIMIT 100
+        `;
 
     res.json(posts);
   } catch (err) {
@@ -109,6 +178,10 @@ muralRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req,
 
     if (!liga_id || !conteudo?.trim()) {
       res.status(400).json({ error: "liga_id e conteudo são obrigatórios." });
+      return;
+    }
+    if (conteudo.length > 5000) {
+      res.status(400).json({ error: "conteúdo muito longo." });
       return;
     }
 
@@ -232,6 +305,25 @@ muralRouter.post("/:id/comentarios", authenticate, async (req, res, next) => {
 
     if (!conteudo?.trim()) {
       res.status(400).json({ error: "conteudo é obrigatório." });
+      return;
+    }
+    if (conteudo.length > 2000) {
+      res.status(400).json({ error: "comentário muito longo." });
+      return;
+    }
+
+    const [post] = await sql`SELECT liga_id FROM posts WHERE id = ${id} LIMIT 1`;
+    if (!post) {
+      res.status(404).json({ error: "Post não encontrado." });
+      return;
+    }
+
+    if (
+      user.role !== "staff" &&
+      user.role !== "professor" &&
+      !(await usuarioPertenceALiga(user.email, post.liga_id as string))
+    ) {
+      res.status(403).json({ error: "Acesso restrito aos membros desta liga." });
       return;
     }
 

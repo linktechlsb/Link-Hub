@@ -2,7 +2,11 @@ import { Router, type Router as IRouter } from "express";
 
 import { sql } from "../config/db.js";
 import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
-import { usuarioEhDiretorDaLiga } from "../middleware/authorization.js";
+import {
+  usuarioEhDiretorDaLiga,
+  usuarioEhProfessorDaLiga,
+  usuarioPertenceALiga,
+} from "../middleware/authorization.js";
 
 import type { StatusPresenca } from "@link-leagues/types";
 
@@ -13,18 +17,42 @@ const STATUS_VALIDOS: StatusPresenca[] = ["presente", "ausente", "justificado"];
 // GET /presenca?liga_id=&usuario_id=&periodo_inicio=&periodo_fim=
 presencaRouter.get("/", authenticate, async (req, res, next) => {
   try {
+    const user = (req as AuthenticatedRequest).user!;
     const { liga_id, usuario_id, periodo_inicio, periodo_fim } = req.query as Record<
       string,
       string
     >;
 
+    if (!liga_id) {
+      res.status(400).json({ error: "liga_id é obrigatório." });
+      return;
+    }
+
+    if (user.role === "professor") {
+      if (!(await usuarioEhProfessorDaLiga(user.id, liga_id))) {
+        res.status(403).json({ error: "Acesso restrito ao professor responsável desta liga." });
+        return;
+      }
+    } else if (user.role !== "staff") {
+      if (!(await usuarioPertenceALiga(user.email, liga_id))) {
+        res.status(403).json({ error: "Acesso restrito aos membros desta liga." });
+        return;
+      }
+      // Membro só pode ver as próprias presenças
+      if (user.role === "membro" && usuario_id && usuario_id !== user.id) {
+        res.status(403).json({ error: "Você só pode consultar suas próprias presenças." });
+        return;
+      }
+    }
+
+    const usuarioFiltro = user.role === "membro" ? user.id : usuario_id;
+
     const presencas = await sql`
       SELECT p.*, row_to_json(e.*) AS evento
       FROM presencas p
       LEFT JOIN eventos e ON e.id = p.evento_id
-      WHERE TRUE
-        ${liga_id ? sql`AND p.liga_id = ${liga_id}` : sql``}
-        ${usuario_id ? sql`AND p.usuario_id = ${usuario_id}` : sql``}
+      WHERE p.liga_id = ${liga_id}
+        ${usuarioFiltro ? sql`AND p.usuario_id = ${usuarioFiltro}` : sql``}
         ${periodo_inicio ? sql`AND e.data >= ${periodo_inicio}` : sql``}
         ${periodo_fim ? sql`AND e.data <= ${periodo_fim}` : sql``}
       ORDER BY e.data DESC
@@ -74,6 +102,14 @@ presencaRouter.post("/", authenticate, requireRole("staff", "diretor"), async (r
     }
     if ((evento.liga_id as string) !== liga_id) {
       res.status(400).json({ error: "Evento não pertence à liga informada." });
+      return;
+    }
+
+    const [vinculo] = await sql`
+      SELECT 1 FROM liga_membros WHERE liga_id = ${liga_id} AND usuario_id = ${usuario_id} LIMIT 1
+    `;
+    if (!vinculo) {
+      res.status(400).json({ error: "Usuário não é membro desta liga." });
       return;
     }
 
@@ -127,6 +163,20 @@ presencaRouter.post(
           res.status(400).json({ error: "Registro inválido em registros[]." });
           return;
         }
+      }
+
+      const idsAlvo = registros.map((r) => r.usuario_id);
+      const membrosLiga = await sql`
+        SELECT usuario_id FROM liga_membros
+        WHERE liga_id = ${liga_id} AND usuario_id = ANY(${idsAlvo})
+      `;
+      const idsValidos = new Set(membrosLiga.map((m) => m["usuario_id"] as string));
+      const naoMembros = idsAlvo.filter((uid) => !idsValidos.has(uid));
+      if (naoMembros.length > 0) {
+        res
+          .status(400)
+          .json({ error: "Há usuários que não pertencem à liga.", usuarios: naoMembros });
+        return;
       }
 
       const atualizados = await sql.begin(async (tx) => {

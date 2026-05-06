@@ -57,6 +57,12 @@ recursosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (r
       return;
     }
 
+    const TIPOS_VALIDOS = ["link", "documento", "drive", "video", "outro"];
+    if (tipo && !TIPOS_VALIDOS.includes(tipo)) {
+      res.status(400).json({ error: `tipo inválido. Use: ${TIPOS_VALIDOS.join(", ")}.` });
+      return;
+    }
+
     if (user.role === "diretor" && !(await usuarioEhDiretorDaLiga(user.email, liga_id))) {
       res.status(403).json({ error: "Você só pode criar recursos da sua própria liga." });
       return;
