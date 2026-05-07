@@ -47,6 +47,8 @@ async function resolveSession(token: string): Promise<CachedSession | null> {
 
   if (error || !data.user?.id) return null;
 
+  if (!data.user.email) return null;
+
   // Lookup por email — robusto independente de como o usuário foi criado na tabela
   const [usuario] = await sql`
     SELECT id, email, role FROM usuarios WHERE email = ${data.user.email} LIMIT 1
