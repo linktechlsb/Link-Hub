@@ -101,13 +101,15 @@ export function LigasCarousel({ ligas, ranking = [] }: LigasCarouselProps) {
       </div>
 
       {/* Dots */}
-      <div className="flex justify-center gap-1.5 py-3 bg-white border-t border-border">
+      <div className="flex justify-center gap-1.5 py-3 bg-background border-t border-border">
         {ligas.map((_, i) => (
           <button
             key={i}
             onClick={() => irPara(i)}
             className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === currentIndex ? "w-4 bg-navy" : "w-1.5 bg-slate-200 hover:bg-slate-300"
+              i === currentIndex
+                ? "w-4 bg-navy dark:bg-white"
+                : "w-1.5 bg-foreground/20 hover:bg-foreground/30"
             }`}
           />
         ))}

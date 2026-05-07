@@ -57,5 +57,8 @@
     "*.{json,md,yml,yaml,css}": [
       "prettier --write"
     ]
+  },
+  "optionalDependencies": {
+    "@esbuild/darwin-arm64": "^0.25.12"
   }
 }

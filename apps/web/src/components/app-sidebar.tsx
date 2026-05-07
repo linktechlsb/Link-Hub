@@ -24,7 +24,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUser } from "@/hooks/use-user";
@@ -70,49 +69,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     manageNav.push({ title: "Super Admin", url: "/super-admin", icon: ShieldCheck });
   }
   if (canManage) {
-    manageNav.push({
-      title: "Formulários",
-      url: "/formularios",
-      icon: ClipboardList,
-    });
+    manageNav.push({ title: "Formulários", url: "/formularios", icon: ClipboardList });
     manageNav.push({ title: "Gerenciamento", url: "/gerenciamento", icon: Settings });
   }
 
   return (
-    <Sidebar
-      collapsible="icon"
-      {...props}
-      style={
-        {
-          "--sidebar-background": "218 66% 18%",
-          "--sidebar-foreground": "0 0% 95%",
-          "--sidebar-accent": "218 50% 26%",
-          "--sidebar-accent-foreground": "0 0% 100%",
-          "--sidebar-border": "218 50% 28%",
-          "--sidebar-ring": "43 98% 63%",
-          "--sidebar-primary": "43 98% 63%",
-          "--sidebar-primary-foreground": "218 66% 18%",
-        } as React.CSSProperties
-      }
-    >
+    <Sidebar variant="inset" collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              className="rounded-none hover:bg-transparent active:bg-transparent"
-            >
-              <div className="flex aspect-square size-8 items-center justify-center">
-                <img src="/link_logo.png" alt="Link" className="size-8 object-contain" />
-              </div>
-              <div className="grid flex-1 text-left leading-tight">
-                <span className="font-display font-bold text-base tracking-tight whitespace-nowrap">
-                  Link Leagues
-                </span>
-                <span className="truncate text-xs text-sidebar-foreground/70">
-                  Link School of Business
-                </span>
-              </div>
+            <SidebarMenuButton size="lg" asChild>
+              <a href="/home">
+                <div className="flex aspect-square size-8 items-center justify-center">
+                  <img src="/link_logo.png" alt="Link" className="size-8 object-contain" />
+                </div>
+                <div className="grid flex-1 text-left leading-tight">
+                  <span className="font-display font-bold text-base tracking-tight whitespace-nowrap">
+                    Link Leagues
+                  </span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    Link School of Business
+                  </span>
+                </div>
+              </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -140,7 +119,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavUser user={user} />
       </SidebarFooter>
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
-      <SidebarRail />
     </Sidebar>
   );
 }

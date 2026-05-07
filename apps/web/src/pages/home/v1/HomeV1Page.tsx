@@ -29,7 +29,7 @@ export function HomeV1Page() {
   const dataFormatada = hoje.replace(/\./g, "").toUpperCase();
 
   return (
-    <div className="font-plex-sans bg-white min-h-full">
+    <div className="font-plex-sans bg-background min-h-full">
       <div className="max-w-5xl mx-auto px-8 py-10">
         <header className="flex items-end justify-between">
           <div>

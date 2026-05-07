@@ -1,5 +1,5 @@
 import { type LucideIcon } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 import {
   SidebarGroup,
@@ -16,34 +16,22 @@ export type NavMainItem = {
 };
 
 export function NavMain({ items, label }: { items: NavMainItem[]; label?: string }) {
-  const { pathname } = useLocation();
-
   return (
     <SidebarGroup>
-      {label && (
-        <SidebarGroupLabel className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-white/40 h-auto mb-1">
-          {label}
-        </SidebarGroupLabel>
-      )}
+      {label && <SidebarGroupLabel>{label}</SidebarGroupLabel>}
       <SidebarMenu>
-        {items.map((item) => {
-          const isActive = pathname === item.url || pathname.startsWith(`${item.url}/`);
-          return (
-            <SidebarMenuItem key={item.url}>
-              <SidebarMenuButton
-                asChild
-                tooltip={item.title}
-                isActive={isActive}
-                className={`rounded-none ${isActive ? "text-brand-yellow font-semibold" : ""}`}
-              >
-                <Link to={item.url}>
+        {items.map((item) => (
+          <SidebarMenuItem key={item.title}>
+            <NavLink to={item.url}>
+              {({ isActive }) => (
+                <SidebarMenuButton tooltip={item.title} isActive={isActive}>
                   <item.icon />
                   <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          );
-        })}
+                </SidebarMenuButton>
+              )}
+            </NavLink>
+          </SidebarMenuItem>
+        ))}
       </SidebarMenu>
     </SidebarGroup>
   );
