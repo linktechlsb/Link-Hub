@@ -71,8 +71,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
   if (canManage) {
     manageNav.push({
-      title: "Processo Seletivo",
-      url: "/processo-seletivo",
+      title: "Formulários",
+      url: "/formularios",
       icon: ClipboardList,
     });
     manageNav.push({ title: "Gerenciamento", url: "/gerenciamento", icon: Settings });

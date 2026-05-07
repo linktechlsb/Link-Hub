@@ -1,6 +1,6 @@
 import { env } from "../config/env.js";
 
-import type { CreatePerguntaInput, TemaProcesso } from "@link-leagues/types";
+import type { CreatePerguntaInput, TemaFormulario } from "@link-leagues/types";
 
 const TYPEFORM_BASE_URL = "https://api.typeform.com";
 
@@ -95,7 +95,7 @@ function mapPerguntaToField(pergunta: CreatePerguntaInput): TypeformField {
   }
 }
 
-export async function criarTemaTypeform(tema: TemaProcesso): Promise<string> {
+export async function criarTemaTypeform(tema: TemaFormulario): Promise<string> {
   const body: Record<string, unknown> = {
     name: `tema-${Date.now()}`,
     colors: {
