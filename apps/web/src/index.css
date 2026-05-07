@@ -77,7 +77,7 @@
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
     --sidebar-primary-foreground: 0 0% 4%;
-    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent: 0 0% 7.8%; /* #141414 — nav ativo bg */
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 10%;
     --sidebar-ring: 0 0% 100%;
