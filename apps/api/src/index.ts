@@ -25,7 +25,20 @@ const corsMiddleware = cors({
 app.set("trust proxy", 1);
 app.use(
   helmet({
-    contentSecurityPolicy: env.isProduction ? undefined : false,
+    contentSecurityPolicy: env.isProduction
+      ? {
+          directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+            imgSrc: ["'self'", "data:", "blob:", "https:"],
+            fontSrc: ["'self'", "https:", "data:"],
+            connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co"],
+            frameSrc: ["'none'"],
+            objectSrc: ["'none'"],
+          },
+        }
+      : false,
     crossOriginEmbedderPolicy: false,
   }),
 );
