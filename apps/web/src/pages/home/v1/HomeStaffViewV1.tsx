@@ -122,7 +122,7 @@ export function HomeStaffViewV1({ pendentes, ligas, ranking }: HomeStaffViewV1Pr
             acao={
               <button
                 onClick={() => navigate("/super-admin")}
-                className="font-plex-mono text-[10px] uppercase tracking-[0.2em] text-navy border-b border-navy pb-0.5"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.2em] text-foreground/50 border-b border-foreground/20 pb-0.5"
               >
                 Ver todos →
               </button>

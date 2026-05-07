@@ -106,7 +106,13 @@
       "Bash(npm list *)",
       "Bash(npx vite@6.4.2 --version)",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); deps={**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}; print\\('\\\\n'.join\\(deps.keys\\(\\)\\)\\)\")",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); deps={**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}; print\\('\\\\n'.join\\(k for k in deps if 'vite' in k.lower\\(\\)\\)\\)\")"
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); deps={**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}; print\\('\\\\n'.join\\(k for k in deps if 'vite' in k.lower\\(\\)\\)\\)\")",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub add docs/superpowers/specs/2026-05-07-app-redesign-dark-neutral.md)",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub commit -m \"docs: add dark neutral redesign spec\")",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub add docs/superpowers/plans/2026-05-07-dark-neutral-redesign.md)",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub commit -m \"docs: add dark neutral redesign implementation plan\")",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub add apps/web/src/pages/home/v1/EditorialHero.tsx)",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub commit -m \"design: EditorialHero dark neutral — remove bg hardcoded and navy colors\")"
     ],
     "deny": [
       "Bash(git commit *)",

@@ -13,15 +13,17 @@ export function MinhaLigaStrip({ liga }: MinhaLigaStripProps) {
       type="button"
       onClick={() => navigate(`/ligas/${liga.id}`)}
       aria-label={`Acessar liga ${liga.nome}`}
-      className="w-full flex items-center justify-between border-t border-navy/80 px-0 py-5 text-left focus:outline-none focus:ring-2 focus:ring-navy focus:ring-offset-2"
+      className="w-full flex items-center justify-between border border-[#191919] rounded-lg px-5 py-4 text-left hover:bg-foreground/5 transition-colors focus:outline-none focus:ring-1 focus:ring-foreground/20"
     >
       <div>
-        <div className="font-plex-mono text-[10px] uppercase tracking-[0.2em] text-navy/70">
+        <div className="font-plex-mono text-[10px] uppercase tracking-[0.2em] text-foreground/50">
           Minha liga
         </div>
-        <div className="font-plex-sans text-[14px] font-semibold text-navy mt-1">{liga.nome}</div>
+        <div className="font-plex-sans text-[14px] font-semibold text-foreground mt-1">
+          {liga.nome}
+        </div>
       </div>
-      <div className="font-plex-mono text-[10px] uppercase tracking-[0.2em] text-navy border-b border-navy pb-0.5">
+      <div className="font-plex-mono text-[10px] uppercase tracking-[0.2em] text-foreground/50 border-b border-foreground/20 pb-0.5">
         Acessar →
       </div>
     </button>
