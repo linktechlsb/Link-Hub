@@ -13,6 +13,7 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().min(1).optional(),
 
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
+  TYPEFORM_API_KEY: z.string().min(1),
   RATE_LIMIT_DISABLED: z
     .enum(["true", "false"])
     .default("false")
