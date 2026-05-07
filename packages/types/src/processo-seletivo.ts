@@ -2,6 +2,14 @@ export type ProcessoStatus = "rascunho" | "aberto" | "encerrado";
 export type PerguntaTipo = "texto" | "multipla_escolha" | "nota_1_10" | "sim_nao";
 export type CandidatoStatus = "pendente" | "aprovado" | "reprovado";
 
+export interface TemaProcesso {
+  cor_fundo: string;
+  cor_pergunta: string;
+  cor_botao: string;
+  logo_url?: string;
+  imagem_fundo_url?: string;
+}
+
 export interface ProcessoSeletivo {
   id: string;
   liga_id: string;
@@ -11,6 +19,7 @@ export interface ProcessoSeletivo {
   typeform_form_id?: string;
   typeform_form_url?: string;
   pontuacao_minima_aprovacao: number;
+  tema?: TemaProcesso;
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -61,6 +70,7 @@ export interface CreateProcessoInput {
   descricao?: string;
   pontuacao_minima_aprovacao: number;
   perguntas: CreatePerguntaInput[];
+  tema?: TemaProcesso;
 }
 
 export interface ProcessoSeletivoComPerguntas extends ProcessoSeletivo {

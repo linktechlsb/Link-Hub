@@ -1,13 +1,96 @@
 import { Router, type Router as IRouter } from "express";
+import multer from "multer";
 
 import { sql } from "../config/db.js";
+import { supabaseAdmin } from "../config/supabase.js";
 import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 import { usuarioEhDiretorDaLiga } from "../middleware/authorization.js";
-import { criarFormTypeform, buscarRespostasTypeform } from "../services/typeform.js";
+import {
+  criarFormTypeform,
+  criarTemaTypeform,
+  buscarRespostasTypeform,
+} from "../services/typeform.js";
 
-import type { CreateProcessoInput, ProcessoPergunta } from "@link-leagues/types";
+import type { CreateProcessoInput, ProcessoPergunta, TemaProcesso } from "@link-leagues/types";
 
 export const processoSeletivoRouter: IRouter = Router();
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+
+// GET /processo-seletivo/minha-liga — retorna a liga do diretor autenticado
+processoSeletivoRouter.get(
+  "/minha-liga",
+  authenticate,
+  requireRole("diretor"),
+  async (req, res, next) => {
+    try {
+      const user = (req as AuthenticatedRequest).user!;
+
+      const [liga] = await sql`
+        SELECT l.id, l.nome
+        FROM ligas l
+        WHERE l.ativo = true
+          AND (
+            l.lider_id = (SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1)
+            OR EXISTS (
+              SELECT 1 FROM liga_membros lm
+              JOIN usuarios u ON u.id = lm.usuario_id
+              WHERE lm.liga_id = l.id
+                AND u.email = ${user.email}
+                AND (lm.cargo = 'Diretor' OR u.role = 'diretor')
+            )
+          )
+        LIMIT 1
+      `;
+
+      if (!liga) {
+        res.status(404).json({ error: "Nenhuma liga encontrada para este diretor." });
+        return;
+      }
+
+      res.json(liga);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// POST /processo-seletivo/assets/upload — faz upload de imagem para o Supabase Storage
+processoSeletivoRouter.post(
+  "/assets/upload",
+  authenticate,
+  requireRole("staff", "diretor"),
+  upload.single("file"),
+  async (req, res, next) => {
+    try {
+      const file = req.file;
+      if (!file) {
+        res.status(400).json({ error: "Nenhum arquivo enviado." });
+        return;
+      }
+
+      const ext = file.originalname.split(".").pop() ?? "jpg";
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+      const { error } = await supabaseAdmin.storage
+        .from("processo-seletivo-assets")
+        .upload(fileName, file.buffer, {
+          contentType: file.mimetype,
+          upsert: false,
+        });
+
+      if (error) throw new Error(error.message);
+
+      const { data: publicUrlData } = supabaseAdmin.storage
+        .from("processo-seletivo-assets")
+        .getPublicUrl(fileName);
+
+      res.json({ url: publicUrlData.publicUrl });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // GET /processo-seletivo — lista processos (filtrado por liga para diretores)
 processoSeletivoRouter.get(
@@ -74,7 +157,7 @@ processoSeletivoRouter.post(
   async (req, res, next) => {
     try {
       const user = (req as AuthenticatedRequest).user!;
-      const { liga_id, nome, descricao, pontuacao_minima_aprovacao, perguntas } =
+      const { liga_id, nome, descricao, pontuacao_minima_aprovacao, perguntas, tema } =
         req.body as CreateProcessoInput;
 
       if (!liga_id || !nome || !perguntas?.length) {
@@ -89,15 +172,21 @@ processoSeletivoRouter.post(
 
       const [criador] = await sql`SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1`;
 
+      // Criar tema no Typeform se fornecido
+      let themeId: string | undefined;
+      if (tema) {
+        themeId = await criarTemaTypeform(tema as TemaProcesso);
+      }
+
       // Criar form no Typeform
-      const { formId, formUrl } = await criarFormTypeform(nome, perguntas);
+      const { formId, formUrl } = await criarFormTypeform(nome, perguntas, themeId);
 
       // Inserir processo
       const [processo] = await sql`
         INSERT INTO processos_seletivos
-          (liga_id, nome, descricao, pontuacao_minima_aprovacao, typeform_form_id, typeform_form_url, created_by)
+          (liga_id, nome, descricao, pontuacao_minima_aprovacao, typeform_form_id, typeform_form_url, tema, created_by)
         VALUES
-          (${liga_id}, ${nome}, ${descricao ?? null}, ${pontuacao_minima_aprovacao ?? 70}, ${formId}, ${formUrl}, ${criador?.id ?? null})
+          (${liga_id}, ${nome}, ${descricao ?? null}, ${pontuacao_minima_aprovacao ?? 70}, ${formId}, ${formUrl}, ${tema ? JSON.stringify(tema) : null}, ${criador?.id ?? null})
         RETURNING *
       `;
 

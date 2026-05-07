@@ -1,5 +1,14 @@
-import { ArrowLeft, ArrowRight, Check, Copy, GripVertical, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Copy,
+  GripVertical,
+  Plus,
+  Trash2,
+  Upload,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -15,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 
 import type {
@@ -22,6 +32,7 @@ import type {
   CreateProcessoInput,
   PerguntaTipo,
   ProcessoSeletivoComPerguntas,
+  TemaProcesso,
 } from "@link-leagues/types";
 
 async function getToken(): Promise<string> {
@@ -41,15 +52,214 @@ const TIPO_LABELS: Record<PerguntaTipo, string> = {
   sim_nao: "Sim / Não",
 };
 
-const ETAPA_LABELS = ["Informações", "Perguntas", "Revisão"];
+const ETAPA_LABELS = ["Informações", "Perguntas", "Personalização", "Revisão"];
+
+const TEMA_DEFAULT: TemaProcesso = {
+  cor_fundo: "#10284E",
+  cor_pergunta: "#FFFFFF",
+  cor_botao: "#FEC641",
+};
+
+function TypeformMockup({ tema }: { tema: TemaProcesso }) {
+  const bgStyle: React.CSSProperties = tema.imagem_fundo_url
+    ? {
+        backgroundImage: `url(${tema.imagem_fundo_url})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }
+    : { backgroundColor: tema.cor_fundo };
+
+  return (
+    <div
+      className="rounded-lg overflow-hidden shadow-lg w-full max-w-[280px] mx-auto select-none"
+      style={bgStyle}
+    >
+      {tema.logo_url && (
+        <div className="flex items-center justify-center pt-5 pb-2">
+          <img
+            src={tema.logo_url}
+            alt="Logo"
+            className="h-8 w-auto object-contain"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+        </div>
+      )}
+
+      <div className="px-6 py-8 space-y-4">
+        <p className="text-[13px] font-semibold leading-snug" style={{ color: tema.cor_pergunta }}>
+          Como você soube sobre nossa liga?
+        </p>
+
+        <div className="space-y-2">
+          {["Redes sociais", "Indicação", "Site da faculdade"].map((opt) => (
+            <div
+              key={opt}
+              className="border rounded px-3 py-2 text-[11px]"
+              style={{ borderColor: `${tema.cor_pergunta}40`, color: tema.cor_pergunta }}
+            >
+              {opt}
+            </div>
+          ))}
+        </div>
+
+        <button
+          className="mt-4 px-4 py-2 rounded text-[11px] font-bold w-full"
+          style={{ backgroundColor: tema.cor_botao, color: tema.cor_fundo }}
+        >
+          OK →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <input
+        type="color"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-8 h-8 rounded border border-navy/20 cursor-pointer p-0.5 bg-white"
+      />
+      <div className="flex-1">
+        <Label className="text-[11px] font-medium text-navy mb-0.5 block">{label}</Label>
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="border-navy/20 text-[12px] h-7 font-mono uppercase"
+          maxLength={7}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ImageField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string | undefined;
+  onChange: (url: string) => void;
+}) {
+  const [tab, setTab] = useState<"url" | "upload">("url");
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleUpload(file: File) {
+    try {
+      setUploading(true);
+      const token = await getToken();
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("http://localhost:3001/api/processo-seletivo/assets/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      if (!res.ok) throw new Error();
+      const data = (await res.json()) as { url: string };
+      onChange(data.url);
+      toast.success("Imagem enviada!");
+    } catch {
+      toast.error("Erro ao enviar imagem.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-[11px] font-medium text-navy block">{label}</Label>
+      <div className="flex gap-2 mb-2">
+        <button
+          onClick={() => setTab("url")}
+          className={`text-[10px] px-2 py-1 border transition-colors ${tab === "url" ? "border-navy bg-navy text-white" : "border-navy/20 text-navy"}`}
+        >
+          URL
+        </button>
+        <button
+          onClick={() => setTab("upload")}
+          className={`text-[10px] px-2 py-1 border transition-colors ${tab === "upload" ? "border-navy bg-navy text-white" : "border-navy/20 text-navy"}`}
+        >
+          Upload
+        </button>
+      </div>
+
+      {tab === "url" ? (
+        <Input
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="https://..."
+          className="border-navy/20 text-[12px]"
+        />
+      ) : (
+        <div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void handleUpload(file);
+            }}
+          />
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="flex items-center gap-2 text-[11px] border border-dashed border-navy/30 px-4 py-2 w-full justify-center hover:bg-navy/5 text-navy/60 transition-colors"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            {uploading ? "Enviando..." : "Selecionar arquivo"}
+          </button>
+        </div>
+      )}
+
+      {value && (
+        <div className="flex items-center gap-2">
+          <img
+            src={value}
+            alt=""
+            className="h-8 w-8 object-cover rounded border border-navy/10"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+          <button
+            onClick={() => onChange("")}
+            className="text-[10px] text-navy/40 hover:text-red-500 transition-colors"
+          >
+            Remover
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function NovoProcessoPage() {
   const navigate = useNavigate();
+  const { role } = useUser();
   const [etapa, setEtapa] = useState(1);
   const [salvando, setSalvando] = useState(false);
   const [linkCriado, setLinkCriado] = useState<string | null>(null);
   const [processoId, setProcessoId] = useState<string | null>(null);
   const [ligas, setLigas] = useState<LigaOpcao[]>([]);
+  const [ligaFixa, setLigaFixa] = useState<LigaOpcao | null>(null);
+  const [carregandoLiga, setCarregandoLiga] = useState(false);
 
   // Etapa 1
   const [ligaId, setLigaId] = useState("");
@@ -61,14 +271,39 @@ export function NovoProcessoPage() {
   const [perguntas, setPerguntas] = useState<CreatePerguntaInput[]>([]);
   const [somaPesos, setSomaPesos] = useState(0);
 
+  // Etapa 3
+  const [tema, setTema] = useState<TemaProcesso>({ ...TEMA_DEFAULT });
+
   useEffect(() => {
-    carregarLigas();
-  }, []);
+    if (role === "diretor") {
+      carregarMinhaLiga();
+    } else if (role === "staff") {
+      void carregarLigas();
+    }
+  }, [role]);
 
   useEffect(() => {
     const soma = perguntas.reduce((acc, p) => acc + (p.peso || 0), 0);
     setSomaPesos(soma);
   }, [perguntas]);
+
+  async function carregarMinhaLiga() {
+    try {
+      setCarregandoLiga(true);
+      const token = await getToken();
+      const res = await fetch("http://localhost:3001/api/processo-seletivo/minha-liga", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      const liga = (await res.json()) as LigaOpcao;
+      setLigaFixa(liga);
+      setLigaId(liga.id);
+    } catch {
+      toast.error("Erro ao carregar sua liga.");
+    } finally {
+      setCarregandoLiga(false);
+    }
+  }
 
   async function carregarLigas() {
     try {
@@ -82,6 +317,10 @@ export function NovoProcessoPage() {
     } catch {
       toast.error("Erro ao carregar ligas");
     }
+  }
+
+  function atualizarTema(parcial: Partial<TemaProcesso>) {
+    setTema((prev) => ({ ...prev, ...parcial }));
   }
 
   function adicionarPergunta(tipo: PerguntaTipo) {
@@ -182,6 +421,7 @@ export function NovoProcessoPage() {
         descricao: descricao || undefined,
         pontuacao_minima_aprovacao: pontuacaoMinima,
         perguntas,
+        tema,
       };
 
       const res = await fetch("http://localhost:3001/api/processo-seletivo", {
@@ -209,7 +449,7 @@ export function NovoProcessoPage() {
       }
 
       setLinkCriado(processo.typeform_form_url ?? null);
-      setEtapa(4);
+      setEtapa(5);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao criar processo");
     } finally {
@@ -217,7 +457,7 @@ export function NovoProcessoPage() {
     }
   }
 
-  if (etapa === 4 && linkCriado) {
+  if (etapa === 5 && linkCriado) {
     return (
       <div className="max-w-2xl mx-auto px-8 py-10">
         <div className="text-center py-12 border border-navy/15">
@@ -265,7 +505,7 @@ export function NovoProcessoPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-8 py-10">
+    <div className="max-w-4xl mx-auto px-8 py-10">
       <div className="mb-8">
         <button
           onClick={() => navigate("/processo-seletivo")}
@@ -280,13 +520,13 @@ export function NovoProcessoPage() {
       </div>
 
       {/* Steps indicator */}
-      <div className="flex items-center gap-0 mb-10">
+      <div className="flex items-center gap-0 mb-10 overflow-x-auto">
         {ETAPA_LABELS.map((label, i) => {
           const num = i + 1;
           const ativa = etapa === num;
           const concluida = etapa > num;
           return (
-            <div key={num} className="flex items-center">
+            <div key={num} className="flex items-center flex-shrink-0">
               <div className="flex items-center gap-2">
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold
@@ -306,21 +546,33 @@ export function NovoProcessoPage() {
 
       {/* Etapa 1 — Informações */}
       {etapa === 1 && (
-        <div className="space-y-5">
+        <div className="space-y-5 max-w-2xl">
           <div>
             <Label className="text-[12px] font-medium text-navy mb-1.5 block">Liga *</Label>
-            <Select value={ligaId} onValueChange={setLigaId}>
-              <SelectTrigger className="border-navy/20 text-navy">
-                <SelectValue placeholder="Selecione a liga" />
-              </SelectTrigger>
-              <SelectContent>
-                {ligas.map((liga) => (
-                  <SelectItem key={liga.id} value={liga.id}>
-                    {liga.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {role === "diretor" ? (
+              carregandoLiga ? (
+                <p className="text-[13px] text-navy/40">Carregando...</p>
+              ) : (
+                <div className="border border-navy/20 px-3 py-2 bg-navy/5">
+                  <p className="text-[13px] text-navy font-medium">
+                    {ligaFixa?.nome ?? "Sua liga"}
+                  </p>
+                </div>
+              )
+            ) : (
+              <Select value={ligaId} onValueChange={setLigaId}>
+                <SelectTrigger className="border-navy/20 text-navy">
+                  <SelectValue placeholder="Selecione a liga" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ligas.map((liga) => (
+                    <SelectItem key={liga.id} value={liga.id}>
+                      {liga.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div>
@@ -384,7 +636,7 @@ export function NovoProcessoPage() {
 
       {/* Etapa 2 — Perguntas */}
       {etapa === 2 && (
-        <div className="space-y-5">
+        <div className="space-y-5 max-w-2xl">
           {perguntas.some((p) => p.tipo !== "texto") && (
             <div
               className={`text-[12px] p-3 border ${somaPesos === 100 ? "border-green-200 bg-green-50 text-green-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}
@@ -553,9 +805,88 @@ export function NovoProcessoPage() {
         </div>
       )}
 
-      {/* Etapa 3 — Revisão */}
+      {/* Etapa 3 — Personalização */}
       {etapa === 3 && (
-        <div className="space-y-6">
+        <div className="flex gap-8">
+          {/* Controles */}
+          <div className="flex-1 space-y-6 max-w-sm">
+            <div>
+              <h3 className="font-display font-bold text-[14px] text-navy mb-4">Cores</h3>
+              <div className="space-y-4">
+                <ColorField
+                  label="Cor de fundo"
+                  value={tema.cor_fundo}
+                  onChange={(v) => atualizarTema({ cor_fundo: v })}
+                />
+                <ColorField
+                  label="Cor das perguntas"
+                  value={tema.cor_pergunta}
+                  onChange={(v) => atualizarTema({ cor_pergunta: v })}
+                />
+                <ColorField
+                  label="Cor dos botões"
+                  value={tema.cor_botao}
+                  onChange={(v) => atualizarTema({ cor_botao: v })}
+                />
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-display font-bold text-[14px] text-navy mb-4">Imagens</h3>
+              <div className="space-y-5">
+                <ImageField
+                  label="Logo"
+                  value={tema.logo_url}
+                  onChange={(url) => atualizarTema({ logo_url: url || undefined })}
+                />
+                <ImageField
+                  label="Imagem de fundo"
+                  value={tema.imagem_fundo_url}
+                  onChange={(url) => atualizarTema({ imagem_fundo_url: url || undefined })}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-between pt-2">
+              <Button variant="ghost" onClick={() => setEtapa(2)} className="text-navy gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                Voltar
+              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setTema({ ...TEMA_DEFAULT });
+                    setEtapa(4);
+                  }}
+                  className="text-navy/50 text-[12px]"
+                >
+                  Pular
+                </Button>
+                <Button
+                  onClick={() => setEtapa(4)}
+                  className="bg-navy text-white hover:bg-navy/90 gap-2"
+                >
+                  Próximo
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Preview */}
+          <div className="flex-1 flex flex-col items-center">
+            <p className="text-[11px] text-navy/40 mb-4 font-medium uppercase tracking-wide">
+              Preview
+            </p>
+            <TypeformMockup tema={tema} />
+          </div>
+        </div>
+      )}
+
+      {/* Etapa 4 — Revisão */}
+      {etapa === 4 && (
+        <div className="space-y-6 max-w-2xl">
           <div className="border border-navy/15 p-5 space-y-3">
             <h3 className="font-display font-bold text-[15px] text-navy">Informações</h3>
             <div className="grid grid-cols-2 gap-3 text-[13px]">
@@ -601,8 +932,45 @@ export function NovoProcessoPage() {
             </div>
           </div>
 
+          <div className="border border-navy/15 p-5 space-y-3">
+            <h3 className="font-display font-bold text-[15px] text-navy">Personalização</h3>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-7 h-7 rounded-full border border-navy/10"
+                  style={{ backgroundColor: tema.cor_fundo }}
+                  title="Fundo"
+                />
+                <div
+                  className="w-7 h-7 rounded-full border border-navy/10"
+                  style={{ backgroundColor: tema.cor_pergunta }}
+                  title="Pergunta"
+                />
+                <div
+                  className="w-7 h-7 rounded-full border border-navy/10"
+                  style={{ backgroundColor: tema.cor_botao }}
+                  title="Botão"
+                />
+              </div>
+              {tema.logo_url && (
+                <img
+                  src={tema.logo_url}
+                  alt="Logo"
+                  className="h-7 w-auto object-contain rounded border border-navy/10"
+                />
+              )}
+              {tema.imagem_fundo_url && (
+                <img
+                  src={tema.imagem_fundo_url}
+                  alt="Fundo"
+                  className="h-7 w-12 object-cover rounded border border-navy/10"
+                />
+              )}
+            </div>
+          </div>
+
           <div className="flex justify-between pt-2">
-            <Button variant="ghost" onClick={() => setEtapa(2)} className="text-navy gap-2">
+            <Button variant="ghost" onClick={() => setEtapa(3)} className="text-navy gap-2">
               <ArrowLeft className="w-4 h-4" />
               Voltar
             </Button>

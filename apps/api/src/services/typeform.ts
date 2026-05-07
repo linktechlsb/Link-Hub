@@ -1,6 +1,6 @@
 import { env } from "../config/env.js";
 
-import type { CreatePerguntaInput } from "@link-leagues/types";
+import type { CreatePerguntaInput, TemaProcesso } from "@link-leagues/types";
 
 const TYPEFORM_BASE_URL = "https://api.typeform.com";
 
@@ -95,13 +95,52 @@ function mapPerguntaToField(pergunta: CreatePerguntaInput): TypeformField {
   }
 }
 
+export async function criarTemaTypeform(tema: TemaProcesso): Promise<string> {
+  const body: Record<string, unknown> = {
+    name: `tema-${Date.now()}`,
+    colors: {
+      answer: tema.cor_botao,
+      background: tema.cor_fundo,
+      button: tema.cor_botao,
+      question: tema.cor_pergunta,
+    },
+    font: "Montserrat",
+  };
+
+  if (tema.imagem_fundo_url) {
+    body["background"] = { href: tema.imagem_fundo_url, layout: "fullscreen", brightness: 0 };
+  }
+
+  if (tema.logo_url) {
+    body["has_transparent_button"] = false;
+  }
+
+  const res = await fetch(`${TYPEFORM_BASE_URL}/themes`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.TYPEFORM_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`Erro ao criar tema no Typeform: ${error}`);
+  }
+
+  const data = (await res.json()) as { id: string };
+  return data.id;
+}
+
 export async function criarFormTypeform(
   nome: string,
   perguntas: CreatePerguntaInput[],
+  themeId?: string,
 ): Promise<{ formId: string; formUrl: string }> {
   const fields = perguntas.sort((a, b) => a.ordem - b.ordem).map(mapPerguntaToField);
 
-  const body = {
+  const body: Record<string, unknown> = {
     title: nome,
     fields,
     settings: {
@@ -128,6 +167,10 @@ export async function criarFormTypeform(
       },
     ],
   };
+
+  if (themeId) {
+    body["theme"] = { href: `${TYPEFORM_BASE_URL}/themes/${themeId}` };
+  }
 
   const res = await fetch(`${TYPEFORM_BASE_URL}/forms`, {
     method: "POST",
