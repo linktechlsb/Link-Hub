@@ -15,19 +15,31 @@ const allowedOrigins = env.CORS_ORIGIN.split(",")
   .map((o) => o.trim())
   .filter(Boolean);
 
+const corsMiddleware = cors({
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    cb(new Error("Origem não permitida pelo CORS."));
+  },
+});
+
 app.set("trust proxy", 1);
 app.use(
   helmet({
-    contentSecurityPolicy: env.isProduction ? undefined : false,
+    contentSecurityPolicy: env.isProduction
+      ? {
+          directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+            imgSrc: ["'self'", "data:", "blob:", "https:"],
+            fontSrc: ["'self'", "https:", "data:"],
+            connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co"],
+            frameSrc: ["'none'"],
+            objectSrc: ["'none'"],
+          },
+        }
+      : false,
     crossOriginEmbedderPolicy: false,
-  }),
-);
-app.use(
-  cors({
-    origin: (origin, cb) => {
-      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-      cb(new Error("Origem não permitida pelo CORS."));
-    },
   }),
 );
 app.use(express.json({ limit: "200kb" }));
@@ -51,6 +63,7 @@ const sensitiveLimiter = rateLimit({
 // Dynamic import to ensure environment variables are loaded before routes initialize
 (async () => {
   const { router } = await import("./routes/index.js");
+  app.use("/api", corsMiddleware);
   app.use("/api", apiLimiter);
   app.use("/api/feedbacks", sensitiveLimiter);
   app.use("/api/usuarios/busca", sensitiveLimiter);
@@ -73,6 +86,9 @@ const sensitiveLimiter = rateLimit({
   app.listen(env.PORT, "0.0.0.0", () => {
     console.log(`API rodando na porta ${env.PORT}`);
   });
-})();
+})().catch((err) => {
+  console.error("Falha crítica ao inicializar o servidor:", err);
+  process.exit(1);
+});
 
 export default app;
