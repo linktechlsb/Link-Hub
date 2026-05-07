@@ -1,0 +1,102 @@
+<h2>Sidebar no Light Mode — qual estilo?</h2>
+<p class="subtitle">Background: #FBFBFB | Page/Cards: #FFFFFF</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#FBFBFB;border:1px solid #eee;border-radius:8px;overflow:hidden;display:flex;height:180px;">
+      <div style="width:48px;background:#10284E;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:14px;">
+        <div style="width:24px;height:24px;background:#FEC641;border-radius:5px;"></div>
+        <div style="width:18px;height:18px;background:#FEC641;border-radius:4px;opacity:0.9;margin-top:6px;"></div>
+        <div style="width:18px;height:18px;background:#546484;border-radius:4px;"></div>
+        <div style="width:18px;height:18px;background:#546484;border-radius:4px;"></div>
+        <div style="width:18px;height:18px;background:#546484;border-radius:4px;"></div>
+      </div>
+      <div style="width:150px;background:#FFFFFF;border-right:1px solid #EAEAEA;padding:10px;">
+        <div style="font-size:8px;color:#999;font-family:monospace;margin-bottom:8px;letter-spacing:0.1em;">PRINCIPAL</div>
+        <div style="background:#10284E;color:#FEC641;font-size:9px;padding:5px 8px;border-radius:4px;margin-bottom:3px;font-weight:600;">Dashboard</div>
+        <div style="color:#546484;font-size:9px;padding:5px 8px;margin-bottom:3px;">Ligas</div>
+        <div style="color:#546484;font-size:9px;padding:5px 8px;margin-bottom:3px;">Projetos</div>
+        <div style="color:#546484;font-size:9px;padding:5px 8px;">Agenda</div>
+      </div>
+      <div style="flex:1;background:#FBFBFB;padding:10px;">
+        <div style="width:70%;height:7px;background:#EAEAEA;border-radius:3px;margin-bottom:5px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:10px;">
+          <div style="background:#FFF;border:1px solid #EAEAEA;border-radius:5px;height:40px;"></div>
+          <div style="background:#FFF;border:1px solid #EAEAEA;border-radius:5px;height:40px;"></div>
+          <div style="background:#FFF;border:1px solid #EAEAEA;border-radius:5px;height:40px;"></div>
+          <div style="background:#FFF;border:1px solid #EAEAEA;border-radius:5px;height:40px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Sidebar Navy (atual)</h3>
+      <p>Tira de ícones navy #10284E + painel de nav branco #FFFFFF. Mantém identidade da marca, contraste forte.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#FBFBFB;border:1px solid #eee;border-radius:8px;overflow:hidden;display:flex;height:180px;">
+      <div style="width:48px;background:#FFFFFF;border-right:1px solid #EAEAEA;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:14px;">
+        <div style="width:24px;height:24px;background:#10284E;border-radius:5px;"></div>
+        <div style="width:18px;height:18px;background:#10284E;border-radius:4px;margin-top:6px;"></div>
+        <div style="width:18px;height:18px;background:#EAEAEA;border-radius:4px;"></div>
+        <div style="width:18px;height:18px;background:#EAEAEA;border-radius:4px;"></div>
+        <div style="width:18px;height:18px;background:#EAEAEA;border-radius:4px;"></div>
+      </div>
+      <div style="width:150px;background:#FBFBFB;border-right:1px solid #EAEAEA;padding:10px;">
+        <div style="font-size:8px;color:#999;font-family:monospace;margin-bottom:8px;letter-spacing:0.1em;">PRINCIPAL</div>
+        <div style="background:#10284E;color:#FFFFFF;font-size:9px;padding:5px 8px;border-radius:4px;margin-bottom:3px;font-weight:600;">Dashboard</div>
+        <div style="color:#546484;font-size:9px;padding:5px 8px;margin-bottom:3px;">Ligas</div>
+        <div style="color:#546484;font-size:9px;padding:5px 8px;margin-bottom:3px;">Projetos</div>
+        <div style="color:#546484;font-size:9px;padding:5px 8px;">Agenda</div>
+      </div>
+      <div style="flex:1;background:#FBFBFB;padding:10px;">
+        <div style="width:70%;height:7px;background:#EAEAEA;border-radius:3px;margin-bottom:5px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:10px;">
+          <div style="background:#FFF;border:1px solid #EAEAEA;border-radius:5px;height:40px;"></div>
+          <div style="background:#FFF;border:1px solid #EAEAEA;border-radius:5px;height:40px;"></div>
+          <div style="background:#FFF;border:1px solid #EAEAEA;border-radius:5px;height:40px;"></div>
+          <div style="background:#FFF;border:1px solid #EAEAEA;border-radius:5px;height:40px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Full Light</h3>
+      <p>Tudo branco/cinza claro. Sidebar discreta, sem cor de marca. Design ultra-limpo tipo Notion/Linear.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#FBFBFB;border:1px solid #eee;border-radius:8px;overflow:hidden;display:flex;height:180px;">
+      <div style="width:48px;background:#FBFBFB;border-right:1px solid #EAEAEA;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:14px;">
+        <div style="width:24px;height:24px;background:#10284E;border-radius:5px;"></div>
+        <div style="width:18px;height:18px;background:#10284E;border-radius:4px;margin-top:6px;opacity:0.15;"></div>
+        <div style="width:18px;height:18px;background:#10284E;border-radius:4px;opacity:0.15;"></div>
+        <div style="width:18px;height:18px;background:#10284E;border-radius:4px;opacity:0.15;"></div>
+        <div style="width:18px;height:18px;background:#FEC641;border-radius:4px;margin-top:auto;"></div>
+      </div>
+      <div style="width:150px;background:#FFFFFF;border-right:1px solid #EAEAEA;padding:10px;">
+        <div style="font-size:8px;color:#999;font-family:monospace;margin-bottom:8px;letter-spacing:0.1em;">PRINCIPAL</div>
+        <div style="background:#FEC641;color:#10284E;font-size:9px;padding:5px 8px;border-radius:4px;margin-bottom:3px;font-weight:700;">Dashboard</div>
+        <div style="color:#10284E;font-size:9px;padding:5px 8px;margin-bottom:3px;opacity:0.6;">Ligas</div>
+        <div style="color:#10284E;font-size:9px;padding:5px 8px;margin-bottom:3px;opacity:0.6;">Projetos</div>
+        <div style="color:#10284E;font-size:9px;padding:5px 8px;opacity:0.6;">Agenda</div>
+      </div>
+      <div style="flex:1;background:#FBFBFB;padding:10px;">
+        <div style="width:70%;height:7px;background:#EAEAEA;border-radius:3px;margin-bottom:5px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:10px;">
+          <div style="background:#FFF;border:1px solid #EAEAEA;border-radius:5px;height:40px;"></div>
+          <div style="background:#FFF;border:1px solid #EAEAEA;border-radius:5px;height:40px;"></div>
+          <div style="background:#FFF;border:1px solid #EAEAEA;border-radius:5px;height:40px;"></div>
+          <div style="background:#FFF;border:1px solid #EAEAEA;border-radius:5px;height:40px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Amarelo como Acento</h3>
+      <p>Sidebar clara com amarelo #FEC641 no item ativo. Leve, contemporâneo, mantém a marca de forma sutil.</p>
+    </div>
+  </div>
+
+</div>

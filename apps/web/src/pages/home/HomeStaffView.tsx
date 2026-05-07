@@ -188,7 +188,7 @@ export function HomeStaffView({ pendentes, ligas, ranking }: HomeStaffViewProps)
           <Card className="shadow-sm overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50">
+                <TableRow>
                   <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
                     Liga
                   </TableHead>
@@ -211,7 +211,7 @@ export function HomeStaffView({ pendentes, ligas, ranking }: HomeStaffViewProps)
                       ? "[&>div]:bg-amber-500"
                       : "[&>div]:bg-green-500";
                   return (
-                    <TableRow key={r.liga_id} className={baixa ? "bg-red-50" : undefined}>
+                    <TableRow key={r.liga_id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <span
@@ -225,7 +225,7 @@ export function HomeStaffView({ pendentes, ligas, ranking }: HomeStaffViewProps)
                           <span
                             className={cn(
                               "text-sm font-semibold",
-                              baixa ? "text-red-600" : "text-slate-700",
+                              baixa ? "text-red-400" : "text-foreground",
                             )}
                           >
                             {r.nome}
@@ -233,7 +233,7 @@ export function HomeStaffView({ pendentes, ligas, ranking }: HomeStaffViewProps)
                           {baixa && (
                             <Badge
                               variant="outline"
-                              className="text-[10px] border-red-300 text-red-600 bg-red-50"
+                              className="text-[10px] border-red-800/40 text-red-400 bg-transparent"
                             >
                               baixa
                             </Badge>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Style</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0a; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 32px; }
+  h1 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 28px; }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .card {
+    border-radius: 12px; border: 2px solid #222; overflow: hidden;
+    cursor: pointer; transition: border-color 0.15s, transform 0.15s; background: #111;
+  }
+  .card:hover { border-color: #444; transform: translateY(-2px); }
+  .card.selected { border-color: #5b8af5; }
+  .card-label {
+    padding: 12px 16px 10px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; color: #888;
+    border-bottom: 1px solid #1c1c1c; display: flex; align-items: center; justify-content: space-between;
+  }
+  .card.selected .card-label { color: #5b8af5; }
+
+  /* PAGE PREVIEWS */
+  .page {
+    padding: 16px; height: 300px; overflow: hidden;
+  }
+  .page-title { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+  .page-sub { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
+
+  /* ── A: Elevação sutil, borda fina ── */
+  .page-a { background: #101010; }
+  .a-card { background: #181818; border: 1px solid #232323; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+  .a-label { font-size: 8px; color: #555; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .a-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .a-stat { background: #1f1f1f; border: 1px solid #282828; border-radius: 6px; padding: 8px 10px; }
+  .a-val { font-size: 18px; font-weight: 700; color: #fff; line-height: 1; }
+  .a-lab { font-size: 8px; color: #555; text-transform: uppercase; margin-top: 3px; }
+  .a-hero { background: #181818; border: 1px solid #232323; border-radius: 8px; padding: 12px; margin-bottom: 10px; height: 58px; display:flex; align-items:flex-end; }
+  .a-hero-name { font-size: 14px; font-weight: 700; color: #fff; }
+  .a-hero-sub { font-size: 9px; color: #666; }
+
+  /* ── B: Bordas brilhantes + sombra ── */
+  .page-b { background: #0d0d0d; }
+  .b-card { background: #161616; border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+  .b-label { font-size: 8px; color: #555; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .b-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .b-stat { background: #1c1c1c; border: 1px solid #2a2a2a; border-radius: 7px; padding: 8px 10px; }
+  .b-val { font-size: 18px; font-weight: 700; color: #fff; line-height: 1; }
+  .b-lab { font-size: 8px; color: #555; text-transform: uppercase; margin-top: 3px; }
+  .b-hero { background: linear-gradient(135deg, #1a1a1a 0%, #222 100%); border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px; margin-bottom: 10px; height: 58px; display:flex; align-items:flex-end; box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+  .b-hero-name { font-size: 14px; font-weight: 700; color: #fff; }
+  .b-hero-sub { font-size: 9px; color: #666; }
+
+  /* ── C: Sem cards, divisores ── */
+  .page-c { background: #101010; }
+  .c-section { margin-bottom: 14px; }
+  .c-label { font-size: 8px; color: #444; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .c-divider { height: 1px; background: #1e1e1e; margin: 10px 0; }
+  .c-row { display: flex; gap: 0; border-top: 1px solid #1e1e1e; border-bottom: 1px solid #1e1e1e; }
+  .c-stat { flex: 1; padding: 10px 0; text-align:center; }
+  .c-stat + .c-stat { border-left: 1px solid #1e1e1e; }
+  .c-val { font-size: 18px; font-weight: 700; color: #fff; }
+  .c-lab { font-size: 8px; color: #444; text-transform: uppercase; margin-top: 2px; }
+  .c-item { padding: 8px 0; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; justify-content: space-between; }
+  .c-item-name { font-size: 12px; color: #e0e0e0; }
+  .c-item-meta { font-size: 9px; color: #555; }
+
+  .card-desc { padding: 14px 16px; border-top: 1px solid #1c1c1c; }
+  .card-desc h3 { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .card-desc p { font-size: 11px; color: #666; line-height: 1.5; }
+  .badge-rec { font-size: 9px; padding: 2px 7px; border-radius: 999px; font-weight: 600; background: #1a2a1a; color: #4caf72; border: 1px solid #2a3a2a; }
+</style>
+</head>
+<body>
+<h1>Como devem ser os painéis de conteúdo?</h1>
+<p class="subtitle">Como as informações são agrupadas dentro das páginas.</p>
+
+<div class="cards">
+
+  <!-- A: Elevação sutil -->
+  <div class="card" data-choice="a" onclick="sel(this)">
+    <div class="card-label">A — Elevação sutil <span class="badge-rec">Recomendado</span></div>
+    <div class="page page-a">
+      <div class="page-title">Olá, Diogo</div>
+      <div class="page-sub">Qui · 07 mai 2026</div>
+      <div class="a-hero">
+        <div><div class="a-hero-name">Agro</div><div class="a-hero-sub">Liga de Agronegócios</div></div>
+      </div>
+      <div class="a-card">
+        <div class="a-label">Métricas globais</div>
+        <div class="a-grid">
+          <div class="a-stat"><div class="a-val">9</div><div class="a-lab">Ligas</div></div>
+          <div class="a-stat"><div class="a-val">148</div><div class="a-lab">Membros</div></div>
+          <div class="a-stat"><div class="a-val">6</div><div class="a-lab">Presenças</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-desc">
+      <h3>Elevação sutil</h3>
+      <p>Cards em #181818 sobre fundo #101010. Borda fina #232323. Não tem sombra — a diferença de cor já cria a hierarquia. Exatamente como a referência.</p>
+    </div>
+  </div>
+
+  <!-- B: Borda + sombra -->
+  <div class="card" data-choice="b" onclick="sel(this)">
+    <div class="card-label">B — Borda + Sombra</div>
+    <div class="page page-b">
+      <div class="page-title">Olá, Diogo</div>
+      <div class="page-sub">Qui · 07 mai 2026</div>
+      <div class="b-hero">
+        <div><div class="b-hero-name">Agro</div><div class="b-hero-sub">Liga de Agronegócios</div></div>
+      </div>
+      <div class="b-card">
+        <div class="b-label">Métricas globais</div>
+        <div class="b-grid">
+          <div class="b-stat"><div class="b-val">9</div><div class="b-lab">Ligas</div></div>
+          <div class="b-stat"><div class="b-val">148</div><div class="b-lab">Membros</div></div>
+          <div class="b-stat"><div class="b-val">6</div><div class="b-lab">Presenças</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-desc">
+      <h3>Borda + Sombra</h3>
+      <p>Cards com borda levemente mais brilhante (#2a2a2a) + sombra sutil. Dá mais "profundidade" — estilo mais próximo ao GitHub/Vercel dark.</p>
+    </div>
+  </div>
+
+  <!-- C: Sem cards -->
+  <div class="card" data-choice="c" onclick="sel(this)">
+    <div class="card-label">C — Sem cards (divisores)</div>
+    <div class="page page-c">
+      <div class="page-title">Olá, Diogo</div>
+      <div class="page-sub">Qui · 07 mai 2026</div>
+      <div class="c-row" style="margin-bottom:14px;">
+        <div class="c-stat"><div class="c-val">9</div><div class="c-lab">Ligas</div></div>
+        <div class="c-stat"><div class="c-val">148</div><div class="c-lab">Membros</div></div>
+        <div class="c-stat"><div class="c-val">6</div><div class="c-lab">Presenças</div></div>
+      </div>
+      <div class="c-label">Ligas ativas</div>
+      <div class="c-item"><div class="c-item-name">Agro</div><div class="c-item-meta">35 membros</div></div>
+      <div class="c-item"><div class="c-item-name">Real Estate</div><div class="c-item-meta">22 membros</div></div>
+      <div class="c-item"><div class="c-item-name">Finanças</div><div class="c-item-meta">18 membros</div></div>
+    </div>
+    <div class="card-desc">
+      <h3>Sem cards</h3>
+      <p>Nenhum container visual — apenas divisores horizontais #1e1e1e. Extremamente limpo, estilo Linear. Sem borders, sem backgrounds nos grupos.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function sel(el) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    fetch('/select', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({type:'click', choice: el.dataset.choice, text: el.querySelector('h3').textContent}) }).catch(()=>{});
+  }
+</script>
+</body>
+</html>

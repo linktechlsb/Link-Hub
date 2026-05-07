@@ -1,11 +1,10 @@
-import { ChevronsUpDown, LogOut, User as UserIcon } from "lucide-react";
+import { ChevronsUpDown, LogOut, Moon, Sun, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -17,32 +16,28 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { cache } from "@/lib/cache";
+import { useTheme } from "@/hooks/use-theme";
 import { supabase } from "@/lib/supabase";
 
 export type NavUserData = {
   name: string;
   email: string;
-  avatarUrl?: string | null;
+  avatarUrl: string | null;
 };
-
-function initials(value: string) {
-  const source = value.trim();
-  if (!source) return "LL";
-  const parts = source.split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "LL";
-  const first = parts[0] ?? "";
-  if (parts.length === 1) return first.slice(0, 2).toUpperCase();
-  const last = parts[parts.length - 1] ?? "";
-  return ((first[0] ?? "") + (last[0] ?? "")).toUpperCase();
-}
 
 export function NavUser({ user }: { user: NavUserData }) {
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
+  const { theme, toggle } = useTheme();
+
+  const initials = user.name
+    .split(" ")
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
 
   async function handleLogout() {
-    cache.limpar();
     await supabase.auth.signOut();
     navigate("/login");
   }
@@ -54,22 +49,14 @@ export function NavUser({ user }: { user: NavUserData }) {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="rounded-none data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-lg bg-brand-yellow text-navy">
-                {user.avatarUrl ? (
-                  <AvatarImage
-                    src={user.avatarUrl}
-                    alt={user.name || user.email}
-                    className="rounded-lg object-cover"
-                  />
-                ) : null}
-                <AvatarFallback className="rounded-lg bg-brand-yellow text-navy font-semibold">
-                  {initials(user.name || user.email)}
-                </AvatarFallback>
+              <Avatar className="h-8 w-8 rounded-lg">
+                <AvatarImage src={user.avatarUrl ?? undefined} alt={user.name} />
+                <AvatarFallback className="rounded-lg">{initials || "?"}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name || "Usuário"}</span>
+                <span className="truncate font-semibold">{user.name}</span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -83,31 +70,25 @@ export function NavUser({ user }: { user: NavUserData }) {
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg bg-brand-yellow text-navy">
-                  {user.avatarUrl ? (
-                    <AvatarImage
-                      src={user.avatarUrl}
-                      alt={user.name || user.email}
-                      className="rounded-lg object-cover"
-                    />
-                  ) : null}
-                  <AvatarFallback className="rounded-lg bg-brand-yellow text-navy font-semibold">
-                    {initials(user.name || user.email)}
-                  </AvatarFallback>
+                <Avatar className="h-8 w-8 rounded-lg">
+                  <AvatarImage src={user.avatarUrl ?? undefined} alt={user.name} />
+                  <AvatarFallback className="rounded-lg">{initials || "?"}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name || "Usuário"}</span>
+                  <span className="truncate font-semibold">{user.name}</span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => navigate("/conta")}>
-                <UserIcon />
-                Conta
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => navigate("/conta")}>
+              <User />
+              Minha Conta
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={toggle}>
+              {theme === "dark" ? <Sun /> : <Moon />}
+              {theme === "dark" ? "Modo Claro" : "Modo Escuro"}
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut />

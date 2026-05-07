@@ -70,13 +70,15 @@ const config: Config = {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
         },
       },
       fontFamily: {
         sans: ["Montserrat", "ui-sans-serif", "system-ui", "sans-serif"],
         display: ["Aeonik", "Montserrat", "ui-sans-serif", "sans-serif"],
-        "plex-sans": ['"IBM Plex Sans"', "ui-sans-serif", "system-ui", "sans-serif"],
-        "plex-mono": ['"IBM Plex Mono"', "ui-monospace", "monospace"],
+        "plex-sans": ['IBM Plex Sans"', "ui-sans-serif", "system-ui", "sans-serif"],
+        "plex-mono": ['IBM Plex Mono"', "ui-monospace", "monospace"],
       },
       borderRadius: {
         lg: "var(--radius)",

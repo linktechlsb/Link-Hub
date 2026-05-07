@@ -118,7 +118,7 @@ function apiParaRecurso(r: RecursoAPI): Recurso {
 }
 
 const inputClass =
-  "w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60";
+  "w-full border border-navy/20 px-3 py-2.5 bg-background font-plex-sans text-[13px] text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-navy/60";
 
 // ─── picker de ícone/cor ──────────────────────────────────────────────────────
 
@@ -187,7 +187,7 @@ function IconeCor({
         <RecursoIcone id={icone} />
       </button>
       {aberto && (
-        <div className="absolute left-0 top-11 z-50 bg-white border border-navy/15 p-3 w-56">
+        <div className="absolute left-0 top-11 z-50 bg-background border border-foreground/15 p-3 w-56">
           <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
             Ícone
           </p>
@@ -392,7 +392,7 @@ function AbaInformacoes({
                 setBannerFile(null);
                 setForm((prev) => ({ ...prev, bannerUrl: "" }));
               }}
-              className="absolute top-2 right-2 bg-white/80 hover:bg-white text-red-500 p-1 transition-colors"
+              className="absolute top-2 right-2 bg-background/80 hover:bg-background text-red-500 p-1 transition-colors"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -654,7 +654,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                         value={editForm.nome ?? ""}
                         onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
                         placeholder="Nome"
-                        className="flex-1 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
+                        className="flex-1 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-navy/60 bg-background"
                       />
                     </div>
                     <div className="flex gap-2">
@@ -662,13 +662,13 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                         value={editForm.url ?? ""}
                         onChange={(e) => setEditForm({ ...editForm, url: e.target.value })}
                         placeholder="URL"
-                        className="flex-1 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
+                        className="flex-1 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-navy/60 bg-background"
                       />
                       <input
                         value={editForm.tipo ?? ""}
                         onChange={(e) => setEditForm({ ...editForm, tipo: e.target.value })}
                         placeholder="Tipo"
-                        className="w-36 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
+                        className="w-36 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-navy/60 bg-background"
                       />
                     </div>
                     <div className="flex gap-3">

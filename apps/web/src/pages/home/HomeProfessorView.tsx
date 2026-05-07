@@ -106,7 +106,7 @@ export function HomeProfessorView({ minhaLiga, ranking }: HomeProfessorViewProps
             <>
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-50">
+                  <TableRow>
                     <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
                       Projeto
                     </TableHead>
@@ -127,7 +127,7 @@ export function HomeProfessorView({ minhaLiga, ranking }: HomeProfessorViewProps
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span className="text-sm font-semibold text-navy">{p.nome}</span>
+                            <span className="text-sm font-semibold text-foreground">{p.nome}</span>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -139,10 +139,10 @@ export function HomeProfessorView({ minhaLiga, ranking }: HomeProfessorViewProps
                               variant="outline"
                               className={
                                 urgente
-                                  ? "border-red-300 text-red-600 bg-red-50 text-[10px]"
+                                  ? "border-red-800/40 text-red-400 bg-transparent text-[10px]"
                                   : medio
-                                    ? "border-amber-300 text-amber-700 bg-amber-50 text-[10px]"
-                                    : "border-slate-300 text-slate-500 bg-slate-50 text-[10px]"
+                                    ? "border-amber-700/40 text-amber-400 bg-transparent text-[10px]"
+                                    : "border-foreground/20 text-foreground/50 bg-transparent text-[10px]"
                               }
                             >
                               {urgente ? "Urgente" : medio ? "Atenção" : "Aguardando"}
@@ -165,7 +165,7 @@ export function HomeProfessorView({ minhaLiga, ranking }: HomeProfessorViewProps
                 </TableBody>
               </Table>
               {totalPages > 1 && (
-                <div className="border-t border-border px-4 py-2 bg-slate-50">
+                <div className="border-t border-[#191919] px-4 py-2 bg-background">
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>

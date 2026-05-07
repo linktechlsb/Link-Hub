@@ -41,11 +41,11 @@ export function KpiCard({
     <Card className="shadow-sm">
       <CardContent className="pt-5 pb-4">
         {icon && (
-          <div className="h-8 w-8 rounded-lg bg-slate-50 border border-border flex items-center justify-center mb-3">
+          <div className="h-8 w-8 rounded-lg bg-background border border-[#191919] flex items-center justify-center mb-3">
             {icon}
           </div>
         )}
-        <div className="text-3xl font-bold text-navy leading-none">{value}</div>
+        <div className="text-3xl font-bold text-foreground leading-none">{value}</div>
         <div className="text-xs text-muted-foreground uppercase tracking-wide mt-2">{label}</div>
         {trend && <div className={cn("text-xs mt-1.5 font-medium", trendClass)}>{trend}</div>}
       </CardContent>

@@ -29,7 +29,7 @@ export function HomeV1Page() {
   const dataFormatada = hoje.replace(/\./g, "").toUpperCase();
 
   return (
-    <div className="font-plex-sans bg-white min-h-full">
+    <div className="font-plex-sans bg-background min-h-full">
       <div className="max-w-5xl mx-auto px-8 py-10">
         <header className="flex items-end justify-between">
           <div>
@@ -40,17 +40,17 @@ export function HomeV1Page() {
               </>
             ) : (
               <>
-                <h1 className="font-plex-sans text-[22px] font-semibold text-navy tracking-[-0.02em]">
+                <h1 className="font-plex-sans text-[22px] font-semibold text-foreground tracking-[-0.02em]">
                   Olá, {nomeUsuario}
                 </h1>
-                <p className="font-plex-mono text-[10px] uppercase tracking-[0.08em] text-navy/60 mt-1">
+                <p className="font-plex-mono text-[10px] uppercase tracking-[0.08em] text-foreground/50 mt-1">
                   {dataFormatada}
                 </p>
               </>
             )}
           </div>
           {role && !loadingUser && (
-            <span className="font-plex-mono text-[9px] uppercase tracking-[0.2em] text-navy border border-navy px-2.5 py-1.5">
+            <span className="font-plex-mono text-[9px] uppercase tracking-[0.2em] text-foreground/60 border border-foreground/20 px-2.5 py-1.5">
               {ROLE_LABELS[role] ?? role}
             </span>
           )}
