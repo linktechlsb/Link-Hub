@@ -43,12 +43,15 @@ interface SectionHeaderProps {
   eyebrow?: string;
   titulo: string;
   acao?: ReactNode;
+  tituloClassName?: string;
 }
 
-export function SectionHeader({ titulo, acao }: SectionHeaderProps) {
+export function SectionHeader({ titulo, acao, tituloClassName }: SectionHeaderProps) {
   return (
     <div className="flex items-center justify-between mb-4">
-      <p className="text-xs font-bold text-link-blue uppercase tracking-wider">{titulo}</p>
+      <p className={tituloClassName ?? "text-xs font-bold text-link-blue uppercase tracking-wider"}>
+        {titulo}
+      </p>
       {acao}
     </div>
   );

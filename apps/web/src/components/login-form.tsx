@@ -46,7 +46,7 @@ export function LoginForm({
             required
             value={email}
             onChange={(e) => onEmailChange(e.target.value)}
-            className="border-brand-gray focus-visible:ring-link-blue"
+            className="border-brand-gray focus-visible:ring-link-blue bg-white"
           />
         </div>
         <div className="grid gap-2">
@@ -68,7 +68,7 @@ export function LoginForm({
             required
             value={password}
             onChange={(e) => onPasswordChange(e.target.value)}
-            className="border-brand-gray focus-visible:ring-link-blue"
+            className="border-brand-gray focus-visible:ring-link-blue bg-white"
           />
         </div>
 

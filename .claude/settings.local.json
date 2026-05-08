@@ -118,7 +118,13 @@
       "Bash(curl -s \"https://api.github.com/repos/shadcn-ui/ui/git/trees/main?recursive=1\")",
       "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(f['path']\\) for f in data.get\\('tree',[]\\) if 'sidebar-07' in f['path'].lower\\(\\)]\")",
       "Bash(curl -s \"https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/v4/public/r/styles/new-york/sidebar-07.json\")",
-      "Bash(npx shadcn@latest add switch --yes)"
+      "Bash(npx shadcn@latest add switch --yes)",
+      "Bash(xargs cat)",
+      "Bash(npx shadcn@latest add select)",
+      "Bash(npx shadcn@latest add calendar --yes)",
+      "Bash(grep -E \"^vite|^react$|^react-dom\")",
+      "Bash(npx vite *)",
+      "Bash(grep \"^vite$\")"
     ],
     "deny": [
       "Bash(git commit *)",

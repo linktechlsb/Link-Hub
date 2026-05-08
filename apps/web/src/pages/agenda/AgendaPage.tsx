@@ -1,6 +1,15 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useState, useMemo } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { type DayButton } from "react-day-picker";
 
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -28,7 +37,6 @@ const LEAGUE_PALETTE: { bg: string; text: string; dot: string }[] = [
   { bg: "bg-emerald-600", text: "text-white", dot: "#059669" },
 ];
 
-const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MESES = [
   "Janeiro",
   "Fevereiro",
@@ -47,11 +55,11 @@ const MESES = [
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
 }
-function getFirstDayOfMonth(year: number, month: number) {
-  return new Date(year, month, 1).getDay();
-}
 function toDateStr(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+function dateToStr(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 function formatDateLabel(dateStr: string) {
   const parts = dateStr.split("-").map(Number);
@@ -147,6 +155,90 @@ function GoogleCalendarIcon() {
   );
 }
 
+// ── Calendar context ───────────────────────────────────────────────────────────
+const AgendaCalendarContext = createContext<{
+  eventosPorDia: Record<string, EventoComLiga[]>;
+  ligaColorMap: Record<string, (typeof LEAGUE_PALETTE)[0]>;
+}>({ eventosPorDia: {}, ligaColorMap: {} });
+
+function AgendaDayButton({
+  day,
+  modifiers,
+  className: _ignored,
+  ...props
+}: React.ComponentProps<typeof DayButton>) {
+  const { eventosPorDia, ligaColorMap } = useContext(AgendaCalendarContext);
+  const isOutside = modifiers.outside ?? false;
+
+  if (isOutside) {
+    return <button {...props} disabled className="w-full min-h-[88px]" aria-hidden />;
+  }
+
+  const dateStr = dateToStr(day.date);
+  const isToday = modifiers.today ?? false;
+  const isSelected = modifiers.selected ?? false;
+  const dayEvents = eventosPorDia[dateStr] ?? [];
+
+  return (
+    <button
+      {...props}
+      className={cn(
+        "w-full min-h-[88px] p-2 text-left transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-navy/30",
+        isSelected ? "bg-navy/[0.04]" : "hover:bg-navy/[0.02]",
+      )}
+    >
+      <span
+        className={cn(
+          "inline-flex items-center justify-center w-7 h-7 text-sm mb-1 select-none font-plex-mono",
+          isToday && "rounded-full bg-navy text-white font-bold",
+          !isToday && isSelected && "text-navy font-bold",
+          !isToday && !isSelected && "text-navy/70 font-medium",
+        )}
+      >
+        {day.date.getDate()}
+      </span>
+      <div className="space-y-0.5">
+        {dayEvents.slice(0, 2).map((evento) => {
+          const color = ligaColorMap[evento.liga_id];
+          return (
+            <div
+              key={evento.id}
+              title={evento.titulo}
+              className={cn(
+                "relative text-[11px] px-1.5 py-0.5 truncate font-medium leading-snug",
+                color?.bg ?? "bg-navy",
+                color?.text ?? "text-white",
+              )}
+            >
+              {evento.titulo}
+              {evento.requer_aprovacao &&
+                (evento.status_aprovacao === "pendente" ||
+                  evento.status_aprovacao === "rejeitado") && (
+                  <span
+                    className={cn(
+                      "absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full border border-white/40",
+                      evento.status_aprovacao === "pendente" ? "bg-brand-yellow" : "bg-rose-400",
+                    )}
+                  />
+                )}
+            </div>
+          );
+        })}
+        {dayEvents.length > 2 && (
+          <p className="text-[10px] text-navy/40 px-1 font-plex-mono">
+            +{dayEvents.length - 2} mais
+          </p>
+        )}
+      </div>
+    </button>
+  );
+}
+
+// ── Select helpers ─────────────────────────────────────────────────────────────
+const triggerCls = "font-plex-sans text-[13px] w-auto";
+const sheetTriggerCls = "w-full font-plex-sans text-[13px]";
+
+// ── Page ───────────────────────────────────────────────────────────────────────
 export function AgendaPage() {
   const today = new Date();
   const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
@@ -162,14 +254,12 @@ export function AgendaPage() {
   const [role, setRole] = useState<UserRole | null>(null);
   const [usuarioId, setUsuarioId] = useState<string | null>(null);
 
-  // Sheet (criar / editar)
   const [sheetAberto, setSheetAberto] = useState<"criar" | "editar" | null>(null);
   const [eventoEditando, setEventoEditando] = useState<EventoComLiga | null>(null);
   const [form, setForm] = useState<EventoForm>(formVazio(todayStr));
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  // Exclusão
   const [confirmarDeletar, setConfirmarDeletar] = useState<EventoComLiga | null>(null);
   const [deletando, setDeletando] = useState(false);
   const [eventoRecenteCriado, setEventoRecenteCriado] = useState<EventoCriadoData | null>(null);
@@ -258,15 +348,16 @@ export function AgendaPage() {
         email: string;
         avatar_url?: string | null;
       }>;
-      const filtrados = data
-        .filter((m) => m.usuario_id !== usuarioId && m.email)
-        .map((m) => ({
-          usuario_id: m.usuario_id,
-          nome: m.nome,
-          email: m.email,
-          avatar_url: m.avatar_url,
-        }));
-      setMembrosLiga(filtrados);
+      setMembrosLiga(
+        data
+          .filter((m) => m.usuario_id !== usuarioId && m.email)
+          .map((m) => ({
+            usuario_id: m.usuario_id,
+            nome: m.nome,
+            email: m.email,
+            avatar_url: m.avatar_url,
+          })),
+      );
     }
     void carregarMembros(eventoRecenteCriado.liga_id);
   }, [eventoRecenteCriado, usuarioId]);
@@ -408,15 +499,6 @@ export function AgendaPage() {
     }
   }
 
-  // Grade do calendário
-  const daysInMonth = getDaysInMonth(year, month);
-  const firstDay = getFirstDayOfMonth(year, month);
-  const calendarDays: (number | null)[] = [
-    ...Array.from({ length: firstDay }, () => null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ];
-  while (calendarDays.length % 7 !== 0) calendarDays.push(null);
-
   const eventosPorDia = useMemo(() => {
     const map: Record<string, EventoComLiga[]> = {};
     for (const evento of eventos) {
@@ -438,6 +520,12 @@ export function AgendaPage() {
     [eventos, todayStr],
   );
 
+  const selectedDateObj = useMemo(() => {
+    if (!selectedDate) return undefined;
+    const parts = selectedDate.split("-").map(Number);
+    return new Date(parts[0]!, parts[1]! - 1, parts[2]!);
+  }, [selectedDate]);
+
   function prevMonth() {
     setViewDate(new Date(year, month - 1, 1));
     setSelectedDate(null);
@@ -455,9 +543,6 @@ export function AgendaPage() {
   }
 
   const precisaSala = ["encontro", "aula", "evento", "hub"].includes(form.categoria);
-
-  const salasDisponiveis = salas;
-
   const salaSelecionada = salas.find((s) => s.id === form.sala_id);
   const alertaHorarioSala =
     salaSelecionada?.disponivel_a_partir &&
@@ -465,6 +550,11 @@ export function AgendaPage() {
     form.hora_inicio < salaSelecionada.disponivel_a_partir
       ? `A sala ${salaSelecionada.nome} está disponível apenas a partir das ${salaSelecionada.disponivel_a_partir.slice(0, 5)}.`
       : null;
+
+  // Sentinel values para Select (evita value="" vazio no Radix)
+  const filterLigaVal = filterLiga || "__all";
+  const formSalaVal = form.sala_id || "__none";
+  const formLigaVal = form.liga_id || "__none";
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-10">
@@ -479,55 +569,54 @@ export function AgendaPage() {
           }
         }}
       >
-        <SheetContent
-          side="right"
-          className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-white"
-        >
+        <SheetContent side="right" className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0">
           <div className="flex-shrink-0">
-            <div className="h-px bg-navy/90" />
+            <div className="h-px bg-foreground/20" />
             <div className="px-8 pt-8 pb-6">
-              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50">
+              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
                 {sheetAberto === "criar" ? "Novo" : "Editar"}
               </p>
-              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy mt-1">
+              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
                 {sheetAberto === "criar" ? "Criar Evento" : (eventoEditando?.titulo ?? "Evento")}
               </h2>
             </div>
-            <div className="h-px bg-navy/15" />
+            <div className="h-px bg-foreground/[0.08]" />
           </div>
 
           <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
             {eventoRecenteCriado ? (
               <div className="flex flex-col items-center gap-6 py-8">
-                <p className="font-plex-sans text-[14px] font-medium text-navy text-center">
+                <p className="font-plex-sans text-[14px] font-medium text-foreground text-center">
                   Evento criado com sucesso!
                 </p>
-
                 <div className="w-full">
-                  <label
-                    htmlFor="ev-convidados-modo"
-                    className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
-                  >
+                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
                     Convidar membros
                   </label>
-                  <select
-                    id="ev-convidados-modo"
+                  <Select
                     value={modoConvidados}
-                    onChange={(e) => {
-                      const v = e.target.value as "todos" | "selecionar";
-                      setModoConvidados(v);
+                    onValueChange={(v) => {
+                      setModoConvidados(v as "todos" | "selecionar");
                       if (v === "todos") setSelecionados(new Set());
                     }}
-                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
                   >
-                    <option value="todos">Todos os membros</option>
-                    <option value="selecionar">Selecionar membros</option>
-                  </select>
+                    <SelectTrigger className={sheetTriggerCls}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos" className="font-plex-sans text-[13px]">
+                        Todos os membros
+                      </SelectItem>
+                      <SelectItem value="selecionar" className="font-plex-sans text-[13px]">
+                        Selecionar membros
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
 
                   {modoConvidados === "selecionar" && (
-                    <div className="mt-3 border border-navy/20 max-h-56 overflow-y-auto">
+                    <div className="mt-3 border border-border bg-muted/30 max-h-56 overflow-y-auto rounded">
                       {membrosLiga.length === 0 ? (
-                        <p className="font-plex-sans text-[13px] text-navy/50 px-3 py-3">
+                        <p className="font-plex-sans text-[13px] text-foreground/50 px-3 py-3">
                           Nenhum membro disponível.
                         </p>
                       ) : (
@@ -536,26 +625,26 @@ export function AgendaPage() {
                           return (
                             <label
                               key={m.usuario_id}
-                              className="flex items-center gap-3 px-3 py-2 border-b border-navy/10 last:border-b-0 cursor-pointer hover:bg-navy/[0.03]"
+                              className="flex items-center gap-3 px-3 py-2 border-b border-border/50 last:border-b-0 cursor-pointer hover:bg-muted/50"
                             >
                               <input
                                 type="checkbox"
                                 checked={checked}
-                                onChange={() => {
+                                onChange={() =>
                                   setSelecionados((prev) => {
                                     const next = new Set(prev);
                                     if (next.has(m.usuario_id)) next.delete(m.usuario_id);
                                     else next.add(m.usuario_id);
                                     return next;
-                                  });
-                                }}
+                                  })
+                                }
                                 className="accent-navy"
                               />
                               <div className="flex flex-col text-left flex-1 min-w-0">
-                                <span className="font-plex-sans text-[13px] text-navy truncate">
+                                <span className="font-plex-sans text-[13px] text-foreground truncate">
                                   {m.nome}
                                 </span>
-                                <span className="font-plex-mono text-[10px] text-navy/50 truncate">
+                                <span className="font-plex-mono text-[10px] text-foreground/50 truncate">
                                   {m.email}
                                 </span>
                               </div>
@@ -565,9 +654,8 @@ export function AgendaPage() {
                       )}
                     </div>
                   )}
-
                   {modoConvidados === "selecionar" && membrosLiga.length > 0 && (
-                    <p className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-navy/50 mt-2">
+                    <p className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/50 mt-2">
                       {selecionados.size} selecionado{selecionados.size === 1 ? "" : "s"}
                     </p>
                   )}
@@ -594,7 +682,7 @@ export function AgendaPage() {
                       "_blank",
                     );
                   }}
-                  className="border border-gray-200 rounded-lg px-4 py-2 flex items-center gap-2 hover:shadow-sm transition-shadow text-sm text-navy cursor-pointer"
+                  className="border border-border rounded-full px-4 py-2 flex items-center gap-2 hover:bg-muted/50 transition-colors text-sm text-foreground cursor-pointer"
                 >
                   <GoogleCalendarIcon />
                   Adicionar ao Google Calendar
@@ -602,72 +690,84 @@ export function AgendaPage() {
               </div>
             ) : (
               <>
-                {/* Liga — apenas ao criar */}
                 {sheetAberto === "criar" && (
                   <div>
-                    <label
-                      htmlFor="ev-liga"
-                      className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
-                    >
+                    <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
                       Liga
                     </label>
                     {role === "diretor" && ligasDisponiveis.length === 1 ? (
-                      <div className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-navy/[0.03]">
+                      <div className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 rounded">
                         {ligasDisponiveis[0]!.nome}
                       </div>
                     ) : (
-                      <select
-                        id="ev-liga"
-                        value={form.liga_id}
-                        onChange={(e) => setForm((f) => ({ ...f, liga_id: e.target.value }))}
-                        className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                      <Select
+                        value={formLigaVal}
+                        onValueChange={(v) =>
+                          setForm((f) => ({ ...f, liga_id: v === "__none" ? "" : v }))
+                        }
                       >
-                        <option value="">Selecionar liga...</option>
-                        {ligasDisponiveis.map((liga) => (
-                          <option key={liga.id} value={liga.id}>
-                            {liga.nome}
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger className={sheetTriggerCls}>
+                          <SelectValue placeholder="Selecionar liga..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ligasDisponiveis.map((liga) => (
+                            <SelectItem
+                              key={liga.id}
+                              value={liga.id}
+                              className="font-plex-sans text-[13px]"
+                            >
+                              {liga.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     )}
                   </div>
                 )}
 
-                {/* Categoria */}
                 <div>
-                  <label
-                    htmlFor="ev-categoria"
-                    className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
-                  >
+                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
                     Categoria
                   </label>
-                  <select
-                    id="ev-categoria"
+                  <Select
                     value={form.categoria}
-                    onChange={(e) =>
+                    onValueChange={(v) =>
                       setForm((f) => ({
                         ...f,
-                        categoria: e.target.value as CategoriaEvento,
+                        categoria: v as CategoriaEvento,
                         sala_id: "",
                         hora_inicio: "",
                         hora_fim: "",
                       }))
                     }
-                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
                   >
-                    <option value="encontro">Encontro</option>
-                    <option value="aula">Aula</option>
-                    <option value="cowork">Cowork</option>
-                    <option value="evento">Evento</option>
-                    <option value="hub">Hub</option>
-                  </select>
+                    <SelectTrigger className={sheetTriggerCls}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="encontro" className="font-plex-sans text-[13px]">
+                        Encontro
+                      </SelectItem>
+                      <SelectItem value="aula" className="font-plex-sans text-[13px]">
+                        Aula
+                      </SelectItem>
+                      <SelectItem value="cowork" className="font-plex-sans text-[13px]">
+                        Cowork
+                      </SelectItem>
+                      <SelectItem value="evento" className="font-plex-sans text-[13px]">
+                        Evento
+                      </SelectItem>
+                      <SelectItem value="hub" className="font-plex-sans text-[13px]">
+                        Hub
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* Título */}
                 <div>
                   <label
                     htmlFor="ev-titulo"
-                    className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                    className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
                   >
                     Título
                   </label>
@@ -677,15 +777,14 @@ export function AgendaPage() {
                     value={form.titulo}
                     onChange={(e) => setForm((f) => ({ ...f, titulo: e.target.value }))}
                     placeholder="Nome do evento"
-                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+                    className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
                   />
                 </div>
 
-                {/* Data */}
                 <div>
                   <label
                     htmlFor="ev-data"
-                    className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                    className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
                   >
                     Data
                   </label>
@@ -694,18 +793,17 @@ export function AgendaPage() {
                     type="date"
                     value={form.data}
                     onChange={(e) => setForm((f) => ({ ...f, data: e.target.value }))}
-                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                    className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 focus:outline-none focus:border-foreground/30 rounded"
                   />
                 </div>
 
-                {/* Horário + Sala */}
                 {precisaSala && (
                   <>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label
                           htmlFor="ev-inicio"
-                          className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                          className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
                         >
                           Horário início
                         </label>
@@ -714,13 +812,13 @@ export function AgendaPage() {
                           type="time"
                           value={form.hora_inicio}
                           onChange={(e) => setForm((f) => ({ ...f, hora_inicio: e.target.value }))}
-                          className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                          className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 focus:outline-none focus:border-foreground/30 rounded"
                         />
                       </div>
                       <div>
                         <label
                           htmlFor="ev-fim"
-                          className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                          className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
                         >
                           Horário fim
                         </label>
@@ -729,30 +827,35 @@ export function AgendaPage() {
                           type="time"
                           value={form.hora_fim}
                           onChange={(e) => setForm((f) => ({ ...f, hora_fim: e.target.value }))}
-                          className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                          className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 focus:outline-none focus:border-foreground/30 rounded"
                         />
                       </div>
                     </div>
                     <div>
-                      <label
-                        htmlFor="ev-sala"
-                        className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
-                      >
+                      <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
                         Sala
                       </label>
-                      <select
-                        id="ev-sala"
-                        value={form.sala_id}
-                        onChange={(e) => setForm((f) => ({ ...f, sala_id: e.target.value }))}
-                        className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                      <Select
+                        value={formSalaVal}
+                        onValueChange={(v) =>
+                          setForm((f) => ({ ...f, sala_id: v === "__none" ? "" : v }))
+                        }
                       >
-                        <option value="">Selecionar sala...</option>
-                        {salasDisponiveis.map((sala) => (
-                          <option key={sala.id} value={sala.id}>
-                            {sala.nome}
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger className={sheetTriggerCls}>
+                          <SelectValue placeholder="Selecionar sala..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {salas.map((sala) => (
+                            <SelectItem
+                              key={sala.id}
+                              value={sala.id}
+                              className="font-plex-sans text-[13px]"
+                            >
+                              {sala.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       {alertaHorarioSala && (
                         <p className="font-plex-mono text-[10px] tracking-[0.08em] text-amber-600 mt-2">
                           {alertaHorarioSala}
@@ -762,27 +865,23 @@ export function AgendaPage() {
                   </>
                 )}
 
-                {/* Aviso resubmissão ao editar evento já aprovado */}
                 {sheetAberto === "editar" &&
                   eventoEditando?.status_aprovacao === "aprovado" &&
                   ["evento", "hub"].includes(form.categoria) && (
-                    <p className="font-plex-mono text-[10px] tracking-[0.08em] text-navy/50">
+                    <p className="font-plex-mono text-[10px] tracking-[0.08em] text-foreground/50">
                       Esta edição irá resubmeter o evento para aprovação do staff.
                     </p>
                   )}
-
-                {/* Aviso aprovação */}
                 {["evento", "hub"].includes(form.categoria) && (
                   <p className="font-plex-mono text-[10px] tracking-[0.08em] text-amber-600">
                     Este evento requer aprovação do staff antes de ser publicado.
                   </p>
                 )}
 
-                {/* Descrição */}
                 <div>
                   <label
                     htmlFor="ev-descricao"
-                    className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                    className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
                   >
                     Descrição (opcional)
                   </label>
@@ -792,7 +891,7 @@ export function AgendaPage() {
                     onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))}
                     placeholder="Detalhes do evento..."
                     rows={3}
-                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60 resize-none"
+                    className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 resize-none rounded"
                   />
                 </div>
 
@@ -802,32 +901,43 @@ export function AgendaPage() {
           </div>
 
           <div className="flex-shrink-0">
-            <div className="h-px bg-navy/15" />
-            <div className="px-8 py-6">
+            <div className="h-px bg-foreground/[0.08]" />
+            <div className="px-8 py-6 flex flex-col gap-3">
               {eventoRecenteCriado ? (
                 <button
                   onClick={() => {
                     setSheetAberto(null);
                     setEventoRecenteCriado(null);
                   }}
-                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-4 py-3 hover:bg-navy hover:text-white transition-colors"
+                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
                 >
                   Fechar
                 </button>
               ) : (
-                <button
-                  onClick={() => void handleSalvar()}
-                  disabled={
-                    salvando || !form.titulo.trim() || (sheetAberto === "criar" && !form.liga_id)
-                  }
-                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {salvando
-                    ? "Salvando..."
-                    : sheetAberto === "criar"
-                      ? "Criar evento"
-                      : "Salvar alterações"}
-                </button>
+                <>
+                  <button
+                    onClick={() => void handleSalvar()}
+                    disabled={
+                      salvando || !form.titulo.trim() || (sheetAberto === "criar" && !form.liga_id)
+                    }
+                    className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {salvando
+                      ? "Salvando..."
+                      : sheetAberto === "criar"
+                        ? "Criar evento"
+                        : "Salvar alterações"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSheetAberto(null);
+                      setErro(null);
+                    }}
+                    className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -837,36 +947,38 @@ export function AgendaPage() {
       {/* Confirm Exclusão */}
       {confirmarDeletar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white border border-navy/20 w-full max-w-sm mx-4">
+          <div className="bg-background border border-foreground/20 w-full max-w-sm mx-4 rounded-lg overflow-hidden">
             <div className="px-8 py-6">
-              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50">
+              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50">
                 Confirmar
               </p>
-              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy mt-1">
+              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
                 Excluir evento
               </h2>
             </div>
-            <div className="h-px bg-navy/15" />
+            <div className="h-px bg-foreground/15" />
             <div className="px-8 py-5">
-              <p className="font-plex-sans text-[13px] text-navy/70">
+              <p className="font-plex-sans text-[13px] text-foreground/70">
                 Tem certeza que deseja excluir{" "}
-                <span className="font-medium text-navy">&quot;{confirmarDeletar.titulo}&quot;</span>
+                <span className="font-medium text-foreground">
+                  &quot;{confirmarDeletar.titulo}&quot;
+                </span>
                 ? Esta ação não pode ser desfeita.
               </p>
             </div>
-            <div className="h-px bg-navy/15" />
+            <div className="h-px bg-foreground/15" />
             <div className="px-8 py-6 flex gap-3">
               <button
                 onClick={() => setConfirmarDeletar(null)}
                 disabled={deletando}
-                className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-4 py-3 hover:bg-navy hover:text-white transition-colors disabled:opacity-40"
+                className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-4 py-3 rounded-full hover:bg-foreground hover:text-background transition-colors disabled:opacity-40"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => void handleDeletarEvento()}
                 disabled={deletando}
-                className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-red-600 px-4 py-3 hover:bg-red-700 transition-colors disabled:opacity-40"
+                className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-red-600 px-4 py-3 rounded-full hover:bg-red-700 transition-colors disabled:opacity-40"
               >
                 {deletando ? "..." : "Excluir"}
               </button>
@@ -878,10 +990,10 @@ export function AgendaPage() {
       {/* Cabeçalho */}
       <div className="mb-10 flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
+          <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground">
             Agenda
           </h1>
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50 mt-1">
             Calendário · Link School of Business
           </p>
         </div>
@@ -889,33 +1001,39 @@ export function AgendaPage() {
           {podeGerenciar && (
             <button
               onClick={abrirCriar}
-              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-2 hover:bg-navy/90 transition-colors"
+              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-foreground hover:text-background transition-colors"
             >
               + Criar evento
             </button>
           )}
           <button
             onClick={goToToday}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors"
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-foreground hover:text-background transition-colors"
           >
             Hoje
           </button>
           {ligas.length > 0 && (
-            <select
-              value={filterLiga}
-              onChange={(e) => {
-                setFilterLiga(e.target.value);
+            <Select
+              value={filterLigaVal}
+              onValueChange={(v) => {
+                setFilterLiga(v === "__all" ? "" : v);
                 setSelectedDate(null);
               }}
-              className="font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-1.5 bg-white focus:outline-none focus:border-navy/60"
             >
-              <option value="">Todas as ligas</option>
-              {ligas.map((liga) => (
-                <option key={liga.id} value={liga.id}>
-                  {liga.nome}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className={cn(triggerCls, "min-w-[160px]")}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all" className="font-plex-sans text-[13px]">
+                  Todas as ligas
+                </SelectItem>
+                {ligas.map((liga) => (
+                  <SelectItem key={liga.id} value={liga.id} className="font-plex-sans text-[13px]">
+                    {liga.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         </div>
       </div>
@@ -926,124 +1044,77 @@ export function AgendaPage() {
         <div className="xl:col-span-2 space-y-4">
           <div>
             {/* Navegação do mês */}
-            <div className="h-px bg-navy/90" />
+            <div className="h-px bg-foreground/90" />
             <div className="flex items-center justify-between py-4">
               <button
                 onClick={prevMonth}
-                className="p-2 text-navy hover:bg-navy/[0.04] transition-colors"
+                className="p-2 text-foreground hover:bg-foreground/[0.04] rounded-full transition-colors"
                 aria-label="Mês anterior"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <h2 className="font-display font-bold text-[18px] tracking-[-0.02em] text-navy select-none">
+              <h2 className="font-display font-bold text-[18px] tracking-[-0.02em] text-foreground select-none">
                 {MESES[month]} {year}
               </h2>
               <button
                 onClick={nextMonth}
-                className="p-2 text-navy hover:bg-navy/[0.04] transition-colors"
+                className="p-2 text-foreground hover:bg-foreground/[0.04] rounded-full transition-colors"
                 aria-label="Próximo mês"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
-            <div className="h-px bg-navy/15" />
+            <div className="h-px bg-foreground/15" />
 
-            {/* Dias da semana */}
-            <div className="grid grid-cols-7 border-b border-navy/10 bg-navy/[0.02]">
-              {DIAS_SEMANA.map((dia) => (
-                <div
-                  key={dia}
-                  className="py-2.5 text-center font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/50"
-                >
-                  {dia}
-                </div>
-              ))}
-            </div>
-
-            {/* Grade de dias */}
-            <div className="grid grid-cols-7">
-              {calendarDays.map((day, i) => {
-                if (!day) {
-                  return (
-                    <div
-                      key={`empty-${i}`}
-                      className={cn(
-                        "min-h-[88px] border-b border-navy/10",
-                        (i + 1) % 7 !== 0 && "border-r border-navy/10",
-                      )}
-                    />
-                  );
-                }
-
-                const dateStr = toDateStr(year, month, day);
-                const isToday = dateStr === todayStr;
-                const isSelected = dateStr === selectedDate;
-                const dayEvents = eventosPorDia[dateStr] ?? [];
-                const isLastInRow = (i + 1) % 7 === 0;
-
-                return (
-                  <button
-                    key={day}
-                    onClick={() => {
-                      setSelectedDate(isSelected ? null : dateStr);
-                      setSelectedEvento(null);
-                    }}
-                    className={cn(
-                      "min-h-[88px] p-2 border-b border-navy/10 text-left transition-all",
-                      !isLastInRow && "border-r border-navy/10",
-                      isSelected ? "bg-navy/[0.04]" : "hover:bg-navy/[0.02]",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "inline-flex items-center justify-center w-7 h-7 text-sm mb-1 select-none font-plex-mono",
-                        isToday && "rounded-full bg-navy text-white font-bold",
-                        !isToday && isSelected && "text-navy font-bold",
-                        !isToday && !isSelected && "text-navy/70 font-medium",
-                      )}
-                    >
-                      {day}
-                    </span>
-
-                    <div className="space-y-0.5">
-                      {dayEvents.slice(0, 2).map((evento) => {
-                        const color = ligaColorMap[evento.liga_id];
-                        return (
-                          <div
-                            key={evento.id}
-                            title={evento.titulo}
-                            className={cn(
-                              "relative text-[11px] px-1.5 py-0.5 truncate font-medium leading-snug",
-                              color?.bg ?? "bg-navy",
-                              color?.text ?? "text-white",
-                            )}
-                          >
-                            {evento.titulo}
-                            {evento.requer_aprovacao &&
-                              (evento.status_aprovacao === "pendente" ||
-                                evento.status_aprovacao === "rejeitado") && (
-                                <span
-                                  className={cn(
-                                    "absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full border border-white/40",
-                                    evento.status_aprovacao === "pendente"
-                                      ? "bg-brand-yellow"
-                                      : "bg-rose-400",
-                                  )}
-                                />
-                              )}
-                          </div>
-                        );
-                      })}
-                      {dayEvents.length > 2 && (
-                        <p className="text-[10px] text-navy/40 px-1 font-plex-mono">
-                          +{dayEvents.length - 2} mais
-                        </p>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            {/* Calendar shadcn */}
+            <AgendaCalendarContext.Provider value={{ eventosPorDia, ligaColorMap }}>
+              <Calendar
+                mode="single"
+                selected={selectedDateObj}
+                onSelect={(date) => {
+                  if (date) {
+                    const s = dateToStr(date);
+                    setSelectedDate(s === selectedDate ? null : s);
+                  } else {
+                    setSelectedDate(null);
+                  }
+                  setSelectedEvento(null);
+                }}
+                month={viewDate}
+                onMonthChange={(date) => {
+                  setViewDate(new Date(date.getFullYear(), date.getMonth(), 1));
+                  setSelectedDate(null);
+                  setSelectedEvento(null);
+                }}
+                showOutsideDays
+                className="w-full p-0 bg-transparent"
+                classNames={{
+                  root: "w-full",
+                  months: "w-full",
+                  month: "w-full flex flex-col gap-0",
+                  month_caption: "hidden",
+                  nav: "hidden",
+                  table: "w-full",
+                  weekdays: "grid grid-cols-7 border-b border-navy/10 bg-navy/[0.02]",
+                  weekday:
+                    "py-2.5 text-center font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/50",
+                  week: "grid grid-cols-7",
+                  day: "group/day border-b border-r border-navy/10 [&:nth-child(7n)]:border-r-0",
+                  today: "",
+                  selected: "",
+                  outside: "",
+                  disabled: "",
+                  hidden: "invisible",
+                }}
+                components={{ DayButton: AgendaDayButton }}
+                formatters={{
+                  formatWeekdayName: (weekday) => {
+                    const names = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+                    return names[weekday.getDay()] ?? "";
+                  },
+                }}
+              />
+            </AgendaCalendarContext.Provider>
           </div>
 
           {/* Legenda */}
@@ -1079,13 +1150,13 @@ export function AgendaPage() {
           {/* Eventos do dia selecionado */}
           {selectedDate && (
             <div>
-              <div className="h-px bg-navy/90" />
+              <div className="h-px bg-foreground/90" />
               <div className="flex items-start justify-between pt-4 pb-3">
                 <div>
-                  <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 capitalize">
+                  <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50 capitalize">
                     {formatDateLabel(selectedDate)}
                   </p>
-                  <p className="font-plex-mono text-[10px] text-navy/40 mt-0.5">
+                  <p className="font-plex-mono text-[10px] text-foreground/40 mt-0.5">
                     {selectedDayEventos.length === 0
                       ? "Nenhum evento"
                       : `${selectedDayEventos.length} evento${selectedDayEventos.length !== 1 ? "s" : ""}`}
@@ -1096,15 +1167,15 @@ export function AgendaPage() {
                     setSelectedDate(null);
                     setSelectedEvento(null);
                   }}
-                  className="font-plex-mono text-[10px] text-navy/40 hover:text-navy transition-colors mt-0.5"
+                  className="font-plex-mono text-[10px] text-foreground/40 hover:text-foreground transition-colors mt-0.5"
                 >
                   ✕
                 </button>
               </div>
-              <div className="h-px bg-navy/15" />
+              <div className="h-px bg-foreground/15" />
 
               {selectedDayEventos.length === 0 ? (
-                <p className="font-plex-sans text-[13px] text-navy/40 pt-4">
+                <p className="font-plex-sans text-[13px] text-foreground/40 pt-4">
                   Nenhum evento neste dia.
                 </p>
               ) : (
@@ -1114,12 +1185,12 @@ export function AgendaPage() {
                     const isOpen = selectedEvento?.id === evento.id;
                     const podeGerir = podeGerenciarEvento(evento);
                     return (
-                      <div key={evento.id} className="border-b border-navy/10 last:border-0">
+                      <div key={evento.id} className="border-b border-foreground/10 last:border-0">
                         <button
                           onClick={() => setSelectedEvento(isOpen ? null : evento)}
                           className={cn(
                             "w-full py-3 text-left transition-colors",
-                            isOpen ? "bg-navy/[0.03]" : "hover:bg-navy/[0.02]",
+                            isOpen ? "bg-foreground/[0.03]" : "hover:bg-foreground/[0.02]",
                           )}
                         >
                           <div className="flex items-start gap-3">
@@ -1128,10 +1199,10 @@ export function AgendaPage() {
                               style={{ backgroundColor: color?.dot ?? "#10284E" }}
                             />
                             <div className="min-w-0">
-                              <p className="font-plex-sans text-[13px] font-medium text-navy truncate">
+                              <p className="font-plex-sans text-[13px] font-medium text-foreground truncate">
                                 {evento.titulo}
                               </p>
-                              <p className="font-plex-mono text-[10px] text-navy/50 mt-0.5">
+                              <p className="font-plex-mono text-[10px] text-foreground/50 mt-0.5">
                                 {evento.liga?.nome ?? "Liga"}
                                 {formatTime(evento.data) && (
                                   <span className="ml-2">{formatTime(evento.data)}</span>
@@ -1152,7 +1223,7 @@ export function AgendaPage() {
                                   </span>
                                 )}
                               {isOpen && evento.descricao && (
-                                <p className="font-plex-sans text-[12px] text-navy/60 mt-2 leading-relaxed border-t border-navy/10 pt-2">
+                                <p className="font-plex-sans text-[12px] text-foreground/60 mt-2 leading-relaxed border-t border-foreground/10 pt-2">
                                   {evento.descricao}
                                 </p>
                               )}
@@ -1163,7 +1234,7 @@ export function AgendaPage() {
                         {isOpen && podeGerir && (
                           <div className="pl-5 pb-2">
                             <button
-                              onClick={() => {
+                              onClick={() =>
                                 window.open(
                                   buildGoogleCalendarUrl(
                                     evento.titulo,
@@ -1174,9 +1245,9 @@ export function AgendaPage() {
                                     evento.categoria,
                                   ),
                                   "_blank",
-                                );
-                              }}
-                              className="border border-gray-200 rounded-lg px-4 py-2 flex items-center gap-2 hover:shadow-sm transition-shadow text-sm text-navy cursor-pointer"
+                                )
+                              }
+                              className="border border-foreground/20 rounded-full px-4 py-2 flex items-center gap-2 hover:shadow-sm transition-shadow text-sm text-foreground cursor-pointer"
                             >
                               <GoogleCalendarIcon />
                               Adicionar ao Google Calendar
@@ -1188,7 +1259,7 @@ export function AgendaPage() {
                           <div className="flex items-center gap-4 pb-3 pl-5">
                             <button
                               onClick={() => abrirEdicao(evento)}
-                              className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/50 hover:text-navy transition-colors"
+                              className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-foreground/50 hover:text-foreground transition-colors"
                             >
                               Editar
                             </button>
@@ -1210,11 +1281,16 @@ export function AgendaPage() {
 
           {/* Próximos eventos */}
           <div>
-            <SectionHeader numero="01" eyebrow="Calendário" titulo="Próximos Eventos" />
+            <SectionHeader
+              numero="01"
+              eyebrow="Calendário"
+              titulo="Próximos Eventos"
+              tituloClassName="text-xs font-bold text-link-blue dark:text-white uppercase tracking-wider"
+            />
             {loading ? (
-              <p className="font-plex-sans text-[13px] text-navy/50">Carregando...</p>
+              <p className="font-plex-sans text-[13px] text-foreground/50">Carregando...</p>
             ) : upcomingEventos.length === 0 ? (
-              <p className="font-plex-sans text-[13px] text-navy/50">
+              <p className="font-plex-sans text-[13px] text-foreground/50">
                 Nenhum evento próximo neste mês.
               </p>
             ) : (
@@ -1230,7 +1306,6 @@ export function AgendaPage() {
                     .toLocaleDateString("pt-BR", { month: "short" })
                     .replace(".", "")
                     .toUpperCase();
-
                   return (
                     <button
                       key={evento.id}
@@ -1244,7 +1319,7 @@ export function AgendaPage() {
                           setViewDate(new Date(eventYear, eventMonth, 1));
                         }
                       }}
-                      className="w-full flex items-center gap-4 py-3 border-b border-navy/10 last:border-0 hover:bg-navy/[0.02] transition-colors text-left"
+                      className="w-full flex items-center gap-4 py-3 border-b border-foreground/10 last:border-0 hover:bg-foreground/[0.02] transition-colors text-left"
                     >
                       <div
                         className={cn(
@@ -1260,10 +1335,10 @@ export function AgendaPage() {
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <p className="font-plex-sans text-[13px] font-medium text-navy truncate">
+                        <p className="font-plex-sans text-[13px] font-medium text-foreground truncate">
                           {evento.titulo}
                         </p>
-                        <p className="font-plex-mono text-[10px] text-navy/50 mt-0.5 truncate">
+                        <p className="font-plex-mono text-[10px] text-foreground/50 mt-0.5 truncate">
                           {evento.liga?.nome ?? "Liga"}
                           {formatTime(evento.data) && ` · ${formatTime(evento.data)}`}
                         </p>
