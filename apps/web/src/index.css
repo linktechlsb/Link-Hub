@@ -4,10 +4,10 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98.4%; /* #FBFBFB */
+    --background: 0 0% 100%; /* #FFFFFF */
     --foreground: 0 0% 4%;
 
-    --card: 0 0% 100%; /* #FFFFFF */
+    --card: 0 0% 96.1%; /* #F5F5F5 */
     --card-foreground: 0 0% 4%;
 
     --popover: 0 0% 100%;
@@ -16,7 +16,7 @@
     --primary: 0 0% 4%;
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 0 0% 96%;
+    --secondary: 0 0% 96.1%;
     --secondary-foreground: 0 0% 4%;
 
     --muted: 0 0% 94%;
@@ -28,7 +28,7 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
+    --border: 0 0% 89.4%; /* #E4E4E4 */
     --input: 0 0% 90%;
     --ring: 0 0% 4%;
 
@@ -45,41 +45,41 @@
   }
 
   .dark {
-    --background: 0 0% 6.3%; /* #101010 */
+    --background: 0 0% 1.2%; /* #030303 */
     --foreground: 0 0% 100%;
 
-    --card: 0 0% 6.3%; /* #101010 */
+    --card: 0 0% 5.1%; /* #0D0D0D */
     --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 6.3%;
+    --popover: 0 0% 5.1%; /* #0D0D0D */
     --popover-foreground: 0 0% 100%;
 
     --primary: 0 0% 100%;
     --primary-foreground: 0 0% 4%;
 
-    --secondary: 0 0% 12%;
+    --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 12%;
+    --muted: 0 0% 10%;
     --muted-foreground: 0 0% 65%;
 
-    --accent: 0 0% 12%;
+    --accent: 0 0% 10%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 12%;
-    --input: 0 0% 12%;
+    --border: 0 0% 10%;
+    --input: 0 0% 10%;
     --ring: 0 0% 100%;
 
-    --sidebar-background: 0 0% 1.6%; /* #040404 */
+    --sidebar-background: 0 0% 5.1%; /* #0D0D0D */
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
     --sidebar-primary-foreground: 0 0% 4%;
-    --sidebar-accent: 0 0% 7.8%; /* #141414 — nav ativo bg */
+    --sidebar-accent: 0 0% 9%; /* nav ativo bg */
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 10%;
+    --sidebar-border: 0 0% 9%;
     --sidebar-ring: 0 0% 100%;
   }
 
@@ -155,4 +155,10 @@
 }
 .dark .hover\:text-white:hover {
   color: hsl(var(--foreground));
+}
+
+/* Cards sem borda (light mode) */
+.rounded-lg.border.bg-card,
+.rounded-xl.border.bg-card {
+  border-color: transparent;
 }

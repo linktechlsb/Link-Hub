@@ -24,6 +24,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUser } from "@/hooks/use-user";
@@ -40,7 +41,12 @@ const mainNav: NavMainItem[] = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { role } = useUser();
-  const [user, setUser] = useState<NavUserData>({ name: "", email: "", avatarUrl: null });
+  const [user, setUser] = useState<NavUserData>({
+    name: "",
+    email: "",
+    avatarUrl: null,
+    role: null,
+  });
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   useEffect(() => {
@@ -57,6 +63,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         name: (usuario?.nome as string | undefined) ?? "",
         email,
         avatarUrl: (usuario?.avatar_url as string | null | undefined) ?? null,
+        role,
       });
     });
   }, []);
@@ -74,7 +81,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   return (
-    <Sidebar variant="inset" collapsible="offcanvas" {...props}>
+    <Sidebar variant="inset" collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -118,6 +125,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </TooltipProvider>
         <NavUser user={user} />
       </SidebarFooter>
+      <SidebarRail />
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </Sidebar>
   );

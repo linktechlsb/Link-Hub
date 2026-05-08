@@ -1,7 +1,10 @@
+import { MapPin } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { Card, CardContent } from "@/components/ui/card";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
+import { cn } from "@/lib/utils";
 
 import {
   AlertList,
@@ -84,7 +87,7 @@ export function HomeDiretorViewV1({ minhaLiga, ligas, ranking }: HomeDiretorView
         p.status === "rejeitado"
           ? "Projeto rejeitado"
           : `Aguardando aprovação há ${diasDesde(p.criado_em)} dias`,
-      tipo: p.status === "rejeitado" ? "urgente" : "atencao",
+      tipo: p.status === "rejeitado" ? "urgente" : ("atencao" as const),
     }));
 
   const rankingItems: RankingV1Item[] = ranking.map((r) => ({
@@ -100,30 +103,32 @@ export function HomeDiretorViewV1({ minhaLiga, ligas, ranking }: HomeDiretorView
     ? dataEvento.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" })
     : "";
 
-  let secao = 1;
-
   return (
-    <div className="space-y-12">
+    <div className="space-y-6">
       <section>
         <SectionHeader
-          numero={String(secao++).padStart(2, "0")}
-          eyebrow={`Visão · ${visao === "minha" ? "Minha liga" : "Global"}`}
-          titulo="Métricas da operação"
+          titulo={`Métricas · ${visao === "minha" ? "Minha Liga" : "Global"}`}
           acao={
-            <div className="flex gap-0 font-plex-mono">
+            <div className="flex">
               <button
                 onClick={() => setVisao("minha")}
-                className={`px-4 py-2 text-[10px] uppercase tracking-[0.18em] border border-navy transition-colors ${
-                  visao === "minha" ? "bg-navy text-white" : "text-navy"
-                }`}
+                className={cn(
+                  "px-4 py-1.5 text-xs font-semibold border border-[#191919] transition-colors rounded-l-md",
+                  visao === "minha"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
               >
                 Minha
               </button>
               <button
                 onClick={() => setVisao("global")}
-                className={`px-4 py-2 text-[10px] uppercase tracking-[0.18em] border border-navy border-l-0 transition-colors ${
-                  visao === "global" ? "bg-navy text-white" : "text-navy"
-                }`}
+                className={cn(
+                  "px-4 py-1.5 text-xs font-semibold border border-[#191919] border-l-0 transition-colors rounded-r-md",
+                  visao === "global"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
               >
                 Global
               </button>
@@ -136,13 +141,11 @@ export function HomeDiretorViewV1({ minhaLiga, ligas, ranking }: HomeDiretorView
       {visao === "minha" && alertas.length > 0 && (
         <section>
           <SectionHeader
-            numero={String(secao++).padStart(2, "0")}
-            eyebrow="Ação necessária"
-            titulo="Projetos com pendência"
+            titulo="Projetos com Pendência"
             acao={
               <button
                 onClick={() => navigate("/projetos")}
-                className="font-plex-mono text-[10px] uppercase tracking-[0.2em] text-navy border-b border-navy pb-0.5"
+                className="text-xs font-semibold text-link-blue hover:underline"
               >
                 Ver todos →
               </button>
@@ -154,42 +157,34 @@ export function HomeDiretorViewV1({ minhaLiga, ligas, ranking }: HomeDiretorView
 
       {mostrarSala && (
         <section>
-          <SectionHeader
-            numero={String(secao++).padStart(2, "0")}
-            eyebrow="Próxima reserva"
-            titulo="Sala agendada"
-          />
-          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-6">
-            <div className="w-14 h-14 border border-navy flex items-center justify-center font-plex-sans font-bold text-[18px] text-navy">
-              {sala.nome.replace(/[^0-9]/g, "") || sala.nome.slice(0, 3)}
-            </div>
-            <div>
-              <div className="font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/60">
-                Localização
+          <SectionHeader titulo="Próxima Reserva" />
+          <Card className="shadow-sm">
+            <CardContent className="pt-5 pb-4">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-lg border border-[#191919] flex items-center justify-center shrink-0">
+                  <MapPin className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                    Localização
+                  </p>
+                  <p className="text-sm font-semibold text-foreground mt-0.5">{sala.nome}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Quando</p>
+                  <p className="text-sm font-semibold text-foreground mt-0.5">
+                    {dataFmt} · {proximoEvento.hora_inicio?.slice(0, 5)}
+                  </p>
+                </div>
               </div>
-              <div className="font-plex-sans font-semibold text-[15px] text-navy mt-1">
-                {sala.nome}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/60">
-                Quando
-              </div>
-              <div className="font-plex-sans font-semibold text-[15px] text-navy mt-1">
-                {dataFmt} · {proximoEvento.hora_inicio?.slice(0, 5)}
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </section>
       )}
 
       {rankingItems.length > 0 && (
         <section>
-          <SectionHeader
-            numero={String(secao++).padStart(2, "0")}
-            eyebrow="Ranking geral"
-            titulo="Pontuação das ligas"
-          />
+          <SectionHeader titulo="Ranking das Ligas" />
           <RankingList items={rankingItems} />
         </section>
       )}
