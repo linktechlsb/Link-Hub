@@ -124,7 +124,12 @@
       "Bash(npx shadcn@latest add calendar --yes)",
       "Bash(grep -E \"^vite|^react$|^react-dom\")",
       "Bash(npx vite *)",
-      "Bash(grep \"^vite$\")"
+      "Bash(grep \"^vite$\")",
+      "Bash(git -C /Users/diogochiapetagarcia/Cursor/Link-Hub log --oneline --all -- apps/web/src/pages/)",
+      "Bash(scripts/start-server.sh --project-dir /Users/diogochiapetagarcia/Cursor/Link-Hub)",
+      "Bash(/Users/diogochiapetagarcia/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/scripts/start-server.sh --project-dir /Users/diogochiapetagarcia/Cursor/Link-Hub)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")"
     ],
     "deny": [
       "Bash(git commit *)",

@@ -1,6 +1,7 @@
-import { AlertTriangle, Camera, X } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { carregarMinhaLiga, carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
 import { cn } from "@/lib/utils";
 import { TrocarSenhaSection } from "@/pages/conta/TrocarSenhaSection";
@@ -45,7 +46,7 @@ function gerarIniciais(nome: string) {
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/60 mb-1.5">
+    <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
       {children}
     </label>
   );
@@ -64,7 +65,7 @@ function Campo({
     <div>
       <Label>{label}</Label>
       {children}
-      {dica && <p className="font-plex-sans text-[11px] text-navy/40 mt-1">{dica}</p>}
+      {dica && <p className="font-plex-sans text-[11px] text-foreground/40 mt-1">{dica}</p>}
     </div>
   );
 }
@@ -87,12 +88,12 @@ function InputTexto({
   return (
     <div
       className={cn(
-        "flex items-center border border-navy/20 overflow-hidden",
-        readOnly && "bg-navy/[0.02]",
+        "flex items-center border border-border overflow-hidden rounded",
+        readOnly ? "bg-muted/50" : "bg-muted/50",
       )}
     >
       {prefix && (
-        <span className="px-3 py-2.5 font-plex-mono text-[11px] text-navy/40 bg-navy/[0.03] border-r border-navy/20 select-none shrink-0">
+        <span className="px-3 py-2.5 font-plex-mono text-[11px] text-foreground/40 bg-foreground/[0.04] border-r border-border select-none shrink-0">
           {prefix}
         </span>
       )}
@@ -105,7 +106,9 @@ function InputTexto({
         onChange={(e) => onChange?.(e.target.value)}
         className={cn(
           "flex-1 px-3 py-2.5 font-plex-sans text-[13px] bg-transparent focus:outline-none",
-          readOnly ? "text-navy/40 cursor-default" : "text-navy placeholder:text-navy/30",
+          readOnly
+            ? "text-foreground/40 cursor-default"
+            : "text-foreground placeholder:text-foreground/20",
         )}
       />
     </div>
@@ -122,7 +125,7 @@ function BotaoSalvar({
   return (
     <button
       onClick={onClick}
-      className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors"
+      className="bg-navy text-white font-plex-sans text-[13px] font-semibold px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity"
     >
       {label}
     </button>
@@ -148,7 +151,7 @@ function Toggle({ ativo, onToggle }: { ativo: boolean; onToggle: () => void }) {
       onClick={onToggle}
       className={cn(
         "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none",
-        ativo ? "bg-navy" : "bg-navy/20",
+        ativo ? "bg-navy" : "bg-foreground/20",
       )}
     >
       <span
@@ -165,64 +168,16 @@ function Toggle({ ativo, onToggle }: { ativo: boolean; onToggle: () => void }) {
 
 function AbaPerfil({
   dados,
-  avatarUrl,
-  uploadandoAvatar,
   onChange,
   onSalvar,
-  onAvatarChange,
 }: {
   dados: DadosUsuario;
-  avatarUrl: string | null;
-  uploadandoAvatar: boolean;
   onChange: (campo: keyof DadosUsuario, valor: string) => void;
   onSalvar: () => void;
-  onAvatarChange: (file: File) => void;
 }) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const iniciais = gerarIniciais(dados.nome);
-
   return (
     <div className="space-y-6">
       <SectionHeader numero="01" eyebrow="Conta" titulo="Perfil" />
-
-      <div className="flex items-center gap-4">
-        <div
-          className="relative group cursor-pointer shrink-0"
-          onClick={() => fileRef.current?.click()}
-        >
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="Avatar" className="h-16 w-16 rounded-full object-cover" />
-          ) : (
-            <div className="h-16 w-16 rounded-full bg-navy text-white text-xl font-bold flex items-center justify-center">
-              {iniciais}
-            </div>
-          )}
-          <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            {uploadandoAvatar ? (
-              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Camera className="h-5 w-5 text-white" />
-            )}
-          </div>
-        </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/jpeg,image/png"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onAvatarChange(file);
-            e.target.value = "";
-          }}
-        />
-        <div>
-          <p className="font-plex-sans font-medium text-[14px] text-navy">{dados.nome}</p>
-          <p className="font-plex-sans text-[12px] text-navy/40 mt-0.5">
-            Clique na foto para alterar
-          </p>
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Campo label="Nome completo">
@@ -247,7 +202,7 @@ function AbaPerfil({
           maxLength={160}
           rows={3}
           placeholder="Conte um pouco sobre você..."
-          className="w-full px-3 py-2.5 border border-navy/20 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 resize-none placeholder:text-navy/30"
+          className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 resize-none placeholder:text-foreground/20 rounded"
         />
       </Campo>
 
@@ -296,7 +251,7 @@ function AbaDadosAcademicos({
         <select
           value={dados.semestre}
           onChange={(e) => onChange("semestre", e.target.value)}
-          className="w-full max-w-xs px-3 py-2.5 border border-navy/20 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60"
+          className="w-full max-w-xs px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 rounded"
         >
           {SEMESTRES.map((s) => (
             <option key={s} value={s}>
@@ -308,8 +263,8 @@ function AbaDadosAcademicos({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Campo label="Liga" dica="Para trocar de liga, fale com o Staff">
-          <div className="flex items-center gap-2 px-3 py-2.5 border border-navy/20 bg-navy/[0.02]">
-            <span className="font-plex-mono text-[9px] uppercase tracking-[0.14em] px-2 py-0.5 bg-navy/10 text-navy">
+          <div className="flex items-center gap-2 px-3 py-2.5 border border-border bg-muted/50 rounded">
+            <span className="font-plex-mono text-[9px] uppercase tracking-[0.14em] px-2 py-0.5 bg-foreground/[0.08] text-foreground/60 rounded">
               {dados.liga}
             </span>
           </div>
@@ -347,12 +302,12 @@ function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
           <AlertTriangle className="h-3.5 w-3.5" />
           Zona de perigo
         </p>
-        <p className="font-plex-sans text-[13px] text-navy/50 mb-4">
+        <p className="font-plex-sans text-[13px] text-foreground/40 mb-4">
           Desativar sua conta remove o acesso à plataforma. Esta ação pode ser revertida pelo Staff.
         </p>
         <button
           onClick={() => setModalDesativar(true)}
-          className="font-plex-mono text-[10px] uppercase tracking-[0.14em] border border-red-400 text-red-600 px-3 py-1.5 hover:bg-red-50 transition-colors"
+          className="font-plex-sans text-[13px] font-semibold text-red-600 border border-red-300 px-5 py-2.5 rounded-full hover:bg-red-50 transition-colors"
         >
           Desativar conta
         </button>
@@ -360,38 +315,39 @@ function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
 
       {modalDesativar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white shadow-xl w-full max-w-md mx-4 p-6">
+          <div className="bg-white shadow-xl w-full max-w-md mx-4 p-6 rounded-lg">
             <div className="flex items-start justify-between mb-5">
               <h3 className="font-display font-bold text-[18px] tracking-[-0.02em] text-navy">
                 Desativar conta
               </h3>
               <button
                 onClick={fecharModal}
-                className="text-navy/30 hover:text-navy transition-colors"
+                className="text-foreground/30 hover:text-foreground transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="font-plex-sans text-[13px] text-navy/60 mb-4">
-              Digite <strong className="text-navy font-bold">DESATIVAR</strong> para confirmar.
+            <p className="font-plex-sans text-[13px] text-foreground/50 mb-4">
+              Digite <strong className="text-foreground font-bold">DESATIVAR</strong> para
+              confirmar.
             </p>
             <input
               type="text"
               value={textoConfirmacao}
               onChange={(e) => setTextoConfirmacao(e.target.value)}
               placeholder="DESATIVAR"
-              className="w-full px-3 py-2.5 border border-navy/20 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 mb-4 placeholder:text-navy/30"
+              className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 mb-4 placeholder:text-foreground/20 rounded"
             />
             <div className="flex gap-3">
               <button
                 onClick={fecharModal}
-                className="flex-1 font-plex-mono text-[10px] uppercase tracking-[0.14em] border border-navy/20 text-navy px-3 py-2 hover:bg-navy/5 transition-colors"
+                className="flex-1 font-plex-sans text-[13px] font-semibold border border-foreground/20 text-foreground px-3 py-2.5 rounded-full hover:bg-foreground/[0.04] transition-colors"
               >
                 Cancelar
               </button>
               <button
                 disabled={textoConfirmacao !== "DESATIVAR"}
-                className="flex-1 font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-red-600 text-white px-3 py-2 hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 font-plex-sans text-[13px] font-semibold bg-red-600 text-white px-3 py-2.5 rounded-full hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Confirmar desativação
               </button>
@@ -458,10 +414,13 @@ function AbaNotificacoes({
 
   function renderOpcao({ chave, label, descricao }: OpcaoNotif) {
     return (
-      <div key={chave} className="flex items-center justify-between py-4 border-b border-navy/10">
+      <div
+        key={chave}
+        className="flex items-center justify-between py-4 border-b border-foreground/[0.06]"
+      >
         <div>
-          <p className="font-plex-sans font-medium text-[13px] text-navy">{label}</p>
-          <p className="font-plex-sans text-[12px] text-navy/40 mt-0.5">{descricao}</p>
+          <p className="font-plex-sans font-medium text-[13px] text-foreground">{label}</p>
+          <p className="font-plex-sans text-[12px] text-foreground/40 mt-0.5">{descricao}</p>
         </div>
         <Toggle ativo={notif[chave]} onToggle={() => onChange(chave, !notif[chave])} />
       </div>
@@ -472,13 +431,13 @@ function AbaNotificacoes({
     <div className="space-y-6">
       <SectionHeader numero="04" eyebrow="Conta" titulo="Notificações" />
 
-      <div className="border-t border-navy/15">{base.map(renderOpcao)}</div>
+      <div className="border-t border-foreground/[0.06]">{base.map(renderOpcao)}</div>
 
       <div>
-        <p className="font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/60 mb-3">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3">
           Exclusivo do Líder
         </p>
-        <div className="border-t border-navy/15">{lider.map(renderOpcao)}</div>
+        <div className="border-t border-foreground/[0.06]">{lider.map(renderOpcao)}</div>
       </div>
 
       <BotaoSalvar onClick={onSalvar} label="Salvar preferências" />
@@ -528,6 +487,7 @@ export function ContaLiderView() {
     projetosAguardando: true,
   });
   const [toast, setToast] = useState<string | null>(null);
+  const fileCardRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     Promise.all([carregarUsuarioMe(), carregarMinhaLiga()]).then(([usuario, liga]) => {
@@ -579,11 +539,8 @@ export function ContaLiderView() {
 
   async function salvarDadosAcademicos() {
     const resultado = await salvarPerfilMe({ semestre: dados.semestre });
-    if (resultado) {
-      exibirToast("Alterações salvas com sucesso.");
-    } else {
-      exibirToast("Erro ao salvar. Tente novamente.");
-    }
+    if (resultado) exibirToast("Alterações salvas com sucesso.");
+    else exibirToast("Erro ao salvar. Tente novamente.");
   }
 
   async function handleAvatarChange(file: File) {
@@ -598,45 +555,71 @@ export function ContaLiderView() {
     }
   }
 
+  const iniciais = gerarIniciais(dados.nome);
+  const badge = dados.cargo && dados.liga ? `${dados.cargo} · ${dados.liga}` : dados.cargo || "—";
+
   return (
-    <div className="max-w-3xl mx-auto px-8 py-10">
-      <div className="mb-10">
+    <div className="max-w-5xl mx-auto px-8 py-10">
+      <div className="mb-6">
         <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
           Minha conta
         </h1>
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mt-1">
           Gerencie suas informações e preferências
         </p>
       </div>
 
-      <div className="border-b border-[#DBDFE4]">
-        <div className="flex">
-          {ABAS.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setAbaAtiva(key)}
-              className={cn(
-                "px-5 py-3 font-plex-mono text-[10px] uppercase tracking-[0.14em] transition-colors border-b-2 -mb-px",
-                abaAtiva === key
-                  ? "border-navy text-navy"
-                  : "border-transparent text-navy/40 hover:text-navy",
-              )}
-            >
-              {label}
-            </button>
-          ))}
+      {/* Profile card */}
+      <div className="flex items-center gap-4 px-5 py-4 rounded-lg bg-foreground/[0.02] border border-foreground/[0.06] mb-6">
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt="Avatar"
+            className="w-[52px] h-[52px] rounded-full object-cover shrink-0"
+          />
+        ) : (
+          <div className="w-[52px] h-[52px] rounded-full bg-navy flex items-center justify-center text-white font-bold text-lg shrink-0">
+            {iniciais}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="font-plex-sans font-bold text-[14px] text-navy truncate">{dados.nome}</p>
+          <p className="font-plex-sans text-[11px] text-foreground/40 mt-0.5">{dados.email}</p>
+          <span className="inline-block font-plex-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-foreground/50 border border-foreground/[0.15] px-2 py-0.5 rounded-full mt-1.5">
+            {badge}
+          </span>
         </div>
+        <button
+          onClick={() => fileCardRef.current?.click()}
+          disabled={uploadandoAvatar}
+          className="shrink-0 font-plex-sans text-[11px] font-semibold text-foreground/45 border border-foreground/[0.15] px-3 py-1.5 rounded-full bg-transparent hover:border-foreground/30 transition-colors disabled:opacity-40"
+        >
+          {uploadandoAvatar ? "Enviando..." : "Alterar foto"}
+        </button>
+        <input
+          ref={fileCardRef}
+          type="file"
+          accept="image/jpeg,image/png"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleAvatarChange(file);
+            e.target.value = "";
+          }}
+        />
       </div>
 
+      <AnimatedTabs
+        tabs={ABAS.map(({ key, label }) => ({ id: key, label }))}
+        activeTab={abaAtiva}
+        onChange={(key) => setAbaAtiva(key as Aba)}
+        wrapperClassName="border-foreground/[0.08] mb-8"
+        activeTabClassName="text-navy"
+        inactiveTabClassName="text-foreground/40 hover:text-foreground/60"
+      />
+
       {abaAtiva === "perfil" && (
-        <AbaPerfil
-          dados={dados}
-          avatarUrl={avatarUrl}
-          uploadandoAvatar={uploadandoAvatar}
-          onChange={alterarDado}
-          onSalvar={salvarPerfil}
-          onAvatarChange={handleAvatarChange}
-        />
+        <AbaPerfil dados={dados} onChange={alterarDado} onSalvar={salvarPerfil} />
       )}
       {abaAtiva === "academico" && (
         <AbaDadosAcademicos dados={dados} onChange={alterarDado} onSalvar={salvarDadosAcademicos} />

@@ -1,11 +1,10 @@
 import {
+  MoreHorizontal,
   X,
-  Pencil,
-  Trash2,
   Plus,
+  Image,
   Link,
   FileText,
-  Image,
   Globe,
   Folder,
   BookOpen,
@@ -14,14 +13,22 @@ import {
   Music,
   Star,
   ChevronDown,
-  AlertTriangle,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { SectionHeader, KpiRow, RankingList } from "@/pages/home/v1/primitives";
 
 import type { RankingLiga } from "@link-leagues/types";
 
@@ -327,62 +334,74 @@ function AbaInformacoes({
     setBannerPreview(URL.createObjectURL(file));
   }
 
+  const inputCls =
+    "w-full border border-navy/20 px-3 py-2.5 bg-background font-plex-sans text-[13px] text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-navy/60";
+
   return (
-    <div className="space-y-4">
-      {/* Dados gerais */}
-      <div className="border border-navy/15 p-5 space-y-4">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
-          Dados Gerais
-        </p>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            Nome da liga
-          </label>
-          <input
-            value={form.nome}
-            onChange={(e) => setForm({ ...form, nome: e.target.value })}
-            className={inputClass}
-          />
+    <div className="space-y-8">
+      {/* Dados Gerais */}
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Dados Gerais"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          acao={
+            alterado ? (
+              <div className="flex items-center gap-3">
+                {salvo && <span className="font-plex-sans text-[12px] text-green-600">Salvo!</span>}
+                {erro && <span className="font-plex-sans text-[12px] text-red-600">{erro}</span>}
+                <button
+                  onClick={() => void salvar()}
+                  disabled={salvando}
+                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white transition-colors disabled:opacity-40"
+                >
+                  {salvando ? "Salvando…" : "Salvar alterações"}
+                </button>
+              </div>
+            ) : null
+          }
+        />
+        <div className="space-y-4">
+          {[
+            { label: "Nome da liga", field: "nome" as const, placeholder: "" },
+            { label: "Área de atuação", field: "area" as const, placeholder: "" },
+            {
+              label: "Semestre de fundação",
+              field: "semestre" as const,
+              placeholder: "ex: 2023.1",
+            },
+          ].map(({ label, field, placeholder }) => (
+            <div key={field}>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2 block">
+                {label}
+              </label>
+              <input
+                value={form[field]}
+                onChange={(e) => setForm({ ...form, [field]: e.target.value })}
+                placeholder={placeholder}
+                className={inputCls}
+              />
+            </div>
+          ))}
+          <div>
+            <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2 block">
+              Descrição
+            </label>
+            <textarea
+              value={form.descricao}
+              onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+              rows={3}
+              className={cn(inputCls, "resize-none")}
+            />
+          </div>
         </div>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            Área de atuação
-          </label>
-          <input
-            value={form.area}
-            onChange={(e) => setForm({ ...form, area: e.target.value })}
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            Descrição
-          </label>
-          <textarea
-            value={form.descricao}
-            onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-            rows={3}
-            className={cn(inputClass, "resize-none")}
-          />
-        </div>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            Semestre de fundação
-          </label>
-          <input
-            value={form.semestre}
-            onChange={(e) => setForm({ ...form, semestre: e.target.value })}
-            placeholder="ex: 2023.1"
-            className={inputClass}
-          />
-        </div>
-      </div>
+      </section>
 
       {/* Foto / Banner */}
-      <div className="border border-navy/15 p-5 space-y-3">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
-          Foto / Banner da Liga
-        </p>
+      <section className="space-y-3">
+        <SectionHeader
+          titulo="Foto / Banner da Liga"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+        />
         {bannerPreview ? (
           <div className="relative overflow-hidden border border-navy/15 h-36">
             <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
@@ -408,88 +427,69 @@ function AbaInformacoes({
           {bannerPreview ? "Trocar imagem" : "Selecionar imagem"}
           <input type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
         </label>
-      </div>
+      </section>
 
       {/* Contatos */}
-      <div className="border border-navy/15 p-5 space-y-4">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
-          Contatos da Liga
-        </p>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            E-mail de contato
-          </label>
-          <input
-            type="email"
-            value={form.emailContato}
-            onChange={(e) => setForm({ ...form, emailContato: e.target.value })}
-            placeholder="contato@faculdade.edu"
-            className={inputClass}
-          />
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Contatos da Liga"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+        />
+        <div className="space-y-4">
+          {[
+            {
+              label: "E-mail de contato",
+              field: "emailContato" as const,
+              type: "email",
+              placeholder: "contato@faculdade.edu",
+            },
+            { label: "Instagram", field: "instagram" as const, type: "text", placeholder: "@liga" },
+            {
+              label: "LinkedIn",
+              field: "linkedin" as const,
+              type: "text",
+              placeholder: "liga-faculdade",
+            },
+          ].map(({ label, field, type, placeholder }) => (
+            <div key={field}>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2 block">
+                {label}
+              </label>
+              <input
+                type={type}
+                value={form[field]}
+                onChange={(e) => setForm({ ...form, [field]: e.target.value })}
+                placeholder={placeholder}
+                className={inputCls}
+              />
+            </div>
+          ))}
         </div>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            Instagram
-          </label>
-          <input
-            value={form.instagram}
-            onChange={(e) => setForm({ ...form, instagram: e.target.value })}
-            placeholder="@liga"
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            LinkedIn
-          </label>
-          <input
-            value={form.linkedin}
-            onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
-            placeholder="liga-faculdade"
-            className={inputClass}
-          />
-        </div>
-      </div>
+      </section>
 
-      {/* Professor mentor */}
-      <div className="border border-navy/15 p-5 space-y-3">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
-          Professor Mentor
-        </p>
+      {/* Professor Mentor */}
+      <section className="space-y-3">
+        <SectionHeader
+          titulo="Professor Mentor"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+        />
         <input
           value={form.professorMentor}
           onChange={(e) => setForm({ ...form, professorMentor: e.target.value })}
           placeholder="Nome do professor mentor"
-          className={inputClass}
+          className={inputCls}
         />
-      </div>
+      </section>
 
-      {/* Botão salvar */}
-      {alterado && (
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => void salvar()}
-            disabled={salvando}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {salvando ? "Salvando…" : "Salvar alterações"}
-          </button>
-          {salvo && (
-            <span className="font-plex-sans text-[12px] text-green-600">Salvo com sucesso!</span>
-          )}
-          {erro && <span className="font-plex-sans text-[12px] text-red-600">{erro}</span>}
-        </div>
-      )}
-
-      {/* Zona de perigo */}
-      <div className="border border-red-200 p-5 space-y-3">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-red-500 flex items-center gap-1.5">
-          <AlertTriangle className="h-3.5 w-3.5" />
-          Zona de Perigo
-        </p>
-        <p className="font-plex-sans text-[13px] text-navy/50">
-          Arquivar a liga a tornará inativa e ela não aparecerá mais para os membros. Esta ação pode
-          ser revertida pelo Super Admin.
+      {/* Zona de Perigo */}
+      <section className="space-y-3">
+        <SectionHeader
+          titulo="Zona de Perigo"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-red-500"
+        />
+        <p className="font-plex-sans text-[13px] text-foreground/50">
+          Arquivar a liga a tornará inativa e não aparecerá mais para os membros. Pode ser revertido
+          pelo Super Admin.
         </p>
         {confirmandoArquivar ? (
           <div className="flex items-center gap-4">
@@ -512,12 +512,12 @@ function AbaInformacoes({
         ) : (
           <button
             onClick={() => setConfirmandoArquivar(true)}
-            className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-500 hover:text-red-700 transition-colors"
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-red-500 hover:text-red-700 border border-red-200 px-3 py-1.5 rounded-full transition-colors"
           >
             Arquivar liga
           </button>
         )}
-      </div>
+      </section>
     </div>
   );
 }
@@ -534,6 +534,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
   const [editForm, setEditForm] = useState<Partial<Recurso>>({});
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+  const [sheetAberto, setSheetAberto] = useState(false);
 
   const [prevId, setPrevId] = useState(ligaId);
   if (ligaId !== prevId) {
@@ -605,6 +606,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
   function iniciarEdicao(r: Recurso) {
     setEditandoId(r.id);
     setEditForm({ nome: r.nome, tipo: r.tipo, url: r.url, icone: r.icone, cor: r.cor });
+    setSheetAberto(true);
   }
 
   async function salvarEdicao(id: string) {
@@ -631,143 +633,210 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
     return <p className="font-plex-sans text-[13px] text-navy/50">Carregando recursos…</p>;
 
   return (
-    <div className="space-y-4">
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Recursos ({recursos.length})
-        </p>
-        {recursos.length === 0 ? (
-          <p className="font-plex-sans text-[13px] text-navy/50">Nenhum recurso cadastrado.</p>
-        ) : (
-          <div className="border-t border-navy/15">
-            {recursos.map((r) => (
-              <div key={r.id} className="border-b border-navy/10 py-3">
-                {editandoId === r.id ? (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex gap-2 items-center">
-                      <IconeCor
-                        icone={editForm.icone ?? "link"}
-                        cor={editForm.cor ?? "#546484"}
-                        onChange={(ic, c) => setEditForm({ ...editForm, icone: ic, cor: c })}
-                      />
-                      <input
-                        value={editForm.nome ?? ""}
-                        onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
-                        placeholder="Nome"
-                        className="flex-1 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-navy/60 bg-background"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <input
-                        value={editForm.url ?? ""}
-                        onChange={(e) => setEditForm({ ...editForm, url: e.target.value })}
-                        placeholder="URL"
-                        className="flex-1 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-navy/60 bg-background"
-                      />
-                      <input
-                        value={editForm.tipo ?? ""}
-                        onChange={(e) => setEditForm({ ...editForm, tipo: e.target.value })}
-                        placeholder="Tipo"
-                        className="w-36 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-navy/60 bg-background"
-                      />
-                    </div>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => void salvarEdicao(r.id)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-white bg-navy px-3 py-1.5 hover:bg-navy/90 transition-colors"
-                      >
-                        Salvar
-                      </button>
-                      <button
-                        onClick={() => setEditandoId(null)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="h-9 w-9 flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: r.cor }}
-                      >
-                        <RecursoIcone id={r.icone} />
-                      </div>
-                      <div>
-                        <p className="font-plex-sans font-semibold text-[13px] text-navy">
-                          {r.nome}
-                        </p>
-                        <p className="font-plex-mono text-[10px] text-navy/50">{r.tipo}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => iniciarEdicao(r)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
-                        title="Editar"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={() => void remover(r.id)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-400 hover:text-red-600 transition-colors"
-                        title="Remover"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Adicionar */}
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Adicionar Recurso
-        </p>
-        <div className="flex gap-2 flex-wrap items-center">
-          <IconeCor
-            icone={novoIcone}
-            cor={novoCor}
-            onChange={(ic, c) => {
-              setNovoIcone(ic);
-              setNovoCor(c);
-            }}
-          />
-          <input
-            value={novoNome}
-            onChange={(e) => setNovoNome(e.target.value)}
-            placeholder="Nome do recurso"
-            className="flex-1 min-w-[140px] border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
-          />
-          <input
-            value={novoUrl}
-            onChange={(e) => setNovoUrl(e.target.value)}
-            placeholder="URL"
-            className="flex-1 min-w-[160px] border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
-          />
-          <input
-            value={novoTipo}
-            onChange={(e) => setNovoTipo(e.target.value)}
-            placeholder="Tipo (ex: Documento)"
-            className="w-36 border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
-          />
+    <div className="space-y-6">
+      <SectionHeader
+        titulo="Recursos"
+        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+        acao={
           <button
-            onClick={() => void adicionar()}
-            className="flex items-center gap-1.5 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-2.5 hover:bg-navy/90 transition-colors"
+            onClick={() => {
+              setNovoNome("");
+              setNovoTipo("Link");
+              setNovoUrl("");
+              setNovoIcone("link");
+              setNovoCor("#546484");
+              setEditandoId(null);
+              setSheetAberto(true);
+            }}
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white transition-colors"
           >
-            <Plus className="h-3.5 w-3.5" />
-            Adicionar
+            + Adicionar
           </button>
-        </div>
-        {erro && <p className="font-plex-sans text-[12px] text-red-600 mt-2">{erro}</p>}
-      </div>
+        }
+      />
+
+      {recursos.length === 0 ? (
+        <p className="font-plex-sans text-[13px] text-navy/40">Nenhum recurso cadastrado.</p>
+      ) : (
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-foreground/[0.08]">
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Recurso
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+                URL
+              </th>
+              <th className="py-3 px-4 w-10" />
+            </tr>
+          </thead>
+          <tbody>
+            {recursos.map((r) => (
+              <tr
+                key={r.id}
+                className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
+              >
+                <td className="py-4 px-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="h-8 w-8 flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: r.cor }}
+                    >
+                      <RecursoIcone id={r.icone} />
+                    </div>
+                    <div>
+                      <span className="font-plex-sans font-semibold text-[13px] text-foreground">
+                        {r.nome}
+                      </span>
+                      <span className="block font-plex-mono text-[10px] text-foreground/40">
+                        {r.tipo}
+                      </span>
+                    </div>
+                  </div>
+                </td>
+                <td className="py-4 px-4 hidden sm:table-cell">
+                  <span className="font-plex-mono text-[11px] text-foreground/40 truncate max-w-[200px] block">
+                    {r.url}
+                  </span>
+                </td>
+                <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-1 rounded hover:bg-foreground/[0.08] text-foreground/40 hover:text-foreground/70 transition-colors">
+                        <MoreHorizontal size={14} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[140px]">
+                      <DropdownMenuItem
+                        className="text-[12px] cursor-pointer"
+                        onClick={() => iniciarEdicao(r)}
+                      >
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-[12px] cursor-pointer text-red-500 focus:text-red-600"
+                        onClick={() => void remover(r.id)}
+                      >
+                        Remover
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <Sheet open={sheetAberto} onOpenChange={(v) => !v && setSheetAberto(false)}>
+        <SheetContent side="right" className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0">
+          <div className="flex-shrink-0">
+            <div className="h-px bg-foreground/20" />
+            <div className="px-8 pt-8 pb-6">
+              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
+                Recursos
+              </p>
+              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
+                {editandoId ? "Editar Recurso" : "Adicionar Recurso"}
+              </h2>
+            </div>
+            <div className="h-px bg-foreground/[0.08]" />
+          </div>
+          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <IconeCor
+                icone={editandoId ? (editForm.icone ?? "link") : novoIcone}
+                cor={editandoId ? (editForm.cor ?? "#546484") : novoCor}
+                onChange={(ic, c) => {
+                  if (editandoId) setEditForm({ ...editForm, icone: ic, cor: c });
+                  else {
+                    setNovoIcone(ic);
+                    setNovoCor(c);
+                  }
+                }}
+              />
+              <div className="flex-1">
+                <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                  Nome
+                </label>
+                <input
+                  value={editandoId ? (editForm.nome ?? "") : novoNome}
+                  onChange={(e) =>
+                    editandoId
+                      ? setEditForm({ ...editForm, nome: e.target.value })
+                      : setNovoNome(e.target.value)
+                  }
+                  placeholder="Nome do recurso"
+                  className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                URL
+              </label>
+              <input
+                value={editandoId ? (editForm.url ?? "") : novoUrl}
+                onChange={(e) =>
+                  editandoId
+                    ? setEditForm({ ...editForm, url: e.target.value })
+                    : setNovoUrl(e.target.value)
+                }
+                placeholder="https://..."
+                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+              />
+            </div>
+            <div>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                Tipo
+              </label>
+              <input
+                value={editandoId ? (editForm.tipo ?? "") : novoTipo}
+                onChange={(e) =>
+                  editandoId
+                    ? setEditForm({ ...editForm, tipo: e.target.value })
+                    : setNovoTipo(e.target.value)
+                }
+                placeholder="Ex: Documento, Notion..."
+                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+              />
+            </div>
+            {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
+          </div>
+          <div className="flex-shrink-0">
+            <div className="h-px bg-foreground/[0.08]" />
+            <div className="px-8 py-6 flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  if (editandoId) void salvarEdicao(editandoId).then(() => setSheetAberto(false));
+                  else
+                    void adicionar().then(() => {
+                      if (!erro) setSheetAberto(false);
+                    });
+                }}
+                style={{
+                  backgroundColor: editandoId
+                    ? (editForm.nome ?? "").trim() && (editForm.url ?? "").trim()
+                      ? "#10244D"
+                      : "#9FA7B8"
+                    : novoNome.trim() && novoUrl.trim()
+                      ? "#10244D"
+                      : "#9FA7B8",
+                }}
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white px-4 py-3 rounded-full hover:opacity-90 transition-all"
+              >
+                {editandoId ? "Salvar" : "Adicionar"}
+              </button>
+              <button
+                onClick={() => setSheetAberto(false)}
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
@@ -781,9 +850,6 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
   const scoreMaxRanking = ranking.reduce((acc, r) => Math.max(acc, r.pontuacao ?? 0), 0);
   const scoreMax = Math.max(scoreMaxRanking, 1);
   const porcentagem = Math.round((score / scoreMax) * 100);
-
-  const formatarMoeda = (valor: number) =>
-    valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
   const composicao = [
     {
@@ -809,169 +875,100 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
   const posicao = minha?.posicao ?? rankingOrdenado.findIndex((l) => l.id === liga.id) + 1;
 
   return (
-    <div className="space-y-4">
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-4">
-          Score Atual
-        </p>
-        <div className="flex items-end justify-between mb-3">
-          <div>
-            <span className="font-display font-bold text-4xl text-navy">{score}</span>
-            <span className="font-plex-sans text-lg text-navy/40 ml-1">pts</span>
-          </div>
-          {posicao > 0 && (
-            <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-brand-yellow text-navy px-2 py-0.5">
-              {posicao}º lugar
-            </span>
-          )}
-        </div>
-        <div className="w-full bg-navy/10 h-px overflow-hidden">
-          <div
-            className="h-px transition-all duration-500"
-            style={{
-              width: `${porcentagem}%`,
-              background: "linear-gradient(90deg, #10284E, #546484)",
-            }}
-          />
-        </div>
-        <div className="flex justify-between mt-2 font-plex-mono text-[10px] text-navy/40">
-          <span>0 pts</span>
-          <span>{porcentagem}% do máximo</span>
-          <span>{scoreMax} pts</span>
-        </div>
-      </div>
-
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Resumo
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {[
-            {
-              label: "Projetos concluídos",
-              valor: String(minha?.projetos_concluidos ?? 0),
-              cor: "text-green-600",
-            },
-            {
-              label: "Em andamento",
-              valor: String(minha?.projetos_em_andamento ?? 0),
-              cor: "text-blue-600",
-            },
-            {
-              label: "Receita total",
-              valor: formatarMoeda(Number(minha?.receita_total ?? 0)),
-              cor: "text-amber-600",
-            },
-            {
-              label: "Presenças",
-              valor: String(minha?.presencas ?? 0),
-              cor: "text-purple-600",
-            },
-            {
-              label: "Publicações",
-              valor: String(minha?.posts ?? 0),
-              cor: "text-navy",
-            },
-          ].map((r) => (
-            <div key={r.label} className="border border-navy/10 p-3">
-              <p className={cn("font-display font-bold text-xl", r.cor)}>{r.valor}</p>
-              <p className="font-plex-sans text-[12px] text-navy/50 mt-0.5">{r.label}</p>
+    <div className="space-y-8">
+      {/* Score */}
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Score Atual"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+        />
+        <div className="border border-navy/15 p-5">
+          <div className="flex items-end justify-between mb-3">
+            <div>
+              <span className="font-display font-bold text-4xl text-navy">{score}</span>
+              <span className="font-plex-sans text-lg text-navy/40 ml-1">pts</span>
             </div>
-          ))}
+            {posicao > 0 && (
+              <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-brand-yellow text-navy px-2 py-0.5 rounded-full">
+                {posicao}º lugar
+              </span>
+            )}
+          </div>
+          <div className="w-full bg-navy/10 h-px overflow-hidden">
+            <div
+              className="h-px transition-all duration-500"
+              style={{
+                width: `${porcentagem}%`,
+                background: "linear-gradient(90deg, #10284E, #546484)",
+              }}
+            />
+          </div>
+          <div className="flex justify-between mt-2 font-plex-mono text-[10px] text-navy/40">
+            <span>0 pts</span>
+            <span>{porcentagem}% do máximo</span>
+            <span>{scoreMax} pts</span>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Indicadores
-        </p>
+      {/* KPIs resumo */}
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Resumo"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+        />
+        <KpiRow
+          items={[
+            { label: "Projetos concluídos", valor: String(minha?.projetos_concluidos ?? 0) },
+            { label: "Em andamento", valor: String(minha?.projetos_em_andamento ?? 0) },
+            { label: "Presenças", valor: String(minha?.presencas ?? 0) },
+            { label: "Publicações", valor: String(minha?.posts ?? 0) },
+          ]}
+          cols={4}
+        />
+      </section>
+
+      {/* Indicadores */}
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Indicadores"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+        />
         <div className="space-y-4">
           {composicao.map((c) => (
             <div key={c.label}>
               <div className="flex items-center justify-between mb-2">
-                <span className="font-plex-sans font-semibold text-[13px] text-navy">
+                <span className="font-plex-sans font-semibold text-[13px] text-foreground">
                   {c.label}
                 </span>
-                <span className="font-plex-mono text-[12px] text-navy">{c.valor}</span>
+                <span className="font-plex-mono text-[12px] text-foreground">{c.valor}</span>
               </div>
               <div className="w-full bg-navy/10 h-px overflow-hidden">
                 <div
                   className={cn("h-px", c.cor)}
-                  style={{
-                    width: `${Math.round((c.valor / composicaoMax) * 100)}%`,
-                  }}
+                  style={{ width: `${Math.round((c.valor / composicaoMax) * 100)}%` }}
                 />
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Comparativo — Ranking Geral
-        </p>
-        <div className="space-y-1">
-          {rankingOrdenado.map((l, i) => {
-            const isAtual = l.id === liga.id;
-            const pct = Math.round((l.pontos / scoreMax) * 100);
-            return (
-              <div
-                key={l.id}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 transition-colors",
-                  isAtual ? "bg-navy/5 border border-navy/15" : "hover:bg-navy/[0.02]",
-                )}
-              >
-                <span
-                  className={cn(
-                    "font-plex-mono text-[10px] w-5 text-center",
-                    isAtual ? "text-navy" : "text-navy/40",
-                  )}
-                >
-                  {i + 1}º
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span
-                      className={cn(
-                        "font-plex-sans font-semibold text-[13px] truncate",
-                        isAtual ? "text-navy" : "text-navy/70",
-                      )}
-                    >
-                      {l.nome}
-                      {isAtual && (
-                        <span className="ml-2 font-plex-mono text-[9px] uppercase tracking-[0.10em] bg-navy text-white px-1.5 py-0.5 align-middle">
-                          atual
-                        </span>
-                      )}
-                    </span>
-                    <span
-                      className={cn(
-                        "font-plex-mono text-[11px] ml-3 shrink-0",
-                        isAtual ? "text-navy" : "text-navy/40",
-                      )}
-                    >
-                      {l.pontos} pts
-                    </span>
-                  </div>
-                  <div className="w-full bg-navy/10 h-px overflow-hidden">
-                    <div
-                      className="h-px transition-all duration-500"
-                      style={{
-                        width: `${pct}%`,
-                        background: isAtual
-                          ? "linear-gradient(90deg, #10284E, #546484)"
-                          : "#CBCBCB",
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* Ranking comparativo */}
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Comparativo — Ranking Geral"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+        />
+        <RankingList
+          items={rankingOrdenado.map((l) => ({
+            id: l.id,
+            nome: l.nome,
+            score: l.pontos,
+            destaque: l.id === liga.id,
+          }))}
+        />
+      </section>
     </div>
   );
 }
@@ -1122,24 +1119,12 @@ export function GerenciamentoStaffPage() {
       </div>
 
       {/* Abas */}
-      <div className="border-b border-navy/15 mb-8">
-        <div className="flex">
-          {ABAS.map((aba) => (
-            <button
-              key={aba}
-              onClick={() => setAbaAtiva(aba)}
-              className={cn(
-                "px-5 py-3 font-plex-mono text-[10px] uppercase tracking-[0.14em] transition-colors border-b-2 -mb-px",
-                abaAtiva === aba
-                  ? "border-navy text-navy"
-                  : "border-transparent text-navy/40 hover:text-navy",
-              )}
-            >
-              {aba}
-            </button>
-          ))}
-        </div>
-      </div>
+      <AnimatedTabs
+        tabs={ABAS}
+        activeTab={abaAtiva}
+        onChange={(aba) => setAbaAtiva(aba as Aba)}
+        wrapperClassName="mb-8"
+      />
 
       {/* Conteúdo */}
       {abaAtiva === "Informações" && (

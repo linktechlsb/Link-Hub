@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import {
   Select,
   SelectContent,
@@ -274,7 +275,7 @@ export function ProjetosLiderView() {
               aba === "liga" ? (
                 <button
                   onClick={abrirNovo}
-                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-foreground hover:text-background transition-colors"
+                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
                 >
                   + Novo Projeto
                 </button>
@@ -282,28 +283,20 @@ export function ProjetosLiderView() {
             }
           />
 
-          <div className="flex gap-6 mb-6 border-b border-foreground/[0.08]">
-            <button
-              onClick={() => setAba("liga")}
-              className={`font-plex-mono text-[11px] tracking-[0.14em] uppercase pb-3 -mb-px border-b-2 transition-colors ${
-                aba === "liga"
-                  ? "text-foreground border-foreground"
-                  : "text-foreground/40 border-transparent hover:text-foreground"
-              }`}
-            >
-              Da Liga
-            </button>
-            <button
-              onClick={() => setAba("todos")}
-              className={`font-plex-mono text-[11px] tracking-[0.14em] uppercase pb-3 -mb-px border-b-2 transition-colors ${
-                aba === "todos"
-                  ? "text-foreground border-foreground"
-                  : "text-foreground/40 border-transparent hover:text-foreground"
-              }`}
-            >
-              Todos os Projetos
-            </button>
-          </div>
+          <AnimatedTabs
+            tabs={[
+              { id: "liga", label: "Da Liga" },
+              { id: "todos", label: "Todos os Projetos" },
+            ]}
+            activeTab={aba}
+            onChange={(id) => setAba(id as typeof aba)}
+            wrapperClassName="border-foreground/[0.08] mb-6"
+            innerClassName="gap-6"
+            tabClassName="px-0 py-3"
+            activeTabClassName="text-foreground"
+            inactiveTabClassName="text-foreground/40 hover:text-foreground"
+            indicatorClassName="bg-foreground"
+          />
 
           {aba === "liga" &&
             (projetos.length === 0 ? (

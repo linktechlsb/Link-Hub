@@ -2,6 +2,7 @@ import { Camera } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { splitLigaTitle } from "@/pages/home/v1/splitLigaTitle";
@@ -194,21 +195,14 @@ export function LigaDetailPage() {
 
         {/* Abas */}
         <div className="max-w-5xl mx-auto px-8 overflow-x-auto">
-          <div className="flex gap-6 border-b border-navy/15">
-            {abasVisiveis.map((aba) => (
-              <button
-                key={aba.id}
-                onClick={() => setAbaAtiva(aba.id)}
-                className={`font-plex-mono text-[11px] tracking-[0.14em] uppercase pt-2 pb-3 -mb-px border-b-2 whitespace-nowrap transition-colors ${
-                  abaAtualVisivel === aba.id
-                    ? "text-navy border-navy"
-                    : "text-navy/50 border-transparent hover:text-navy"
-                }`}
-              >
-                {aba.label}
-              </button>
-            ))}
-          </div>
+          <AnimatedTabs
+            tabs={abasVisiveis}
+            activeTab={abaAtualVisivel}
+            onChange={(id) => setAbaAtiva(id as typeof abaAtiva)}
+            tabClassName="px-0 py-3"
+            innerClassName="gap-6"
+            inactiveTabClassName="text-navy/50 hover:text-navy"
+          />
         </div>
       </div>
 

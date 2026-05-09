@@ -16,6 +16,7 @@ rankingRouter.get("/", authenticate, async (_req, res, next) => {
         projetos_concluidos,
         projetos_em_andamento,
         presencas,
+        presenca_percentual,
         receita_total,
         posts,
         pontuacao,

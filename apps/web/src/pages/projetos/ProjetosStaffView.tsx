@@ -266,7 +266,7 @@ export function ProjetosStaffView() {
                   setForm(FORM_VAZIO);
                   setSheetNovo(true);
                 }}
-                className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors"
+                className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
               >
                 + Novo Projeto
               </button>

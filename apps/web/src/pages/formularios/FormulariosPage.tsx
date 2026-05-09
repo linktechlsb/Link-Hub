@@ -1,18 +1,12 @@
-import { Plus, ClipboardList, ExternalLink } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
+import { useCachedFetch } from "@/hooks/use-cached-fetch";
+import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
 
+import type { KpiItem } from "@/pages/home/v1/primitives";
 import type { Formulario, FormularioStatus } from "@link-leagues/types";
-
-async function getToken(): Promise<string> {
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token ?? "";
-}
 
 const STATUS_LABELS: Record<FormularioStatus, string> = {
   rascunho: "Rascunho",
@@ -20,11 +14,13 @@ const STATUS_LABELS: Record<FormularioStatus, string> = {
   encerrado: "Encerrado",
 };
 
-const STATUS_COLORS: Record<FormularioStatus, string> = {
-  rascunho: "bg-brand-gray text-navy",
+const STATUS_BADGE: Record<FormularioStatus, string> = {
+  rascunho: "bg-brand-yellow/20 text-navy",
   aberto: "bg-green-100 text-green-800",
-  encerrado: "bg-red-100 text-red-700",
+  encerrado: "bg-navy/10 text-navy/60",
 };
+
+type Filtro = FormularioStatus | "todos";
 
 interface FormularioComLiga extends Formulario {
   liga_nome: string;
@@ -32,106 +28,150 @@ interface FormularioComLiga extends Formulario {
 
 export function FormulariosPage() {
   const navigate = useNavigate();
-  const [formularios, setFormularios] = useState<FormularioComLiga[]>([]);
-  const [carregando, setCarregando] = useState(true);
+  const { data, carregando } = useCachedFetch<FormularioComLiga[]>("/api/formularios");
+  const formularios = data ?? [];
+  const [filtro, setFiltro] = useState<Filtro>("todos");
 
-  useEffect(() => {
-    carregarFormularios();
-  }, []);
+  const filtrados = useMemo(
+    () => (filtro === "todos" ? formularios : formularios.filter((f) => f.status === filtro)),
+    [formularios, filtro],
+  );
 
-  async function carregarFormularios() {
-    try {
-      setCarregando(true);
-      const token = await getToken();
-      const res = await fetch("http://localhost:3001/api/formularios", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Falha ao carregar formulários");
-      const dados = await res.json();
-      setFormularios(dados);
-    } catch {
-      toast.error("Erro ao carregar formulários");
-    } finally {
-      setCarregando(false);
-    }
-  }
+  const kpis: KpiItem[] = [
+    { label: "Total", valor: String(formularios.length) },
+    {
+      label: "Abertos",
+      valor: String(formularios.filter((f) => f.status === "aberto").length),
+    },
+    {
+      label: "Encerrados",
+      valor: String(formularios.filter((f) => f.status === "encerrado").length),
+    },
+    {
+      label: "Rascunhos",
+      valor: String(formularios.filter((f) => f.status === "rascunho").length),
+    },
+  ];
+
+  const filtros: { valor: Filtro; label: string }[] = [
+    { valor: "todos", label: "Todos" },
+    { valor: "aberto", label: "Abertos" },
+    { valor: "encerrado", label: "Encerrados" },
+    { valor: "rascunho", label: "Rascunhos" },
+  ];
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-10">
-      <div className="mb-8 flex items-start justify-between">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-8">
         <div>
           <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
             Formulários
           </h1>
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
-            Recrutamento · Liga
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/40 mt-1">
+            Formulários da liga
           </p>
         </div>
-        <Button
+        <button
           onClick={() => navigate("/formularios/novo")}
-          className="bg-navy text-white hover:bg-navy/90 gap-2"
+          className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors flex-shrink-0"
         >
-          <Plus className="w-4 h-4" />
-          Novo Formulário
-        </Button>
+          + Novo Formulário
+        </button>
       </div>
 
-      {carregando ? (
-        <div className="text-center py-16 text-navy/50 text-sm">Carregando...</div>
-      ) : formularios.length === 0 ? (
-        <div className="border border-navy/15 p-12 text-center">
-          <ClipboardList className="w-8 h-8 text-navy/30 mx-auto mb-3" />
-          <p className="font-display font-bold text-[16px] tracking-[-0.02em] text-navy">
-            Nenhum formulário ainda
-          </p>
-          <p className="text-[13px] text-navy/50 mt-1">
-            Crie um novo formulário para começar a recrutar membros.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {formularios.map((formulario) => (
-            <div
-              key={formulario.id}
-              className="border border-navy/15 p-5 hover:border-navy/30 transition-colors cursor-pointer"
-              onClick={() => navigate(`/formularios/${formulario.id}`)}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-display font-bold text-[15px] text-navy truncate">
-                      {formulario.nome}
-                    </span>
-                    <Badge
-                      className={`text-[10px] px-2 py-0.5 ${STATUS_COLORS[formulario.status]}`}
-                    >
-                      {STATUS_LABELS[formulario.status]}
-                    </Badge>
-                  </div>
-                  <p className="text-[12px] text-navy/50">{formulario.liga_nome}</p>
-                  {formulario.descricao && (
-                    <p className="text-[12px] text-navy/60 mt-1 line-clamp-1">
-                      {formulario.descricao}
-                    </p>
-                  )}
-                </div>
-                {formulario.typeform_form_url && (
-                  <a
-                    href={formulario.typeform_form_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-navy/40 hover:text-navy transition-colors flex-shrink-0"
-                    title="Abrir formulário"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                )}
-              </div>
+      {/* KPIs */}
+      <div className="mb-10">
+        <KpiRow items={kpis} cols={4} />
+      </div>
+
+      {/* Section + tabela */}
+      <div className="space-y-12">
+        <section>
+          <SectionHeader
+            titulo="Todos os Formulários"
+            tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          />
+
+          {/* Filtros */}
+          <div className="flex gap-2 mb-5">
+            {filtros.map(({ valor, label }) => (
+              <button
+                key={valor}
+                onClick={() => setFiltro(valor)}
+                className={
+                  filtro === valor
+                    ? "bg-navy text-white px-3 py-1 rounded-full text-[11px] font-semibold transition-colors"
+                    : "border border-navy/20 text-navy/60 px-3 py-1 rounded-full text-[11px] font-semibold hover:border-navy/40 transition-colors"
+                }
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {carregando ? (
+            <p className="text-[13px] text-navy/40 py-10 text-center">Carregando...</p>
+          ) : filtrados.length === 0 ? (
+            <div className="border border-dashed border-navy/20 rounded-lg py-16 text-center">
+              <p className="text-[13px] text-navy/40">
+                {formularios.length === 0
+                  ? "Nenhum formulário ainda."
+                  : "Nenhum formulário neste filtro."}
+              </p>
+              {formularios.length === 0 && (
+                <Button
+                  onClick={() => navigate("/formularios/novo")}
+                  className="mt-4 bg-navy text-white hover:bg-navy/90"
+                >
+                  Criar primeiro formulário
+                </Button>
+              )}
             </div>
-          ))}
-        </div>
-      )}
+          ) : (
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-foreground/[0.08]">
+                  {["Título", "Liga", "Status", "Criado em"].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-navy/40 font-normal"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtrados.map((f) => (
+                  <tr
+                    key={f.id}
+                    onClick={() => navigate(`/formularios/${f.id}`)}
+                    className="border-b border-foreground/[0.06] hover:bg-navy/[0.02] cursor-pointer transition-colors"
+                  >
+                    <td className="py-3 px-4 font-plex-sans text-[13px] font-semibold text-navy">
+                      {f.nome}
+                    </td>
+                    <td className="py-3 px-4 font-plex-sans text-[13px] text-navy/60">
+                      {f.liga_nome}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${STATUS_BADGE[f.status]}`}
+                      >
+                        {STATUS_LABELS[f.status]}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 font-plex-mono text-[11px] text-navy/40">
+                      {new Date(f.created_at).toLocaleDateString("pt-BR")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

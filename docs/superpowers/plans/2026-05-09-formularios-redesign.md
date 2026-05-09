@@ -1,3 +1,263 @@
+# Formulários Redesign — Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Redesenhar as três páginas de Formulários para seguir o padrão visual de Ligas/Projetos — `SectionHeader`, `KpiRow`, tipografia `font-plex-mono`, filtros em pills, tabela com hover state — e corrigir URLs hardcoded para `localhost:3001`.
+
+**Architecture:** Cada um dos três arquivos de página é modificado de forma independente. Nenhum novo componente é criado. `SectionHeader` e `KpiRow` são importados de `@/pages/home/v1/primitives`; `useCachedFetch` substitui o fetch manual na lista. A lógica funcional (fetch, ações, Sheet de candidato) é preservada — só o JSX muda.
+
+**Tech Stack:** React 18, TypeScript strict, Tailwind CSS v3, shadcn/ui, lucide-react, sonner (toast)
+
+---
+
+## File Map
+
+| Arquivo                                                    | Mudança                                                                                                |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `apps/web/src/pages/formularios/FormulariosPage.tsx`       | Redesign completo — novo header, KpiRow, SectionHeader, tabela, filtros, URL relativa                  |
+| `apps/web/src/pages/formularios/FormularioDetalhePage.tsx` | Redesign completo — novo header, barra distribuição CSS, KpiRow, SectionHeader, tabela, URLs relativas |
+| `apps/web/src/pages/formularios/NovoFormularioPage.tsx`    | Visual update — eyebrow no header + URLs relativas                                                     |
+
+**Referência (ler, não alterar):**
+
+- `apps/web/src/pages/home/v1/primitives.tsx` — exporta `SectionHeader`, `KpiRow`, `KpiItem`
+- `apps/web/src/hooks/use-cached-fetch.ts` — hook para fetch com cache
+
+---
+
+## Task 1: FormulariosPage — Redesign Completo
+
+**Files:**
+
+- Modify: `apps/web/src/pages/formularios/FormulariosPage.tsx`
+
+### Contexto do componente atual
+
+A página atual usa cards estilizados individualmente, sem KpiRow ou SectionHeader. Busca via `fetch("http://localhost:3001/api/formularios", ...)`. O tipo `FormularioComLiga extends Formulario` com `liga_nome: string` deve ser preservado.
+
+- [ ] **Step 1: Substituir o arquivo completo pelo redesign**
+
+Substitua todo o conteúdo de `apps/web/src/pages/formularios/FormulariosPage.tsx` por:
+
+```tsx
+import { Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { Button } from "@/components/ui/button";
+import { useCachedFetch } from "@/hooks/use-cached-fetch";
+import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
+
+import type { Formulario, FormularioStatus } from "@link-leagues/types";
+import type { KpiItem } from "@/pages/home/v1/primitives";
+
+const STATUS_LABELS: Record<FormularioStatus, string> = {
+  rascunho: "Rascunho",
+  aberto: "Aberto",
+  encerrado: "Encerrado",
+};
+
+const STATUS_BADGE: Record<FormularioStatus, string> = {
+  rascunho: "bg-brand-yellow/20 text-navy",
+  aberto: "bg-green-100 text-green-800",
+  encerrado: "bg-navy/10 text-navy/60",
+};
+
+type Filtro = FormularioStatus | "todos";
+
+interface FormularioComLiga extends Formulario {
+  liga_nome: string;
+}
+
+export function FormulariosPage() {
+  const navigate = useNavigate();
+  const { data } = useCachedFetch<FormularioComLiga[]>("/api/formularios");
+  const formularios = data ?? [];
+  const carregando = data === null;
+  const [filtro, setFiltro] = useState<Filtro>("todos");
+
+  const filtrados = useMemo(
+    () => (filtro === "todos" ? formularios : formularios.filter((f) => f.status === filtro)),
+    [formularios, filtro],
+  );
+
+  const kpis: KpiItem[] = [
+    { label: "Total", valor: String(formularios.length) },
+    {
+      label: "Abertos",
+      valor: String(formularios.filter((f) => f.status === "aberto").length),
+    },
+    {
+      label: "Encerrados",
+      valor: String(formularios.filter((f) => f.status === "encerrado").length),
+    },
+    {
+      label: "Rascunhos",
+      valor: String(formularios.filter((f) => f.status === "rascunho").length),
+    },
+  ];
+
+  const filtros: { valor: Filtro; label: string }[] = [
+    { valor: "todos", label: "Todos" },
+    { valor: "aberto", label: "Abertos" },
+    { valor: "encerrado", label: "Encerrados" },
+    { valor: "rascunho", label: "Rascunhos" },
+  ];
+
+  return (
+    <div className="max-w-5xl mx-auto px-8 py-10">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/40 mb-1">
+            Processos Seletivos
+          </p>
+          <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
+            Formulários
+          </h1>
+        </div>
+        <Button
+          onClick={() => navigate("/formularios/novo")}
+          className="bg-navy text-white hover:bg-navy/90 gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Novo Formulário
+        </Button>
+      </div>
+
+      {/* KPIs */}
+      <div className="mb-10">
+        <KpiRow items={kpis} cols={4} />
+      </div>
+
+      {/* Section header */}
+      <div className="space-y-12">
+        <section>
+          <SectionHeader
+            titulo="Todos os Formulários"
+            tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          />
+
+          {/* Filtros */}
+          <div className="flex gap-2 mb-5">
+            {filtros.map(({ valor, label }) => (
+              <button
+                key={valor}
+                onClick={() => setFiltro(valor)}
+                className={
+                  filtro === valor
+                    ? "bg-navy text-white px-3 py-1 rounded-full text-[11px] font-semibold transition-colors"
+                    : "border border-navy/20 text-navy/60 px-3 py-1 rounded-full text-[11px] font-semibold hover:border-navy/40 transition-colors"
+                }
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tabela */}
+          {carregando ? (
+            <p className="text-[13px] text-navy/40 py-10 text-center">Carregando...</p>
+          ) : filtrados.length === 0 ? (
+            <div className="border border-dashed border-navy/20 rounded-lg py-16 text-center">
+              <p className="text-[13px] text-navy/40">
+                {formularios.length === 0
+                  ? "Nenhum formulário ainda."
+                  : "Nenhum formulário neste filtro."}
+              </p>
+              {formularios.length === 0 && (
+                <Button
+                  onClick={() => navigate("/formularios/novo")}
+                  className="mt-4 bg-navy text-white hover:bg-navy/90"
+                >
+                  Criar primeiro formulário
+                </Button>
+              )}
+            </div>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-foreground/[0.08]">
+                  {["Título", "Liga", "Pontuação mínima", "Status", "Criado em"].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-navy/40 font-normal"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtrados.map((f) => (
+                  <tr
+                    key={f.id}
+                    onClick={() => navigate(`/formularios/${f.id}`)}
+                    className="border-b border-foreground/[0.06] hover:bg-navy/[0.02] cursor-pointer transition-colors"
+                  >
+                    <td className="py-3 px-4 font-plex-sans text-[13px] font-semibold text-navy">
+                      {f.nome}
+                    </td>
+                    <td className="py-3 px-4 font-plex-sans text-[13px] text-navy/60">
+                      {f.liga_nome}
+                    </td>
+                    <td className="py-3 px-4 font-plex-sans text-[13px] text-navy/60">
+                      {f.pontuacao_minima_aprovacao}/100
+                    </td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${STATUS_BADGE[f.status]}`}
+                      >
+                        {STATUS_LABELS[f.status]}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 font-plex-mono text-[11px] text-navy/40">
+                      {new Date(f.created_at).toLocaleDateString("pt-BR")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 2: Verificar typecheck**
+
+```bash
+cd /Users/diogochiapetagarcia/Cursor/Link-Hub && npm run typecheck 2>&1 | head -40
+```
+
+Esperado: sem erros em `FormulariosPage.tsx`.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add apps/web/src/pages/formularios/FormulariosPage.tsx
+git commit -m "redesign: FormulariosPage com KpiRow, tabela e filtros por status"
+```
+
+---
+
+## Task 2: FormularioDetalhePage — Redesign Completo
+
+**Files:**
+
+- Modify: `apps/web/src/pages/formularios/FormularioDetalhePage.tsx`
+
+### Contexto do componente atual
+
+A página de detalhe carrega `FormularioComPerguntas` e `ResultadosFormulario` em paralelo. Exibe candidatos com filtro por status e Sheet para ver respostas individuais. Precisa: atualizar header, adicionar barra de distribuição CSS, trocar os stats por `KpiRow`, adicionar `SectionHeader` antes da tabela, corrigir todas as URLs para relativas.
+
+- [ ] **Step 4: Substituir o arquivo completo pelo redesign**
+
+Substitua todo o conteúdo de `apps/web/src/pages/formularios/FormularioDetalhePage.tsx` por:
+
+```tsx
 import { ArrowLeft, Copy, ExternalLink, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -5,10 +265,9 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { supabase } from "@/lib/supabase";
 import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
+import { supabase } from "@/lib/supabase";
 
-import type { KpiItem } from "@/pages/home/v1/primitives";
 import type {
   FormularioCandidato,
   FormularioComPerguntas,
@@ -16,6 +275,7 @@ import type {
   CandidatoStatus,
   FormularioStatus,
 } from "@link-leagues/types";
+import type { KpiItem } from "@/pages/home/v1/primitives";
 
 async function getToken(): Promise<string> {
   const { data } = await supabase.auth.getSession();
@@ -155,6 +415,7 @@ export function FormularioDetalhePage() {
 
   const formularioComLiga = formulario as (FormularioComPerguntas & { liga_nome?: string }) | null;
 
+  // Barra de distribuição CSS
   const total = resultados?.total ?? 0;
   const pctAprovados = total > 0 ? Math.round((resultados!.aprovados / total) * 100) : 0;
   const pctReprovados = total > 0 ? Math.round((resultados!.reprovados / total) * 100) : 0;
@@ -463,3 +724,177 @@ export function FormularioDetalhePage() {
     </div>
   );
 }
+```
+
+- [ ] **Step 5: Verificar typecheck**
+
+```bash
+cd /Users/diogochiapetagarcia/Cursor/Link-Hub && npm run typecheck 2>&1 | head -40
+```
+
+Esperado: sem erros em `FormularioDetalhePage.tsx`.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add apps/web/src/pages/formularios/FormularioDetalhePage.tsx
+git commit -m "redesign: FormularioDetalhePage com KpiRow, barra de distribuição e SectionHeader"
+```
+
+---
+
+## Task 3: NovoFormularioPage — Atualização Visual + URLs Relativas
+
+**Files:**
+
+- Modify: `apps/web/src/pages/formularios/NovoFormularioPage.tsx`
+
+### Contexto
+
+A página de criação tem fluxo em 4 etapas + tela de sucesso (etapa 5). Não alteramos a lógica. As mudanças são:
+
+1. Adicionar eyebrow "Novo Processo Seletivo" acima do `<h1>`
+2. Corrigir as 3 URLs hardcoded para relativas
+
+- [ ] **Step 7: Adicionar eyebrow ao header**
+
+No arquivo `apps/web/src/pages/formularios/NovoFormularioPage.tsx`, localize o bloco do header principal (linha ~443):
+
+```tsx
+<div className="mb-8">
+  <button
+    onClick={() => navigate("/formularios")}
+    className="flex items-center gap-1 text-[12px] text-navy/50 hover:text-navy mb-4 transition-colors"
+  >
+    <ArrowLeft className="w-3.5 h-3.5" />
+    Voltar
+  </button>
+  <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
+    Novo Formulário
+  </h1>
+</div>
+```
+
+Substitua por:
+
+```tsx
+<div className="mb-8">
+  <button
+    onClick={() => navigate("/formularios")}
+    className="flex items-center gap-1 text-[12px] text-navy/50 hover:text-navy mb-6 transition-colors"
+  >
+    <ArrowLeft className="w-3.5 h-3.5" />
+    Formulários
+  </button>
+  <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/40 mb-1">
+    Novo Processo Seletivo
+  </p>
+  <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
+    Criar Formulário
+  </h1>
+</div>
+```
+
+- [ ] **Step 8: Corrigir URLs hardcoded (3 ocorrências)**
+
+Substitua cada URL com `http://localhost:3001` pela URL relativa correspondente:
+
+Linha ~229:
+
+```tsx
+      const res = await fetch("http://localhost:3001/api/formularios/minha-liga", {
+```
+
+→
+
+```tsx
+      const res = await fetch("/api/formularios/minha-liga", {
+```
+
+Linha ~246:
+
+```tsx
+      const res = await fetch("http://localhost:3001/api/ligas", {
+```
+
+→
+
+```tsx
+      const res = await fetch("/api/ligas", {
+```
+
+Linha ~362:
+
+```tsx
+      const res = await fetch("http://localhost:3001/api/formularios", {
+```
+
+→
+
+```tsx
+      const res = await fetch("/api/formularios", {
+```
+
+Linha ~380:
+
+```tsx
+        await fetch(`http://localhost:3001/api/formularios/${formulario.id}/publicar`, {
+```
+
+→
+
+```tsx
+        await fetch(`/api/formularios/${formulario.id}/publicar`, {
+```
+
+- [ ] **Step 9: Verificar typecheck**
+
+```bash
+cd /Users/diogochiapetagarcia/Cursor/Link-Hub && npm run typecheck 2>&1 | head -40
+```
+
+Esperado: zero erros de tipos.
+
+- [ ] **Step 10: Commit**
+
+```bash
+git add apps/web/src/pages/formularios/NovoFormularioPage.tsx
+git commit -m "fix: NovoFormularioPage eyebrow header e URLs relativas"
+```
+
+---
+
+## Verificação Final
+
+- [ ] **Step 11: Abrir o app e testar o fluxo completo**
+
+```bash
+cd /Users/diogochiapetagarcia/Cursor/Link-Hub && npm run dev
+```
+
+Checklist manual (abrir `http://localhost:3000`):
+
+1. Navegar para `/formularios`
+
+   - Header "Formulários" com eyebrow "PROCESSOS SELETIVOS"
+   - KpiRow com 4 cards (Total, Abertos, Encerrados, Rascunhos)
+   - Tabela com colunas: Título | Liga | Pontuação mínima | Status | Criado em
+   - Pills de filtro funcionando (Todos / Abertos / Encerrados / Rascunhos)
+   - Hover na linha muda o fundo
+   - Empty state com botão "Criar primeiro formulário"
+
+2. Clicar em um formulário → navega para `/formularios/:id`
+
+   - Back link "← Formulários"
+   - Header com nome, badge de status, botões de ação
+   - Barra de distribuição colorida (verde/vermelho/âmbar) quando há candidatos
+   - KpiRow com 4 cards de candidatos
+   - Filtros por status funcionando
+   - Tabela de candidatos com hover
+   - Clicar em candidato abre Sheet lateral com respostas
+   - Botão Exportar CSV aparece quando há candidatos
+
+3. Navegar para `/formularios/novo`
+   - Eyebrow "NOVO PROCESSO SELETIVO" acima do título "Criar Formulário"
+   - Back link "← Formulários"
+   - Fluxo em etapas funciona normalmente

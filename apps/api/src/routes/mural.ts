@@ -95,11 +95,11 @@ muralRouter.post(
   },
 );
 
-// GET /mural?liga_id= — lista posts (feed global ou de uma liga)
+// GET /mural?filtro=publica|liga — lista posts (feed global ou de uma liga)
 muralRouter.get("/", authenticate, async (req, res, next) => {
   try {
     const user = (req as AuthenticatedRequest).user!;
-    const liga_id = req.query["liga_id"] as string | undefined;
+    const filtro = (req.query["filtro"] as "publica" | "liga" | undefined) ?? "publica";
 
     const [usuarioAtual] = await sql`
       SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1
@@ -107,19 +107,36 @@ muralRouter.get("/", authenticate, async (req, res, next) => {
 
     const restringirPorLiga = user.role !== "staff" && user.role !== "professor";
 
-    if (liga_id && restringirPorLiga) {
-      if (!(await usuarioPertenceALiga(user.email, liga_id))) {
-        res.status(403).json({ error: "Acesso restrito aos membros desta liga." });
-        return;
-      }
-    }
+    let posts;
 
-    const posts = restringirPorLiga
-      ? await sql`
+    if (restringirPorLiga) {
+      if (filtro === "publica") {
+        // Posts públicos de todas as ligas — sem restrição de liga
+        posts = await sql`
           SELECT
             p.id, p.liga_id, l.nome AS liga_nome, p.autor_id,
             u.nome AS autor_nome, u.role AS autor_role, u.avatar_url AS autor_avatar_url,
-            p.conteudo, p.imagem_url, p.criado_em, p.atualizado_em,
+            p.conteudo, p.imagem_url, p.visibilidade, p.criado_em, p.atualizado_em,
+            (SELECT COUNT(*)::int FROM post_curtidas c WHERE c.post_id = p.id) AS curtidas,
+            EXISTS (
+              SELECT 1 FROM post_curtidas c
+              WHERE c.post_id = p.id AND c.usuario_id = ${usuarioAtual?.id ?? null}
+            ) AS curtido_por_mim,
+            (SELECT COUNT(*)::int FROM post_comentarios co WHERE co.post_id = p.id) AS total_comentarios
+          FROM posts p
+          JOIN ligas l ON l.id = p.liga_id
+          JOIN usuarios u ON u.id = p.autor_id
+          WHERE p.visibilidade = 'publica'
+          ORDER BY p.criado_em DESC
+          LIMIT 100
+        `;
+      } else {
+        // Posts da liga do usuário — público + só-liga
+        posts = await sql`
+          SELECT
+            p.id, p.liga_id, l.nome AS liga_nome, p.autor_id,
+            u.nome AS autor_nome, u.role AS autor_role, u.avatar_url AS autor_avatar_url,
+            p.conteudo, p.imagem_url, p.visibilidade, p.criado_em, p.atualizado_em,
             (SELECT COUNT(*)::int FROM post_curtidas c WHERE c.post_id = p.id) AS curtidas,
             EXISTS (
               SELECT 1 FROM post_curtidas c
@@ -136,15 +153,18 @@ muralRouter.get("/", authenticate, async (req, res, next) => {
             UNION
             SELECT id FROM ligas WHERE lider_id = (SELECT id FROM usuarios WHERE email = ${user.email})
           )
-            ${liga_id ? sql`AND p.liga_id = ${liga_id}` : sql``}
           ORDER BY p.criado_em DESC
           LIMIT 100
-        `
-      : await sql`
+        `;
+      }
+    } else {
+      // Staff / professor — sem restrição de liga
+      if (filtro === "publica") {
+        posts = await sql`
           SELECT
             p.id, p.liga_id, l.nome AS liga_nome, p.autor_id,
             u.nome AS autor_nome, u.role AS autor_role, u.avatar_url AS autor_avatar_url,
-            p.conteudo, p.imagem_url, p.criado_em, p.atualizado_em,
+            p.conteudo, p.imagem_url, p.visibilidade, p.criado_em, p.atualizado_em,
             (SELECT COUNT(*)::int FROM post_curtidas c WHERE c.post_id = p.id) AS curtidas,
             EXISTS (
               SELECT 1 FROM post_curtidas c
@@ -154,11 +174,30 @@ muralRouter.get("/", authenticate, async (req, res, next) => {
           FROM posts p
           JOIN ligas l ON l.id = p.liga_id
           JOIN usuarios u ON u.id = p.autor_id
-          WHERE TRUE
-            ${liga_id ? sql`AND p.liga_id = ${liga_id}` : sql``}
+          WHERE p.visibilidade = 'publica'
           ORDER BY p.criado_em DESC
           LIMIT 100
         `;
+      } else {
+        posts = await sql`
+          SELECT
+            p.id, p.liga_id, l.nome AS liga_nome, p.autor_id,
+            u.nome AS autor_nome, u.role AS autor_role, u.avatar_url AS autor_avatar_url,
+            p.conteudo, p.imagem_url, p.visibilidade, p.criado_em, p.atualizado_em,
+            (SELECT COUNT(*)::int FROM post_curtidas c WHERE c.post_id = p.id) AS curtidas,
+            EXISTS (
+              SELECT 1 FROM post_curtidas c
+              WHERE c.post_id = p.id AND c.usuario_id = ${usuarioAtual?.id ?? null}
+            ) AS curtido_por_mim,
+            (SELECT COUNT(*)::int FROM post_comentarios co WHERE co.post_id = p.id) AS total_comentarios
+          FROM posts p
+          JOIN ligas l ON l.id = p.liga_id
+          JOIN usuarios u ON u.id = p.autor_id
+          ORDER BY p.criado_em DESC
+          LIMIT 100
+        `;
+      }
+    }
 
     res.json(posts);
   } catch (err) {
@@ -170,10 +209,11 @@ muralRouter.get("/", authenticate, async (req, res, next) => {
 muralRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
     const user = (req as AuthenticatedRequest).user!;
-    const { liga_id, conteudo, imagem_url } = req.body as {
+    const { liga_id, conteudo, imagem_url, visibilidade } = req.body as {
       liga_id?: string;
       conteudo?: string;
       imagem_url?: string;
+      visibilidade?: "publica" | "liga";
     };
 
     if (!liga_id || !conteudo?.trim()) {
@@ -190,16 +230,16 @@ muralRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req,
       return;
     }
 
-    const [autor] = await sql`SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1`;
+    const [autor] = await sql`SELECT id, nome FROM usuarios WHERE email = ${user.email} LIMIT 1`;
     if (!autor) {
       res.status(404).json({ error: "Autor não encontrado." });
       return;
     }
 
     const [post] = await sql`
-      INSERT INTO posts (liga_id, autor_id, conteudo, imagem_url)
-      VALUES (${liga_id}, ${autor.id}, ${conteudo.trim()}, ${imagem_url ?? null})
-      RETURNING id, liga_id, autor_id, conteudo, imagem_url, criado_em, atualizado_em
+      INSERT INTO posts (liga_id, autor_id, conteudo, imagem_url, visibilidade)
+      VALUES (${liga_id}, ${autor.id}, ${conteudo.trim()}, ${imagem_url ?? null}, ${visibilidade ?? "publica"})
+      RETURNING id, liga_id, autor_id, conteudo, imagem_url, visibilidade, criado_em, atualizado_em
     `;
 
     res.status(201).json({

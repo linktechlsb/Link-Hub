@@ -1,14 +1,5 @@
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  Copy,
-  GripVertical,
-  Plus,
-  Trash2,
-  Upload,
-} from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, Check, Copy, GripVertical, Info, Plus, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -145,7 +136,7 @@ function ColorField({
   );
 }
 
-function ImageField({
+function ImageUrlField({
   label,
   value,
   onChange,
@@ -154,80 +145,15 @@ function ImageField({
   value: string | undefined;
   onChange: (url: string) => void;
 }) {
-  const [tab, setTab] = useState<"url" | "upload">("url");
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  async function handleUpload(file: File) {
-    try {
-      setUploading(true);
-      const token = await getToken();
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("http://localhost:3001/api/formularios/assets/upload", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: form,
-      });
-      if (!res.ok) throw new Error();
-      const data = (await res.json()) as { url: string };
-      onChange(data.url);
-      toast.success("Imagem enviada!");
-    } catch {
-      toast.error("Erro ao enviar imagem.");
-    } finally {
-      setUploading(false);
-    }
-  }
-
   return (
     <div className="space-y-2">
-      <Label className="text-[11px] font-medium text-navy block">{label}</Label>
-      <div className="flex gap-2 mb-2">
-        <button
-          onClick={() => setTab("url")}
-          className={`text-[10px] px-2 py-1 border transition-colors ${tab === "url" ? "border-navy bg-navy text-white" : "border-navy/20 text-navy"}`}
-        >
-          URL
-        </button>
-        <button
-          onClick={() => setTab("upload")}
-          className={`text-[10px] px-2 py-1 border transition-colors ${tab === "upload" ? "border-navy bg-navy text-white" : "border-navy/20 text-navy"}`}
-        >
-          Upload
-        </button>
-      </div>
-
-      {tab === "url" ? (
-        <Input
-          value={value ?? ""}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="https://..."
-          className="border-navy/20 text-[12px]"
-        />
-      ) : (
-        <div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void handleUpload(file);
-            }}
-          />
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="flex items-center gap-2 text-[11px] border border-dashed border-navy/30 px-4 py-2 w-full justify-center hover:bg-navy/5 text-navy/60 transition-colors"
-          >
-            <Upload className="w-3.5 h-3.5" />
-            {uploading ? "Enviando..." : "Selecionar arquivo"}
-          </button>
-        </div>
-      )}
-
+      <Label className="text-[11px] font-medium text-navy block">{label} (opcional)</Label>
+      <Input
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="https://..."
+        className="border-navy/20 text-[12px]"
+      />
       {value && (
         <div className="flex items-center gap-2">
           <img
@@ -265,7 +191,6 @@ export function NovoFormularioPage() {
   const [ligaId, setLigaId] = useState("");
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [pontuacaoMinima, setPontuacaoMinima] = useState(70);
 
   // Etapa 2
   const [perguntas, setPerguntas] = useState<CreatePerguntaInput[]>([]);
@@ -291,7 +216,7 @@ export function NovoFormularioPage() {
     try {
       setCarregandoLiga(true);
       const token = await getToken();
-      const res = await fetch("http://localhost:3001/api/formularios/minha-liga", {
+      const res = await fetch("/api/formularios/minha-liga", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error();
@@ -308,7 +233,7 @@ export function NovoFormularioPage() {
   async function carregarLigas() {
     try {
       const token = await getToken();
-      const res = await fetch("http://localhost:3001/api/ligas", {
+      const res = await fetch("/api/ligas", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error();
@@ -419,12 +344,11 @@ export function NovoFormularioPage() {
         liga_id: ligaId,
         nome,
         descricao: descricao || undefined,
-        pontuacao_minima_aprovacao: pontuacaoMinima,
         perguntas,
         tema,
       };
 
-      const res = await fetch("http://localhost:3001/api/formularios", {
+      const res = await fetch("/api/formularios", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -442,13 +366,13 @@ export function NovoFormularioPage() {
       setFormularioId(formulario.id);
 
       if (publicar) {
-        await fetch(`http://localhost:3001/api/formularios/${formulario.id}/publicar`, {
+        await fetch(`/api/formularios/${formulario.id}/publicar`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
       }
 
-      setLinkCriado(formulario.typeform_form_url ?? null);
+      setLinkCriado(formulario.google_form_url ?? null);
       setEtapa(5);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao criar formulário");
@@ -509,13 +433,13 @@ export function NovoFormularioPage() {
       <div className="mb-8">
         <button
           onClick={() => navigate("/formularios")}
-          className="flex items-center gap-1 text-[12px] text-navy/50 hover:text-navy mb-4 transition-colors"
+          className="flex items-center gap-1 text-[12px] text-navy/50 hover:text-navy mb-6 transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          Voltar
+          Formulários
         </button>
         <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
-          Novo Formulário
+          Criar Formulário
         </h1>
       </div>
 
@@ -598,26 +522,8 @@ export function NovoFormularioPage() {
             />
           </div>
 
-          <div>
-            <Label className="text-[12px] font-medium text-navy mb-1.5 block">
-              Pontuação mínima para aprovação: {pontuacaoMinima}/100
-            </Label>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={pontuacaoMinima}
-              onChange={(e) => setPontuacaoMinima(Number(e.target.value))}
-              className="w-full accent-navy"
-            />
-            <div className="flex justify-between text-[11px] text-navy/40 mt-1">
-              <span>0</span>
-              <span>100</span>
-            </div>
-          </div>
-
           <div className="flex justify-end pt-2">
-            <Button
+            <button
               onClick={() => {
                 if (!ligaId || !nome) {
                   toast.error("Liga e nome são obrigatórios.");
@@ -625,11 +531,11 @@ export function NovoFormularioPage() {
                 }
                 setEtapa(2);
               }}
-              className="bg-navy text-white hover:bg-navy/90 gap-2"
+              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors flex items-center gap-1.5"
             >
               Próximo
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       )}
@@ -775,7 +681,7 @@ export function NovoFormularioPage() {
                 <button
                   key={tipo}
                   onClick={() => adicionarPergunta(tipo)}
-                  className="text-[11px] border border-navy/20 px-3 py-1.5 hover:bg-navy/5 text-navy transition-colors"
+                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/60 border border-foreground/30 px-3 py-1.5 rounded-full hover:text-foreground hover:border-foreground/50 transition-colors"
                 >
                   + {label}
                 </button>
@@ -784,11 +690,14 @@ export function NovoFormularioPage() {
           </div>
 
           <div className="flex justify-between pt-2">
-            <Button variant="ghost" onClick={() => setEtapa(1)} className="text-navy gap-2">
-              <ArrowLeft className="w-4 h-4" />
+            <button
+              onClick={() => setEtapa(1)}
+              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/50 border border-foreground/20 px-3 py-1.5 rounded-full hover:text-foreground hover:border-foreground/40 transition-colors flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
               Voltar
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={() => {
                 if (perguntas.length === 0) {
                   toast.error("Adicione pelo menos uma pergunta.");
@@ -796,11 +705,11 @@ export function NovoFormularioPage() {
                 }
                 setEtapa(3);
               }}
-              className="bg-navy text-white hover:bg-navy/90 gap-2"
+              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors flex items-center gap-1.5"
             >
               Próximo
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       )}
@@ -833,13 +742,20 @@ export function NovoFormularioPage() {
 
             <div>
               <h3 className="font-display font-bold text-[14px] text-navy mb-4">Imagens</h3>
+              <div className="flex items-start gap-2 p-3 border border-amber-200 bg-amber-50 mb-4">
+                <Info className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <p className="text-[11px] text-amber-700">
+                  Logo e imagem de fundo não são aplicadas automaticamente pelo Google Forms API.
+                  Após publicar, edite o formulário no Google para adicioná-las manualmente.
+                </p>
+              </div>
               <div className="space-y-5">
-                <ImageField
+                <ImageUrlField
                   label="Logo"
                   value={tema.logo_url}
                   onChange={(url) => atualizarTema({ logo_url: url || undefined })}
                 />
-                <ImageField
+                <ImageUrlField
                   label="Imagem de fundo"
                   value={tema.imagem_fundo_url}
                   onChange={(url) => atualizarTema({ imagem_fundo_url: url || undefined })}
@@ -848,28 +764,30 @@ export function NovoFormularioPage() {
             </div>
 
             <div className="flex justify-between pt-2">
-              <Button variant="ghost" onClick={() => setEtapa(2)} className="text-navy gap-2">
-                <ArrowLeft className="w-4 h-4" />
+              <button
+                onClick={() => setEtapa(2)}
+                className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/50 border border-foreground/20 px-3 py-1.5 rounded-full hover:text-foreground hover:border-foreground/40 transition-colors flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
                 Voltar
-              </Button>
+              </button>
               <div className="flex gap-2">
-                <Button
-                  variant="ghost"
+                <button
                   onClick={() => {
                     setTema({ ...TEMA_DEFAULT });
                     setEtapa(4);
                   }}
-                  className="text-navy/50 text-[12px]"
+                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/40 hover:text-foreground transition-colors px-2"
                 >
                   Pular
-                </Button>
-                <Button
+                </button>
+                <button
                   onClick={() => setEtapa(4)}
-                  className="bg-navy text-white hover:bg-navy/90 gap-2"
+                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors flex items-center gap-1.5"
                 >
                   Próximo
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           </div>
@@ -893,10 +811,6 @@ export function NovoFormularioPage() {
               <div>
                 <span className="text-navy/50">Nome:</span>{" "}
                 <span className="text-navy font-medium">{nome}</span>
-              </div>
-              <div>
-                <span className="text-navy/50">Pontuação mínima:</span>{" "}
-                <span className="text-navy font-medium">{pontuacaoMinima}/100</span>
               </div>
               {descricao && (
                 <div className="col-span-2">
@@ -970,26 +884,28 @@ export function NovoFormularioPage() {
           </div>
 
           <div className="flex justify-between pt-2">
-            <Button variant="ghost" onClick={() => setEtapa(3)} className="text-navy gap-2">
-              <ArrowLeft className="w-4 h-4" />
+            <button
+              onClick={() => setEtapa(3)}
+              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/50 border border-foreground/20 px-3 py-1.5 rounded-full hover:text-foreground hover:border-foreground/40 transition-colors flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
               Voltar
-            </Button>
+            </button>
             <div className="flex gap-3">
-              <Button
-                variant="outline"
+              <button
                 onClick={() => criarFormulario(false)}
                 disabled={salvando}
-                className="border-navy/20 text-navy"
+                className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/50 border border-foreground/20 px-3 py-1.5 rounded-full hover:text-foreground hover:border-foreground/40 transition-colors disabled:opacity-40"
               >
                 {salvando ? "Criando..." : "Salvar como rascunho"}
-              </Button>
-              <Button
+              </button>
+              <button
                 onClick={() => criarFormulario(true)}
                 disabled={salvando}
-                className="bg-navy text-white hover:bg-navy/90"
+                className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors disabled:opacity-40"
               >
                 {salvando ? "Criando..." : "Criar e publicar"}
-              </Button>
+              </button>
             </div>
           </div>
         </div>

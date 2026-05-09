@@ -16,9 +16,8 @@ export interface Formulario {
   nome: string;
   descricao?: string;
   status: FormularioStatus;
-  typeform_form_id?: string;
-  typeform_form_url?: string;
-  pontuacao_minima_aprovacao: number;
+  google_form_id?: string;
+  google_form_url?: string;
   tema?: TemaFormulario;
   created_by?: string;
   created_at: string;
@@ -28,7 +27,7 @@ export interface Formulario {
 export interface FormularioPergunta {
   id: string;
   processo_id: string;
-  typeform_field_id?: string;
+  google_item_id?: string;
   titulo: string;
   tipo: PerguntaTipo;
   peso: number;
@@ -42,7 +41,7 @@ export interface FormularioPergunta {
 export interface FormularioCandidato {
   id: string;
   processo_id: string;
-  typeform_response_id: string;
+  google_response_id: string;
   nome: string;
   email: string;
   pontuacao_total: number;
@@ -68,7 +67,6 @@ export interface CreateFormularioInput {
   liga_id: string;
   nome: string;
   descricao?: string;
-  pontuacao_minima_aprovacao: number;
   perguntas: CreatePerguntaInput[];
   tema?: TemaFormulario;
 }

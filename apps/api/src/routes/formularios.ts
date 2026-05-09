@@ -5,17 +5,10 @@ import { sql } from "../config/db.js";
 import { supabaseAdmin } from "../config/supabase.js";
 import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 import { usuarioEhDiretorDaLiga } from "../middleware/authorization.js";
-import {
-  criarFormTypeform,
-  criarTemaTypeform,
-  buscarRespostasTypeform,
-} from "../services/typeform.js";
+import { criarFormGoogle, buscarRespostasGoogle } from "../services/googleForms.js";
 
-import type {
-  CreateFormularioInput,
-  FormularioPergunta,
-  TemaFormulario,
-} from "@link-leagues/types";
+import type { GoogleFormAnswer } from "../services/googleForms.js";
+import type { CreateFormularioInput, FormularioPergunta } from "@link-leagues/types";
 
 export const formulariosRouter: IRouter = Router();
 
@@ -153,7 +146,7 @@ formulariosRouter.get(
   },
 );
 
-// POST /formularios — cria formulário + form no Typeform
+// POST /formularios — cria formulário + form no Google Forms
 formulariosRouter.post(
   "/",
   authenticate,
@@ -161,8 +154,7 @@ formulariosRouter.post(
   async (req, res, next) => {
     try {
       const user = (req as AuthenticatedRequest).user!;
-      const { liga_id, nome, descricao, pontuacao_minima_aprovacao, perguntas, tema } =
-        req.body as CreateFormularioInput;
+      const { liga_id, nome, descricao, perguntas, tema } = req.body as CreateFormularioInput;
 
       if (!liga_id || !nome || !perguntas?.length) {
         res.status(400).json({ error: "liga_id, nome e perguntas são obrigatórios." });
@@ -176,18 +168,13 @@ formulariosRouter.post(
 
       const [criador] = await sql`SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1`;
 
-      let themeId: string | undefined;
-      if (tema) {
-        themeId = await criarTemaTypeform(tema as TemaFormulario);
-      }
-
-      const { formId, formUrl } = await criarFormTypeform(nome, perguntas, themeId);
+      const { formId, formUrl, questionIds } = await criarFormGoogle(nome, descricao, perguntas);
 
       const [processo] = await sql`
         INSERT INTO processos_seletivos
-          (liga_id, nome, descricao, pontuacao_minima_aprovacao, typeform_form_id, typeform_form_url, tema, created_by)
+          (liga_id, nome, descricao, google_form_id, google_form_url, tema, created_by)
         VALUES
-          (${liga_id}, ${nome}, ${descricao ?? null}, ${pontuacao_minima_aprovacao ?? 70}, ${formId}, ${formUrl}, ${tema ? JSON.stringify(tema) : null}, ${criador?.id ?? null})
+          (${liga_id}, ${nome}, ${descricao ?? null}, ${formId}, ${formUrl}, ${tema ? JSON.stringify(tema) : null}, ${criador?.id ?? null})
         RETURNING *
       `;
 
@@ -197,12 +184,12 @@ formulariosRouter.post(
       }
 
       for (const pergunta of perguntas) {
-        const fieldRef = `pergunta_${pergunta.ordem}`;
+        const questionId = questionIds[pergunta.ordem] ?? null;
         await sql`
           INSERT INTO processo_perguntas
-            (processo_id, typeform_field_id, titulo, tipo, peso, eliminatoria, nota_minima, opcoes_eliminatorias, opcoes, ordem)
+            (processo_id, google_item_id, titulo, tipo, peso, eliminatoria, nota_minima, opcoes_eliminatorias, opcoes, ordem)
           VALUES
-            (${processo.id}, ${fieldRef}, ${pergunta.titulo}, ${pergunta.tipo},
+            (${processo.id}, ${questionId}, ${pergunta.titulo}, ${pergunta.tipo},
              ${pergunta.peso ?? 0}, ${pergunta.eliminatoria ?? false},
              ${pergunta.nota_minima ?? null},
              ${pergunta.opcoes_eliminatorias ? JSON.stringify(pergunta.opcoes_eliminatorias) : null},
@@ -356,7 +343,7 @@ formulariosRouter.post(
   },
 );
 
-// POST /formularios/:id/sincronizar — busca respostas do Typeform e aplica scoring
+// POST /formularios/:id/sincronizar — busca respostas do Google Forms e aplica scoring
 formulariosRouter.post(
   "/:id/sincronizar",
   authenticate,
@@ -375,8 +362,8 @@ formulariosRouter.post(
         return;
       }
 
-      if (!processo.typeform_form_id) {
-        res.status(400).json({ error: "Formulário não possui form Typeform associado." });
+      if (!processo.google_form_id) {
+        res.status(400).json({ error: "Formulário não possui Google Form associado." });
         return;
       }
 
@@ -392,56 +379,47 @@ formulariosRouter.post(
         SELECT * FROM processo_perguntas WHERE processo_id = ${id} ORDER BY ordem ASC
       `) as FormularioPergunta[];
 
-      const respostasTypeform = await buscarRespostasTypeform(processo.typeform_form_id as string);
+      const respostasGoogle = await buscarRespostasGoogle(processo.google_form_id as string);
 
       const jaSincronizados = (await sql`
-        SELECT typeform_response_id FROM processo_candidatos WHERE processo_id = ${id}
-      `) as unknown as Array<{ typeform_response_id: string }>;
-      const idsExistentes = new Set(jaSincronizados.map((r) => r.typeform_response_id));
+        SELECT google_response_id FROM processo_candidatos WHERE processo_id = ${id}
+      `) as unknown as Array<{ google_response_id: string }>;
+      const idsExistentes = new Set(jaSincronizados.map((r) => r.google_response_id));
 
       let novosCandidatos = 0;
 
-      for (const resposta of respostasTypeform) {
-        if (idsExistentes.has(resposta.response_id)) continue;
+      for (const resposta of respostasGoogle) {
+        if (idsExistentes.has(resposta.responseId)) continue;
 
-        const answers = resposta.answers ?? [];
-        let nome = "Candidato";
-        let email = "";
-
-        for (const answer of answers) {
-          if (answer.type === "email" || answer.field?.type === "email") {
-            email = answer.email ?? answer.text ?? "";
-          }
-          if (
-            answer.field?.type === "short_text" &&
-            answer.type === "text" &&
-            nome === "Candidato"
-          ) {
-            nome = answer.text ?? nome;
-          }
-        }
+        const answers = resposta.answers ?? {};
+        const email = resposta.respondentEmail ?? "";
+        const nome = email || "Candidato";
 
         let pontuacao = 0;
         let reprovado = false;
         let motivo_reprovacao: string | null = null;
 
         for (const pergunta of perguntas) {
-          const fieldRef = pergunta.typeform_field_id;
-          const answer = answers.find((a) => a.field?.ref === fieldRef);
+          const questionId = (pergunta as FormularioPergunta & { google_item_id?: string })
+            .google_item_id;
+          if (!questionId) continue;
 
+          const answer: GoogleFormAnswer | undefined = answers[questionId];
           if (!answer) continue;
 
+          const choiceValue = answer.textAnswers?.answers?.[0]?.value ?? "";
+          const scaleValue = answer.scaleAnswer?.value ?? 0;
+
           if (pergunta.eliminatoria) {
-            if (pergunta.tipo === "sim_nao" && answer.boolean === false) {
+            if (pergunta.tipo === "sim_nao" && choiceValue === "Não") {
               reprovado = true;
               motivo_reprovacao = `Critério eliminatório: ${pergunta.titulo}`;
               break;
             }
 
             if (pergunta.tipo === "multipla_escolha") {
-              const respLabel = answer.choice?.label ?? "";
               const eliminatorias = (pergunta.opcoes_eliminatorias as string[]) ?? [];
-              if (eliminatorias.includes(respLabel)) {
+              if (eliminatorias.includes(choiceValue)) {
                 reprovado = true;
                 motivo_reprovacao = `Critério eliminatório: ${pergunta.titulo}`;
                 break;
@@ -449,8 +427,7 @@ formulariosRouter.post(
             }
 
             if (pergunta.tipo === "nota_1_10") {
-              const nota = answer.number ?? 0;
-              if (pergunta.nota_minima && nota < pergunta.nota_minima) {
+              if (pergunta.nota_minima && scaleValue < pergunta.nota_minima) {
                 reprovado = true;
                 motivo_reprovacao = `Nota mínima não atingida: ${pergunta.titulo}`;
                 break;
@@ -460,42 +437,36 @@ formulariosRouter.post(
 
           if (pergunta.peso > 0) {
             if (pergunta.tipo === "nota_1_10") {
-              const nota = answer.number ?? 0;
-              pontuacao += (nota / 10) * pergunta.peso;
+              pontuacao += (scaleValue / 10) * pergunta.peso;
             } else if (pergunta.tipo === "sim_nao") {
-              pontuacao += answer.boolean ? pergunta.peso : 0;
+              pontuacao += choiceValue === "Sim" ? pergunta.peso : 0;
             } else if (pergunta.tipo === "multipla_escolha") {
-              const respLabel = answer.choice?.label ?? "";
               const eliminatorias = (pergunta.opcoes_eliminatorias as string[]) ?? [];
-              if (!eliminatorias.includes(respLabel)) {
+              if (!eliminatorias.includes(choiceValue)) {
                 pontuacao += pergunta.peso;
               }
             }
           }
         }
 
-        const status = reprovado
-          ? "reprovado"
-          : Math.round(pontuacao) >= (processo.pontuacao_minima_aprovacao as number)
-            ? "aprovado"
-            : "pendente";
+        const status = reprovado ? "reprovado" : "pendente";
 
         await sql`
           INSERT INTO processo_candidatos
-            (processo_id, typeform_response_id, nome, email, pontuacao_total, status, respostas, motivo_reprovacao, submitted_at)
+            (processo_id, google_response_id, nome, email, pontuacao_total, status, respostas, motivo_reprovacao, submitted_at)
           VALUES
-            (${id}, ${resposta.response_id}, ${nome}, ${email},
+            (${id}, ${resposta.responseId}, ${nome}, ${email},
              ${Math.round(pontuacao)}, ${status},
-             ${JSON.stringify(resposta.answers ?? [])},
+             ${JSON.stringify(answers)},
              ${motivo_reprovacao},
-             ${resposta.submitted_at})
-          ON CONFLICT (processo_id, typeform_response_id) DO NOTHING
+             ${resposta.lastSubmittedTime})
+          ON CONFLICT (processo_id, google_response_id) DO NOTHING
         `;
 
         novosCandidatos++;
       }
 
-      res.json({ sincronizados: novosCandidatos, total_typeform: respostasTypeform.length });
+      res.json({ sincronizados: novosCandidatos, total_google: respostasGoogle.length });
     } catch (err) {
       next(err);
     }
