@@ -1094,7 +1094,6 @@ export function AgendaPage() {
                   month: "w-full flex flex-col gap-0",
                   month_caption: "hidden",
                   nav: "hidden",
-                  table: "w-full",
                   weekdays: "grid grid-cols-7 border-b border-navy/10 bg-navy/[0.02]",
                   weekday:
                     "py-2.5 text-center font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/50",
