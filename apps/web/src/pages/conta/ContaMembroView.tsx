@@ -2,6 +2,7 @@ import { AlertTriangle, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
+import { Switch } from "@/components/ui/switch";
 import { carregarMinhaLiga, carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
 import { cn } from "@/lib/utils";
 import { TrocarSenhaSection } from "@/pages/conta/TrocarSenhaSection";
@@ -140,22 +141,12 @@ function Toast({ mensagem, onFechar }: { mensagem: string; onFechar: () => void 
 
 function Toggle({ ativo, onToggle }: { ativo: boolean; onToggle: () => void }) {
   return (
-    <button
-      role="switch"
-      aria-checked={ativo}
-      onClick={onToggle}
-      className={cn(
-        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none",
-        ativo ? "bg-navy" : "bg-foreground/20",
-      )}
-    >
-      <span
-        className={cn(
-          "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform",
-          ativo ? "translate-x-5" : "translate-x-0",
-        )}
-      />
-    </button>
+    <Switch
+      checked={ativo}
+      onCheckedChange={onToggle}
+      className="data-[state=checked]:bg-[#165DFC]"
+      thumbClassName="data-[state=checked]:bg-white"
+    />
   );
 }
 

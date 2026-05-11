@@ -26,9 +26,9 @@ export function AnimatedTabs({
   wrapperClassName,
   innerClassName,
   tabClassName,
-  activeTabClassName = "text-navy",
-  inactiveTabClassName = "text-navy/40 hover:text-navy",
-  indicatorClassName = "bg-navy",
+  activeTabClassName = "text-navy dark:text-white",
+  inactiveTabClassName = "text-navy/40 hover:text-navy dark:text-white/40 dark:hover:text-white",
+  indicatorClassName = "bg-navy dark:bg-white",
 }: AnimatedTabsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);

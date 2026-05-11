@@ -26,8 +26,32 @@ export function useTheme() {
     localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 
-  function toggle() {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  function toggle(event?: React.MouseEvent) {
+    const next = theme === "dark" ? "light" : "dark";
+
+    const x = event?.clientX ?? window.innerWidth / 2;
+    const y = event?.clientY ?? window.innerHeight / 2;
+    const maxRadius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y),
+    );
+
+    // View Transitions API com animação de círculo
+    if (!document.startViewTransition) {
+      setTheme(next);
+      return;
+    }
+
+    document.documentElement.style.setProperty("--vt-x", `${x}px`);
+    document.documentElement.style.setProperty("--vt-y", `${y}px`);
+    document.documentElement.style.setProperty("--vt-r", `${maxRadius}px`);
+
+    const transition = document.startViewTransition(() => {
+      setTheme(next);
+      applyTheme(next);
+    });
+
+    transition.ready.catch(() => {});
   }
 
   return { theme, toggle };

@@ -49,7 +49,12 @@ interface SectionHeaderProps {
 export function SectionHeader({ titulo, acao, tituloClassName }: SectionHeaderProps) {
   return (
     <div className="flex items-center justify-between mb-4">
-      <p className={tituloClassName ?? "text-xs font-bold text-link-blue uppercase tracking-wider"}>
+      <p
+        className={
+          tituloClassName ??
+          "text-xs font-bold text-link-blue dark:text-white uppercase tracking-wider"
+        }
+      >
         {titulo}
       </p>
       {acao}

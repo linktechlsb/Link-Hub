@@ -228,7 +228,7 @@ export function AbaPresenca({ ligaId }: Props) {
     <div className="space-y-6">
       <SectionHeader
         titulo="Controle de Presença"
-        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         acao={
           <div className="flex items-center gap-2">
             <button

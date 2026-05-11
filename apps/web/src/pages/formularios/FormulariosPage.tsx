@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { Button } from "@/components/ui/button";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
@@ -53,13 +54,6 @@ export function FormulariosPage() {
     },
   ];
 
-  const filtros: { valor: Filtro; label: string }[] = [
-    { valor: "todos", label: "Todos" },
-    { valor: "aberto", label: "Abertos" },
-    { valor: "encerrado", label: "Encerrados" },
-    { valor: "rascunho", label: "Rascunhos" },
-  ];
-
   return (
     <div className="max-w-5xl mx-auto px-8 py-10">
       {/* Header */}
@@ -90,25 +84,21 @@ export function FormulariosPage() {
         <section>
           <SectionHeader
             titulo="Todos os Formulários"
-            tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+            tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
           />
 
-          {/* Filtros */}
-          <div className="flex gap-2 mb-5">
-            {filtros.map(({ valor, label }) => (
-              <button
-                key={valor}
-                onClick={() => setFiltro(valor)}
-                className={
-                  filtro === valor
-                    ? "bg-navy text-white px-3 py-1 rounded-full text-[11px] font-semibold transition-colors"
-                    : "border border-navy/20 text-navy/60 px-3 py-1 rounded-full text-[11px] font-semibold hover:border-navy/40 transition-colors"
-                }
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <AnimatedTabs
+            tabs={[
+              { id: "todos", label: "Todos" },
+              { id: "aberto", label: "Abertos" },
+              { id: "encerrado", label: "Encerrados" },
+              { id: "rascunho", label: "Rascunhos" },
+            ]}
+            activeTab={filtro}
+            onChange={(id) => setFiltro(id as Filtro)}
+            wrapperClassName="border-foreground/[0.08] mb-6"
+            inactiveTabClassName="text-foreground/40 hover:text-foreground/60"
+          />
 
           {carregando ? (
             <p className="text-[13px] text-navy/40 py-10 text-center">Carregando...</p>

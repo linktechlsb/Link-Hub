@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Lock } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
 import { supabase } from "@/lib/supabase";
@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/60 mb-1.5">
+    <label className="block font-plex-mono text-[9px] uppercase tracking-[0.18em] text-foreground/50 mb-1.5">
       {children}
     </label>
   );
@@ -25,7 +25,7 @@ function Campo({
     <div>
       <Label>{label}</Label>
       {children}
-      {dica && <p className="font-plex-sans text-[11px] text-navy/40 mt-1">{dica}</p>}
+      {dica && <p className="font-plex-sans text-[11px] text-foreground/40 mt-1">{dica}</p>}
     </div>
   );
 }
@@ -97,7 +97,7 @@ export function TrocarSenhaSection({ onToast }: { onToast: (msg: string) => void
             value={senhaAtual}
             onChange={(e) => setSenhaAtual(e.target.value)}
             placeholder="••••••••"
-            className="w-full px-3 py-2.5 pr-10 border border-navy/20 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 placeholder:text-navy/30"
+            className="w-full px-3 py-2.5 pr-10 border border-border bg-muted/50 rounded font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 placeholder:text-foreground/20"
           />
           <button
             type="button"
@@ -116,7 +116,7 @@ export function TrocarSenhaSection({ onToast }: { onToast: (msg: string) => void
             value={novaSenha}
             onChange={(e) => setNovaSenha(e.target.value)}
             placeholder="••••••••"
-            className="w-full px-3 py-2.5 border border-navy/20 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 placeholder:text-navy/30"
+            className="w-full px-3 py-2.5 border border-border bg-muted/50 rounded font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 placeholder:text-foreground/20"
           />
         </Campo>
         <Campo label="Confirmar nova senha">
@@ -126,10 +126,10 @@ export function TrocarSenhaSection({ onToast }: { onToast: (msg: string) => void
             onChange={(e) => setConfirmar(e.target.value)}
             placeholder="••••••••"
             className={cn(
-              "w-full px-3 py-2.5 border bg-white font-plex-sans text-[13px] text-navy focus:outline-none placeholder:text-navy/30",
+              "w-full px-3 py-2.5 border bg-muted/50 rounded font-plex-sans text-[13px] text-foreground focus:outline-none placeholder:text-foreground/20",
               confirmar && novaSenha !== confirmar
                 ? "border-red-400 focus:border-red-500"
-                : "border-navy/20 focus:border-navy/60",
+                : "border-border focus:border-foreground/30",
             )}
           />
           {confirmar && novaSenha !== confirmar && (
@@ -143,9 +143,8 @@ export function TrocarSenhaSection({ onToast }: { onToast: (msg: string) => void
       <button
         onClick={handleAtualizarSenha}
         disabled={!senhasValidas || loading}
-        className="flex items-center gap-2 font-plex-mono text-[11px] tracking-[0.14em] uppercase border border-navy text-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        className="bg-navy text-white font-plex-sans text-[13px] font-semibold px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        <Lock className="h-3.5 w-3.5" />
         {loading ? "Atualizando..." : "Atualizar senha"}
       </button>
     </div>

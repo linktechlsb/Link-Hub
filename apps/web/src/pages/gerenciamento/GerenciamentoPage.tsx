@@ -20,7 +20,7 @@ import {
   MoreHorizontal,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
@@ -28,6 +28,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -117,78 +119,67 @@ function IconeCor({
   cor: string;
   onChange: (icone: string, cor: string) => void;
 }) {
-  const [aberto, setAberto] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function fechar(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setAberto(false);
-    }
-    document.addEventListener("mousedown", fechar);
-    return () => document.removeEventListener("mousedown", fechar);
-  }, []);
-
   return (
-    <div ref={ref} className="relative shrink-0">
-      <button
-        type="button"
-        onClick={() => setAberto((v) => !v)}
-        className="group h-9 w-9 flex items-center justify-center rounded-full transition-all relative overflow-hidden"
-        style={{ backgroundColor: cor }}
-        title="Escolher ícone e cor"
-      >
-        <RecursoIcone
-          id={icone}
-          className="h-4 w-4 text-white transition-opacity group-hover:opacity-0"
-        />
-        <Pencil className="h-3.5 w-3.5 text-white absolute opacity-0 group-hover:opacity-100 transition-opacity" />
-      </button>
-
-      {aberto && (
-        <div className="absolute left-0 top-11 z-50 bg-white border border-navy/15 p-3 w-56">
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
-            Ícone
-          </p>
-          <div className="grid grid-cols-5 gap-1.5 mb-3">
-            {ICONES.map((ic) => {
-              const Comp = ic.componente;
-              return (
-                <button
-                  key={ic.id}
-                  type="button"
-                  onClick={() => onChange(ic.id, cor)}
-                  className={cn(
-                    "h-8 w-8 flex items-center justify-center transition-colors",
-                    icone === ic.id
-                      ? "bg-navy text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200",
-                  )}
-                >
-                  <Comp className="h-4 w-4" />
-                </button>
-              );
-            })}
-          </div>
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
-            Cor
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {CORES_PICKER.map((c) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="group relative h-9 w-9 flex items-center justify-center rounded-full border-2 border-transparent hover:border-navy/20 transition-colors shrink-0 outline-none"
+          style={{ backgroundColor: cor }}
+          title="Escolher ícone e cor"
+        >
+          <span className="group-hover:opacity-0 transition-opacity">
+            <RecursoIcone id={icone} />
+          </span>
+          <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <Pencil className="h-3.5 w-3.5 text-white" />
+          </span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56 p-3">
+        <DropdownMenuLabel className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 px-0 pb-2">
+          Ícone
+        </DropdownMenuLabel>
+        <div className="grid grid-cols-5 gap-1.5">
+          {ICONES.map((ic) => {
+            const Comp = ic.componente;
+            return (
               <button
-                key={c}
+                key={ic.id}
                 type="button"
-                onClick={() => onChange(icone, c)}
+                onClick={() => onChange(ic.id, cor)}
                 className={cn(
-                  "h-6 w-6 rounded-full border-2 transition-colors",
-                  cor === c ? "border-navy scale-110" : "border-transparent",
+                  "h-8 w-8 flex items-center justify-center rounded transition-colors",
+                  icone === ic.id
+                    ? "bg-navy text-white"
+                    : "bg-foreground/[0.06] text-foreground/60 hover:bg-foreground/[0.10]",
                 )}
-                style={{ backgroundColor: c }}
-              />
-            ))}
-          </div>
+              >
+                <Comp className="h-4 w-4" />
+              </button>
+            );
+          })}
         </div>
-      )}
-    </div>
+        <DropdownMenuSeparator className="my-3" />
+        <DropdownMenuLabel className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 px-0 pb-2">
+          Cor
+        </DropdownMenuLabel>
+        <div className="flex flex-wrap gap-1.5">
+          {CORES_PICKER.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => onChange(icone, c)}
+              className={cn(
+                "h-6 w-6 rounded-full border-2 transition-all",
+                cor === c ? "border-navy scale-110" : "border-transparent hover:scale-105",
+              )}
+              style={{ backgroundColor: c }}
+            />
+          ))}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -401,7 +392,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
     <div className="space-y-6">
       <SectionHeader
         titulo="Membros da liga"
-        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         acao={
           <button
             onClick={() => {
@@ -410,9 +401,9 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
               setCargoConvite("Membro");
               setSheetAberto(true);
             }}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white transition-colors"
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
           >
-            + Adicionar
+            + Novo membro
           </button>
         }
       />
@@ -617,22 +608,20 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
               {sheetModo === "adicionar" ? (
                 <button
                   onClick={() => void convidar()}
-                  disabled={enviandoConvite}
-                  style={{ backgroundColor: emailConvite.trim() ? "#10244D" : "#9FA7B8" }}
-                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white px-4 py-3 rounded-full hover:opacity-90 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+                  disabled={enviandoConvite || !emailConvite.trim()}
+                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {enviandoConvite && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  Adicionar
+                  Adicionar membro
                 </button>
               ) : (
                 <button
                   onClick={() => editandoId && void salvarEdicao(editandoId)}
                   disabled={salvandoEdicaoId !== null}
-                  style={{ backgroundColor: "#10244D" }}
-                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white px-4 py-3 rounded-full hover:opacity-90 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {salvandoEdicaoId && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  Salvar
+                  Salvar alterações
                 </button>
               )}
               <button
@@ -720,7 +709,7 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
       <section className="space-y-4">
         <SectionHeader
           titulo="Dados Gerais"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
           acao={
             alterado ? (
               <div className="flex items-center gap-3">
@@ -777,7 +766,7 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
       <section className="space-y-3">
         <SectionHeader
           titulo="Foto / Banner da Liga"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         />
         {bannerPreview ? (
           <div className="relative overflow-hidden border border-navy/15 h-36">
@@ -809,7 +798,7 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
       <section className="space-y-4">
         <SectionHeader
           titulo="Contatos da Liga"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         />
         <div className="space-y-4">
           {[
@@ -895,14 +884,18 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
     setEnviando: (v: boolean) => void,
   ) {
     const tiposPermitidos = [
-      "image/jpeg",
-      "image/png",
-      "image/gif",
       "application/pdf",
-      "text/plain",
-      "application/zip",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "video/mp4",
+      "video/webm",
+      "video/quicktime",
     ];
-    const tamanhoMaximoMB = 5;
+    const tamanhoMaximoMB = 50;
     if (!tiposPermitidos.includes(file.type)) {
       setErro("Tipo de ficheiro não permitido. Use imagens, PDF, TXT ou ZIP.");
       return;
@@ -1032,7 +1025,7 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
     <div className="space-y-6">
       <SectionHeader
         titulo="Recursos"
-        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         acao={
           <button
             onClick={() => {
@@ -1044,9 +1037,9 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
               setEditandoId(null);
               setSheetAberto(true);
             }}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white transition-colors"
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
           >
-            + Adicionar
+            + Novo recurso
           </button>
         }
       />
@@ -1075,7 +1068,7 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-3">
                     <div
-                      className="h-8 w-8 flex items-center justify-center shrink-0"
+                      className="h-8 w-8 flex items-center justify-center shrink-0 rounded-full"
                       style={{ backgroundColor: r.cor }}
                     >
                       <RecursoIcone id={r.icone} />
@@ -1183,25 +1176,43 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {["URL", "Documento", "Notion", "Planilha", "Apresentação", "Vídeo", "Outro"].map(
-                    (t) => (
-                      <SelectItem key={t} value={t} className="font-plex-sans text-[13px]">
-                        {t}
-                      </SelectItem>
-                    ),
-                  )}
+                  {[
+                    "URL",
+                    "PDF",
+                    "Apresentação",
+                    "Documento",
+                    "Notion",
+                    "Planilha",
+                    "Vídeo",
+                    "Outro",
+                  ].map((t) => (
+                    <SelectItem key={t} value={t} className="font-plex-sans text-[13px]">
+                      {t}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             {(() => {
               const tipo = editandoId ? (editForm.tipo ?? "URL") : novoTipo;
-              const ehMidia = tipo === "Documento" || tipo === "Vídeo";
+              const ehMidia =
+                tipo === "PDF" ||
+                tipo === "Documento" ||
+                tipo === "Vídeo" ||
+                tipo === "Apresentação";
               const currentUrl = editandoId ? (editForm.url ?? "") : novoUrl;
               const enviando = editandoId ? editEnviando : novoEnviando;
               const setUrl = (url: string) =>
                 editandoId ? setEditForm({ ...editForm, url }) : setNovoUrl(url);
               const setEnviando = editandoId ? setEditEnviando : setNovoEnviando;
-              const accept = tipo === "Vídeo" ? "video/*" : ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx";
+              const accept =
+                tipo === "Vídeo"
+                  ? "video/*"
+                  : tipo === "PDF"
+                    ? ".pdf"
+                    : tipo === "Apresentação"
+                      ? ".pdf,.ppt,.pptx"
+                      : ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx";
 
               return (
                 <div>
@@ -1273,18 +1284,14 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                       if (!erro) setSheetAberto(false);
                     });
                 }}
-                style={{
-                  backgroundColor: editandoId
-                    ? (editForm.nome ?? "").trim() && (editForm.url ?? "").trim()
-                      ? "#10244D"
-                      : "#9FA7B8"
-                    : novoNome.trim() && novoUrl.trim()
-                      ? "#10244D"
-                      : "#9FA7B8",
-                }}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white px-4 py-3 rounded-full hover:opacity-90 transition-all"
+                disabled={
+                  editandoId
+                    ? !(editForm.nome ?? "").trim() || !(editForm.url ?? "").trim()
+                    : !novoNome.trim() || !novoUrl.trim()
+                }
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {editandoId ? "Salvar" : "Adicionar"}
+                {editandoId ? "Salvar alterações" : "Adicionar recurso"}
               </button>
               <button
                 onClick={() => setSheetAberto(false)}
@@ -1460,7 +1467,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
       <section className="space-y-4">
         <SectionHeader
           titulo="Lançamentos"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
           acao={
             <button
               onClick={() => {
@@ -1472,7 +1479,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                 setNovaData(new Date().toISOString().slice(0, 10));
                 setSheetAberto(true);
               }}
-              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white transition-colors"
+              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
             >
               + Adicionar
             </button>
@@ -1701,14 +1708,11 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
             <div className="px-8 py-6 flex flex-col gap-3">
               <button
                 onClick={() => void adicionar()}
-                disabled={enviando}
-                style={{
-                  backgroundColor: novaDescricao.trim() && novoValor.trim() ? "#10244D" : "#9FA7B8",
-                }}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white px-4 py-3 rounded-full hover:opacity-90 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+                disabled={enviando || !novaDescricao.trim() || !novoValor.trim()}
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {enviando && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                Adicionar
+                Adicionar lançamento
               </button>
               <button
                 onClick={() => setSheetAberto(false)}
@@ -1788,9 +1792,9 @@ function AbaDesempenho({ ligaId }: { ligaId: string | null }) {
       <section className="space-y-4">
         <SectionHeader
           titulo="Score Atual"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         />
-        <div className="border border-navy/15 p-5">
+        <div className="border border-navy/15 p-5 rounded-lg">
           <div className="flex items-end justify-between mb-3">
             <div>
               <span className="font-display font-bold text-4xl text-navy">{score}</span>
@@ -1823,7 +1827,7 @@ function AbaDesempenho({ ligaId }: { ligaId: string | null }) {
       <section className="space-y-4">
         <SectionHeader
           titulo="Resumo"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         />
         <KpiRow
           items={resumo.map((r) => ({ label: r.label, valor: r.valor }))}
@@ -1835,7 +1839,7 @@ function AbaDesempenho({ ligaId }: { ligaId: string | null }) {
       <section className="space-y-4">
         <SectionHeader
           titulo="Indicadores"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         />
         <div className="space-y-4">
           {composicao.map((c) => (
@@ -1953,7 +1957,6 @@ export function GerenciamentoPage() {
         </h1>
         <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
           {ligaNome || "Carregando…"}
-          {diretorNome ? ` · ${diretorNome}` : ""}
         </p>
       </div>
 

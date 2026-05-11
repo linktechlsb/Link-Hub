@@ -220,11 +220,11 @@ export function AbaCRM({ ligaId }: Props) {
     <div className="space-y-6">
       <SectionHeader
         titulo="Contatos da Liga"
-        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         acao={
           <button
             onClick={abrirFormularioNovo}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white transition-colors"
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
           >
             + Novo Contato
           </button>
@@ -423,9 +423,8 @@ export function AbaCRM({ ligaId }: Props) {
             <div className="px-8 py-6 flex flex-col gap-3">
               <button
                 onClick={salvarContato}
-                disabled={salvando}
-                style={{ backgroundColor: formData.nome.trim() ? "#10244D" : "#9FA7B8" }}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white px-4 py-3 rounded-full hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                disabled={salvando || !formData.nome.trim()}
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {salvando && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Salvar

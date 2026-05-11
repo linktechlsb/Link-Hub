@@ -2,6 +2,7 @@ import {
   MoreHorizontal,
   X,
   Plus,
+  Pencil,
   Image,
   Link,
   FileText,
@@ -12,23 +13,34 @@ import {
   Video,
   Music,
   Star,
-  ChevronDown,
+  Upload,
+  Check,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { SectionHeader, KpiRow, RankingList } from "@/pages/home/v1/primitives";
+import { SectionHeader, KpiRow } from "@/pages/home/v1/primitives";
 
 import type { RankingLiga } from "@link-leagues/types";
 
@@ -125,7 +137,7 @@ function apiParaRecurso(r: RecursoAPI): Recurso {
 }
 
 const inputClass =
-  "w-full border border-navy/20 px-3 py-2.5 bg-background font-plex-sans text-[13px] text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-navy/60";
+  "w-full border border-border bg-muted/50 rounded px-3 py-2.5 font-plex-sans text-[13px] text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 transition-colors";
 
 // ─── picker de ícone/cor ──────────────────────────────────────────────────────
 
@@ -171,73 +183,67 @@ function IconeCor({
   cor: string;
   onChange: (i: string, c: string) => void;
 }) {
-  const [aberto, setAberto] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function fechar(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setAberto(false);
-    }
-    document.addEventListener("mousedown", fechar);
-    return () => document.removeEventListener("mousedown", fechar);
-  }, []);
-
   return (
-    <div ref={ref} className="relative shrink-0">
-      <button
-        type="button"
-        onClick={() => setAberto((v) => !v)}
-        className="h-9 w-9 flex items-center justify-center border-2 border-transparent hover:border-navy/20 transition-colors"
-        style={{ backgroundColor: cor }}
-        title="Escolher ícone e cor"
-      >
-        <RecursoIcone id={icone} />
-      </button>
-      {aberto && (
-        <div className="absolute left-0 top-11 z-50 bg-background border border-foreground/15 p-3 w-56">
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
-            Ícone
-          </p>
-          <div className="grid grid-cols-5 gap-1.5 mb-3">
-            {ICONES.map((ic) => {
-              const Comp = ic.componente;
-              return (
-                <button
-                  key={ic.id}
-                  type="button"
-                  onClick={() => onChange(ic.id, cor)}
-                  className={cn(
-                    "h-8 w-8 flex items-center justify-center transition-colors",
-                    icone === ic.id
-                      ? "bg-navy text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200",
-                  )}
-                >
-                  <Comp className="h-4 w-4" />
-                </button>
-              );
-            })}
-          </div>
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
-            Cor
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {CORES_PICKER.map((c) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="group relative h-9 w-9 flex items-center justify-center rounded-full border-2 border-transparent hover:border-navy/20 transition-colors shrink-0 outline-none"
+          style={{ backgroundColor: cor }}
+          title="Escolher ícone e cor"
+        >
+          <span className="group-hover:opacity-0 transition-opacity">
+            <RecursoIcone id={icone} />
+          </span>
+          <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <Pencil className="h-3.5 w-3.5 text-white" />
+          </span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56 p-3">
+        <DropdownMenuLabel className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 px-0 pb-2">
+          Ícone
+        </DropdownMenuLabel>
+        <div className="grid grid-cols-5 gap-1.5">
+          {ICONES.map((ic) => {
+            const Comp = ic.componente;
+            return (
               <button
-                key={c}
+                key={ic.id}
                 type="button"
-                onClick={() => onChange(icone, c)}
+                onClick={() => onChange(ic.id, cor)}
                 className={cn(
-                  "h-6 w-6 rounded-full border-2 transition-colors",
-                  cor === c ? "border-navy scale-110" : "border-transparent",
+                  "h-8 w-8 flex items-center justify-center rounded transition-colors",
+                  icone === ic.id
+                    ? "bg-navy text-white"
+                    : "bg-foreground/[0.06] text-foreground/60 hover:bg-foreground/[0.10]",
                 )}
-                style={{ backgroundColor: c }}
-              />
-            ))}
-          </div>
+              >
+                <Comp className="h-4 w-4" />
+              </button>
+            );
+          })}
         </div>
-      )}
-    </div>
+        <DropdownMenuSeparator className="my-3" />
+        <DropdownMenuLabel className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 px-0 pb-2">
+          Cor
+        </DropdownMenuLabel>
+        <div className="flex flex-wrap gap-1.5">
+          {CORES_PICKER.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => onChange(icone, c)}
+              className={cn(
+                "h-6 w-6 rounded-full border-2 transition-all",
+                cor === c ? "border-navy scale-110" : "border-transparent hover:scale-105",
+              )}
+              style={{ backgroundColor: c }}
+            />
+          ))}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -334,8 +340,7 @@ function AbaInformacoes({
     setBannerPreview(URL.createObjectURL(file));
   }
 
-  const inputCls =
-    "w-full border border-navy/20 px-3 py-2.5 bg-background font-plex-sans text-[13px] text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-navy/60";
+  const inputCls = inputClass;
 
   return (
     <div className="space-y-8">
@@ -343,7 +348,7 @@ function AbaInformacoes({
       <section className="space-y-4">
         <SectionHeader
           titulo="Dados Gerais"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
           acao={
             alterado ? (
               <div className="flex items-center gap-3">
@@ -400,7 +405,7 @@ function AbaInformacoes({
       <section className="space-y-3">
         <SectionHeader
           titulo="Foto / Banner da Liga"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         />
         {bannerPreview ? (
           <div className="relative overflow-hidden border border-navy/15 h-36">
@@ -433,7 +438,7 @@ function AbaInformacoes({
       <section className="space-y-4">
         <SectionHeader
           titulo="Contatos da Liga"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         />
         <div className="space-y-4">
           {[
@@ -471,7 +476,7 @@ function AbaInformacoes({
       <section className="space-y-3">
         <SectionHeader
           titulo="Professor Mentor"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         />
         <input
           value={form.professorMentor}
@@ -526,12 +531,14 @@ function AbaInformacoes({
 function AbaRecursos({ ligaId }: { ligaId: string }) {
   const [recursos, setRecursos] = useState<Recurso[]>([]);
   const [novoNome, setNovoNome] = useState("");
-  const [novoTipo, setNovoTipo] = useState("Link");
+  const [novoTipo, setNovoTipo] = useState("URL");
   const [novoUrl, setNovoUrl] = useState("");
   const [novoIcone, setNovoIcone] = useState("link");
   const [novoCor, setNovoCor] = useState("#546484");
+  const [novoEnviando, setNovoEnviando] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Recurso>>({});
+  const [editEnviando, setEditEnviando] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [sheetAberto, setSheetAberto] = useState(false);
@@ -542,6 +549,46 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
     setRecursos([]);
     setEditandoId(null);
     setCarregando(true);
+  }
+
+  async function uploadArquivo(
+    file: File,
+    setUrl: (url: string) => void,
+    setEnviando: (v: boolean) => void,
+  ) {
+    const tiposPermitidos = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "video/mp4",
+      "video/webm",
+      "video/quicktime",
+    ];
+    const tamanhoMaximoMB = 50;
+    if (!tiposPermitidos.includes(file.type)) {
+      setErro("Tipo de ficheiro não permitido.");
+      return;
+    }
+    if (file.size > tamanhoMaximoMB * 1024 * 1024) {
+      setErro(`O ficheiro não pode ter mais de ${tamanhoMaximoMB} MB.`);
+      return;
+    }
+    setEnviando(true);
+    const ext = file.name.split(".").pop() ?? "bin";
+    const path = `${ligaId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("recursos").upload(path, file, { upsert: false });
+    if (error) {
+      setErro("Falha ao enviar o ficheiro. Tente novamente.");
+      setEnviando(false);
+      return;
+    }
+    const { data } = supabase.storage.from("recursos").getPublicUrl(path);
+    setUrl(data.publicUrl);
+    setEnviando(false);
   }
 
   useEffect(() => {
@@ -586,8 +633,10 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
       setRecursos((prev) => [apiParaRecurso(criado), ...prev]);
       setNovoNome("");
       setNovoUrl("");
+      setNovoTipo("URL");
       setNovoIcone("link");
       setNovoCor("#546484");
+      setNovoEnviando(false);
     } else {
       const body = (await res.json().catch(() => ({}))) as { error?: string };
       setErro(body.error ?? `Erro ${res.status}.`);
@@ -636,19 +685,19 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
     <div className="space-y-6">
       <SectionHeader
         titulo="Recursos"
-        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         acao={
           <button
             onClick={() => {
               setNovoNome("");
-              setNovoTipo("Link");
+              setNovoTipo("URL");
               setNovoUrl("");
               setNovoIcone("link");
               setNovoCor("#546484");
               setEditandoId(null);
               setSheetAberto(true);
             }}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white transition-colors"
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
           >
             + Adicionar
           </button>
@@ -679,7 +728,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-3">
                     <div
-                      className="h-8 w-8 flex items-center justify-center shrink-0"
+                      className="h-8 w-8 flex items-center justify-center shrink-0 rounded-full"
                       style={{ backgroundColor: r.cor }}
                     >
                       <RecursoIcone id={r.icone} />
@@ -743,22 +792,22 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
             <div className="h-px bg-foreground/[0.08]" />
           </div>
           <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
-            <div className="flex items-center gap-3">
-              <IconeCor
-                icone={editandoId ? (editForm.icone ?? "link") : novoIcone}
-                cor={editandoId ? (editForm.cor ?? "#546484") : novoCor}
-                onChange={(ic, c) => {
-                  if (editandoId) setEditForm({ ...editForm, icone: ic, cor: c });
-                  else {
-                    setNovoIcone(ic);
-                    setNovoCor(c);
-                  }
-                }}
-              />
-              <div className="flex-1">
-                <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                  Nome
-                </label>
+            <div>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                Nome
+              </label>
+              <div className="flex items-center gap-3">
+                <IconeCor
+                  icone={editandoId ? (editForm.icone ?? "link") : novoIcone}
+                  cor={editandoId ? (editForm.cor ?? "#546484") : novoCor}
+                  onChange={(ic, c) => {
+                    if (editandoId) setEditForm({ ...editForm, icone: ic, cor: c });
+                    else {
+                      setNovoIcone(ic);
+                      setNovoCor(c);
+                    }
+                  }}
+                />
                 <input
                   value={editandoId ? (editForm.nome ?? "") : novoNome}
                   onChange={(e) =>
@@ -767,40 +816,118 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                       : setNovoNome(e.target.value)
                   }
                   placeholder="Nome do recurso"
-                  className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                  className="flex-1 font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
                 />
               </div>
             </div>
             <div>
               <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                URL
-              </label>
-              <input
-                value={editandoId ? (editForm.url ?? "") : novoUrl}
-                onChange={(e) =>
-                  editandoId
-                    ? setEditForm({ ...editForm, url: e.target.value })
-                    : setNovoUrl(e.target.value)
-                }
-                placeholder="https://..."
-                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
-              />
-            </div>
-            <div>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
                 Tipo
               </label>
-              <input
-                value={editandoId ? (editForm.tipo ?? "") : novoTipo}
-                onChange={(e) =>
-                  editandoId
-                    ? setEditForm({ ...editForm, tipo: e.target.value })
-                    : setNovoTipo(e.target.value)
+              <Select
+                value={editandoId ? (editForm.tipo ?? "URL") : novoTipo}
+                onValueChange={(v) =>
+                  editandoId ? setEditForm({ ...editForm, tipo: v }) : setNovoTipo(v)
                 }
-                placeholder="Ex: Documento, Notion..."
-                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
-              />
+              >
+                <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[
+                    "URL",
+                    "PDF",
+                    "Apresentação",
+                    "Documento",
+                    "Notion",
+                    "Planilha",
+                    "Vídeo",
+                    "Outro",
+                  ].map((t) => (
+                    <SelectItem key={t} value={t} className="font-plex-sans text-[13px]">
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+            {(() => {
+              const tipo = editandoId ? (editForm.tipo ?? "URL") : novoTipo;
+              const ehMidia =
+                tipo === "PDF" ||
+                tipo === "Documento" ||
+                tipo === "Vídeo" ||
+                tipo === "Apresentação";
+              const currentUrl = editandoId ? (editForm.url ?? "") : novoUrl;
+              const enviando = editandoId ? editEnviando : novoEnviando;
+              const setUrl = (url: string) =>
+                editandoId ? setEditForm({ ...editForm, url }) : setNovoUrl(url);
+              const setEnviando = editandoId ? setEditEnviando : setNovoEnviando;
+              const accept =
+                tipo === "Vídeo"
+                  ? "video/*"
+                  : tipo === "PDF"
+                    ? ".pdf"
+                    : tipo === "Apresentação"
+                      ? ".pdf,.ppt,.pptx"
+                      : ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx";
+
+              return (
+                <div>
+                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                    {ehMidia ? "Arquivo" : "URL"}
+                  </label>
+                  {ehMidia ? (
+                    <label
+                      className={cn(
+                        "flex flex-col items-center justify-center gap-2 w-full h-24 border border-dashed rounded cursor-pointer transition-colors",
+                        currentUrl
+                          ? "border-foreground/30 bg-muted/30"
+                          : "border-foreground/20 hover:border-foreground/40",
+                      )}
+                    >
+                      {enviando ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-foreground/40" />
+                      ) : currentUrl ? (
+                        <>
+                          <Check className="h-4 w-4 text-green-600" />
+                          <span className="font-plex-mono text-[10px] text-foreground/50 max-w-[220px] truncate">
+                            {currentUrl.split("/").pop()}
+                          </span>
+                          <span className="font-plex-mono text-[9px] uppercase tracking-[0.12em] text-foreground/30">
+                            Trocar arquivo
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-5 w-5 text-foreground/30" />
+                          <span className="font-plex-sans text-[12px] text-foreground/40">
+                            Clique para selecionar
+                          </span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept={accept}
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          void uploadArquivo(file, setUrl, setEnviando);
+                        }}
+                      />
+                    </label>
+                  ) : (
+                    <input
+                      value={currentUrl}
+                      onChange={(e) => setUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                    />
+                  )}
+                </div>
+              );
+            })()}
             {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
           </div>
           <div className="flex-shrink-0">
@@ -814,18 +941,14 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                       if (!erro) setSheetAberto(false);
                     });
                 }}
-                style={{
-                  backgroundColor: editandoId
-                    ? (editForm.nome ?? "").trim() && (editForm.url ?? "").trim()
-                      ? "#10244D"
-                      : "#9FA7B8"
-                    : novoNome.trim() && novoUrl.trim()
-                      ? "#10244D"
-                      : "#9FA7B8",
-                }}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white px-4 py-3 rounded-full hover:opacity-90 transition-all"
+                disabled={
+                  editandoId
+                    ? !(editForm.nome ?? "").trim() || !(editForm.url ?? "").trim()
+                    : !novoNome.trim() || !novoUrl.trim()
+                }
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {editandoId ? "Salvar" : "Adicionar"}
+                {editandoId ? "Salvar alterações" : "Adicionar recurso"}
               </button>
               <button
                 onClick={() => setSheetAberto(false)}
@@ -880,9 +1003,9 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
       <section className="space-y-4">
         <SectionHeader
           titulo="Score Atual"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         />
-        <div className="border border-navy/15 p-5">
+        <div className="border border-navy/15 p-5 rounded-lg">
           <div className="flex items-end justify-between mb-3">
             <div>
               <span className="font-display font-bold text-4xl text-navy">{score}</span>
@@ -915,7 +1038,7 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
       <section className="space-y-4">
         <SectionHeader
           titulo="Resumo"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         />
         <KpiRow
           items={[
@@ -932,7 +1055,7 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
       <section className="space-y-4">
         <SectionHeader
           titulo="Indicadores"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         />
         <div className="space-y-4">
           {composicao.map((c) => (
@@ -958,16 +1081,62 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
       <section className="space-y-4">
         <SectionHeader
           titulo="Comparativo — Ranking Geral"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         />
-        <RankingList
-          items={rankingOrdenado.map((l) => ({
-            id: l.id,
-            nome: l.nome,
-            score: l.pontos,
-            destaque: l.id === liga.id,
-          }))}
-        />
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-foreground/[0.08]">
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal w-10">
+                #
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Liga
+              </th>
+              <th className="text-right py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Score
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rankingOrdenado.map((l, i) => {
+              const isLast = i === rankingOrdenado.length - 1;
+              return (
+                <tr
+                  key={l.id}
+                  className={cn(
+                    "transition-colors",
+                    !isLast ? "border-b border-foreground/[0.06]" : "",
+                    l.id === liga.id ? "bg-foreground/[0.02]" : "hover:bg-foreground/[0.03]",
+                  )}
+                >
+                  <td className="py-4 px-4 font-plex-mono text-[12px] text-foreground/40">
+                    {i + 1}º
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "font-plex-sans text-[13px] font-semibold",
+                          l.id === liga.id ? "text-foreground" : "text-foreground/70",
+                        )}
+                      >
+                        {l.nome}
+                      </span>
+                      {l.id === liga.id && (
+                        <span className="font-plex-mono text-[8px] uppercase tracking-[0.2em] text-foreground/50 border border-foreground/20 px-1.5 py-0.5 rounded-sm">
+                          Minha
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-right font-plex-mono text-[13px] text-foreground/60">
+                    {l.pontos}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </section>
     </div>
   );
@@ -982,7 +1151,6 @@ export function GerenciamentoStaffPage() {
   const [ligas, setLigas] = useState<Liga[]>([]);
   const [ligaSelecionadaId, setLigaSelecionadaId] = useState<string | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<Aba>("Informações");
-  const [seletorAberto, setSeletorAberto] = useState(false);
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
@@ -1008,7 +1176,6 @@ export function GerenciamentoStaffPage() {
   function selecionarLiga(id: string) {
     setLigaSelecionadaId(id);
     setAbaAtiva("Informações");
-    setSeletorAberto(false);
   }
 
   function arquivarLiga() {
@@ -1053,69 +1220,19 @@ export function GerenciamentoStaffPage() {
       </div>
 
       {/* Seletor de liga */}
-      <div className="relative mb-8">
-        <button
-          onClick={() => setSeletorAberto((v) => !v)}
-          className="flex items-center gap-3 bg-white border border-navy/15 px-4 py-3 hover:border-navy/30 transition-colors w-full sm:w-auto"
-        >
-          <div
-            className="h-8 w-8 flex items-center justify-center text-white font-plex-mono text-[11px] shrink-0"
-            style={{ background: "linear-gradient(135deg, #10284E, #546484)" }}
-          >
-            {liga.nome.charAt(0)}
-          </div>
-          <div className="text-left">
-            <p className="font-plex-sans font-semibold text-[13px] text-navy">{liga.nome}</p>
-            <p className="font-plex-mono text-[10px] text-navy/50">
-              {liga.info.area || "Sem área definida"}
-            </p>
-          </div>
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 text-navy/40 ml-auto transition-transform",
-              seletorAberto && "rotate-180",
-            )}
-          />
-        </button>
-
-        {seletorAberto && (
-          <div className="absolute top-full left-0 mt-1 z-20 bg-white border border-navy/15 overflow-hidden w-full sm:w-80">
+      <div className="mb-8">
+        <Select value={ligaSelecionadaId ?? ""} onValueChange={selecionarLiga}>
+          <SelectTrigger className="w-full sm:w-[280px] font-plex-sans text-[13px] border-border bg-muted/50 rounded focus:outline-none">
+            <SelectValue placeholder="Selecionar liga" />
+          </SelectTrigger>
+          <SelectContent>
             {ligas.map((l) => (
-              <button
-                key={l.id}
-                onClick={() => selecionarLiga(l.id)}
-                className={cn(
-                  "flex items-center gap-3 w-full px-4 py-3 hover:bg-navy/[0.03] transition-colors text-left border-b border-navy/10 last:border-0",
-                  l.id === ligaSelecionadaId && "bg-navy/5",
-                )}
-              >
-                <div
-                  className="h-7 w-7 flex items-center justify-center text-white font-plex-mono text-[10px] shrink-0"
-                  style={{ background: "linear-gradient(135deg, #10284E, #546484)" }}
-                >
-                  {l.nome.charAt(0)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p
-                    className={cn(
-                      "font-plex-sans font-semibold text-[13px] truncate",
-                      l.id === ligaSelecionadaId ? "text-navy" : "text-navy/70",
-                    )}
-                  >
-                    {l.nome}
-                  </p>
-                  <p className="font-plex-mono text-[10px] text-navy/50 truncate">
-                    {l.info.area || "Sem área"}
-                  </p>
-                </div>
-              </button>
+              <SelectItem key={l.id} value={l.id} className="font-plex-sans text-[13px]">
+                {l.nome}
+              </SelectItem>
             ))}
-          </div>
-        )}
-
-        {seletorAberto && (
-          <div className="fixed inset-0 z-10" onClick={() => setSeletorAberto(false)} />
-        )}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Abas */}

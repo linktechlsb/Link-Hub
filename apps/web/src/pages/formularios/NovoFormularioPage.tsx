@@ -5,8 +5,6 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -14,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 
@@ -121,15 +118,17 @@ function ColorField({
         type="color"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-8 h-8 rounded border border-navy/20 cursor-pointer p-0.5 bg-white"
+        className="w-8 h-8 rounded border border-border cursor-pointer p-0.5 bg-white"
       />
       <div className="flex-1">
-        <Label className="text-[11px] font-medium text-navy mb-0.5 block">{label}</Label>
-        <Input
+        <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
+          {label}
+        </label>
+        <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="border-navy/20 text-[12px] h-7 font-mono uppercase"
           maxLength={7}
+          className="w-full px-3 py-1.5 border border-border bg-muted/50 font-mono text-[12px] text-foreground uppercase focus:outline-none focus:border-foreground/30 rounded"
         />
       </div>
     </div>
@@ -147,12 +146,14 @@ function ImageUrlField({
 }) {
   return (
     <div className="space-y-2">
-      <Label className="text-[11px] font-medium text-navy block">{label} (opcional)</Label>
-      <Input
+      <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
+        {label} (opcional)
+      </label>
+      <input
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder="https://..."
-        className="border-navy/20 text-[12px]"
+        className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 rounded placeholder:text-foreground/20"
       />
       {value && (
         <div className="flex items-center gap-2">
@@ -454,15 +455,19 @@ export function NovoFormularioPage() {
               <div className="flex items-center gap-2">
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold
-                    ${ativa ? "bg-navy text-white" : concluida ? "bg-navy/20 text-navy" : "bg-brand-gray text-navy/40"}`}
+                    ${ativa ? "bg-navy text-white" : concluida ? "bg-navy/20 text-navy dark:bg-brand-gray/20 dark:text-white" : "bg-brand-gray text-navy/40 dark:bg-brand-gray dark:text-[#10284F]"}`}
                 >
                   {concluida ? <Check className="w-3 h-3" /> : num}
                 </div>
-                <span className={`text-[12px] font-medium ${ativa ? "text-navy" : "text-navy/40"}`}>
+                <span
+                  className={`text-[12px] font-medium ${ativa ? "text-navy dark:text-white" : "text-navy/40 dark:text-white/40"}`}
+                >
                   {label}
                 </span>
               </div>
-              {i < ETAPA_LABELS.length - 1 && <div className="w-8 h-px bg-navy/15 mx-3" />}
+              {i < ETAPA_LABELS.length - 1 && (
+                <div className="w-8 h-px bg-navy/15 dark:bg-brand-gray mx-3" />
+              )}
             </div>
           );
         })}
@@ -472,20 +477,22 @@ export function NovoFormularioPage() {
       {etapa === 1 && (
         <div className="space-y-5 max-w-2xl">
           <div>
-            <Label className="text-[12px] font-medium text-navy mb-1.5 block">Liga *</Label>
+            <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
+              Liga *
+            </label>
             {role === "diretor" ? (
               carregandoLiga ? (
-                <p className="text-[13px] text-navy/40">Carregando...</p>
+                <p className="text-[13px] text-foreground/40">Carregando...</p>
               ) : (
-                <div className="border border-navy/20 px-3 py-2 bg-navy/5">
-                  <p className="text-[13px] text-navy font-medium">
+                <div className="border border-border px-3 py-2 bg-muted/50 rounded">
+                  <p className="text-[13px] text-foreground font-medium">
                     {ligaFixa?.nome ?? "Sua liga"}
                   </p>
                 </div>
               )
             ) : (
               <Select value={ligaId} onValueChange={setLigaId}>
-                <SelectTrigger className="border-navy/20 text-navy">
+                <SelectTrigger className="border-border bg-muted/50 text-foreground">
                   <SelectValue placeholder="Selecione a liga" />
                 </SelectTrigger>
                 <SelectContent>
@@ -500,25 +507,27 @@ export function NovoFormularioPage() {
           </div>
 
           <div>
-            <Label className="text-[12px] font-medium text-navy mb-1.5 block">
+            <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
               Nome do formulário *
-            </Label>
-            <Input
+            </label>
+            <input
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Ex: Processo Seletivo 2026.1"
-              className="border-navy/20"
+              className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 rounded placeholder:text-foreground/20"
             />
           </div>
 
           <div>
-            <Label className="text-[12px] font-medium text-navy mb-1.5 block">Descrição</Label>
-            <Textarea
+            <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
+              Descrição
+            </label>
+            <textarea
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               placeholder="Descreva o formulário..."
-              className="border-navy/20 resize-none"
               rows={3}
+              className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 rounded placeholder:text-foreground/20 resize-none"
             />
           </div>
 
@@ -569,18 +578,22 @@ export function NovoFormularioPage() {
                 </div>
 
                 <div>
-                  <Label className="text-[11px] text-navy/50 mb-1 block">Pergunta *</Label>
-                  <Input
+                  <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
+                    Pergunta *
+                  </label>
+                  <input
                     value={pergunta.titulo}
                     onChange={(e) => atualizarPergunta(index, { titulo: e.target.value })}
                     placeholder="Digite a pergunta..."
-                    className="border-navy/20 text-[13px]"
+                    className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 rounded placeholder:text-foreground/20"
                   />
                 </div>
 
                 {pergunta.tipo === "multipla_escolha" && (
                   <div className="space-y-2">
-                    <Label className="text-[11px] text-navy/50 block">Opções</Label>
+                    <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
+                      Opções
+                    </label>
                     {(pergunta.opcoes ?? []).map((opcao, oi) => (
                       <div key={oi} className="flex items-center gap-2">
                         <input
@@ -590,11 +603,11 @@ export function NovoFormularioPage() {
                           className="accent-red-500 flex-shrink-0"
                           title="Marcar como eliminatória"
                         />
-                        <Input
+                        <input
                           value={opcao}
                           onChange={(e) => atualizarOpcao(index, oi, e.target.value)}
                           placeholder={`Opção ${oi + 1}`}
-                          className="border-navy/20 text-[12px]"
+                          className="w-full px-3 py-2 border border-border bg-muted/50 font-plex-sans text-[12px] text-foreground focus:outline-none focus:border-foreground/30 rounded placeholder:text-foreground/20"
                         />
                       </div>
                     ))}
@@ -611,8 +624,10 @@ export function NovoFormularioPage() {
                 {pergunta.tipo === "nota_1_10" && (
                   <div className="flex items-center gap-4">
                     <div>
-                      <Label className="text-[11px] text-navy/50 mb-1 block">Nota mínima</Label>
-                      <Input
+                      <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
+                        Nota mínima
+                      </label>
+                      <input
                         type="number"
                         min={1}
                         max={10}
@@ -620,7 +635,7 @@ export function NovoFormularioPage() {
                         onChange={(e) =>
                           atualizarPergunta(index, { nota_minima: Number(e.target.value) })
                         }
-                        className="border-navy/20 w-20 text-[12px]"
+                        className="w-20 px-3 py-2 border border-border bg-muted/50 font-plex-sans text-[12px] text-foreground focus:outline-none focus:border-foreground/30 rounded"
                       />
                     </div>
                     <div className="flex items-center gap-2 mt-4">
@@ -633,9 +648,12 @@ export function NovoFormularioPage() {
                         }
                         className="accent-red-500"
                       />
-                      <Label htmlFor={`elim-${index}`} className="text-[11px] text-navy/60">
+                      <label
+                        htmlFor={`elim-${index}`}
+                        className="font-plex-sans text-[11px] text-foreground/60"
+                      >
                         Eliminatória
-                      </Label>
+                      </label>
                     </div>
                   </div>
                 )}
@@ -649,17 +667,20 @@ export function NovoFormularioPage() {
                       onChange={(e) => atualizarPergunta(index, { eliminatoria: e.target.checked })}
                       className="accent-red-500"
                     />
-                    <Label htmlFor={`elim-sn-${index}`} className="text-[11px] text-navy/60">
+                    <label
+                      htmlFor={`elim-sn-${index}`}
+                      className="font-plex-sans text-[11px] text-foreground/60"
+                    >
                       {`Eliminatória se responder "Não"`}
-                    </Label>
+                    </label>
                   </div>
                 )}
 
                 {pergunta.tipo !== "texto" && (
                   <div>
-                    <Label className="text-[11px] text-navy/50 mb-1 block">
+                    <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
                       Peso na pontuação: {pergunta.peso}%
-                    </Label>
+                    </label>
                     <input
                       type="range"
                       min={0}

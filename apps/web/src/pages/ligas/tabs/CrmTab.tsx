@@ -221,26 +221,26 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
       <Sheet open={sheetAberto} onOpenChange={setSheetAberto}>
         <SheetContent
           side="right"
-          className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-white"
+          className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-white dark:bg-[#030303]"
         >
           <div className="flex-shrink-0">
-            <div className="h-px bg-navy/90" />
+            <div className="h-px bg-navy/90 dark:bg-white/20" />
             <div className="px-8 pt-8 pb-6">
-              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50">
+              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 dark:text-white/40">
                 {contatoEditando ? "Editar" : "Novo"}
               </p>
-              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy mt-1">
+              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy dark:text-white mt-1">
                 {contatoEditando ? "Editar contato" : "Novo contato"}
               </h2>
             </div>
-            <div className="h-px bg-navy/15" />
+            <div className="h-px bg-navy/15 dark:bg-white/10" />
           </div>
 
           <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
             <div>
               <label
                 htmlFor="crm-nome"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 dark:text-white/50 mb-3 block"
               >
                 Nome *
               </label>
@@ -249,14 +249,14 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
                 value={formNome}
                 onChange={(e) => setFormNome(e.target.value)}
                 placeholder="Nome completo"
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+                className="w-full font-plex-sans text-[13px] text-navy dark:text-white border border-navy/20 dark:border-white/15 rounded px-3 py-2.5 bg-white dark:bg-white/5 placeholder:text-navy/30 dark:placeholder:text-white/25 focus:outline-none focus:border-navy/60 dark:focus:border-white/40"
               />
             </div>
 
             <div>
               <label
                 htmlFor="crm-emprego"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 dark:text-white/50 mb-3 block"
               >
                 Cargo / Emprego
               </label>
@@ -265,14 +265,14 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
                 value={formEmprego}
                 onChange={(e) => setFormEmprego(e.target.value)}
                 placeholder="Ex: Gerente de Parcerias"
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+                className="w-full font-plex-sans text-[13px] text-navy dark:text-white border border-navy/20 dark:border-white/15 rounded px-3 py-2.5 bg-white dark:bg-white/5 placeholder:text-navy/30 dark:placeholder:text-white/25 focus:outline-none focus:border-navy/60 dark:focus:border-white/40"
               />
             </div>
 
             <div>
               <label
                 htmlFor="crm-empresa"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 dark:text-white/50 mb-3 block"
               >
                 Empresa
               </label>
@@ -281,14 +281,14 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
                 value={formEmpresa}
                 onChange={(e) => setFormEmpresa(e.target.value)}
                 placeholder="Nome da empresa"
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+                className="w-full font-plex-sans text-[13px] text-navy dark:text-white border border-navy/20 dark:border-white/15 rounded px-3 py-2.5 bg-white dark:bg-white/5 placeholder:text-navy/30 dark:placeholder:text-white/25 focus:outline-none focus:border-navy/60 dark:focus:border-white/40"
               />
             </div>
 
             <div>
               <label
                 htmlFor="crm-telefone"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 dark:text-white/50 mb-3 block"
               >
                 Telefone
               </label>
@@ -297,14 +297,14 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
                 value={formTelefone}
                 onChange={(e) => setFormTelefone(e.target.value)}
                 placeholder="(11) 99999-9999"
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+                className="w-full font-plex-sans text-[13px] text-navy dark:text-white border border-navy/20 dark:border-white/15 rounded px-3 py-2.5 bg-white dark:bg-white/5 placeholder:text-navy/30 dark:placeholder:text-white/25 focus:outline-none focus:border-navy/60 dark:focus:border-white/40"
               />
             </div>
 
             <div>
               <label
                 htmlFor="crm-email"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 dark:text-white/50 mb-3 block"
               >
                 E-mail
               </label>
@@ -314,14 +314,14 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
                 value={formEmail}
                 onChange={(e) => setFormEmail(e.target.value)}
                 placeholder="email@empresa.com"
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+                className="w-full font-plex-sans text-[13px] text-navy dark:text-white border border-navy/20 dark:border-white/15 rounded px-3 py-2.5 bg-white dark:bg-white/5 placeholder:text-navy/30 dark:placeholder:text-white/25 focus:outline-none focus:border-navy/60 dark:focus:border-white/40"
               />
             </div>
 
             <div>
               <label
                 htmlFor="crm-linkedin"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 dark:text-white/50 mb-3 block"
               >
                 LinkedIn
               </label>
@@ -331,18 +331,18 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
                 value={formLinkedin}
                 onChange={(e) => setFormLinkedin(e.target.value)}
                 placeholder="https://linkedin.com/in/usuario"
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+                className="w-full font-plex-sans text-[13px] text-navy dark:text-white border border-navy/20 dark:border-white/15 rounded px-3 py-2.5 bg-white dark:bg-white/5 placeholder:text-navy/30 dark:placeholder:text-white/25 focus:outline-none focus:border-navy/60 dark:focus:border-white/40"
               />
             </div>
           </div>
 
           <div className="flex-shrink-0">
-            <div className="h-px bg-navy/15" />
+            <div className="h-px bg-navy/15 dark:bg-white/10" />
             <div className="px-8 py-6">
               <button
                 onClick={salvar}
                 disabled={!formNome.trim() || salvando}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy dark:bg-white dark:text-navy px-4 py-3 rounded hover:bg-navy/90 dark:hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {salvando ? "Salvando..." : contatoEditando ? "Salvar contato" : "Criar contato"}
               </button>

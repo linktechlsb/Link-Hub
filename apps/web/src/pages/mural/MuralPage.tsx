@@ -454,7 +454,6 @@ export function MuralPage() {
         activeTab={filtro}
         onChange={(id) => setFiltro(id as typeof filtro)}
         wrapperClassName="border-foreground/[0.08] mb-6"
-        activeTabClassName="text-navy"
         inactiveTabClassName="text-foreground/40 hover:text-foreground/60"
       />
 
@@ -501,16 +500,6 @@ export function MuralPage() {
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                       <span className="font-plex-sans text-[11px] text-foreground/50">
                         {post.liga_nome} · {formatarDataRelativa(post.criado_em)}
-                      </span>
-                      <span
-                        className={cn(
-                          "font-plex-mono text-[8px] uppercase tracking-[0.15em] px-1.5 py-0.5 rounded-sm",
-                          post.visibilidade === "publica"
-                            ? "bg-link-blue/10 text-link-blue"
-                            : "bg-brand-yellow/20 text-yellow-700 dark:text-yellow-400",
-                        )}
-                      >
-                        {post.visibilidade === "publica" ? "Pública" : "Liga"}
                       </span>
                     </div>
                   </div>
@@ -705,7 +694,7 @@ export function MuralPage() {
                   !novoConteudo.trim() ||
                   (isStaff && !ligaSelecionadaId)
                 }
-                className="bg-navy text-white font-plex-mono text-[10px] uppercase tracking-[0.1em] px-4 py-2 rounded hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="bg-navy text-white font-plex-mono text-[10px] uppercase tracking-[0.1em] px-4 py-2 rounded-full hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {publicando ? "Publicando..." : "Publicar →"}
               </button>
