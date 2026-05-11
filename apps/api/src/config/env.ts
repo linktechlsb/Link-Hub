@@ -13,9 +13,6 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().min(1).optional(),
 
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
-  GOOGLE_SERVICE_ACCOUNT_EMAIL: z.string().email(),
-  GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: z.string().min(1),
-  GOOGLE_SERVICE_ACCOUNT_SUBJECT: z.string().email(),
   RATE_LIMIT_DISABLED: z
     .enum(["true", "false"])
     .default("false")
