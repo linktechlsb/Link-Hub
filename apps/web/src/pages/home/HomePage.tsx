@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { useUser } from "@/hooks/use-user";
@@ -15,29 +14,16 @@ import { MinhaLigaCard } from "./MinhaLigaCard";
 
 import type { Liga, RankingLiga } from "@link-leagues/types";
 
-const ROLE_LABELS: Record<string, string> = {
-  staff: "Staff",
-  diretor: "Diretor",
-  professor: "Professor",
-  membro: "Membro",
-  estudante: "Estudante",
-};
-
 export function HomePage() {
   const { role, usuarioId } = useUser();
   const { data: ligasData } = useCachedFetch<Liga[]>("/api/ligas");
   const { data: minhaLigaData } = useCachedFetch<Liga>(
     role !== null && role !== "staff" ? "/api/ligas/minha" : null,
   );
-  const { data: pendentesData } = useCachedFetch<{
-    projetos: { id: string; titulo: string; liga?: { nome: string } }[];
-    eventos: { id: string; titulo: string; liga?: { nome: string } }[];
-  }>(role === "staff" ? "/api/pendentes" : null);
   const { data: rankingData } = useCachedFetch<RankingLiga[]>("/api/ranking");
 
   const ligas = ligasData ?? [];
   const minhaLiga = minhaLigaData ?? null;
-  const pendentes = pendentesData ?? { projetos: [], eventos: [] };
   const ranking = rankingData ?? [];
   const [nomeUsuario, setNomeUsuario] = useState<string>("");
   const [loadingUser, setLoadingUser] = useState(true);
@@ -73,56 +59,54 @@ export function HomePage() {
   const dataFormatada = hoje.charAt(0).toUpperCase() + hoje.slice(1);
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="max-w-5xl mx-auto px-8 py-10">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          {loadingUser ? (
-            <>
-              <Skeleton className="h-8 w-48 mb-2" />
-              <Skeleton className="h-4 w-64" />
-            </>
-          ) : (
-            <>
-              <h1 className="font-display font-bold text-2xl text-navy">Olá, {nomeUsuario}</h1>
-              <p className="text-muted-foreground text-sm mt-1">{dataFormatada}</p>
-            </>
-          )}
-        </div>
-        {role && !loadingUser && (
-          <Badge
-            variant="outline"
-            className="border-navy/30 text-navy bg-navy/5 font-semibold mt-1"
-          >
-            {ROLE_LABELS[role] ?? role}
-          </Badge>
+      <div className="mb-10">
+        {loadingUser ? (
+          <>
+            <Skeleton className="h-6 w-48 mb-2" />
+            <Skeleton className="h-3 w-64" />
+          </>
+        ) : (
+          <>
+            <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
+              Olá, {nomeUsuario}
+            </h1>
+            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
+              {dataFormatada}
+            </p>
+          </>
         )}
       </div>
 
-      {/* Carrossel de ligas */}
-      {ligas.length > 0 && <LigasCarousel ligas={ligas} ranking={ranking} />}
+      <div className="space-y-6">
+        {/* Carrossel de ligas — apenas para professor/membro */}
+        {(role === "professor" || role === "membro") && ligas.length > 0 && (
+          <LigasCarousel ligas={ligas} ranking={ranking} />
+        )}
 
-      {/* Minha Liga */}
-      {minhaLiga && (
-        <div>
-          <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-2">
-            Minha Liga
-          </p>
-          <MinhaLigaCard liga={minhaLiga} />
-        </div>
-      )}
+        {/* Minha Liga — apenas para professor/membro */}
+        {(role === "professor" || role === "membro") && minhaLiga && (
+          <div>
+            <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-2">
+              Minha Liga
+            </p>
+            <MinhaLigaCard liga={minhaLiga} />
+          </div>
+        )}
 
-      {/* View por papel */}
-      {role === "staff" && <HomeStaffView pendentes={pendentes} ligas={ligas} ranking={ranking} />}
-      {role === "diretor" && minhaLiga && (
-        <HomeDiretorView minhaLiga={minhaLiga} ligas={ligas} ranking={ranking} />
-      )}
-      {role === "professor" && minhaLiga && (
-        <HomeProfessorView minhaLiga={minhaLiga} ranking={ranking} />
-      )}
-      {role === "membro" && minhaLiga && (
-        <HomeMembroView minhaLiga={minhaLiga} ranking={ranking} usuarioId={usuarioId} />
-      )}
+        {/* View por papel */}
+        {role === "staff" && <HomeStaffView ligas={ligas} ranking={ranking} />}
+        {role === "diretor" && minhaLiga && (
+          <HomeDiretorView minhaLiga={minhaLiga} ligas={ligas} ranking={ranking} />
+        )}
+        {role === "professor" && minhaLiga && (
+          <HomeProfessorView minhaLiga={minhaLiga} ranking={ranking} />
+        )}
+        {role === "membro" && minhaLiga && (
+          <HomeMembroView minhaLiga={minhaLiga} ranking={ranking} usuarioId={usuarioId} />
+        )}
+      </div>
     </div>
   );
 }

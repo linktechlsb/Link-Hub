@@ -55,10 +55,10 @@ export function AppLayout() {
             <CommandMenu />
             <button
               onClick={(e) => toggle(e)}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-brand-gray bg-white text-navy transition-colors hover:bg-brand-gray dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-brand-gray bg-white text-navy transition-colors hover:bg-brand-gray dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
               aria-label="Alternar tema"
             >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              {theme === "dark" ? <Sun size={13} /> : <Moon size={13} />}
             </button>
           </div>
         </header>

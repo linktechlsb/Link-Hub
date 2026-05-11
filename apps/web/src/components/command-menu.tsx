@@ -109,6 +109,7 @@ const QUICK_ACTIONS: NavItem[] = [
 
 export function CommandMenu() {
   const [open, setOpen] = useState(false);
+  const [commandValue, setCommandValue] = useState("");
   const navigate = useNavigate();
   const { role } = useUser();
 
@@ -126,6 +127,10 @@ export function CommandMenu() {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
+  useEffect(() => {
+    if (open) setCommandValue("");
+  }, [open]);
+
   function run(path: string) {
     navigate(path);
     setOpen(false);
@@ -141,15 +146,20 @@ export function CommandMenu() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-brand-gray bg-white text-muted-foreground transition-colors hover:bg-brand-gray dark:border-white/10 dark:bg-white/10 dark:text-white/60 dark:hover:bg-white/20"
+        className="flex h-7 w-7 items-center justify-center rounded-full border border-brand-gray bg-white text-muted-foreground transition-colors hover:bg-brand-gray dark:border-white/10 dark:bg-white/10 dark:text-white/60 dark:hover:bg-white/20"
         aria-label="Abrir menu de busca"
       >
-        <Command size={16} />
+        <Command size={13} />
       </button>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandDialog
+        open={open}
+        onOpenChange={setOpen}
+        value={commandValue}
+        onValueChange={setCommandValue}
+      >
         <CommandInput placeholder="Buscar páginas, ações, ligas..." />
-        <CommandList>
+        <CommandList onMouseLeave={() => setCommandValue("")}>
           <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
 
           <CommandGroup heading="Navegar">

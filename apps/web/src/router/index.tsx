@@ -14,7 +14,7 @@ import { FormularioDetalhePage } from "@/pages/formularios/FormularioDetalhePage
 import { FormulariosPage } from "@/pages/formularios/FormulariosPage";
 import { NovoFormularioPage } from "@/pages/formularios/NovoFormularioPage";
 import { GerenciamentoPage } from "@/pages/gerenciamento/GerenciamentoPage";
-import { HomeV1Page } from "@/pages/home/v1/HomeV1Page";
+import { HomePage } from "@/pages/home/HomePage";
 import { LigaDetailPage } from "@/pages/ligas/LigaDetailPage";
 import { LigasPage } from "@/pages/ligas/LigasPage";
 import { MuralPage } from "@/pages/mural/MuralPage";
@@ -49,7 +49,7 @@ export const router: BrowserRouter = createBrowserRouter([
         path: "/",
         element: <AppLayout />,
         children: [
-          { path: "home", element: <HomeV1Page /> },
+          { path: "home", element: <HomePage /> },
           { path: "ligas", element: <LigasPage /> },
           { path: "ligas/:id", element: <LigaDetailPage /> },
           { path: "projetos", element: <ProjetosPage /> },
