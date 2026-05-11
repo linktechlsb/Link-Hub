@@ -5,12 +5,7 @@ import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 
-import { HomeDiretorView } from "./HomeDiretorView";
-import { HomeMembroView } from "./HomeMembroView";
-import { HomeProfessorView } from "./HomeProfessorView";
-import { HomeStaffView } from "./HomeStaffView";
-import { LigasCarousel } from "./LigasCarousel";
-import { MinhaLigaCard } from "./MinhaLigaCard";
+import { HomeView } from "./HomeView";
 
 import type { Liga, RankingLiga } from "@link-leagues/types";
 
@@ -79,34 +74,13 @@ export function HomePage() {
         )}
       </div>
 
-      <div className="space-y-6">
-        {/* Carrossel de ligas — apenas para professor/membro */}
-        {(role === "professor" || role === "membro") && ligas.length > 0 && (
-          <LigasCarousel ligas={ligas} ranking={ranking} />
-        )}
-
-        {/* Minha Liga — apenas para professor/membro */}
-        {(role === "professor" || role === "membro") && minhaLiga && (
-          <div>
-            <p className="text-xs font-bold text-link-blue uppercase tracking-wider mb-2">
-              Minha Liga
-            </p>
-            <MinhaLigaCard liga={minhaLiga} />
-          </div>
-        )}
-
-        {/* View por papel */}
-        {role === "staff" && <HomeStaffView ligas={ligas} ranking={ranking} />}
-        {role === "diretor" && minhaLiga && (
-          <HomeDiretorView minhaLiga={minhaLiga} ligas={ligas} ranking={ranking} />
-        )}
-        {role === "professor" && minhaLiga && (
-          <HomeProfessorView minhaLiga={minhaLiga} ranking={ranking} />
-        )}
-        {role === "membro" && minhaLiga && (
-          <HomeMembroView minhaLiga={minhaLiga} ranking={ranking} usuarioId={usuarioId} />
-        )}
-      </div>
+      <HomeView
+        role={role}
+        ligas={ligas}
+        ranking={ranking}
+        minhaLiga={minhaLiga}
+        usuarioId={usuarioId}
+      />
     </div>
   );
 }
