@@ -44,3 +44,5 @@ export function labelStatusPresenca(status: string): string {
   };
   return labels[status] ?? status;
 }
+
+export * from "./scoring.js";

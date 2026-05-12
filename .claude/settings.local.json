@@ -129,7 +129,11 @@
       "Bash(scripts/start-server.sh --project-dir /Users/diogochiapetagarcia/Cursor/Link-Hub)",
       "Bash(/Users/diogochiapetagarcia/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/scripts/start-server.sh --project-dir /Users/diogochiapetagarcia/Cursor/Link-Hub)",
       "Bash(echo \"exit:$?\")",
-      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")"
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "WebFetch(domain:developers.tally.so)",
+      "WebFetch(domain:tally.so)",
+      "Bash(npx vitest *)",
+      "WebSearch"
     ],
     "deny": [
       "Bash(git commit *)",

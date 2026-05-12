@@ -1,78 +1,62 @@
-export type FormularioStatus = "rascunho" | "aberto" | "encerrado";
-export type PerguntaTipo = "texto" | "multipla_escolha" | "nota_1_10" | "sim_nao";
-export type CandidatoStatus = "pendente" | "aprovado" | "reprovado";
+import type { TallyAnswer } from "./tally.js";
 
-export interface TemaFormulario {
-  cor_fundo: string;
-  cor_pergunta: string;
-  cor_botao: string;
-  logo_url?: string;
-  imagem_fundo_url?: string;
-}
+export type FormularioStatus = "rascunho" | "aberto" | "encerrado";
+export type FormularioTipo =
+  | "generico"
+  | "processo_seletivo"
+  | "pesquisa"
+  | "inscricao"
+  | "feedback";
+export type CampoTipo = "texto" | "multipla_escolha" | "nota_1_10" | "sim_nao";
+export type RespostaStatus = "pendente" | "aprovado" | "reprovado";
 
 export interface Formulario {
   id: string;
-  liga_id: string;
+  liga_id: string | null;
+  tipo: FormularioTipo;
   nome: string;
   descricao?: string;
   status: FormularioStatus;
-  google_form_id?: string;
-  google_form_url?: string;
-  tema?: TemaFormulario;
+  scoring_enabled: boolean;
+  pontuacao_minima_aprovacao: number | null;
+  tally_form_id: string | null;
+  tally_form_url: string | null;
+  tally_webhook_id: string | null;
   created_by?: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface FormularioPergunta {
+export interface FormularioCampo {
   id: string;
-  processo_id: string;
-  google_item_id?: string;
+  formulario_id: string;
+  tally_question_id: string | null;
   titulo: string;
-  tipo: PerguntaTipo;
+  tipo: CampoTipo;
+  ordem: number;
   peso: number;
   eliminatoria: boolean;
   nota_minima?: number;
-  opcoes_eliminatorias?: string[];
   opcoes?: string[];
-  ordem: number;
+  opcoes_eliminatorias?: string[];
 }
 
-export interface FormularioCandidato {
+export interface FormularioResposta {
   id: string;
-  processo_id: string;
-  google_response_id: string;
+  formulario_id: string;
+  tally_submission_id: string;
   nome: string;
   email: string;
-  pontuacao_total: number;
-  status: CandidatoStatus;
-  respostas: Record<string, unknown>;
+  respostas: Record<string, TallyAnswer>;
+  pontuacao_total: number | null;
+  status: RespostaStatus;
   motivo_reprovacao?: string;
   submitted_at: string;
   sincronizado_at: string;
 }
 
-export interface CreatePerguntaInput {
-  titulo: string;
-  tipo: PerguntaTipo;
-  peso: number;
-  eliminatoria: boolean;
-  nota_minima?: number;
-  opcoes_eliminatorias?: string[];
-  opcoes?: string[];
-  ordem: number;
-}
-
-export interface CreateFormularioInput {
-  liga_id: string;
-  nome: string;
-  descricao?: string;
-  perguntas: CreatePerguntaInput[];
-  tema?: TemaFormulario;
-}
-
-export interface FormularioComPerguntas extends Formulario {
-  perguntas: FormularioPergunta[];
+export interface FormularioComCampos extends Formulario {
+  campos: FormularioCampo[];
 }
 
 export interface ResultadosFormulario {
@@ -80,5 +64,26 @@ export interface ResultadosFormulario {
   aprovados: number;
   reprovados: number;
   pendentes: number;
-  candidatos: FormularioCandidato[];
+  respostas: FormularioResposta[];
+}
+
+export interface CreateCampoInput {
+  titulo: string;
+  tipo: CampoTipo;
+  ordem: number;
+  peso: number;
+  eliminatoria: boolean;
+  nota_minima?: number;
+  opcoes?: string[];
+  opcoes_eliminatorias?: string[];
+}
+
+export interface CreateFormularioInput {
+  liga_id?: string;
+  tipo: FormularioTipo;
+  nome: string;
+  descricao?: string;
+  scoring_enabled: boolean;
+  pontuacao_minima_aprovacao?: number;
+  campos: CreateCampoInput[];
 }

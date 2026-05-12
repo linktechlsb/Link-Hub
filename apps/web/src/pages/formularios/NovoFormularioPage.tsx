@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Check, Copy, GripVertical, Info, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Copy, GripVertical, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -16,11 +16,11 @@ import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 
 import type {
-  CreatePerguntaInput,
+  CampoTipo,
+  CreateCampoInput,
   CreateFormularioInput,
-  PerguntaTipo,
-  FormularioComPerguntas,
-  TemaFormulario,
+  FormularioComCampos,
+  FormularioTipo,
 } from "@link-leagues/types";
 
 async function getToken(): Promise<string> {
@@ -33,149 +33,22 @@ interface LigaOpcao {
   nome: string;
 }
 
-const TIPO_LABELS: Record<PerguntaTipo, string> = {
+const CAMPO_LABELS: Record<CampoTipo, string> = {
   texto: "Texto livre",
   multipla_escolha: "Múltipla escolha",
   nota_1_10: "Nota (1–10)",
   sim_nao: "Sim / Não",
 };
 
-const ETAPA_LABELS = ["Informações", "Perguntas", "Personalização", "Revisão"];
-
-const TEMA_DEFAULT: TemaFormulario = {
-  cor_fundo: "#10284E",
-  cor_pergunta: "#FFFFFF",
-  cor_botao: "#FEC641",
+const TIPO_LABELS: Record<FormularioTipo, string> = {
+  generico: "Genérico",
+  processo_seletivo: "Processo Seletivo",
+  pesquisa: "Pesquisa",
+  inscricao: "Inscrição",
+  feedback: "Feedback",
 };
 
-function TypeformMockup({ tema }: { tema: TemaFormulario }) {
-  const bgStyle: React.CSSProperties = tema.imagem_fundo_url
-    ? {
-        backgroundImage: `url(${tema.imagem_fundo_url})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }
-    : { backgroundColor: tema.cor_fundo };
-
-  return (
-    <div
-      className="rounded-lg overflow-hidden shadow-lg w-full max-w-[280px] mx-auto select-none"
-      style={bgStyle}
-    >
-      {tema.logo_url && (
-        <div className="flex items-center justify-center pt-5 pb-2">
-          <img
-            src={tema.logo_url}
-            alt="Logo"
-            className="h-8 w-auto object-contain"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
-          />
-        </div>
-      )}
-
-      <div className="px-6 py-8 space-y-4">
-        <p className="text-[13px] font-semibold leading-snug" style={{ color: tema.cor_pergunta }}>
-          Como você soube sobre nossa liga?
-        </p>
-
-        <div className="space-y-2">
-          {["Redes sociais", "Indicação", "Site da faculdade"].map((opt) => (
-            <div
-              key={opt}
-              className="border rounded px-3 py-2 text-[11px]"
-              style={{ borderColor: `${tema.cor_pergunta}40`, color: tema.cor_pergunta }}
-            >
-              {opt}
-            </div>
-          ))}
-        </div>
-
-        <button
-          className="mt-4 px-4 py-2 rounded text-[11px] font-bold w-full"
-          style={{ backgroundColor: tema.cor_botao, color: tema.cor_fundo }}
-        >
-          OK →
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ColorField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <input
-        type="color"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-8 h-8 rounded border border-border cursor-pointer p-0.5 bg-white"
-      />
-      <div className="flex-1">
-        <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
-          {label}
-        </label>
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          maxLength={7}
-          className="w-full px-3 py-1.5 border border-border bg-muted/50 font-mono text-[12px] text-foreground uppercase focus:outline-none focus:border-foreground/30 rounded"
-        />
-      </div>
-    </div>
-  );
-}
-
-function ImageUrlField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string | undefined;
-  onChange: (url: string) => void;
-}) {
-  return (
-    <div className="space-y-2">
-      <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
-        {label} (opcional)
-      </label>
-      <input
-        value={value ?? ""}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="https://..."
-        className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 rounded placeholder:text-foreground/20"
-      />
-      {value && (
-        <div className="flex items-center gap-2">
-          <img
-            src={value}
-            alt=""
-            className="h-8 w-8 object-cover rounded border border-navy/10"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
-          />
-          <button
-            onClick={() => onChange("")}
-            className="text-[10px] text-navy/40 hover:text-red-500 transition-colors"
-          >
-            Remover
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
+const ETAPA_LABELS = ["Informações", "Campos", "Revisão"];
 
 export function NovoFormularioPage() {
   const navigate = useNavigate();
@@ -188,30 +61,31 @@ export function NovoFormularioPage() {
   const [ligaFixa, setLigaFixa] = useState<LigaOpcao | null>(null);
   const [carregandoLiga, setCarregandoLiga] = useState(false);
 
-  // Etapa 1
+  // Etapa 1 — Informações
+  const [tipo, setTipo] = useState<FormularioTipo>("generico");
+  const [scoringEnabled, setScoringEnabled] = useState(false);
+  const [pontuacaoMinima, setPontuacaoMinima] = useState(60);
   const [ligaId, setLigaId] = useState("");
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
 
-  // Etapa 2
-  const [perguntas, setPerguntas] = useState<CreatePerguntaInput[]>([]);
+  // Etapa 2 — Campos
+  const [campos, setCampos] = useState<CreateCampoInput[]>([]);
   const [somaPesos, setSomaPesos] = useState(0);
 
-  // Etapa 3
-  const [tema, setTema] = useState<TemaFormulario>({ ...TEMA_DEFAULT });
-
   useEffect(() => {
-    if (role === "diretor") {
-      carregarMinhaLiga();
-    } else if (role === "staff") {
-      void carregarLigas();
-    }
+    if (role === "diretor") void carregarMinhaLiga();
+    else if (role === "staff") void carregarLigas();
   }, [role]);
 
   useEffect(() => {
-    const soma = perguntas.reduce((acc, p) => acc + (p.peso || 0), 0);
-    setSomaPesos(soma);
-  }, [perguntas]);
+    setSomaPesos(campos.reduce((acc, c) => acc + (c.peso || 0), 0));
+  }, [campos]);
+
+  // Quando tipo muda, sugere scoring default
+  useEffect(() => {
+    setScoringEnabled(tipo === "processo_seletivo");
+  }, [tipo]);
 
   async function carregarMinhaLiga() {
     try {
@@ -234,9 +108,7 @@ export function NovoFormularioPage() {
   async function carregarLigas() {
     try {
       const token = await getToken();
-      const res = await fetch("/api/ligas", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch("/api/ligas", { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error();
       const dados = await res.json();
       setLigas(dados.map((l: { id: string; nome: string }) => ({ id: l.id, nome: l.nome })));
@@ -245,79 +117,58 @@ export function NovoFormularioPage() {
     }
   }
 
-  function atualizarTema(parcial: Partial<TemaFormulario>) {
-    setTema((prev) => ({ ...prev, ...parcial }));
-  }
-
-  function adicionarPergunta(tipo: PerguntaTipo) {
-    const novaPergunta: CreatePerguntaInput = {
+  function adicionarCampo(t: CampoTipo) {
+    const novo: CreateCampoInput = {
       titulo: "",
-      tipo,
+      tipo: t,
+      ordem: campos.length,
       peso: 0,
       eliminatoria: false,
-      nota_minima: tipo === "nota_1_10" ? 5 : undefined,
-      opcoes: tipo === "multipla_escolha" ? ["", ""] : undefined,
-      opcoes_eliminatorias: tipo === "multipla_escolha" ? [] : undefined,
-      ordem: perguntas.length,
+      nota_minima: t === "nota_1_10" ? 5 : undefined,
+      opcoes: t === "multipla_escolha" ? ["", ""] : undefined,
+      opcoes_eliminatorias: t === "multipla_escolha" ? [] : undefined,
     };
-    setPerguntas([...perguntas, novaPergunta]);
+    setCampos([...campos, novo]);
   }
 
-  function atualizarPergunta(index: number, dados: Partial<CreatePerguntaInput>) {
-    setPerguntas((prev) =>
-      prev.map((p, i): CreatePerguntaInput => {
-        if (i !== index) return p;
-        return {
-          titulo: dados.titulo ?? p.titulo,
-          tipo: dados.tipo ?? p.tipo,
-          peso: dados.peso ?? p.peso,
-          eliminatoria: dados.eliminatoria !== undefined ? dados.eliminatoria : p.eliminatoria,
-          nota_minima: dados.nota_minima !== undefined ? dados.nota_minima : p.nota_minima,
-          opcoes: dados.opcoes !== undefined ? dados.opcoes : p.opcoes,
-          opcoes_eliminatorias:
-            dados.opcoes_eliminatorias !== undefined
-              ? dados.opcoes_eliminatorias
-              : p.opcoes_eliminatorias,
-          ordem: dados.ordem ?? p.ordem,
-        };
+  function atualizarCampo(index: number, dados: Partial<CreateCampoInput>) {
+    setCampos((prev) =>
+      prev.map((c, i) => {
+        if (i !== index) return c;
+        return { ...c, ...dados };
       }),
     );
   }
 
-  function removerPergunta(index: number) {
-    setPerguntas((prev) =>
-      prev.filter((_, i) => i !== index).map((p, i): CreatePerguntaInput => ({ ...p, ordem: i })),
-    );
+  function removerCampo(index: number) {
+    setCampos((prev) => prev.filter((_, i) => i !== index).map((c, i) => ({ ...c, ordem: i })));
   }
 
-  function atualizarOpcao(perguntaIndex: number, opcaoIndex: number, valor: string) {
-    setPerguntas((prev) =>
-      prev.map((p, i): CreatePerguntaInput => {
-        if (i !== perguntaIndex) return p;
-        const opcoes = [...(p.opcoes ?? [])];
+  function atualizarOpcao(campoIndex: number, opcaoIndex: number, valor: string) {
+    setCampos((prev) =>
+      prev.map((c, i) => {
+        if (i !== campoIndex) return c;
+        const opcoes = [...(c.opcoes ?? [])];
         opcoes[opcaoIndex] = valor;
-        return { ...p, opcoes };
+        return { ...c, opcoes };
       }),
     );
   }
 
-  function adicionarOpcao(perguntaIndex: number) {
-    setPerguntas((prev) =>
-      prev.map((p, i): CreatePerguntaInput => {
-        if (i !== perguntaIndex) return p;
-        return { ...p, opcoes: [...(p.opcoes ?? []), ""] };
-      }),
+  function adicionarOpcao(campoIndex: number) {
+    setCampos((prev) =>
+      prev.map((c, i) => (i === campoIndex ? { ...c, opcoes: [...(c.opcoes ?? []), ""] } : c)),
     );
   }
 
-  function toggleOpcaoEliminatoria(perguntaIndex: number, opcao: string) {
-    setPerguntas((prev) =>
-      prev.map((p, i): CreatePerguntaInput => {
-        if (i !== perguntaIndex) return p;
-        const eliminatorias = p.opcoes_eliminatorias ?? [];
+  function toggleOpcaoEliminatoria(campoIndex: number, opcao: string) {
+    setCampos((prev) =>
+      prev.map((c, i) => {
+        if (i !== campoIndex) return c;
+        const eliminatorias = c.opcoes_eliminatorias ?? [];
         const jaEsta = eliminatorias.includes(opcao);
         return {
-          ...p,
+          ...c,
           opcoes_eliminatorias: jaEsta
             ? eliminatorias.filter((o) => o !== opcao)
             : [...eliminatorias, opcao],
@@ -327,26 +178,34 @@ export function NovoFormularioPage() {
   }
 
   async function criarFormulario(publicar: boolean) {
-    if (!ligaId || !nome || perguntas.length === 0) {
+    // Validações
+    if (!tipo || !nome || campos.length === 0) {
       toast.error("Preencha todas as informações obrigatórias.");
       return;
     }
-
-    const perguntasComPeso = perguntas.filter((p) => p.tipo !== "texto");
-    if (perguntasComPeso.length > 0 && somaPesos !== 100) {
-      toast.error(`A soma dos pesos deve ser exatamente 100. Atual: ${somaPesos}.`);
+    if (tipo === "processo_seletivo" && !ligaId) {
+      toast.error("Processo Seletivo requer uma liga.");
       return;
+    }
+    if (scoringEnabled) {
+      const camposComPeso = campos.filter((c) => c.tipo !== "texto");
+      if (camposComPeso.length > 0 && somaPesos !== 100) {
+        toast.error(`A soma dos pesos deve ser exatamente 100. Atual: ${somaPesos}.`);
+        return;
+      }
     }
 
     try {
       setSalvando(true);
       const token = await getToken();
       const payload: CreateFormularioInput = {
-        liga_id: ligaId,
+        liga_id: ligaId || undefined,
+        tipo,
         nome,
         descricao: descricao || undefined,
-        perguntas,
-        tema,
+        scoring_enabled: scoringEnabled,
+        pontuacao_minima_aprovacao: scoringEnabled ? pontuacaoMinima : undefined,
+        campos,
       };
 
       const res = await fetch("/api/formularios", {
@@ -363,18 +222,24 @@ export function NovoFormularioPage() {
         throw new Error((err as { error?: string }).error ?? "Erro ao criar formulário");
       }
 
-      const formulario = (await res.json()) as FormularioComPerguntas;
+      const formulario = (await res.json()) as FormularioComCampos;
       setFormularioId(formulario.id);
 
       if (publicar) {
-        await fetch(`/api/formularios/${formulario.id}/publicar`, {
+        const pubRes = await fetch(`/api/formularios/${formulario.id}/publicar`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
+        if (!pubRes.ok) {
+          const err = await pubRes.json();
+          toast.warning(
+            `Formulário criado, mas não publicado: ${(err as { error?: string }).error ?? "erro"}`,
+          );
+        }
       }
 
-      setLinkCriado(formulario.google_form_url ?? null);
-      setEtapa(5);
+      setLinkCriado(formulario.tally_form_url ?? null);
+      setEtapa(4); // tela de sucesso
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao criar formulário");
     } finally {
@@ -382,7 +247,8 @@ export function NovoFormularioPage() {
     }
   }
 
-  if (etapa === 5 && linkCriado) {
+  // ============== TELA DE SUCESSO ==============
+  if (etapa === 4 && linkCriado) {
     return (
       <div className="max-w-2xl mx-auto px-8 py-10">
         <div className="text-center py-12 border border-navy/15">
@@ -391,7 +257,7 @@ export function NovoFormularioPage() {
             Formulário criado com sucesso!
           </h2>
           <p className="text-[13px] text-navy/60 mb-6">
-            Compartilhe o link abaixo com os candidatos.
+            Compartilhe o link abaixo com os respondentes.
           </p>
           <div className="flex items-center gap-2 border border-navy/20 p-3 mx-auto max-w-sm">
             <span className="text-[12px] text-navy/60 truncate flex-1">{linkCriado}</span>
@@ -420,7 +286,7 @@ export function NovoFormularioPage() {
                 onClick={() => navigate(`/formularios/${formularioId}`)}
                 className="bg-navy text-white hover:bg-navy/90"
               >
-                Ver resultados
+                Ver respostas
               </Button>
             )}
           </div>
@@ -442,6 +308,9 @@ export function NovoFormularioPage() {
         <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
           Criar Formulário
         </h1>
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/40 mt-1">
+          Novo Formulário
+        </p>
       </div>
 
       {/* Steps indicator */}
@@ -455,30 +324,79 @@ export function NovoFormularioPage() {
               <div className="flex items-center gap-2">
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold
-                    ${ativa ? "bg-navy text-white" : concluida ? "bg-navy/20 text-navy dark:bg-brand-gray/20 dark:text-white" : "bg-brand-gray text-navy/40 dark:bg-brand-gray dark:text-[#10284F]"}`}
+                    ${ativa ? "bg-navy text-white" : concluida ? "bg-navy/20 text-navy dark:bg-white/20 dark:text-white" : "bg-brand-gray text-navy/40 dark:bg-[#666666] dark:text-white"}`}
                 >
                   {concluida ? <Check className="w-3 h-3" /> : num}
                 </div>
-                <span
-                  className={`text-[12px] font-medium ${ativa ? "text-navy dark:text-white" : "text-navy/40 dark:text-white/40"}`}
-                >
+                <span className={`text-[12px] font-medium ${ativa ? "text-navy" : "text-navy/40"}`}>
                   {label}
                 </span>
               </div>
               {i < ETAPA_LABELS.length - 1 && (
-                <div className="w-8 h-px bg-navy/15 dark:bg-brand-gray mx-3" />
+                <div className="w-8 h-px bg-navy/15 dark:bg-[#666666] mx-3" />
               )}
             </div>
           );
         })}
       </div>
 
-      {/* Etapa 1 — Informações */}
+      {/* ETAPA 1 — Informações */}
       {etapa === 1 && (
         <div className="space-y-5 max-w-2xl">
           <div>
             <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
-              Liga *
+              Tipo de formulário *
+            </label>
+            <Select value={tipo} onValueChange={(v) => setTipo(v as FormularioTipo)}>
+              <SelectTrigger className="border-border bg-muted/50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.entries(TIPO_LABELS) as [FormularioTipo, string][]).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>
+                    {v}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-3 p-3 border border-border bg-muted/30 rounded">
+            <input
+              type="checkbox"
+              id="scoring"
+              checked={scoringEnabled}
+              onChange={(e) => setScoringEnabled(e.target.checked)}
+              className="accent-navy"
+            />
+            <label htmlFor="scoring" className="text-[13px] text-navy flex-1">
+              <span className="font-semibold">Habilitar pontuação automática</span>
+              <span className="block text-[11px] text-navy/50 mt-0.5">
+                Permite definir pesos e critérios eliminatórios para cada campo.
+              </span>
+            </label>
+          </div>
+
+          {scoringEnabled && (
+            <div>
+              <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
+                Pontuação mínima para aprovação *
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={pontuacaoMinima}
+                onChange={(e) => setPontuacaoMinima(Number(e.target.value))}
+                className="w-32 px-3 py-2 border border-border bg-muted/50 text-[13px] rounded"
+              />
+              <span className="ml-2 text-[12px] text-navy/50">/ 100</span>
+            </div>
+          )}
+
+          <div>
+            <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
+              Liga {tipo === "processo_seletivo" ? "*" : ""}
             </label>
             {role === "diretor" ? (
               carregandoLiga ? (
@@ -491,11 +409,17 @@ export function NovoFormularioPage() {
                 </div>
               )
             ) : (
-              <Select value={ligaId} onValueChange={setLigaId}>
-                <SelectTrigger className="border-border bg-muted/50 text-foreground">
-                  <SelectValue placeholder="Selecione a liga" />
+              <Select
+                value={ligaId || "none"}
+                onValueChange={(v) => setLigaId(v === "none" ? "" : v)}
+              >
+                <SelectTrigger className="border-border bg-muted/50">
+                  <SelectValue
+                    placeholder={tipo === "processo_seletivo" ? "Selecione a liga" : "Sem liga"}
+                  />
                 </SelectTrigger>
                 <SelectContent>
+                  {tipo !== "processo_seletivo" && <SelectItem value="none">Sem liga</SelectItem>}
                   {ligas.map((liga) => (
                     <SelectItem key={liga.id} value={liga.id}>
                       {liga.nome}
@@ -514,7 +438,7 @@ export function NovoFormularioPage() {
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Ex: Processo Seletivo 2026.1"
-              className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 rounded placeholder:text-foreground/20"
+              className="w-full px-3 py-2.5 border border-border bg-muted/50 text-[13px] rounded placeholder:text-foreground/20"
             />
           </div>
 
@@ -527,15 +451,19 @@ export function NovoFormularioPage() {
               onChange={(e) => setDescricao(e.target.value)}
               placeholder="Descreva o formulário..."
               rows={3}
-              className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 rounded placeholder:text-foreground/20 resize-none"
+              className="w-full px-3 py-2.5 border border-border bg-muted/50 text-[13px] rounded placeholder:text-foreground/20 resize-none"
             />
           </div>
 
           <div className="flex justify-end pt-2">
             <button
               onClick={() => {
-                if (!ligaId || !nome) {
-                  toast.error("Liga e nome são obrigatórios.");
+                if (!nome) {
+                  toast.error("Nome é obrigatório.");
+                  return;
+                }
+                if (tipo === "processo_seletivo" && !ligaId) {
+                  toast.error("Processo Seletivo requer uma liga.");
                   return;
                 }
                 setEtapa(2);
@@ -549,12 +477,16 @@ export function NovoFormularioPage() {
         </div>
       )}
 
-      {/* Etapa 2 — Perguntas */}
+      {/* ETAPA 2 — Campos */}
       {etapa === 2 && (
         <div className="space-y-5 max-w-2xl">
-          {perguntas.some((p) => p.tipo !== "texto") && (
+          {scoringEnabled && campos.some((c) => c.tipo !== "texto") && (
             <div
-              className={`text-[12px] p-3 border ${somaPesos === 100 ? "border-green-200 bg-green-50 text-green-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}
+              className={`text-[12px] p-3 border ${
+                somaPesos === 100
+                  ? "border-green-200 bg-green-50 text-green-700"
+                  : "border-amber-200 bg-amber-50 text-amber-700"
+              }`}
             >
               Soma dos pesos: {somaPesos}/100
               {somaPesos !== 100 && " — deve totalizar exatamente 100%"}
@@ -562,56 +494,55 @@ export function NovoFormularioPage() {
           )}
 
           <div className="space-y-4">
-            {perguntas.map((pergunta, index) => (
+            {campos.map((campo, index) => (
               <div key={index} className="border border-navy/15 p-4 space-y-3">
                 <div className="flex items-center gap-2">
-                  <GripVertical className="w-4 h-4 text-navy/30 flex-shrink-0" />
-                  <Badge className="text-[10px] bg-brand-gray text-navy px-2 py-0.5 flex-shrink-0">
-                    {TIPO_LABELS[pergunta.tipo]}
+                  <GripVertical className="w-4 h-4 text-navy/30 dark:text-white/50 flex-shrink-0" />
+                  <Badge className="text-[10px] bg-brand-gray text-navy dark:bg-white/10 dark:text-white/70 px-2 py-0.5">
+                    {CAMPO_LABELS[campo.tipo]}
                   </Badge>
                   <button
-                    onClick={() => removerPergunta(index)}
-                    className="ml-auto text-navy/30 hover:text-red-500 transition-colors"
+                    onClick={() => removerCampo(index)}
+                    className="ml-auto text-navy/30 dark:text-white/50 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
 
-                <div>
-                  <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
-                    Pergunta *
-                  </label>
-                  <input
-                    value={pergunta.titulo}
-                    onChange={(e) => atualizarPergunta(index, { titulo: e.target.value })}
-                    placeholder="Digite a pergunta..."
-                    className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 rounded placeholder:text-foreground/20"
-                  />
-                </div>
+                <input
+                  value={campo.titulo}
+                  onChange={(e) => atualizarCampo(index, { titulo: e.target.value })}
+                  placeholder="Digite a pergunta..."
+                  className="w-full px-3 py-2.5 border border-border bg-muted/50 text-[13px] rounded"
+                />
 
-                {pergunta.tipo === "multipla_escolha" && (
+                {campo.tipo === "multipla_escolha" && (
                   <div className="space-y-2">
-                    <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
+                    <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
                       Opções
                     </label>
-                    {(pergunta.opcoes ?? []).map((opcao, oi) => (
+                    {(campo.opcoes ?? []).map((opcao, oi) => (
                       <div key={oi} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={(pergunta.opcoes_eliminatorias ?? []).includes(opcao)}
-                          onChange={() => toggleOpcaoEliminatoria(index, opcao)}
-                          className="accent-red-500 flex-shrink-0"
-                          title="Marcar como eliminatória"
-                        />
+                        {scoringEnabled && (
+                          <input
+                            type="checkbox"
+                            checked={(campo.opcoes_eliminatorias ?? []).includes(opcao)}
+                            onChange={() => toggleOpcaoEliminatoria(index, opcao)}
+                            className="accent-red-500"
+                            title="Marcar como eliminatória"
+                          />
+                        )}
                         <input
                           value={opcao}
                           onChange={(e) => atualizarOpcao(index, oi, e.target.value)}
                           placeholder={`Opção ${oi + 1}`}
-                          className="w-full px-3 py-2 border border-border bg-muted/50 font-plex-sans text-[12px] text-foreground focus:outline-none focus:border-foreground/30 rounded placeholder:text-foreground/20"
+                          className="w-full px-3 py-2 border border-border bg-muted/50 text-[12px] rounded"
                         />
                       </div>
                     ))}
-                    <p className="text-[10px] text-navy/40">☑ marcado = opção eliminatória</p>
+                    {scoringEnabled && (
+                      <p className="text-[10px] text-navy/40">☑ marcado = opção eliminatória</p>
+                    )}
                     <button
                       onClick={() => adicionarOpcao(index)}
                       className="text-[11px] text-navy/50 hover:text-navy transition-colors flex items-center gap-1"
@@ -621,7 +552,7 @@ export function NovoFormularioPage() {
                   </div>
                 )}
 
-                {pergunta.tipo === "nota_1_10" && (
+                {scoringEnabled && campo.tipo === "nota_1_10" && (
                   <div className="flex items-center gap-4">
                     <div>
                       <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
@@ -631,62 +562,50 @@ export function NovoFormularioPage() {
                         type="number"
                         min={1}
                         max={10}
-                        value={pergunta.nota_minima ?? 5}
+                        value={campo.nota_minima ?? 5}
                         onChange={(e) =>
-                          atualizarPergunta(index, { nota_minima: Number(e.target.value) })
+                          atualizarCampo(index, { nota_minima: Number(e.target.value) })
                         }
-                        className="w-20 px-3 py-2 border border-border bg-muted/50 font-plex-sans text-[12px] text-foreground focus:outline-none focus:border-foreground/30 rounded"
+                        className="w-20 px-3 py-2 border border-border bg-muted/50 text-[12px] rounded"
                       />
                     </div>
                     <div className="flex items-center gap-2 mt-4">
                       <input
                         type="checkbox"
-                        id={`elim-${index}`}
-                        checked={pergunta.eliminatoria}
-                        onChange={(e) =>
-                          atualizarPergunta(index, { eliminatoria: e.target.checked })
-                        }
+                        checked={campo.eliminatoria}
+                        onChange={(e) => atualizarCampo(index, { eliminatoria: e.target.checked })}
                         className="accent-red-500"
                       />
-                      <label
-                        htmlFor={`elim-${index}`}
-                        className="font-plex-sans text-[11px] text-foreground/60"
-                      >
-                        Eliminatória
-                      </label>
+                      <label className="text-[11px] text-foreground/60">Eliminatória</label>
                     </div>
                   </div>
                 )}
 
-                {pergunta.tipo === "sim_nao" && (
+                {scoringEnabled && campo.tipo === "sim_nao" && (
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      id={`elim-sn-${index}`}
-                      checked={pergunta.eliminatoria}
-                      onChange={(e) => atualizarPergunta(index, { eliminatoria: e.target.checked })}
+                      checked={campo.eliminatoria}
+                      onChange={(e) => atualizarCampo(index, { eliminatoria: e.target.checked })}
                       className="accent-red-500"
                     />
-                    <label
-                      htmlFor={`elim-sn-${index}`}
-                      className="font-plex-sans text-[11px] text-foreground/60"
-                    >
+                    <label className="text-[11px] text-foreground/60">
                       {`Eliminatória se responder "Não"`}
                     </label>
                   </div>
                 )}
 
-                {pergunta.tipo !== "texto" && (
+                {scoringEnabled && campo.tipo !== "texto" && (
                   <div>
                     <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
-                      Peso na pontuação: {pergunta.peso}%
+                      Peso na pontuação: {campo.peso}%
                     </label>
                     <input
                       type="range"
                       min={0}
                       max={100}
-                      value={pergunta.peso}
-                      onChange={(e) => atualizarPergunta(index, { peso: Number(e.target.value) })}
+                      value={campo.peso}
+                      onChange={(e) => atualizarCampo(index, { peso: Number(e.target.value) })}
                       className="w-full accent-navy"
                     />
                   </div>
@@ -695,13 +614,13 @@ export function NovoFormularioPage() {
             ))}
           </div>
 
-          <div className="border border-dashed border-navy/20 p-4">
-            <p className="text-[11px] text-navy/50 mb-3 font-medium">Adicionar pergunta</p>
+          <div className="border border-dashed border-navy/20 dark:border-white/40 p-4">
+            <p className="text-[11px] text-navy/50 mb-3 font-medium">Adicionar campo</p>
             <div className="flex flex-wrap gap-2">
-              {(Object.entries(TIPO_LABELS) as [PerguntaTipo, string][]).map(([tipo, label]) => (
+              {(Object.entries(CAMPO_LABELS) as [CampoTipo, string][]).map(([t, label]) => (
                 <button
-                  key={tipo}
-                  onClick={() => adicionarPergunta(tipo)}
+                  key={t}
+                  onClick={() => adicionarCampo(t)}
                   className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/60 border border-foreground/30 px-3 py-1.5 rounded-full hover:text-foreground hover:border-foreground/50 transition-colors"
                 >
                   + {label}
@@ -713,15 +632,15 @@ export function NovoFormularioPage() {
           <div className="flex justify-between pt-2">
             <button
               onClick={() => setEtapa(1)}
-              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/50 border border-foreground/20 px-3 py-1.5 rounded-full hover:text-foreground hover:border-foreground/40 transition-colors flex items-center gap-1.5"
+              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/50 border border-foreground/20 px-3 py-1.5 rounded-full hover:text-foreground transition-colors flex items-center gap-1.5"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Voltar
             </button>
             <button
               onClick={() => {
-                if (perguntas.length === 0) {
-                  toast.error("Adicione pelo menos uma pergunta.");
+                if (campos.length === 0) {
+                  toast.error("Adicione pelo menos um campo.");
                   return;
                 }
                 setEtapa(3);
@@ -735,104 +654,30 @@ export function NovoFormularioPage() {
         </div>
       )}
 
-      {/* Etapa 3 — Personalização */}
+      {/* ETAPA 3 — Revisão */}
       {etapa === 3 && (
-        <div className="flex gap-8">
-          {/* Controles */}
-          <div className="flex-1 space-y-6 max-w-sm">
-            <div>
-              <h3 className="font-display font-bold text-[14px] text-navy mb-4">Cores</h3>
-              <div className="space-y-4">
-                <ColorField
-                  label="Cor de fundo"
-                  value={tema.cor_fundo}
-                  onChange={(v) => atualizarTema({ cor_fundo: v })}
-                />
-                <ColorField
-                  label="Cor das perguntas"
-                  value={tema.cor_pergunta}
-                  onChange={(v) => atualizarTema({ cor_pergunta: v })}
-                />
-                <ColorField
-                  label="Cor dos botões"
-                  value={tema.cor_botao}
-                  onChange={(v) => atualizarTema({ cor_botao: v })}
-                />
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-display font-bold text-[14px] text-navy mb-4">Imagens</h3>
-              <div className="flex items-start gap-2 p-3 border border-amber-200 bg-amber-50 mb-4">
-                <Info className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <p className="text-[11px] text-amber-700">
-                  Logo e imagem de fundo não são aplicadas automaticamente pelo Google Forms API.
-                  Após publicar, edite o formulário no Google para adicioná-las manualmente.
-                </p>
-              </div>
-              <div className="space-y-5">
-                <ImageUrlField
-                  label="Logo"
-                  value={tema.logo_url}
-                  onChange={(url) => atualizarTema({ logo_url: url || undefined })}
-                />
-                <ImageUrlField
-                  label="Imagem de fundo"
-                  value={tema.imagem_fundo_url}
-                  onChange={(url) => atualizarTema({ imagem_fundo_url: url || undefined })}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-between pt-2">
-              <button
-                onClick={() => setEtapa(2)}
-                className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/50 border border-foreground/20 px-3 py-1.5 rounded-full hover:text-foreground hover:border-foreground/40 transition-colors flex items-center gap-1.5"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                Voltar
-              </button>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setTema({ ...TEMA_DEFAULT });
-                    setEtapa(4);
-                  }}
-                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/40 hover:text-foreground transition-colors px-2"
-                >
-                  Pular
-                </button>
-                <button
-                  onClick={() => setEtapa(4)}
-                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors flex items-center gap-1.5"
-                >
-                  Próximo
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Preview */}
-          <div className="flex-1 flex flex-col items-center">
-            <p className="text-[11px] text-navy/40 mb-4 font-medium uppercase tracking-wide">
-              Preview
-            </p>
-            <TypeformMockup tema={tema} />
-          </div>
-        </div>
-      )}
-
-      {/* Etapa 4 — Revisão */}
-      {etapa === 4 && (
         <div className="space-y-6 max-w-2xl">
           <div className="border border-navy/15 p-5 space-y-3">
             <h3 className="font-display font-bold text-[15px] text-navy">Informações</h3>
             <div className="grid grid-cols-2 gap-3 text-[13px]">
               <div>
+                <span className="text-navy/50">Tipo:</span>{" "}
+                <span className="text-navy font-medium">{TIPO_LABELS[tipo]}</span>
+              </div>
+              <div>
+                <span className="text-navy/50">Scoring:</span>{" "}
+                <span className="text-navy font-medium">{scoringEnabled ? "Sim" : "Não"}</span>
+              </div>
+              <div>
                 <span className="text-navy/50">Nome:</span>{" "}
                 <span className="text-navy font-medium">{nome}</span>
               </div>
+              {scoringEnabled && (
+                <div>
+                  <span className="text-navy/50">Mínima:</span>{" "}
+                  <span className="text-navy font-medium">{pontuacaoMinima}/100</span>
+                </div>
+              )}
               {descricao && (
                 <div className="col-span-2">
                   <span className="text-navy/50">Descrição:</span>{" "}
@@ -844,20 +689,22 @@ export function NovoFormularioPage() {
 
           <div className="border border-navy/15 p-5 space-y-3">
             <h3 className="font-display font-bold text-[15px] text-navy">
-              Perguntas ({perguntas.length})
+              Campos ({campos.length})
             </h3>
             <div className="space-y-2">
-              {perguntas.map((p, i) => (
+              {campos.map((c, i) => (
                 <div key={i} className="flex items-start gap-3 text-[13px]">
-                  <span className="text-navy/40 w-5 flex-shrink-0">{i + 1}.</span>
+                  <span className="text-navy/40 w-5">{i + 1}.</span>
                   <div className="flex-1">
-                    <span className="text-navy">{p.titulo || "(sem título)"}</span>
+                    <span className="text-navy">{c.titulo || "(sem título)"}</span>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <Badge className="text-[10px] bg-brand-gray text-navy px-1.5 py-0">
-                        {TIPO_LABELS[p.tipo]}
+                      <Badge className="text-[10px] bg-brand-gray text-navy dark:bg-white/10 dark:text-white/70 px-1.5 py-0">
+                        {CAMPO_LABELS[c.tipo]}
                       </Badge>
-                      {p.peso > 0 && <span className="text-[10px] text-navy/40">{p.peso}%</span>}
-                      {p.eliminatoria && (
+                      {scoringEnabled && c.peso > 0 && (
+                        <span className="text-[10px] text-navy/40">{c.peso}%</span>
+                      )}
+                      {scoringEnabled && c.eliminatoria && (
                         <span className="text-[10px] text-red-500">eliminatória</span>
                       )}
                     </div>
@@ -867,47 +714,10 @@ export function NovoFormularioPage() {
             </div>
           </div>
 
-          <div className="border border-navy/15 p-5 space-y-3">
-            <h3 className="font-display font-bold text-[15px] text-navy">Personalização</h3>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-7 h-7 rounded-full border border-navy/10"
-                  style={{ backgroundColor: tema.cor_fundo }}
-                  title="Fundo"
-                />
-                <div
-                  className="w-7 h-7 rounded-full border border-navy/10"
-                  style={{ backgroundColor: tema.cor_pergunta }}
-                  title="Pergunta"
-                />
-                <div
-                  className="w-7 h-7 rounded-full border border-navy/10"
-                  style={{ backgroundColor: tema.cor_botao }}
-                  title="Botão"
-                />
-              </div>
-              {tema.logo_url && (
-                <img
-                  src={tema.logo_url}
-                  alt="Logo"
-                  className="h-7 w-auto object-contain rounded border border-navy/10"
-                />
-              )}
-              {tema.imagem_fundo_url && (
-                <img
-                  src={tema.imagem_fundo_url}
-                  alt="Fundo"
-                  className="h-7 w-12 object-cover rounded border border-navy/10"
-                />
-              )}
-            </div>
-          </div>
-
           <div className="flex justify-between pt-2">
             <button
-              onClick={() => setEtapa(3)}
-              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/50 border border-foreground/20 px-3 py-1.5 rounded-full hover:text-foreground hover:border-foreground/40 transition-colors flex items-center gap-1.5"
+              onClick={() => setEtapa(2)}
+              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/50 border border-foreground/20 px-3 py-1.5 rounded-full hover:text-foreground transition-colors flex items-center gap-1.5"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Voltar
@@ -916,7 +726,7 @@ export function NovoFormularioPage() {
               <button
                 onClick={() => criarFormulario(false)}
                 disabled={salvando}
-                className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/50 border border-foreground/20 px-3 py-1.5 rounded-full hover:text-foreground hover:border-foreground/40 transition-colors disabled:opacity-40"
+                className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/50 border border-foreground/20 px-3 py-1.5 rounded-full hover:text-foreground transition-colors disabled:opacity-40"
               >
                 {salvando ? "Criando..." : "Salvar como rascunho"}
               </button>
