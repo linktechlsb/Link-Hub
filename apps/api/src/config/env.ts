@@ -13,7 +13,7 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().min(1).optional(),
 
   TALLY_API_KEY: z.string().min(1),
-  TALLY_WEBHOOK_SIGNING_SECRET: z.string().min(16).optional(),
+  TALLY_WEBHOOK_SIGNING_SECRET: z.string().min(16),
   TALLY_WORKSPACE_ID: z.string().min(1).optional(),
   PUBLIC_API_BASE_URL: z.string().url().optional(),
 
