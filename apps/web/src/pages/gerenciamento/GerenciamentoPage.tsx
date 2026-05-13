@@ -23,6 +23,16 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import {
   DropdownMenu,
@@ -877,6 +887,8 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [sheetAberto, setSheetAberto] = useState(false);
+  const [confirmandoDeletar, setConfirmandoDeletar] = useState<Recurso | null>(null);
+  const [deletando, setDeletando] = useState(false);
 
   async function uploadArquivo(
     file: File,
@@ -941,19 +953,19 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
     void carregar();
   }, [ligaId]);
 
-  async function adicionar() {
+  async function adicionar(): Promise<boolean> {
     setErro(null);
     if (!novoNome.trim()) {
       setErro("Informe o nome do recurso.");
-      return;
+      return false;
     }
     if (!novoUrl.trim()) {
       setErro("Informe a URL.");
-      return;
+      return false;
     }
     if (!ligaId) {
       setErro("Liga não identificada. Recarregue a página.");
-      return;
+      return false;
     }
     const token = await getToken();
     const res = await fetch("/api/recursos", {
@@ -975,20 +987,31 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
       setNovoUrl("");
       setNovoIcone("link");
       setNovoCor("#546484");
+      return true;
     } else {
       const body = (await res.json().catch(() => ({}))) as { error?: string };
       setErro(body.error ?? `Erro ${res.status} ao salvar.`);
+      return false;
     }
   }
 
   async function remover(id: string) {
-    const token = await getToken();
-    const res = await fetch(`/api/recursos/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      setRecursos((prev) => prev.filter((r) => r.id !== id));
+    setDeletando(true);
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/recursos/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setRecursos((prev) => prev.filter((r) => r.id !== id));
+        toast.success("Recurso removido.");
+      } else {
+        toast.error("Erro ao remover recurso.");
+      }
+    } finally {
+      setDeletando(false);
+      setConfirmandoDeletar(null);
     }
   }
 
@@ -1104,7 +1127,7 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-[12px] cursor-pointer text-red-500 focus:text-red-600"
-                        onClick={() => void remover(r.id)}
+                        onClick={() => setConfirmandoDeletar(r)}
                       >
                         Remover
                       </DropdownMenuItem>
@@ -1116,6 +1139,52 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
           </tbody>
         </table>
       )}
+
+      {/* Dialog de confirmação de deleção */}
+      <AlertDialog
+        open={!!confirmandoDeletar}
+        onOpenChange={(v) => {
+          if (!v && !deletando) setConfirmandoDeletar(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display font-bold text-[18px] text-navy">
+              Remover recurso
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-plex-sans text-[13px] text-foreground/60">
+              Tem certeza que deseja remover{" "}
+              <span className="font-semibold text-foreground">{confirmandoDeletar?.nome}</span>?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={deletando}
+              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase"
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deletando}
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmandoDeletar) void remover(confirmandoDeletar.id);
+              }}
+              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deletando ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Removendo…
+                </span>
+              ) : (
+                "Remover"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Sheet Adicionar/Editar */}
       <Sheet open={sheetAberto} onOpenChange={(v) => !v && setSheetAberto(false)}>
@@ -1280,8 +1349,8 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                 onClick={() => {
                   if (editandoId) void salvarEdicao(editandoId).then(() => setSheetAberto(false));
                   else
-                    void adicionar().then(() => {
-                      if (!erro) setSheetAberto(false);
+                    void adicionar().then((ok) => {
+                      if (ok) setSheetAberto(false);
                     });
                 }}
                 disabled={

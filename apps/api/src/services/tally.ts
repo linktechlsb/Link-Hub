@@ -73,6 +73,11 @@ export const tally = {
         method: "PATCH",
         body: JSON.stringify({ settings: { isClosed: true, closedMessage } }),
       }),
+    reopen: (id: string) =>
+      request<TallyForm>(`/forms/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ settings: { isClosed: false } }),
+      }),
     get: (id: string) => request<TallyForm>(`/forms/${id}`),
   },
   submissions: {
@@ -121,11 +126,11 @@ export function mapCamposToBlocks(
   const blocks: TallyBlock[] = [];
   const ordemParaContainerUuid = new Map<number, string>();
 
-  // FORM_TITLE: groupUuid === uuid (não um UUID separado)
-  const formTitleUuid = randomUUID();
+  // FORM_TITLE: uuid e groupUuid são UUIDs distintos (padrão da API Tally)
+  const formTitleGroupUuid = randomUUID();
   blocks.push({
-    uuid: formTitleUuid,
-    groupUuid: formTitleUuid,
+    uuid: randomUUID(),
+    groupUuid: formTitleGroupUuid,
     type: "FORM_TITLE",
     groupType: "FORM_TITLE",
     payload: { html: formulario.nome },
@@ -134,50 +139,66 @@ export function mapCamposToBlocks(
   const ordenados = [...campos].sort((a, b) => a.ordem - b.ordem);
 
   for (const campo of ordenados) {
+    // Cada pergunta: bloco TITLE (título) + bloco de input, compartilhando o mesmo questionGroupUuid
+    const questionGroupUuid = randomUUID();
+
     if (campo.tipo === "texto") {
+      blocks.push({
+        uuid: randomUUID(),
+        groupUuid: questionGroupUuid,
+        type: "TITLE",
+        groupType: "QUESTION",
+        payload: { html: campo.titulo },
+      });
       const inputUuid = randomUUID();
       ordemParaContainerUuid.set(campo.ordem, inputUuid);
       blocks.push({
         uuid: inputUuid,
-        groupUuid: inputUuid, // groupUuid === uuid para blocos de pergunta
+        groupUuid: questionGroupUuid,
         type: "INPUT_TEXT",
-        groupType: "QUESTION",
-        payload: { html: campo.titulo, isRequired: campo.eliminatoria, placeholder: "" },
+        groupType: "INPUT_TEXT",
+        payload: { isRequired: campo.eliminatoria, placeholder: "" },
       });
       continue;
     }
 
     if (campo.tipo === "nota_1_10") {
+      blocks.push({
+        uuid: randomUUID(),
+        groupUuid: questionGroupUuid,
+        type: "TITLE",
+        groupType: "QUESTION",
+        payload: { html: campo.titulo },
+      });
       const inputUuid = randomUUID();
       ordemParaContainerUuid.set(campo.ordem, inputUuid);
       blocks.push({
         uuid: inputUuid,
-        groupUuid: inputUuid,
+        groupUuid: questionGroupUuid,
         type: "LINEAR_SCALE",
-        groupType: "QUESTION",
-        payload: { html: campo.titulo, isRequired: true, start: 1, end: 10 },
+        groupType: "LINEAR_SCALE",
+        payload: { isRequired: true, start: 1, end: 10 },
       });
       continue;
     }
 
     if (campo.tipo === "multipla_escolha") {
-      const containerUuid = randomUUID();
-      ordemParaContainerUuid.set(campo.ordem, containerUuid);
       blocks.push({
-        uuid: containerUuid,
-        groupUuid: containerUuid,
-        type: "MULTIPLE_CHOICE",
+        uuid: randomUUID(),
+        groupUuid: questionGroupUuid,
+        type: "TITLE",
         groupType: "QUESTION",
         payload: { html: campo.titulo },
       });
+      // Sem bloco container: options usam diretamente o questionGroupUuid
+      ordemParaContainerUuid.set(campo.ordem, questionGroupUuid);
       const opcoes = campo.opcoes ?? [];
       opcoes.forEach((opcao, i) => {
         blocks.push({
           uuid: randomUUID(),
-          groupUuid: containerUuid,
+          groupUuid: questionGroupUuid,
           type: "MULTIPLE_CHOICE_OPTION",
           groupType: "MULTIPLE_CHOICE",
-          // isFirst/isLast vão no payload das options (não no topo do bloco)
           payload: { text: opcao, index: i, isFirst: i === 0, isLast: i === opcoes.length - 1 },
         });
       });
@@ -185,20 +206,19 @@ export function mapCamposToBlocks(
     }
 
     if (campo.tipo === "sim_nao") {
-      const containerUuid = randomUUID();
-      ordemParaContainerUuid.set(campo.ordem, containerUuid);
       blocks.push({
-        uuid: containerUuid,
-        groupUuid: containerUuid,
-        type: "MULTIPLE_CHOICE",
+        uuid: randomUUID(),
+        groupUuid: questionGroupUuid,
+        type: "TITLE",
         groupType: "QUESTION",
         payload: { html: campo.titulo },
       });
+      ordemParaContainerUuid.set(campo.ordem, questionGroupUuid);
       const opts = ["Sim", "Não"];
       opts.forEach((text, i) => {
         blocks.push({
           uuid: randomUUID(),
-          groupUuid: containerUuid,
+          groupUuid: questionGroupUuid,
           type: "MULTIPLE_CHOICE_OPTION",
           groupType: "MULTIPLE_CHOICE",
           payload: { text, index: i, isFirst: i === 0, isLast: i === opts.length - 1 },

@@ -134,6 +134,7 @@ formulariosRouter.post(
         scoring_enabled,
         pontuacao_minima_aprovacao,
         campos,
+        publicar = false,
       } = body;
 
       // Validações
@@ -199,7 +200,7 @@ formulariosRouter.post(
         `;
       }
 
-      // 3. Chama Tally para criar o form
+      // 3. Chama Tally para criar o form (sempre como DRAFT)
       const { blocks, ordemParaContainerUuid } = mapCamposToBlocks({ nome, descricao }, campos);
 
       let tallyForm;
@@ -211,7 +212,6 @@ formulariosRouter.post(
           blocks,
         });
       } catch (err) {
-        // Cleanup local — não persistimos form sem Tally backing
         await sql`DELETE FROM formularios WHERE id = ${formulario.id}`;
         if (err instanceof TallyApiError) {
           res.status(502).json({ error: `Falha ao criar form no Tally: ${err.message}` });
@@ -222,16 +222,40 @@ formulariosRouter.post(
 
       const tallyFormUrl = `https://tally.so/r/${tallyForm.id}`;
 
-      // 4. UPDATE formulario com tally_form_id/url
+      // 4. Se publicar: publica no Tally + cria webhook
+      let webhookId: string | null = null;
+      if (publicar) {
+        try {
+          await tally.forms.publish(tallyForm.id);
+          const webhook = await tally.webhooks.create(
+            tallyForm.id,
+            `${env.PUBLIC_API_BASE_URL}/api/formularios/webhook/tally`,
+            env.TALLY_WEBHOOK_SIGNING_SECRET,
+          );
+          webhookId = webhook.id;
+        } catch (err) {
+          await tally.forms.unpublish(tallyForm.id).catch(() => {});
+          await sql`DELETE FROM formularios WHERE id = ${formulario.id}`;
+          if (err instanceof TallyApiError) {
+            res.status(502).json({ error: `Falha ao publicar: ${err.message}` });
+            return;
+          }
+          throw err;
+        }
+      }
+
+      // 5. UPDATE formulario com tally_form_id/url/status
       await sql`
         UPDATE formularios
         SET tally_form_id = ${tallyForm.id},
             tally_form_url = ${tallyFormUrl},
+            tally_webhook_id = ${webhookId},
+            status = ${publicar ? "aberto" : "rascunho"},
             updated_at = NOW()
         WHERE id = ${formulario.id}
       `;
 
-      // 5. Backfill tally_question_id em cada campo
+      // 6. Backfill tally_question_id em cada campo
       for (const [ordem, uuid] of ordemParaContainerUuid) {
         await sql`
           UPDATE formulario_campos
@@ -240,7 +264,7 @@ formulariosRouter.post(
         `;
       }
 
-      // 6. Retorna formulário completo
+      // 7. Retorna formulário completo
       const [final] = await sql`
         SELECT f.*, l.nome as liga_nome
         FROM formularios f
@@ -429,6 +453,75 @@ formulariosRouter.post(
 );
 
 // ============================================================================
+// POST /formularios/:id/reativar
+// ============================================================================
+formulariosRouter.post(
+  "/:id/reativar",
+  authenticate,
+  requireRole("staff", "diretor"),
+  async (req, res, next) => {
+    try {
+      const id = req.params["id"] as string;
+      const user = (req as AuthenticatedRequest).user!;
+
+      const [formulario] = await sql`SELECT * FROM formularios WHERE id = ${id} LIMIT 1`;
+      if (!formulario) {
+        res.status(404).json({ error: "Formulário não encontrado." });
+        return;
+      }
+      if (formulario.status !== "encerrado") {
+        res.status(400).json({ error: "Apenas formulários encerrados podem ser reativados." });
+        return;
+      }
+      if (
+        user.role === "diretor" &&
+        formulario.liga_id &&
+        !(await usuarioEhDiretorDaLiga(user.email, formulario.liga_id as string))
+      ) {
+        res.status(403).json({ error: "Acesso não autorizado." });
+        return;
+      }
+
+      if (formulario.tally_form_id) {
+        try {
+          await tally.forms.reopen(formulario.tally_form_id as string);
+        } catch (err) {
+          console.warn(`[tally] falha ao reabrir form: ${(err as Error).message}`);
+        }
+      }
+
+      // Recria webhook se não existir
+      if (formulario.tally_form_id && !formulario.tally_webhook_id) {
+        try {
+          const webhook = await tally.webhooks.create(
+            formulario.tally_form_id as string,
+            `${env.PUBLIC_API_BASE_URL}/api/formularios/webhook/tally`,
+            env.TALLY_WEBHOOK_SIGNING_SECRET,
+          );
+          await sql`
+            UPDATE formularios
+            SET tally_webhook_id = ${webhook.id}, updated_at = NOW()
+            WHERE id = ${id}
+          `;
+        } catch (err) {
+          console.warn(`[tally] falha ao recriar webhook: ${(err as Error).message}`);
+        }
+      }
+
+      const [updated] = await sql`
+        UPDATE formularios
+        SET status = 'aberto', updated_at = NOW()
+        WHERE id = ${id}
+        RETURNING *
+      `;
+      res.json(updated);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ============================================================================
 // POST /formularios/:id/sincronizar
 // ============================================================================
 formulariosRouter.post(
@@ -479,6 +572,51 @@ formulariosRouter.post(
       } while (after);
 
       res.json({ sincronizados });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ============================================================================
+// DELETE /formularios/:id
+// ============================================================================
+formulariosRouter.delete(
+  "/:id",
+  authenticate,
+  requireRole("staff", "diretor"),
+  async (req, res, next) => {
+    try {
+      const id = req.params["id"] as string;
+      const user = (req as AuthenticatedRequest).user!;
+
+      const [formulario] = await sql`SELECT * FROM formularios WHERE id = ${id} LIMIT 1`;
+      if (!formulario) {
+        res.status(404).json({ error: "Formulário não encontrado." });
+        return;
+      }
+      if (
+        user.role === "diretor" &&
+        formulario.liga_id &&
+        !(await usuarioEhDiretorDaLiga(user.email, formulario.liga_id as string))
+      ) {
+        res.status(403).json({ error: "Acesso não autorizado." });
+        return;
+      }
+
+      if (formulario.tally_webhook_id) {
+        try {
+          await tally.webhooks.delete(formulario.tally_webhook_id as string);
+        } catch (err) {
+          console.warn(`[tally] falha ao deletar webhook: ${(err as Error).message}`);
+        }
+      }
+
+      await sql`DELETE FROM formulario_respostas WHERE formulario_id = ${id}`;
+      await sql`DELETE FROM formulario_campos WHERE formulario_id = ${id}`;
+      await sql`DELETE FROM formularios WHERE id = ${id}`;
+
+      res.status(204).send();
     } catch (err) {
       next(err);
     }

@@ -51,6 +51,4 @@ COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/web/dist ./apps/web/dist
 COPY --from=builder /app/packages ./packages
 
-EXPOSE 3001
-
 CMD ["node", "apps/api/dist/index.js"]

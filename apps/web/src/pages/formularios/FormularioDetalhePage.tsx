@@ -1,9 +1,25 @@
-import { ArrowLeft, Copy, ExternalLink, MoreHorizontal, RefreshCw } from "lucide-react";
+import {
+  ArrowLeft,
+  Copy,
+  ExternalLink,
+  MoreHorizontal,
+  PowerOff,
+  RefreshCw,
+  Trash2,
+  Zap,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -77,6 +93,9 @@ export function FormularioDetalhePage() {
   const [encerrando, setEncerrando] = useState(false);
   const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>("todos");
   const [respostaAberta, setRespostaAberta] = useState<FormularioResposta | null>(null);
+  const [deletando, setDeletando] = useState(false);
+  const [reativando, setReativando] = useState(false);
+  const [confirmandoDeletar, setConfirmandoDeletar] = useState(false);
 
   useEffect(() => {
     if (id) void carregarDados();
@@ -139,6 +158,45 @@ export function FormularioDetalhePage() {
       toast.error("Erro ao encerrar formulário");
     } finally {
       setEncerrando(false);
+    }
+  }
+
+  async function reativar() {
+    if (!id) return;
+    try {
+      setReativando(true);
+      const token = await getToken();
+      const res = await fetch(`/api/formularios/${id}/reativar`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Formulário reativado.");
+      await carregarDados();
+    } catch {
+      toast.error("Erro ao reativar formulário");
+    } finally {
+      setReativando(false);
+    }
+  }
+
+  async function confirmarDeletar() {
+    if (!id) return;
+    try {
+      setDeletando(true);
+      const token = await getToken();
+      const res = await fetch(`/api/formularios/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Formulário deletado.");
+      navigate("/formularios");
+    } catch {
+      toast.error("Erro ao deletar formulário");
+    } finally {
+      setDeletando(false);
+      setConfirmandoDeletar(false);
     }
   }
 
@@ -248,24 +306,13 @@ export function FormularioDetalhePage() {
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          {formulario.status === "aberto" && (
-            <Button
-              size="sm"
-              onClick={encerrar}
-              disabled={encerrando}
-              className="bg-red-500 hover:bg-red-600 text-white border-0"
-            >
-              {encerrando ? "Encerrando..." : "Encerrar formulário"}
-            </Button>
-          )}
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="border-navy/20 text-navy w-8 px-0">
                 <MoreHorizontal className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-52">
               {formulario.tally_form_url && (
                 <>
                   <DropdownMenuItem
@@ -297,6 +344,35 @@ export function FormularioDetalhePage() {
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${sincronizando ? "animate-spin" : ""}`} />
                 {sincronizando ? "Sincronizando..." : "Sincronizar respostas"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {formulario.status === "aberto" && (
+                <DropdownMenuItem
+                  onClick={encerrar}
+                  disabled={encerrando}
+                  className="gap-2 cursor-pointer text-amber-600 focus:text-amber-600"
+                >
+                  <PowerOff className="w-3.5 h-3.5" />
+                  {encerrando ? "Encerrando..." : "Encerrar formulário"}
+                </DropdownMenuItem>
+              )}
+              {formulario.status === "encerrado" && (
+                <DropdownMenuItem
+                  onClick={reativar}
+                  disabled={reativando}
+                  className="gap-2 cursor-pointer text-green-600 focus:text-green-600"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  {reativando ? "Reativando..." : "Reativar formulário"}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setConfirmandoDeletar(true)}
+                className="gap-2 cursor-pointer text-red-600 focus:text-red-600"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Deletar formulário
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -455,6 +531,44 @@ export function FormularioDetalhePage() {
           </TabsContent>
         )}
       </Tabs>
+
+      <Dialog
+        open={confirmandoDeletar}
+        onOpenChange={(aberto) => !aberto && setConfirmandoDeletar(false)}
+      >
+        <DialogContent className="sm:max-w-sm p-0 gap-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4">
+            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1">
+              Formulários
+            </p>
+            <DialogTitle className="font-display font-bold text-[18px] tracking-[-0.02em] text-foreground">
+              Deletar formulário
+            </DialogTitle>
+            <DialogDescription className="font-plex-sans text-[13px] text-foreground/60 mt-1">
+              Tem certeza que deseja deletar{" "}
+              <span className="font-semibold text-foreground">{formulario.nome}</span>? Todas as
+              respostas serão removidas permanentemente. Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="h-px bg-foreground/[0.08]" />
+          <div className="px-6 py-4 flex items-center gap-2">
+            <button
+              onClick={() => setConfirmandoDeletar(false)}
+              disabled={deletando}
+              className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmarDeletar}
+              disabled={deletando}
+              className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-red-500 hover:bg-red-600 px-4 py-3 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {deletando ? "Deletando..." : "Deletar"}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Sheet open={!!respostaAberta} onOpenChange={(open) => !open && setRespostaAberta(null)}>
         <SheetContent className="w-[400px] sm:w-[500px]">

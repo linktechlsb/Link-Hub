@@ -86,4 +86,5 @@ export interface CreateFormularioInput {
   scoring_enabled: boolean;
   pontuacao_minima_aprovacao?: number;
   campos: CreateCampoInput[];
+  publicar?: boolean;
 }

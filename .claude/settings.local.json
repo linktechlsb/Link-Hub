@@ -133,7 +133,9 @@
       "WebFetch(domain:developers.tally.so)",
       "WebFetch(domain:tally.so)",
       "Bash(npx vitest *)",
-      "WebSearch"
+      "WebSearch",
+      "WebFetch(domain:apidocs.tally.xyz)",
+      "Bash(grep -E \"\\\\.\\(tsx|ts|jsx|js\\)$\")"
     ],
     "deny": [
       "Bash(git commit *)",
