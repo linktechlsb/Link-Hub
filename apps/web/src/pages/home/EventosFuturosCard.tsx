@@ -14,7 +14,8 @@ interface EventosFuturosCardProps {
 }
 
 function parseDateLocal(iso: string): Date {
-  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  const parts = iso.slice(0, 10).split("-");
+  const [y, m, d] = [Number(parts[0]), Number(parts[1]), Number(parts[2])];
   return new Date(y, m - 1, d);
 }
 
