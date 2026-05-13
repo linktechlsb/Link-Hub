@@ -1,16 +1,8 @@
 import { Router, type Router as IRouter } from "express";
 
 import { sql } from "../config/db.js";
-import { env } from "../config/env.js";
 import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
 import { usuarioEhDiretorDaLiga } from "../middleware/authorization.js";
-import { processarSubmission } from "../services/formularios-processor.js";
-import {
-  fromSubmissionResponses,
-  mapCamposToBlocks,
-  TallyApiError,
-  tally,
-} from "../services/tally.js";
 
 import type { CreateFormularioInput, FormularioTipo } from "@link-leagues/types";
 
@@ -116,7 +108,7 @@ formulariosRouter.get(
 );
 
 // ============================================================================
-// POST /formularios — cria local + Tally
+// POST /formularios
 // ============================================================================
 formulariosRouter.post(
   "/",
@@ -200,71 +192,16 @@ formulariosRouter.post(
         `;
       }
 
-      // 3. Chama Tally para criar o form (sempre como DRAFT)
-      const { blocks, ordemParaContainerUuid } = mapCamposToBlocks({ nome, descricao }, campos);
-
-      let tallyForm;
-      try {
-        tallyForm = await tally.forms.create({
-          name: nome,
-          status: "DRAFT",
-          workspaceId: env.TALLY_WORKSPACE_ID,
-          blocks,
-        });
-      } catch (err) {
-        await sql`DELETE FROM formularios WHERE id = ${formulario.id}`;
-        if (err instanceof TallyApiError) {
-          res.status(502).json({ error: `Falha ao criar form no Tally: ${err.message}` });
-          return;
-        }
-        throw err;
-      }
-
-      const tallyFormUrl = `https://tally.so/r/${tallyForm.id}`;
-
-      // 4. Se publicar: publica no Tally + cria webhook
-      let webhookId: string | null = null;
+      // 3. Atualiza status se publicar=true
       if (publicar) {
-        try {
-          await tally.forms.publish(tallyForm.id);
-          const webhook = await tally.webhooks.create(
-            tallyForm.id,
-            `${env.PUBLIC_API_BASE_URL}/api/formularios/webhook/tally`,
-            env.TALLY_WEBHOOK_SIGNING_SECRET,
-          );
-          webhookId = webhook.id;
-        } catch (err) {
-          await tally.forms.unpublish(tallyForm.id).catch(() => {});
-          await sql`DELETE FROM formularios WHERE id = ${formulario.id}`;
-          if (err instanceof TallyApiError) {
-            res.status(502).json({ error: `Falha ao publicar: ${err.message}` });
-            return;
-          }
-          throw err;
-        }
-      }
-
-      // 5. UPDATE formulario com tally_form_id/url/status
-      await sql`
-        UPDATE formularios
-        SET tally_form_id = ${tallyForm.id},
-            tally_form_url = ${tallyFormUrl},
-            tally_webhook_id = ${webhookId},
-            status = ${publicar ? "aberto" : "rascunho"},
-            updated_at = NOW()
-        WHERE id = ${formulario.id}
-      `;
-
-      // 6. Backfill tally_question_id em cada campo
-      for (const [ordem, uuid] of ordemParaContainerUuid) {
         await sql`
-          UPDATE formulario_campos
-          SET tally_question_id = ${uuid}
-          WHERE formulario_id = ${formulario.id} AND ordem = ${ordem}
+          UPDATE formularios
+          SET status = 'aberto', updated_at = NOW()
+          WHERE id = ${formulario.id}
         `;
       }
 
-      // 7. Retorna formulário completo
+      // 4. Retorna formulário completo
       const [final] = await sql`
         SELECT f.*, l.nome as liga_nome
         FROM formularios f
@@ -355,35 +292,9 @@ formulariosRouter.post(
         res.status(403).json({ error: "Acesso não autorizado." });
         return;
       }
-      if (!formulario.tally_form_id) {
-        res.status(500).json({ error: "Formulário sem tally_form_id." });
-        return;
-      }
-
-      // 1. Publica no Tally
-      await tally.forms.publish(formulario.tally_form_id as string);
-
-      // 2. Cria webhook
-      let webhook;
-      try {
-        webhook = await tally.webhooks.create(
-          formulario.tally_form_id as string,
-          `${env.PUBLIC_API_BASE_URL}/api/formularios/webhook/tally`,
-          env.TALLY_WEBHOOK_SIGNING_SECRET,
-        );
-      } catch (err) {
-        // Rollback: volta para DRAFT
-        await tally.forms.unpublish(formulario.tally_form_id as string);
-        if (err instanceof TallyApiError) {
-          res.status(502).json({ error: `Falha ao criar webhook: ${err.message}` });
-          return;
-        }
-        throw err;
-      }
-
       const [updated] = await sql`
         UPDATE formularios
-        SET status = 'aberto', tally_webhook_id = ${webhook.id}, updated_at = NOW()
+        SET status = 'aberto', updated_at = NOW()
         WHERE id = ${id}
         RETURNING *
       `;
@@ -422,21 +333,6 @@ formulariosRouter.post(
       ) {
         res.status(403).json({ error: "Acesso não autorizado." });
         return;
-      }
-
-      if (formulario.tally_webhook_id) {
-        try {
-          await tally.webhooks.delete(formulario.tally_webhook_id as string);
-        } catch (err) {
-          console.warn(`[tally] falha ao deletar webhook: ${(err as Error).message}`);
-        }
-      }
-      if (formulario.tally_form_id) {
-        try {
-          await tally.forms.close(formulario.tally_form_id as string, "Formulário encerrado.");
-        } catch (err) {
-          console.warn(`[tally] falha ao fechar form: ${(err as Error).message}`);
-        }
       }
 
       const [updated] = await sql`
@@ -482,32 +378,6 @@ formulariosRouter.post(
         return;
       }
 
-      if (formulario.tally_form_id) {
-        try {
-          await tally.forms.reopen(formulario.tally_form_id as string);
-        } catch (err) {
-          console.warn(`[tally] falha ao reabrir form: ${(err as Error).message}`);
-        }
-      }
-
-      // Recria webhook se não existir
-      if (formulario.tally_form_id && !formulario.tally_webhook_id) {
-        try {
-          const webhook = await tally.webhooks.create(
-            formulario.tally_form_id as string,
-            `${env.PUBLIC_API_BASE_URL}/api/formularios/webhook/tally`,
-            env.TALLY_WEBHOOK_SIGNING_SECRET,
-          );
-          await sql`
-            UPDATE formularios
-            SET tally_webhook_id = ${webhook.id}, updated_at = NOW()
-            WHERE id = ${id}
-          `;
-        } catch (err) {
-          console.warn(`[tally] falha ao recriar webhook: ${(err as Error).message}`);
-        }
-      }
-
       const [updated] = await sql`
         UPDATE formularios
         SET status = 'aberto', updated_at = NOW()
@@ -522,59 +392,14 @@ formulariosRouter.post(
 );
 
 // ============================================================================
-// POST /formularios/:id/sincronizar
+// POST /formularios/:id/sincronizar — desabilitado (integração Tally removida)
 // ============================================================================
 formulariosRouter.post(
   "/:id/sincronizar",
   authenticate,
   requireRole("staff", "diretor"),
-  async (req, res, next) => {
-    try {
-      const id = req.params["id"] as string;
-      const user = (req as AuthenticatedRequest).user!;
-
-      const [formulario] = await sql`SELECT * FROM formularios WHERE id = ${id} LIMIT 1`;
-      if (!formulario) {
-        res.status(404).json({ error: "Formulário não encontrado." });
-        return;
-      }
-      if (
-        user.role === "diretor" &&
-        formulario.liga_id &&
-        !(await usuarioEhDiretorDaLiga(user.email, formulario.liga_id as string))
-      ) {
-        res.status(403).json({ error: "Acesso não autorizado." });
-        return;
-      }
-      if (!formulario.tally_form_id) {
-        res.status(400).json({ error: "Formulário sem tally_form_id." });
-        return;
-      }
-
-      let sincronizados = 0;
-      let after: string | undefined;
-      do {
-        const page = await tally.submissions.list(formulario.tally_form_id as string, {
-          limit: 100,
-          after,
-        });
-        for (const submission of page.items) {
-          const respostas = fromSubmissionResponses(submission.responses, page.questions);
-          const inseriu = await processarSubmission(
-            formulario.tally_form_id as string,
-            submission.id,
-            respostas,
-            submission.submittedAt,
-          );
-          if (inseriu) sincronizados++;
-        }
-        after = page.hasMore ? page.nextCursor : undefined;
-      } while (after);
-
-      res.json({ sincronizados });
-    } catch (err) {
-      next(err);
-    }
+  (_req, res) => {
+    res.status(501).json({ error: "Sincronização via Tally não está disponível." });
   },
 );
 
@@ -602,14 +427,6 @@ formulariosRouter.delete(
       ) {
         res.status(403).json({ error: "Acesso não autorizado." });
         return;
-      }
-
-      if (formulario.tally_webhook_id) {
-        try {
-          await tally.webhooks.delete(formulario.tally_webhook_id as string);
-        } catch (err) {
-          console.warn(`[tally] falha ao deletar webhook: ${(err as Error).message}`);
-        }
       }
 
       await sql`DELETE FROM formulario_respostas WHERE formulario_id = ${id}`;

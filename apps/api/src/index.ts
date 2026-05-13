@@ -8,7 +8,6 @@ import helmet from "helmet";
 
 import { env } from "./config/env.js";
 import { errorHandler } from "./middleware/errorHandler.js";
-import { tallyWebhookRouter } from "./routes/tally-webhook.js";
 
 const app: Express = express();
 
@@ -43,8 +42,6 @@ app.use(
     crossOriginEmbedderPolicy: false,
   }),
 );
-// Mount Tally webhook BEFORE express.json — needs raw body for HMAC
-app.use(tallyWebhookRouter);
 app.use(express.json({ limit: "200kb" }));
 
 const apiLimiter = rateLimit({

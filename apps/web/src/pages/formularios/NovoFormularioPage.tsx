@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Check, Copy, GripVertical, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, GripVertical, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -54,8 +54,6 @@ export function NovoFormularioPage() {
   const { role } = useUser();
   const [etapa, setEtapa] = useState(1);
   const [salvando, setSalvando] = useState(false);
-  const [linkCriado, setLinkCriado] = useState<string | null>(null);
-  const [formularioId, setFormularioId] = useState<string | null>(null);
   const [ligas, setLigas] = useState<LigaOpcao[]>([]);
   const [ligaFixa, setLigaFixa] = useState<LigaOpcao | null>(null);
   const [carregandoLiga, setCarregandoLiga] = useState(false);
@@ -223,88 +221,12 @@ export function NovoFormularioPage() {
       }
 
       const formulario = (await res.json()) as FormularioComCampos;
-      setFormularioId(formulario.id);
-      setLinkCriado(formulario.tally_form_url ?? null);
-      setEtapa(4); // tela de sucesso
+      navigate(`/formularios/${formulario.id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao criar formulário");
     } finally {
       setSalvando(false);
     }
-  }
-
-  // ============== TELA DE SUCESSO ==============
-  if (etapa === 4 && linkCriado) {
-    return (
-      <div className="max-w-4xl mx-auto px-8 py-10">
-        <div className="mb-8">
-          <button
-            onClick={() => navigate("/formularios")}
-            className="flex items-center gap-1 text-[12px] text-navy/50 hover:text-navy dark:text-white/50 dark:hover:text-white mb-6 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Formulários
-          </button>
-          <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy dark:text-white">
-            Formulário Criado
-          </h1>
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/40 dark:text-white/40 mt-1">
-            Novo Formulário
-          </p>
-        </div>
-
-        <div className="max-w-2xl border border-navy/15 dark:border-white/15 p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-navy/10 dark:bg-white/10 flex items-center justify-center flex-shrink-0">
-              <Check className="w-4 h-4 text-navy dark:text-white" />
-            </div>
-            <div>
-              <h2 className="font-display font-bold text-[16px] text-navy dark:text-white">
-                Formulário criado com sucesso!
-              </h2>
-              <p className="text-[12px] text-navy/50 dark:text-white/50 mt-0.5">
-                Compartilhe o link abaixo com os respondentes.
-              </p>
-            </div>
-          </div>
-
-          <div>
-            <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
-              Link do formulário
-            </label>
-            <div className="flex items-center gap-2 border border-border bg-muted/50 px-3 py-2.5 rounded">
-              <span className="text-[13px] text-foreground/60 truncate flex-1">{linkCriado}</span>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(linkCriado);
-                  toast.success("Link copiado!");
-                }}
-                className="flex-shrink-0 text-foreground/40 hover:text-foreground dark:hover:text-white transition-colors"
-              >
-                <Copy className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex justify-between pt-8">
-            <button
-              onClick={() => navigate("/formularios")}
-              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/50 border border-foreground/20 px-3 py-1.5 rounded-full hover:text-foreground transition-colors"
-            >
-              Ver todos os formulários
-            </button>
-            {formularioId && (
-              <button
-                onClick={() => navigate(`/formularios/${formularioId}`)}
-                className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
-              >
-                Ver respostas
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
   }
 
   return (

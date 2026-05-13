@@ -1,5 +1,3 @@
-import type { TallyAnswer } from "./tally.js";
-
 export type FormularioStatus = "rascunho" | "aberto" | "encerrado";
 export type FormularioTipo =
   | "generico"
@@ -19,9 +17,6 @@ export interface Formulario {
   status: FormularioStatus;
   scoring_enabled: boolean;
   pontuacao_minima_aprovacao: number | null;
-  tally_form_id: string | null;
-  tally_form_url: string | null;
-  tally_webhook_id: string | null;
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -30,7 +25,6 @@ export interface Formulario {
 export interface FormularioCampo {
   id: string;
   formulario_id: string;
-  tally_question_id: string | null;
   titulo: string;
   tipo: CampoTipo;
   ordem: number;
@@ -44,10 +38,9 @@ export interface FormularioCampo {
 export interface FormularioResposta {
   id: string;
   formulario_id: string;
-  tally_submission_id: string;
   nome: string;
   email: string;
-  respostas: Record<string, TallyAnswer>;
+  respostas: Record<string, unknown>;
   pontuacao_total: number | null;
   status: RespostaStatus;
   motivo_reprovacao?: string;

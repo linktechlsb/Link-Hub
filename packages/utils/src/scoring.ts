@@ -1,4 +1,4 @@
-import type { CampoTipo, FormularioCampo, RespostaStatus, TallyAnswer } from "@link-leagues/types";
+import type { CampoTipo, FormularioCampo, RespostaStatus } from "@link-leagues/types";
 
 export interface ScoringResult {
   pontuacao_total: number;
@@ -6,15 +6,17 @@ export interface ScoringResult {
   motivo_reprovacao?: string;
 }
 
+type CampoComChave = FormularioCampo & { tally_question_id?: string | null };
+
 export function calcularPontuacao(
   campos: FormularioCampo[],
-  respostas: Record<string, TallyAnswer>,
+  respostas: Record<string, { value: unknown }>,
   pontuacaoMinima: number,
 ): ScoringResult {
   // 1. Eliminatórias primeiro
   for (const campo of campos) {
     if (!campo.eliminatoria && !temOpcoesEliminatorias(campo)) continue;
-    const key = campo.tally_question_id;
+    const key = (campo as CampoComChave).tally_question_id;
     if (!key) continue;
     const resposta = respostas[key];
     if (!resposta) continue;
@@ -33,7 +35,7 @@ export function calcularPontuacao(
   let soma = 0;
   for (const campo of campos) {
     if (campo.tipo === "texto" || campo.peso <= 0) continue;
-    const key = campo.tally_question_id;
+    const key = (campo as CampoComChave).tally_question_id;
     if (!key) continue;
     const resposta = respostas[key];
     if (!resposta) continue;
@@ -51,7 +53,7 @@ function temOpcoesEliminatorias(campo: FormularioCampo): boolean {
   return (campo.opcoes_eliminatorias?.length ?? 0) > 0;
 }
 
-function avaliarEliminatoria(campo: FormularioCampo, resposta: TallyAnswer): string | null {
+function avaliarEliminatoria(campo: FormularioCampo, resposta: { value: unknown }): string | null {
   const v = resposta.value;
   if (campo.tipo === "sim_nao" && campo.eliminatoria) {
     if (asString(v) === "Não") return `Resposta "Não" em pergunta eliminatória: ${campo.titulo}`;

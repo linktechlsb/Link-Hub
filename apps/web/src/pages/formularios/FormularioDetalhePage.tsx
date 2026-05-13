@@ -1,13 +1,4 @@
-import {
-  ArrowLeft,
-  Copy,
-  ExternalLink,
-  MoreHorizontal,
-  PowerOff,
-  RefreshCw,
-  Trash2,
-  Zap,
-} from "lucide-react";
+import { ArrowLeft, MoreHorizontal, PowerOff, RefreshCw, Trash2, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -32,8 +23,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
 import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
 
-import { TallyPreview } from "./components/TallyPreview";
-
 import type { KpiItem } from "@/pages/home/v1/primitives";
 import type {
   FormularioComCampos,
@@ -41,7 +30,6 @@ import type {
   FormularioStatus,
   ResultadosFormulario,
   RespostaStatus,
-  TallyAnswer,
 } from "@link-leagues/types";
 
 async function getToken(): Promise<string> {
@@ -72,14 +60,15 @@ const STATUS_FORM_BADGE: Record<FormularioStatus, string> = {
 
 type FiltroStatus = RespostaStatus | "todos";
 
-function renderAnswer(answer: TallyAnswer | undefined): string {
-  if (!answer) return "—";
-  const v = answer.value;
-  if (v === null || v === undefined) return "—";
-  if (typeof v === "string") return v;
-  if (typeof v === "number") return String(v);
-  if (Array.isArray(v)) return v.map(String).join(", ");
-  return JSON.stringify(v);
+function renderAnswer(value: unknown): string {
+  if (value === null || value === undefined) return "—";
+  if (typeof value === "object" && "value" in value) {
+    return renderAnswer((value as { value: unknown }).value);
+  }
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  if (Array.isArray(value)) return value.map(String).join(", ");
+  return JSON.stringify(value);
 }
 
 export function FormularioDetalhePage() {
@@ -313,30 +302,6 @@ export function FormularioDetalhePage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
-              {formulario.tally_form_url && (
-                <>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      navigator.clipboard.writeText(formulario.tally_form_url ?? "");
-                      toast.success("Link copiado!");
-                    }}
-                    className="gap-2 cursor-pointer"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                    Copiar link
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() =>
-                      window.open(formulario.tally_form_url ?? "", "_blank", "noopener,noreferrer")
-                    }
-                    className="gap-2 cursor-pointer"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    Abrir formulário
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
-              )}
               <DropdownMenuItem
                 onClick={sincronizar}
                 disabled={sincronizando}
@@ -382,7 +347,6 @@ export function FormularioDetalhePage() {
       <Tabs defaultValue="respostas">
         <TabsList>
           <TabsTrigger value="respostas">Respostas</TabsTrigger>
-          {formulario.tally_form_id && <TabsTrigger value="preview">Preview</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="respostas" className="mt-6">
@@ -524,12 +488,6 @@ export function FormularioDetalhePage() {
             )}
           </section>
         </TabsContent>
-
-        {formulario.tally_form_id && (
-          <TabsContent value="preview" className="mt-6">
-            <TallyPreview tallyFormId={formulario.tally_form_id} />
-          </TabsContent>
-        )}
       </Tabs>
 
       <Dialog
@@ -602,8 +560,9 @@ export function FormularioDetalhePage() {
                   Respostas
                 </p>
                 {formulario.campos.map((campo, i) => {
-                  const answer = campo.tally_question_id
-                    ? respostaAberta.respostas[campo.tally_question_id]
+                  const campoData = campo as typeof campo & { tally_question_id?: string | null };
+                  const answer = campoData.tally_question_id
+                    ? respostaAberta.respostas[campoData.tally_question_id]
                     : undefined;
                   return (
                     <div key={i} className="border-b border-navy/[0.08] pb-3">
