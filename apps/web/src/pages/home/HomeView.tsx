@@ -1,4 +1,4 @@
-import { CalendarPlus, CheckSquare, Clock, FileText, FolderPlus } from "lucide-react";
+import { CalendarPlus, CheckSquare, Clock, FileText, FolderPlus, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -86,6 +86,9 @@ export function HomeView({
       ? `/api/projetos?liga_id=${ligaId}`
       : null,
   );
+  const { data: todosProjetos } = useCachedFetch<Projeto[]>(
+    role === "staff" ? "/api/projetos" : null,
+  );
   const { data: proximoEvento } = useCachedFetch<Evento>(
     role === "membro" && ligaId ? `/api/ligas/${ligaId}/eventos/proximo` : null,
   );
@@ -95,7 +98,18 @@ export function HomeView({
   // Métricas por role
   let metricas: { label: string; value: string }[] = [];
 
-  if (canManage) {
+  if (role === "staff") {
+    const totalMembros = ligas.reduce((s, l) => s + (l.total_membros ?? 0), 0);
+    const totalAtivos = (todosProjetos ?? []).filter((p) => p.status === "aprovado").length;
+    const totalConcluidos = ranking.reduce((s, r) => s + (r.projetos_concluidos ?? 0), 0);
+    const receitaTotal = ranking.reduce((s, r) => s + Number(r.receita_total ?? 0), 0);
+    metricas = [
+      { label: "Projetos ativos", value: String(totalAtivos) },
+      { label: "Total de membros", value: String(totalMembros) },
+      { label: "Receita total", value: formatarMoeda(receitaTotal) },
+      { label: "Projetos concluídos", value: String(totalConcluidos) },
+    ];
+  } else if (role === "diretor") {
     metricas = [
       {
         label: "Projetos ativos",
@@ -144,11 +158,17 @@ export function HomeView({
       Icon: FileText,
       onClick: () => navigate("/mural", { state: { abrirModal: true } }),
     },
-    {
-      label: "Marcar presença",
-      Icon: CheckSquare,
-      onClick: () => navigate("/gerenciamento", { state: { aba: "Presença" } }),
-    },
+    role === "staff"
+      ? {
+          label: "Adicionar usuário",
+          Icon: UserPlus,
+          onClick: () => navigate("/super-admin", { state: { aba: "usuarios", abrirCriar: true } }),
+        }
+      : {
+          label: "Marcar presença",
+          Icon: CheckSquare,
+          onClick: () => navigate("/gerenciamento", { state: { aba: "Presença" } }),
+        },
     {
       label: "Criar projeto",
       Icon: FolderPlus,
@@ -157,17 +177,21 @@ export function HomeView({
   ];
 
   const metricasLabel =
-    canManage || role === "membro"
-      ? `Métricas${ligaAtual ? ` — ${ligaAtual.nome}` : ""}`
-      : "Métricas da Liga";
+    role === "staff"
+      ? "Métricas da Plataforma"
+      : canManage || role === "membro"
+        ? `Métricas${ligaAtual ? ` — ${ligaAtual.nome}` : ""}`
+        : "Métricas da Liga";
 
   return (
     <div className="space-y-6">
-      {/* Carrossel + Membros — staff, diretor e membro */}
+      {/* Carrossel + Membros — diretor e membro */}
       {(canManage || role === "membro") && (
-        <div className="grid grid-cols-[1fr_280px] gap-4 items-stretch">
+        <div
+          className={`grid gap-4 items-stretch ${role !== "staff" ? "grid-cols-[1fr_280px]" : "grid-cols-1"}`}
+        >
           <LigasCarousel ligas={ligas} ranking={ranking} loading={loading} />
-          <MembrosCard ligaId={ligaId} />
+          {role !== "staff" && <MembrosCard ligaId={ligaId} />}
         </div>
       )}
 

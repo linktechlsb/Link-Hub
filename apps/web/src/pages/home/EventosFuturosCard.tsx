@@ -51,20 +51,31 @@ function diasAte(iso: string): number {
 export function EventosFuturosCard({ ligaId, isStaff = false }: EventosFuturosCardProps) {
   const hojeIso = new Date().toISOString().slice(0, 10);
 
-  const url = ligaId
-    ? `/api/eventos?inicio=${hojeIso}&liga_id=${ligaId}`
-    : isStaff
-      ? `/api/eventos?inicio=${hojeIso}`
+  const fimSemanaIso = (() => {
+    const hoje = new Date();
+    const diasAteDomingo = hoje.getDay() === 0 ? 0 : 7 - hoje.getDay();
+    const domingo = new Date(hoje);
+    domingo.setDate(hoje.getDate() + diasAteDomingo);
+    return domingo.toISOString().slice(0, 10);
+  })();
+
+  const url = isStaff
+    ? `/api/eventos?inicio=${hojeIso}&fim=${fimSemanaIso}`
+    : ligaId
+      ? `/api/eventos?inicio=${hojeIso}&liga_id=${ligaId}`
       : null;
 
   const { data: eventosData, carregando: loading } = useCachedFetch<Evento[]>(url);
-  const eventos = (eventosData ?? []).slice(0, 5);
+  const eventos = isStaff ? (eventosData ?? []) : (eventosData ?? []).slice(0, 5);
 
   return (
     <Card className="shadow-sm">
       <CardContent className="pt-5 pb-3 flex flex-col">
         <div className="flex items-center justify-between mb-4">
-          <p className="font-semibold text-sm text-navy">Próximos Eventos</p>
+          <div>
+            <p className="font-semibold text-sm text-navy">Próximos Eventos</p>
+            {isStaff && <p className="text-[10px] text-muted-foreground mt-0.5">Esta semana</p>}
+          </div>
           {eventos.length > 0 && (
             <Badge variant="outline" className="text-[10px] border-navy/20 text-navy/60">
               {eventos.length} evento{eventos.length > 1 ? "s" : ""}
@@ -138,6 +149,11 @@ export function EventosFuturosCard({ ligaId, isStaff = false }: EventosFuturosCa
 
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{e.titulo}</p>
+                    {e.liga && (
+                      <p className="text-[10px] text-link-blue font-medium truncate">
+                        {e.liga.sigla ?? e.liga.nome}
+                      </p>
+                    )}
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                       <span
                         className={cn(
@@ -161,7 +177,7 @@ export function EventosFuturosCard({ ligaId, isStaff = false }: EventosFuturosCa
                   </div>
 
                   {isUrgente && (
-                    <Badge className="text-[10px] bg-brand-yellow text-navy border-0 shrink-0">
+                    <Badge className="text-[10px] bg-brand-yellow text-navy border-0 shrink-0 pointer-events-none">
                       Hoje
                     </Badge>
                   )}
