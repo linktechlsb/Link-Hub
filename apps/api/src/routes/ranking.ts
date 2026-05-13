@@ -30,8 +30,8 @@ rankingRouter.get("/", authenticate, async (_req, res, next) => {
   }
 });
 
-// GET /ranking/configuracoes — pesos atuais (staff)
-rankingRouter.get("/configuracoes", authenticate, requireRole("staff"), async (_req, res, next) => {
+// GET /ranking/configuracoes — pesos atuais
+rankingRouter.get("/configuracoes", authenticate, async (_req, res, next) => {
   try {
     const configs = await sql`
       SELECT chave, valor, descricao, atualizado_em

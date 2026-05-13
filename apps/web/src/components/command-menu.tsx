@@ -3,7 +3,6 @@ import {
   Calendar,
   ClipboardList,
   Command,
-  FileText,
   FolderOpen,
   Home,
   MessageSquare,
@@ -53,13 +52,6 @@ const NAV_ITEMS: NavItem[] = [
     roles: ["staff", "diretor"],
   },
   {
-    id: "formularios",
-    label: "Formulários",
-    icon: FileText,
-    path: "/formularios",
-    roles: ["staff", "diretor"],
-  },
-  {
     id: "gerenciamento",
     label: "Gerenciamento",
     icon: Settings,
@@ -77,13 +69,6 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const QUICK_ACTIONS: NavItem[] = [
-  {
-    id: "novo-formulario",
-    label: "Novo formulário",
-    icon: FileText,
-    path: "/formularios/novo",
-    roles: ["staff", "diretor"],
-  },
   {
     id: "gerenciar-usuarios",
     label: "Gerenciar usuários",

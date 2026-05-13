@@ -135,7 +135,9 @@
       "Bash(npx vitest *)",
       "WebSearch",
       "WebFetch(domain:apidocs.tally.xyz)",
-      "Bash(grep -E \"\\\\.\\(tsx|ts|jsx|js\\)$\")"
+      "Bash(grep -E \"\\\\.\\(tsx|ts|jsx|js\\)$\")",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(curl -s http://localhost:3000/api/health)"
     ],
     "deny": [
       "Bash(git commit *)",

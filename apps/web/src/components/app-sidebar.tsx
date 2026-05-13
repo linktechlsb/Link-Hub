@@ -76,7 +76,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     manageNav.push({ title: "Super Admin", url: "/super-admin", icon: ShieldCheck });
   }
   if (canManage) {
-    manageNav.push({ title: "Formulários", url: "/formularios", icon: ClipboardList });
+    manageNav.push({
+      title: "Formulários",
+      url: "/formularios",
+      icon: ClipboardList,
+      disabled: true,
+    });
     manageNav.push({ title: "Gerenciamento", url: "/gerenciamento", icon: Settings });
   }
 
