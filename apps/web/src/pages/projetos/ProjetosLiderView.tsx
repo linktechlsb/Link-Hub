@@ -23,6 +23,8 @@ import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
 
+import { CriarProjetoDialog } from "./CriarProjetoDialog";
+
 type ProjetoAPI = {
   id: string;
   titulo: string;
@@ -86,7 +88,7 @@ const FORM_VAZIO: ProjetoForm = {
   tipo_projeto: "",
 };
 
-export function ProjetosLiderView() {
+export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
   const { data: liga } = useCachedFetch<MinhaLiga>("/api/ligas/minha");
   const ligaId = liga?.id ?? null;
   const { data: projetosData, refetch: refetchProjetos } = useCachedFetch<ProjetoAPI[]>(
@@ -110,6 +112,7 @@ export function ProjetosLiderView() {
     if (filtroStatus && p.status !== filtroStatus) return false;
     return true;
   });
+  const [dialogCriar, setDialogCriar] = useState(false);
   const [sheetProjeto, setSheetProjeto] = useState<ProjetoAPI | "novo" | null>(null);
   const [form, setForm] = useState<ProjetoForm>(FORM_VAZIO);
   const [salvando, setSalvando] = useState(false);
@@ -117,6 +120,10 @@ export function ProjetosLiderView() {
   const [concluindo, setConcluindo] = useState<string | null>(null);
   const [confirmarConclusao, setConfirmarConclusao] = useState<ProjetoAPI | null>(null);
   const [professorDaLiga, setProfessorDaLiga] = useState<ProfessorAPI>(null);
+
+  useEffect(() => {
+    if (abrirCriar && ligaId) setDialogCriar(true);
+  }, [abrirCriar, ligaId]);
 
   useEffect(() => {
     if (!ligaId) return;
@@ -519,6 +526,13 @@ export function ProjetosLiderView() {
           )}
         </div>
       </div>
+
+      <CriarProjetoDialog
+        open={dialogCriar}
+        onClose={() => setDialogCriar(false)}
+        ligaId={ligaId ?? undefined}
+        onCriado={refetchProjetos}
+      />
 
       <AlertDialog
         open={confirmarConclusao !== null}

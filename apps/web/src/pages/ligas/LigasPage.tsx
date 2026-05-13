@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
@@ -118,7 +119,47 @@ export function LigasPage() {
           />
 
           {carregando ? (
-            <p className="font-plex-sans text-[13px] text-foreground/50">Carregando ligas...</p>
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-foreground/[0.08]">
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                    Nome
+                  </th>
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                    Diretores
+                  </th>
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                    Membros
+                  </th>
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                    Projetos
+                  </th>
+                  <th className="py-3 px-4 w-10" />
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-b border-foreground/[0.06]">
+                    <td className="py-4 px-4">
+                      <Skeleton className="h-4 w-40 mb-1.5" />
+                      <Skeleton className="h-3 w-56" />
+                    </td>
+                    <td className="py-4 px-4">
+                      <Skeleton className="h-5 w-28 rounded-full" />
+                    </td>
+                    <td className="py-4 px-4">
+                      <Skeleton className="h-4 w-6" />
+                    </td>
+                    <td className="py-4 px-4">
+                      <Skeleton className="h-4 w-6" />
+                    </td>
+                    <td className="py-4 px-4 w-10">
+                      <Skeleton className="h-6 w-6 rounded" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : ligas.length === 0 ? (
             <p className="font-plex-sans text-[13px] text-foreground/50">
               Nenhuma liga cadastrada.

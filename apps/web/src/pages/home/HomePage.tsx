@@ -11,11 +11,12 @@ import type { Liga, RankingLiga } from "@link-leagues/types";
 
 export function HomePage() {
   const { role, usuarioId } = useUser();
-  const { data: ligasData } = useCachedFetch<Liga[]>("/api/ligas");
-  const { data: minhaLigaData } = useCachedFetch<Liga>(
+  const { data: ligasData, carregando: ligasLoading } = useCachedFetch<Liga[]>("/api/ligas");
+  const { data: minhaLigaData, carregando: minhaLigaLoading } = useCachedFetch<Liga>(
     role !== null && role !== "staff" ? "/api/ligas/minha" : null,
   );
-  const { data: rankingData } = useCachedFetch<RankingLiga[]>("/api/ranking");
+  const { data: rankingData, carregando: rankingLoading } =
+    useCachedFetch<RankingLiga[]>("/api/ranking");
 
   const ligas = ligasData ?? [];
   const minhaLiga = minhaLigaData ?? null;
@@ -80,6 +81,7 @@ export function HomePage() {
         ranking={ranking}
         minhaLiga={minhaLiga}
         usuarioId={usuarioId}
+        loading={ligasLoading || rankingLoading || minhaLigaLoading}
       />
     </div>
   );

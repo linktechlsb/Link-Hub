@@ -12,6 +12,8 @@ import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
 
+import { CriarProjetoDialog } from "./CriarProjetoDialog";
+
 type ProjetoAPI = {
   id: string;
   titulo: string;
@@ -70,7 +72,7 @@ const FORM_VAZIO: NovoForm = {
   tipo_projeto: "",
 };
 
-export function ProjetosStaffView() {
+export function ProjetosStaffView({ abrirCriar }: { abrirCriar?: boolean }) {
   const { data: projetosData, refetch: refetchProjetos } =
     useCachedFetch<ProjetoAPI[]>("/api/projetos");
   const { data: ligasData } = useCachedFetch<LigaAPI[]>("/api/ligas");
@@ -78,6 +80,7 @@ export function ProjetosStaffView() {
   const ligas = ligasData ?? [];
   const [filtroLiga, setFiltroLiga] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
+  const [dialogCriar, setDialogCriar] = useState(false);
   const [sheetRevisar, setSheetRevisar] = useState<ProjetoAPI | null>(null);
   const [sheetNovo, setSheetNovo] = useState(false);
   const [motivo, setMotivo] = useState("");
@@ -188,6 +191,10 @@ export function ProjetosStaffView() {
       setSalvando(false);
     }
   }
+
+  useEffect(() => {
+    if (abrirCriar) setDialogCriar(true);
+  }, [abrirCriar]);
 
   useEffect(() => {
     if (!form.liga_id) {
@@ -398,6 +405,13 @@ export function ProjetosStaffView() {
           )}
         </div>
       </div>
+
+      <CriarProjetoDialog
+        open={dialogCriar}
+        onClose={() => setDialogCriar(false)}
+        ligas={ligas}
+        onCriado={refetchProjetos}
+      />
 
       {/* Sheet — revisar projeto */}
       <Sheet

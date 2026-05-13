@@ -1,10 +1,12 @@
 import { ChevronDown, Globe, Heart, ImageIcon, Lock, MessageCircle, Send, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -149,6 +151,7 @@ function LigaPill({
 
 export function MuralPage() {
   const { role } = useUser();
+  const location = useLocation();
   const [posts, setPosts] = useState<Post[]>([]);
   const [minhaLiga, setMinhaLiga] = useState<Liga | null>(null);
   const [todasLigas, setTodasLigas] = useState<Liga[]>([]);
@@ -177,6 +180,14 @@ export function MuralPage() {
 
   const podePublicar = role === "staff" || role === "diretor";
   const isStaff = role === "staff";
+
+  useEffect(() => {
+    const state = location.state as { abrirModal?: boolean } | null;
+    if (state?.abrirModal && podePublicar) {
+      setModalAberto(true);
+      window.history.replaceState({}, "");
+    }
+  }, [location.state, podePublicar]);
 
   // Carrega nome do usuário, liga e lista de ligas (staff)
   useEffect(() => {
@@ -459,7 +470,32 @@ export function MuralPage() {
 
       {/* Feed */}
       {carregando ? (
-        <p className="font-plex-sans text-[13px] text-foreground/50">Carregando publicações…</p>
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="border border-foreground/[0.08] rounded-lg p-5">
+              {/* Header: avatar + author info */}
+              <div className="flex items-start gap-3 mb-3">
+                <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-4 w-14 rounded-sm" />
+                  </div>
+                  <Skeleton className="h-3 w-36" />
+                </div>
+              </div>
+              {/* Content: 2-3 lines of text */}
+              <Skeleton className="h-3.5 w-full mb-1.5" />
+              <Skeleton className="h-3.5 w-full mb-1.5" />
+              <Skeleton className="h-3.5 w-2/3 mb-3" />
+              {/* Footer: likes + comments */}
+              <div className="flex items-center gap-6 mt-2">
+                <Skeleton className="h-4 w-10" />
+                <Skeleton className="h-4 w-10" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : posts.length === 0 ? (
         <p className="font-plex-sans text-[13px] text-foreground/50">
           Nenhuma publicação ainda. Seja a primeira liga a postar!

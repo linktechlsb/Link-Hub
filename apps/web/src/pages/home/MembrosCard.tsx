@@ -9,6 +9,7 @@ interface Membro {
   email: string;
   avatar_url?: string | null;
   cargo?: string;
+  role?: string;
 }
 
 interface MembrosCardProps {
@@ -95,7 +96,7 @@ export function MembrosCard({ ligaId }: MembrosCardProps) {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground truncate">{m.nome}</p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {m.cargo ? (CARGO_LABEL[m.cargo] ?? m.cargo) : "Membro"}
+                    {m.role ? (CARGO_LABEL[m.role] ?? m.role) : "Membro"}
                   </p>
                 </div>
               </div>

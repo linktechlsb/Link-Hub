@@ -13,17 +13,24 @@ interface EventosFuturosCardProps {
   isStaff?: boolean;
 }
 
+function parseDateLocal(iso: string): Date {
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
 function formatarData(iso: string): string {
-  const data = new Date(iso);
+  const data = parseDateLocal(iso);
   const hoje = new Date();
   const amanha = new Date(hoje);
   amanha.setDate(amanha.getDate() + 1);
 
-  const isHoje = data.toISOString().slice(0, 10) === hoje.toISOString().slice(0, 10);
-  const isAmanha = data.toISOString().slice(0, 10) === amanha.toISOString().slice(0, 10);
+  const same = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
 
-  if (isHoje) return "Hoje";
-  if (isAmanha) return "Amanhã";
+  if (same(data, hoje)) return "Hoje";
+  if (same(data, amanha)) return "Amanhã";
 
   return data.toLocaleDateString("pt-BR", {
     weekday: "short",
@@ -33,7 +40,7 @@ function formatarData(iso: string): string {
 }
 
 function diasAte(iso: string): number {
-  const data = new Date(iso);
+  const data = parseDateLocal(iso);
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
   data.setHours(0, 0, 0, 0);
@@ -114,7 +121,7 @@ export function EventosFuturosCard({ ligaId, isStaff = false }: EventosFuturosCa
                         isUrgente ? "text-navy" : "text-navy/70",
                       )}
                     >
-                      {new Date(e.data).getDate().toString().padStart(2, "0")}
+                      {parseDateLocal(e.data).getDate().toString().padStart(2, "0")}
                     </span>
                     <span
                       className={cn(
@@ -122,7 +129,7 @@ export function EventosFuturosCard({ ligaId, isStaff = false }: EventosFuturosCa
                         isUrgente ? "text-navy/70" : "text-muted-foreground",
                       )}
                     >
-                      {new Date(e.data)
+                      {parseDateLocal(e.data)
                         .toLocaleDateString("pt-BR", { month: "short" })
                         .replace(".", "")}
                     </span>

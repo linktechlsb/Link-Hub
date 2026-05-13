@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 import {
@@ -50,6 +51,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -304,7 +306,42 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
   }, [ligaId]);
 
   if (carregando)
-    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando membros…</p>;
+    return (
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b border-foreground/[0.08]">
+            <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+              Nome
+            </th>
+            <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+              Cargo
+            </th>
+            <th className="py-3 px-4 w-10" />
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <tr key={i} className="border-b border-foreground/[0.06]">
+              <td className="py-4 px-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-8 w-8 shrink-0" />
+                  <div>
+                    <Skeleton className="h-4 w-32 mb-1" />
+                    <Skeleton className="h-3 w-44" />
+                  </div>
+                </div>
+              </td>
+              <td className="py-4 px-4">
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </td>
+              <td className="py-4 px-4">
+                <Skeleton className="h-6 w-6 rounded" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
 
   async function convidar() {
     if (!ligaId) {
@@ -1042,7 +1079,42 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
   }
 
   if (carregando)
-    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando recursos…</p>;
+    return (
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b border-foreground/[0.08]">
+            <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+              Recurso
+            </th>
+            <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+              URL
+            </th>
+            <th className="py-3 px-4 w-10" />
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <tr key={i} className="border-b border-foreground/[0.06]">
+              <td className="py-4 px-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                  <div>
+                    <Skeleton className="h-4 w-32 mb-1" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+              </td>
+              <td className="py-4 px-4 hidden sm:table-cell">
+                <Skeleton className="h-3 w-48" />
+              </td>
+              <td className="py-4 px-4">
+                <Skeleton className="h-6 w-6 rounded" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
 
   return (
     <div className="space-y-6">
@@ -1518,7 +1590,63 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
   const saldo = totalReceitas - totalCustos;
 
   if (carregando)
-    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando financeiro…</p>;
+    return (
+      <div className="space-y-8">
+        {/* KPI skeletons — 3 cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-border shadow-sm p-5">
+              <Skeleton className="h-8 w-20 mb-2" />
+              <Skeleton className="h-3 w-24 mt-2" />
+            </div>
+          ))}
+        </div>
+        {/* Table skeleton */}
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-foreground/[0.08]">
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Descrição
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+                Data
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden md:table-cell">
+                Recorrência
+              </th>
+              <th className="text-right py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Valor
+              </th>
+              <th className="py-3 px-4 w-10" />
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <tr key={i} className="border-b border-foreground/[0.06]">
+                <td className="py-4 px-4">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-5 w-5 rounded-full shrink-0" />
+                    <Skeleton className="h-4 w-36" />
+                  </div>
+                </td>
+                <td className="py-4 px-4 hidden sm:table-cell">
+                  <Skeleton className="h-4 w-20" />
+                </td>
+                <td className="py-4 px-4 hidden md:table-cell">
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                </td>
+                <td className="py-4 px-4 text-right">
+                  <Skeleton className="h-4 w-20 ml-auto" />
+                </td>
+                <td className="py-4 px-4">
+                  <Skeleton className="h-6 w-6 rounded" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
 
   return (
     <div className="space-y-8">
@@ -1966,7 +2094,9 @@ const INFO_VAZIA: InfoLiga = {
 };
 
 export function GerenciamentoPage() {
-  const [abaAtiva, setAbaAtiva] = useState<Aba>("Membros");
+  const location = useLocation();
+  const abaInicial = (location.state as { aba?: Aba } | null)?.aba ?? "Membros";
+  const [abaAtiva, setAbaAtiva] = useState<Aba>(abaInicial);
   const [ligaNome, setLigaNome] = useState("");
   const [diretorNome, setDiretorNome] = useState("");
   const [ligaId, setLigaId] = useState<string | null>(null);

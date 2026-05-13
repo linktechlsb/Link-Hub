@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { type DayButton } from "react-day-picker";
+import { useSearchParams } from "react-router-dom";
 
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -11,9 +12,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "@/pages/home/v1/primitives";
+
+import { CriarEventoDialog } from "./CriarEventoDialog";
 
 import type { Liga, Evento, UserRole, Sala, CategoriaEvento } from "@link-leagues/types";
 
@@ -242,6 +246,7 @@ const sheetTriggerCls = "w-full font-plex-sans text-[13px]";
 export function AgendaPage() {
   const today = new Date();
   const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [eventos, setEventos] = useState<EventoComLiga[]>([]);
@@ -254,6 +259,7 @@ export function AgendaPage() {
   const [role, setRole] = useState<UserRole | null>(null);
   const [usuarioId, setUsuarioId] = useState<string | null>(null);
 
+  const [dialogCriarAberto, setDialogCriarAberto] = useState(false);
   const [sheetAberto, setSheetAberto] = useState<"criar" | "editar" | null>(null);
   const [eventoEditando, setEventoEditando] = useState<EventoComLiga | null>(null);
   const [form, setForm] = useState<EventoForm>(formVazio(todayStr));
@@ -328,6 +334,13 @@ export function AgendaPage() {
     }
     void carregarSalas();
   }, [podeGerenciar]);
+
+  useEffect(() => {
+    if (searchParams.get("criar") === "true") {
+      setDialogCriarAberto(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!eventoRecenteCriado) {
@@ -558,6 +571,20 @@ export function AgendaPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-10">
+      {/* Dialog Criar Evento — acionado pelo atalho da home */}
+      <CriarEventoDialog
+        open={dialogCriarAberto}
+        onOpenChange={setDialogCriarAberto}
+        ligas={ligas}
+        salas={salas}
+        role={role}
+        usuarioId={usuarioId}
+        onEventoCriado={async () => {
+          const t = await getToken();
+          await recarregarEventos(t);
+        }}
+      />
+
       {/* Sheet Criar / Editar */}
       <Sheet
         open={sheetAberto !== null}
@@ -1287,7 +1314,23 @@ export function AgendaPage() {
               tituloClassName="text-xs font-bold text-link-blue dark:text-white uppercase tracking-wider"
             />
             {loading ? (
-              <p className="font-plex-sans text-[13px] text-foreground/50">Carregando...</p>
+              <div>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-4 py-3 border-b border-foreground/10 last:border-0"
+                  >
+                    {/* Date badge — w-10 h-10 */}
+                    <Skeleton className="h-10 w-10 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      {/* Title — text-[13px] font-medium */}
+                      <Skeleton className="h-4 w-44 mb-1.5" />
+                      {/* Subtitle — text-[10px] liga + time */}
+                      <Skeleton className="h-3 w-28" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : upcomingEventos.length === 0 ? (
               <p className="font-plex-sans text-[13px] text-foreground/50">
                 Nenhum evento próximo neste mês.

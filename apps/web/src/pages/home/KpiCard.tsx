@@ -23,7 +23,9 @@ export function KpiCard({
     return (
       <Card className="shadow-sm">
         <CardContent className="pt-5 pb-4">
-          <Skeleton className="h-8 w-20 mb-2" />
+          {/* text-3xl font-bold leading-none → h-8 */}
+          <Skeleton className="h-8 w-20" />
+          {/* text-xs uppercase tracking-wide mt-2 → h-3 mt-2 */}
           <Skeleton className="h-3 w-28 mt-2" />
         </CardContent>
       </Card>

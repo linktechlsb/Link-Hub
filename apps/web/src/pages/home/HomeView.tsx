@@ -13,6 +13,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -26,10 +27,10 @@ import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { AtalhoCard } from "./AtalhoCard";
 import { EventosFuturosCard } from "./EventosFuturosCard";
 import { KpiCard } from "./KpiCard";
+import { LigasCarousel } from "./LigasCarousel";
 import { MembrosCard } from "./MembrosCard";
 import { RankingLigasCard } from "./RankingLigasCard";
 import { SectionLabel } from "./SectionLabel";
-import { TimelineAtividade } from "./TimelineAtividade";
 
 import type { Evento, Liga, Projeto, RankingLiga } from "@link-leagues/types";
 
@@ -39,6 +40,7 @@ interface HomeViewProps {
   ranking: RankingLiga[];
   minhaLiga: Liga | null;
   usuarioId: string | null;
+  loading?: boolean;
 }
 
 const PER_PAGE = 5;
@@ -62,7 +64,14 @@ function formatarProximoEvento(evento: Evento | null): string {
   return evento.hora_inicio ? `${dataStr} às ${evento.hora_inicio.slice(0, 5)}` : dataStr;
 }
 
-export function HomeView({ role, ligas, ranking, minhaLiga, usuarioId }: HomeViewProps) {
+export function HomeView({
+  role,
+  ligas,
+  ranking,
+  minhaLiga,
+  usuarioId,
+  loading = false,
+}: HomeViewProps) {
   const navigate = useNavigate();
   const [selectedLigaId, setSelectedLigaId] = useState<string | null>(ligas[0]?.id ?? null);
   const [page, setPage] = useState(1);
@@ -72,7 +81,7 @@ export function HomeView({ role, ligas, ranking, minhaLiga, usuarioId }: HomeVie
   const ligaAtual = ligas.find((l) => l.id === ligaId) ?? minhaLiga ?? null;
   const rankingLiga = ranking.find((r) => r.liga_id === ligaId) ?? null;
 
-  const { data: projetosData } = useCachedFetch<Projeto[]>(
+  const { data: projetosData, carregando: projetosLoading } = useCachedFetch<Projeto[]>(
     (role === "membro" || role === "professor") && ligaId
       ? `/api/projetos?liga_id=${ligaId}`
       : null,
@@ -129,10 +138,22 @@ export function HomeView({ role, ligas, ranking, minhaLiga, usuarioId }: HomeVie
   const filaPaginada = filaAprovacao.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   const atalhos = [
-    { label: "Criar evento", Icon: CalendarPlus, onClick: () => navigate("/eventos/novo") },
-    { label: "Criar postagem", Icon: FileText, onClick: () => navigate("/mural") },
-    { label: "Marcar presença", Icon: CheckSquare, onClick: () => navigate("/presenca") },
-    { label: "Criar projeto", Icon: FolderPlus, onClick: () => navigate("/projetos") },
+    { label: "Criar evento", Icon: CalendarPlus, onClick: () => navigate("/agenda?criar=true") },
+    {
+      label: "Criar postagem",
+      Icon: FileText,
+      onClick: () => navigate("/mural", { state: { abrirModal: true } }),
+    },
+    {
+      label: "Marcar presença",
+      Icon: CheckSquare,
+      onClick: () => navigate("/gerenciamento", { state: { aba: "Presença" } }),
+    },
+    {
+      label: "Criar projeto",
+      Icon: FolderPlus,
+      onClick: () => navigate("/projetos", { state: { abrirCriar: true } }),
+    },
   ];
 
   const metricasLabel =
@@ -142,6 +163,30 @@ export function HomeView({ role, ligas, ranking, minhaLiga, usuarioId }: HomeVie
 
   return (
     <div className="space-y-6">
+      {/* Carrossel + Membros — staff, diretor e membro */}
+      {(canManage || role === "membro") && (
+        <div className="grid grid-cols-[1fr_280px] gap-4 items-stretch">
+          <LigasCarousel ligas={ligas} ranking={ranking} loading={loading} />
+          <MembrosCard ligaId={ligaId} />
+        </div>
+      )}
+
+      {/* Métricas — todos */}
+      {(loading || metricas.length > 0) && role !== null && (
+        <div>
+          <SectionLabel>{metricasLabel}</SectionLabel>
+          <div className="grid grid-cols-4 gap-3">
+            {loading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <KpiCard key={i} label="" value="" loading />
+                ))
+              : metricas.map((m) => (
+                  <KpiCard key={m.label} label={m.label} value={m.value} trendType="neutral" />
+                ))}
+          </div>
+        </div>
+      )}
+
       {/* Atalhos — staff + diretor */}
       {canManage && (
         <div>
@@ -151,32 +196,6 @@ export function HomeView({ role, ligas, ranking, minhaLiga, usuarioId }: HomeVie
               <AtalhoCard key={a.label} label={a.label} Icon={a.Icon} onClick={a.onClick} />
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Métricas — todos */}
-      {metricas.length > 0 && (
-        <div>
-          <SectionLabel>{metricasLabel}</SectionLabel>
-          <div className="grid grid-cols-4 gap-3">
-            {metricas.map((m) => (
-              <KpiCard key={m.label} label={m.label} value={m.value} trendType="neutral" />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Timeline + Membros — staff, diretor e membro */}
-      {(canManage || role === "membro") && (
-        <div className="grid grid-cols-[1fr_280px] gap-4 items-stretch">
-          <TimelineAtividade
-            ligaId={ligaId}
-            isStaff={role === "staff"}
-            ligas={ligas}
-            ranking={ranking}
-            onLigaChange={role === "staff" ? (id) => setSelectedLigaId(id) : undefined}
-          />
-          <MembrosCard ligaId={ligaId} />
         </div>
       )}
 
@@ -193,7 +212,44 @@ export function HomeView({ role, ligas, ranking, minhaLiga, usuarioId }: HomeVie
             </button>
           </div>
           <Card className="shadow-sm overflow-hidden">
-            {filaAprovacao.length === 0 ? (
+            {projetosLoading ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
+                      Projeto
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold w-36">
+                      Aguardando
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold w-28">
+                      Ação
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-4 w-4 shrink-0 rounded" />
+                          <Skeleton className="h-4 w-48" />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-3 w-16" />
+                          <Skeleton className="h-5 w-16 rounded-md" />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-7 w-16 rounded-md" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : filaAprovacao.length === 0 ? (
               <div className="px-4 py-6 text-sm text-muted-foreground text-center">
                 Nenhum projeto aguardando sua aprovação.
               </div>
@@ -306,7 +362,7 @@ export function HomeView({ role, ligas, ranking, minhaLiga, usuarioId }: HomeVie
 
       {/* Ranking + Eventos futuros — todos */}
       <div className="grid grid-cols-[1fr_280px] gap-4 items-start">
-        <RankingLigasCard ranking={ranking} minhaLigaId={ligaId} />
+        <RankingLigasCard ranking={ranking} minhaLigaId={ligaId} loading={loading} />
         <EventosFuturosCard ligaId={ligaId} isStaff={role === "staff"} />
       </div>
     </div>

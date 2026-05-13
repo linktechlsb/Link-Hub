@@ -2,6 +2,7 @@ import { HelpCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -96,7 +97,109 @@ export function RankingPage() {
   if (carregando) {
     return (
       <div className="max-w-5xl mx-auto px-8 py-10">
-        <p className="font-plex-sans text-[13px] text-navy/50">Carregando ranking…</p>
+        <div className="mb-10">
+          <Skeleton className="h-7 w-28 mb-2" />
+          <Skeleton className="h-3 w-40 mt-1" />
+        </div>
+
+        <div className="space-y-12">
+          {/* Pódio skeleton */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-3 w-24" />
+            </div>
+            <div className="space-y-3">
+              {/* 1º lugar */}
+              <Card className="shadow-sm border-l-4 border-l-brand-yellow">
+                <CardContent className="py-4 px-5">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-8 w-8 shrink-0" />
+                    <Skeleton className="h-10 w-10 shrink-0" />
+                    <div className="flex-1">
+                      <Skeleton className="h-4 w-36 mb-1.5" />
+                      <Skeleton className="h-3 w-52" />
+                    </div>
+                    <div className="text-right shrink-0">
+                      <Skeleton className="h-8 w-16 mb-1" />
+                      <Skeleton className="h-2.5 w-12 ml-auto" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 2º e 3º */}
+              <div className="grid grid-cols-2 gap-3">
+                {[0, 1].map((i) => (
+                  <Card key={i} className="shadow-sm border-l-4 border-l-link-blue">
+                    <CardContent className="py-4 px-5">
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-6 w-6 shrink-0" />
+                        <Skeleton className="h-8 w-8 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <Skeleton className="h-4 w-28 mb-1.5" />
+                          <Skeleton className="h-3 w-20" />
+                        </div>
+                        <div className="text-right shrink-0">
+                          <Skeleton className="h-6 w-12 mb-1" />
+                          <Skeleton className="h-2.5 w-8 ml-auto" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Ranking completo skeleton */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-3 w-36" />
+            </div>
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-foreground/[0.08]">
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal w-14">
+                    #
+                  </th>
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                    Liga
+                  </th>
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                    Projetos
+                  </th>
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                    Presença
+                  </th>
+                  <th className="text-right py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                    Pontuação
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-b border-foreground/[0.06]">
+                    <td className="py-4 px-4">
+                      <Skeleton className="h-7 w-7" />
+                    </td>
+                    <td className="py-4 px-4">
+                      <Skeleton className="h-4 w-36" />
+                    </td>
+                    <td className="py-4 px-4">
+                      <Skeleton className="h-4 w-8" />
+                    </td>
+                    <td className="py-4 px-4">
+                      <Skeleton className="h-4 w-10" />
+                    </td>
+                    <td className="py-4 px-4 text-right">
+                      <Skeleton className="h-5 w-16 ml-auto" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     );
   }

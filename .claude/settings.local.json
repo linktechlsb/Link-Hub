@@ -137,7 +137,9 @@
       "WebFetch(domain:apidocs.tally.xyz)",
       "Bash(grep -E \"\\\\.\\(tsx|ts|jsx|js\\)$\")",
       "Bash(curl -s http://localhost:3000)",
-      "Bash(curl -s http://localhost:3000/api/health)"
+      "Bash(curl -s http://localhost:3000/api/health)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); pkgs = [k for k in d.get\\('packages',{}\\) if k in ['node_modules/prettier','node_modules/eslint','node_modules/husky','']]; print\\('\\\\n'.join\\(pkgs\\) if pkgs else 'not found'\\)\")"
     ],
     "deny": [
       "Bash(git commit *)",
