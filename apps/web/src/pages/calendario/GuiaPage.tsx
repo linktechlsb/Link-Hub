@@ -1,4 +1,5 @@
-import { Download } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
 
@@ -6,9 +7,31 @@ const BUCKET = "documentos";
 const FILE_PATH = "guia-eventos.pdf";
 
 const { data } = supabase.storage.from(BUCKET).getPublicUrl(FILE_PATH);
-const pdfUrl = data.publicUrl;
+const pdfPublicUrl = data.publicUrl;
 
 export function GuiaPage() {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let objectUrl: string;
+
+    fetch(pdfPublicUrl)
+      .then((res) => {
+        if (!res.ok) throw new Error("Falha ao carregar o PDF");
+        return res.blob();
+      })
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob);
+        setBlobUrl(objectUrl);
+      })
+      .catch(() => setError(true));
+
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, []);
+
   return (
     <div className="flex flex-col h-full px-8 py-10">
       <div className="mb-6 flex items-start justify-between">
@@ -21,7 +44,7 @@ export function GuiaPage() {
           </h1>
         </div>
         <a
-          href={pdfUrl}
+          href={pdfPublicUrl}
           download="guia-eventos.pdf"
           target="_blank"
           rel="noopener noreferrer"
@@ -32,12 +55,28 @@ export function GuiaPage() {
         </a>
       </div>
 
-      <div className="flex-1 border border-border rounded-lg overflow-hidden bg-muted/30 min-h-[600px]">
-        <iframe
-          src={`${pdfUrl}#toolbar=1`}
-          className="w-full h-full min-h-[600px]"
-          title="Guia de Organização de Hubs, Painéis e Workshops"
-        />
+      <div className="flex-1 border border-border rounded-lg overflow-hidden bg-muted/30 min-h-[600px] flex items-center justify-center">
+        {error ? (
+          <div className="text-center text-sm text-muted-foreground space-y-2">
+            <p>Não foi possível carregar o PDF.</p>
+            <a
+              href={pdfPublicUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground"
+            >
+              Abrir em nova aba
+            </a>
+          </div>
+        ) : blobUrl ? (
+          <iframe
+            src={blobUrl}
+            className="w-full h-full min-h-[600px]"
+            title="Guia de Organização de Hubs, Painéis e Workshops"
+          />
+        ) : (
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        )}
       </div>
     </div>
   );
