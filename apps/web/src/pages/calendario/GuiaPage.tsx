@@ -7,7 +7,6 @@ const FILE_PATH = "guia-eventos.pdf";
 
 const { data } = supabase.storage.from(BUCKET).getPublicUrl(FILE_PATH);
 const pdfUrl = data.publicUrl;
-const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`;
 
 export function GuiaPage() {
   return (
@@ -35,7 +34,7 @@ export function GuiaPage() {
 
       <div className="flex-1 border border-border rounded-lg overflow-hidden bg-muted/30 min-h-[600px]">
         <iframe
-          src={viewerUrl}
+          src={`${pdfUrl}#toolbar=1`}
           className="w-full h-full min-h-[600px]"
           title="Guia de Organização de Hubs, Painéis e Workshops"
         />
