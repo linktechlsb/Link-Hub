@@ -34,7 +34,21 @@ const mainNav: NavMainItem[] = [
   { title: "Home", url: "/home", icon: Home },
   { title: "Ligas", url: "/ligas", icon: Users },
   { title: "Projetos", url: "/projetos", icon: FolderKanban },
-  { title: "Agenda", url: "/agenda", icon: Calendar },
+  {
+    title: "Eventos",
+    url: "/calendario",
+    icon: Calendar,
+    children: [
+      { title: "Calendário", url: "/calendario" },
+      {
+        title: "Solicitar eventos",
+        url: "/calendario/solicitar-eventos",
+        roles: ["staff", "diretor", "lider"],
+      },
+      { title: "Marcar encontros", url: "/calendario/marcar-encontros" },
+      { title: "Guia", url: "/calendario/guia" },
+    ],
+  },
   { title: "Mural", url: "/mural", icon: MessageSquare },
   { title: "Ranking", url: "/ranking", icon: Trophy },
 ];
@@ -109,7 +123,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={mainNav} label="Plataforma" />
+        <NavMain
+          items={mainNav.map((item) =>
+            item.children
+              ? {
+                  ...item,
+                  children: item.children.filter(
+                    (child) => !child.roles || child.roles.includes(role ?? ""),
+                  ),
+                }
+              : item,
+          )}
+          label="Plataforma"
+        />
         {manageNav.length > 0 && <NavMain items={manageNav} label="Gestão" />}
       </SidebarContent>
       <SidebarFooter>

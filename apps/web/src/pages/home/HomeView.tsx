@@ -115,7 +115,7 @@ export function HomeView({
         label: "Projetos ativos",
         value: String(rankingLiga?.projetos_em_andamento ?? ligaAtual?.projetos_ativos ?? 0),
       },
-      { label: "Receita", value: formatarMoeda(rankingLiga?.receita_total ?? 0) },
+      { label: "Receita", value: formatarMoeda(Number(rankingLiga?.receita_total ?? 0)) },
       { label: "Membros", value: String(ligaAtual?.total_membros ?? 0) },
       { label: "Score", value: `${rankingLiga?.pontuacao ?? 0} pts` },
     ];
