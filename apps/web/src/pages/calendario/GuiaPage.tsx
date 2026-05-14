@@ -1,4 +1,4 @@
-import { Download, FileText } from "lucide-react";
+import { Download } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 
@@ -7,6 +7,7 @@ const FILE_PATH = "guia-eventos.pdf";
 
 const { data } = supabase.storage.from(BUCKET).getPublicUrl(FILE_PATH);
 const pdfUrl = data.publicUrl;
+const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`;
 
 export function GuiaPage() {
   return (
@@ -33,22 +34,11 @@ export function GuiaPage() {
       </div>
 
       <div className="flex-1 border border-border rounded-lg overflow-hidden bg-muted/30 min-h-[600px]">
-        <object data={pdfUrl} type="application/pdf" className="w-full h-full min-h-[600px]">
-          <div className="flex flex-col items-center justify-center h-full gap-4 py-20">
-            <FileText className="size-12 text-foreground/20" />
-            <p className="font-plex-mono text-[11px] uppercase tracking-[0.14em] text-foreground/50">
-              Seu navegador não suporta visualização de PDF
-            </p>
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase border border-foreground/40 px-4 py-2 rounded-full hover:bg-foreground/5 transition-colors"
-            >
-              Abrir PDF
-            </a>
-          </div>
-        </object>
+        <iframe
+          src={viewerUrl}
+          className="w-full h-full min-h-[600px]"
+          title="Guia de Organização de Hubs, Painéis e Workshops"
+        />
       </div>
     </div>
   );
