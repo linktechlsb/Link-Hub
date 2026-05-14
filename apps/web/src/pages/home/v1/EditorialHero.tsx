@@ -68,11 +68,11 @@ export function EditorialHero({ ligas, ranking = [] }: EditorialHeroProps) {
                     }
                   }}
                   aria-label={`Abrir liga ${liga.nome}`}
-                  className="block w-full text-left bg-[#f5f5f3] p-7 rounded-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-navy focus:ring-offset-2"
+                  className="block w-full text-left bg-background border border-[#191919] rounded-lg p-7 cursor-pointer focus:outline-none focus:ring-1 focus:ring-foreground/20"
                 >
                   <div className="flex items-center justify-between mb-5">
-                    <span className="font-plex-mono text-[11px] tracking-[0.14em] text-navy">
-                      {current} <span className="text-navy/40">/ {total}</span>
+                    <span className="font-plex-mono text-[11px] tracking-[0.14em] text-foreground">
+                      {current} <span className="text-foreground/40">/ {total}</span>
                     </span>
                     {ligas.length > 1 && (
                       <span className="flex gap-1.5">
@@ -83,7 +83,7 @@ export function EditorialHero({ ligas, ranking = [] }: EditorialHeroProps) {
                             e.stopPropagation();
                             prev();
                           }}
-                          className="w-7 h-7 border border-navy flex items-center justify-center text-navy hover:bg-navy hover:text-white transition-colors"
+                          className="w-7 h-7 border border-foreground/20 flex items-center justify-center text-foreground/60 hover:bg-foreground/10 hover:text-foreground transition-colors"
                         >
                           <ChevronLeft className="h-3.5 w-3.5" />
                         </button>
@@ -94,7 +94,7 @@ export function EditorialHero({ ligas, ranking = [] }: EditorialHeroProps) {
                             e.stopPropagation();
                             next();
                           }}
-                          className="w-7 h-7 border border-navy flex items-center justify-center text-navy hover:bg-navy hover:text-white transition-colors"
+                          className="w-7 h-7 border border-foreground/20 flex items-center justify-center text-foreground/60 hover:bg-foreground/10 hover:text-foreground transition-colors"
                         >
                           <ChevronRight className="h-3.5 w-3.5" />
                         </button>
@@ -102,7 +102,7 @@ export function EditorialHero({ ligas, ranking = [] }: EditorialHeroProps) {
                     )}
                   </div>
 
-                  <h2 className="text-navy font-plex-sans font-bold text-[32px] md:text-[42px] leading-[0.95] tracking-[-0.035em]">
+                  <h2 className="text-foreground font-plex-sans font-bold text-[32px] md:text-[42px] leading-[0.95] tracking-[-0.035em]">
                     {segs.map((s, i) => (
                       <span
                         key={`${liga.id}-${i}`}
@@ -119,7 +119,7 @@ export function EditorialHero({ ligas, ranking = [] }: EditorialHeroProps) {
                     ))}
                   </h2>
 
-                  <div className="mt-4 font-plex-mono text-[10px] uppercase tracking-[0.1em] text-navy/70 flex gap-3 flex-wrap">
+                  <div className="mt-4 font-plex-mono text-[10px] uppercase tracking-[0.1em] text-foreground/50 flex gap-3 flex-wrap">
                     <span>
                       Dir.{" "}
                       {liga.diretores && liga.diretores.length > 0
@@ -128,7 +128,7 @@ export function EditorialHero({ ligas, ranking = [] }: EditorialHeroProps) {
                     </span>
                   </div>
 
-                  <div className="mt-5 pt-4 border-t border-navy grid grid-cols-3 gap-0">
+                  <div className="mt-5 pt-4 border-t border-foreground/15 grid grid-cols-3 gap-0">
                     <Stat label="Score" value={String(score)} />
                     <Stat label="Projetos" value={String(liga.projetos_ativos ?? 0)} />
                     <Stat label="Membros" value={String(liga.total_membros ?? "—")} />
@@ -145,11 +145,11 @@ export function EditorialHero({ ligas, ranking = [] }: EditorialHeroProps) {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="pr-4 border-r border-navy/15 last:border-r-0">
-      <div className="font-plex-sans font-bold text-[22px] md:text-[28px] text-navy tracking-[-0.02em]">
+    <div className="pr-4 border-r border-foreground/10 last:border-r-0">
+      <div className="font-plex-sans font-bold text-[22px] md:text-[28px] text-foreground tracking-[-0.02em]">
         {value}
       </div>
-      <div className="font-plex-mono text-[9px] uppercase tracking-[0.14em] text-navy/60 mt-0.5">
+      <div className="font-plex-mono text-[9px] uppercase tracking-[0.14em] text-foreground/50 mt-0.5">
         {label}
       </div>
     </div>

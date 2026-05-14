@@ -8,6 +8,7 @@ export interface Post {
   autor_avatar_url?: string | null;
   conteudo: string;
   imagem_url?: string | null;
+  visibilidade: "publica" | "liga";
   criado_em: string;
   atualizado_em: string;
   curtidas?: number;
@@ -28,6 +29,7 @@ export interface CreatePostInput {
   liga_id: string;
   conteudo: string;
   imagem_url?: string;
+  visibilidade: "publica" | "liga";
 }
 
 export interface CreateComentarioInput {

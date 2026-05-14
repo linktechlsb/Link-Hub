@@ -1,12 +1,15 @@
-import { Heart, MessageCircle, Send, ImageIcon, X, Plus } from "lucide-react";
+import { ChevronDown, Globe, Heart, ImageIcon, Lock, MessageCircle, Send, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { SectionHeader } from "@/pages/home/v1/primitives";
 
 import type { Liga, Post, PostComentario } from "@link-leagues/types";
 
@@ -50,16 +53,117 @@ const ROLE_LABELS: Record<string, string> = {
   estudante: "Estudante",
 };
 
+function VisibilidadePill({
+  value,
+  onChange,
+}: {
+  value: "publica" | "liga";
+  onChange: (v: "publica" | "liga") => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const opcoes: { value: "publica" | "liga"; label: string; Icon: typeof Globe }[] = [
+    { value: "publica", label: "Pública", Icon: Globe },
+    { value: "liga", label: "Só a liga", Icon: Lock },
+  ];
+
+  const atual = opcoes.find((o) => o.value === value)!;
+  const { Icon } = atual;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button className="flex items-center gap-1 border border-navy/25 dark:border-white/25 rounded-full px-2.5 py-0.5 font-plex-mono text-[9px] font-bold text-link-blue dark:text-white hover:border-navy/40 dark:hover:border-white/40 transition-colors">
+          <Icon className="h-2.5 w-2.5" />
+          {atual.label}
+          <ChevronDown className="h-2.5 w-2.5 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="p-1 w-40" align="start">
+        {opcoes.map((op) => {
+          const OpIcon = op.Icon;
+          return (
+            <button
+              key={op.value}
+              onClick={() => {
+                onChange(op.value);
+                setOpen(false);
+              }}
+              className={cn(
+                "w-full flex items-center gap-2 px-3 py-2 rounded text-left font-plex-sans text-[12px] transition-colors",
+                value === op.value
+                  ? "bg-navy/5 text-navy font-semibold"
+                  : "text-foreground/70 hover:bg-foreground/5",
+              )}
+            >
+              <OpIcon className="h-3 w-3" />
+              {op.label}
+            </button>
+          );
+        })}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function LigaPill({
+  ligas,
+  ligaSelecionadaId,
+  onChange,
+}: {
+  ligas: Liga[];
+  ligaSelecionadaId: string;
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selecionada = ligas.find((l) => l.id === ligaSelecionadaId);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button className="flex items-center gap-1 border border-navy/25 dark:border-white/25 rounded-full px-2.5 py-0.5 font-plex-mono text-[9px] font-bold text-link-blue dark:text-white hover:border-navy/40 dark:hover:border-white/40 transition-colors">
+          {selecionada?.nome ?? "Selecionar liga"}
+          <ChevronDown className="h-2.5 w-2.5 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="p-1 w-52" align="start">
+        {ligas.map((liga) => (
+          <button
+            key={liga.id}
+            onClick={() => {
+              onChange(liga.id);
+              setOpen(false);
+            }}
+            className={cn(
+              "w-full text-left px-3 py-2 rounded font-plex-sans text-[12px] transition-colors",
+              ligaSelecionadaId === liga.id
+                ? "bg-navy/5 text-navy font-semibold"
+                : "text-foreground/70 hover:bg-foreground/5",
+            )}
+          >
+            {liga.nome}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function MuralPage() {
   const { role } = useUser();
+  const location = useLocation();
   const [posts, setPosts] = useState<Post[]>([]);
   const [minhaLiga, setMinhaLiga] = useState<Liga | null>(null);
   const [todasLigas, setTodasLigas] = useState<Liga[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [nomeUsuario, setNomeUsuario] = useState<string>("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
+  const [filtro, setFiltro] = useState<"publica" | "liga">("publica");
   const [novoConteudo, setNovoConteudo] = useState("");
   const [publicando, setPublicando] = useState(false);
   const [ligaSelecionadaId, setLigaSelecionadaId] = useState<string>("");
+  const [visibilidade, setVisibilidade] = useState<"publica" | "liga">("publica");
   const [modalAberto, setModalAberto] = useState(false);
 
   const [imagemFile, setImagemFile] = useState<File | null>(null);
@@ -78,17 +182,43 @@ export function MuralPage() {
   const isStaff = role === "staff";
 
   useEffect(() => {
+    const state = location.state as { abrirModal?: boolean } | null;
+    if (state?.abrirModal && podePublicar) {
+      setModalAberto(true);
+      window.history.replaceState({}, "");
+    }
+  }, [location.state, podePublicar]);
+
+  // Carrega nome do usuário, liga e lista de ligas (staff)
+  useEffect(() => {
     async function carregar() {
       try {
         const token = await getToken();
         const headers = { Authorization: `Bearer ${token}` };
 
-        const [postsRes, ligaRes] = await Promise.all([
-          fetch("/api/mural", { headers }),
-          fetch("/api/ligas/minha", { headers }),
-        ]);
+        const { data: sessionData } = await supabase.auth.getSession();
+        const email = sessionData.session?.user?.email ?? "";
+        const metadata = sessionData.session?.user?.user_metadata as
+          | { nome?: string; full_name?: string }
+          | undefined;
 
-        if (postsRes.ok) setPosts(await postsRes.json());
+        // Busca nome e avatar da tabela de usuários
+        const { data: usuarioPerfil } = await supabase
+          .from("usuarios")
+          .select("nome, avatar_url")
+          .eq("email", email)
+          .single();
+
+        setNomeUsuario(
+          (usuarioPerfil?.nome as string | undefined) ??
+            metadata?.nome ??
+            metadata?.full_name ??
+            email.split("@")[0] ??
+            "",
+        );
+        setAvatarUrl((usuarioPerfil?.avatar_url as string | null | undefined) ?? null);
+
+        const ligaRes = await fetch("/api/ligas/minha", { headers });
         if (ligaRes.ok) setMinhaLiga(await ligaRes.json());
 
         if (isStaff) {
@@ -96,24 +226,42 @@ export function MuralPage() {
           if (ligasRes.ok) {
             const ligas = (await ligasRes.json()) as Liga[];
             setTodasLigas(ligas);
-            if (ligas.length > 0) {
-              setLigaSelecionadaId(ligas[0]!.id);
-            }
+            if (ligas.length > 0) setLigaSelecionadaId(ligas[0]!.id);
           }
         }
-      } finally {
-        setCarregando(false);
+      } catch {
+        // sem toast — falha silenciosa no carregamento inicial
       }
     }
     void carregar();
   }, [isStaff]);
 
-  async function uploadImagem(file: File): Promise<string | null> {
+  // Recarrega posts quando o filtro muda
+  useEffect(() => {
+    async function carregarPosts() {
+      setCarregando(true);
+      try {
+        const token = await getToken();
+        const res = await fetch(`/api/mural?filtro=${filtro}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) setPosts(await res.json());
+      } catch {
+        toast.error("Erro ao carregar posts.");
+      } finally {
+        setCarregando(false);
+      }
+    }
+    void carregarPosts();
+  }, [filtro]);
+
+  async function uploadImagem(file: File, ligaId: string): Promise<string | null> {
     setEnviandoImagem(true);
     try {
       const token = await getToken();
       const formData = new FormData();
       formData.append("imagem", file);
+      formData.append("liga_id", ligaId);
       const res = await fetch("/api/mural/upload", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
@@ -134,16 +282,29 @@ export function MuralPage() {
   function selecionarImagem(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setImagemPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
     setImagemFile(file);
-    setImagemPreview(URL.createObjectURL(file));
     setImagemUrl(null);
   }
 
   function removerImagem() {
+    setImagemPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
     setImagemFile(null);
-    setImagemPreview(null);
     setImagemUrl(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function fecharModal() {
+    setModalAberto(false);
+    setNovoConteudo("");
+    setVisibilidade("publica");
+    removerImagem();
   }
 
   async function publicar() {
@@ -157,7 +318,7 @@ export function MuralPage() {
 
     let finalImagemUrl = imagemUrl;
     if (imagemFile && !finalImagemUrl) {
-      finalImagemUrl = await uploadImagem(imagemFile);
+      finalImagemUrl = await uploadImagem(imagemFile, ligaId);
       if (!finalImagemUrl) return;
       setImagemUrl(finalImagemUrl);
     }
@@ -172,6 +333,7 @@ export function MuralPage() {
           liga_id: ligaId,
           conteudo: novoConteudo.trim(),
           imagem_url: finalImagemUrl ?? undefined,
+          visibilidade,
         }),
       });
       if (!res.ok) {
@@ -184,12 +346,10 @@ export function MuralPage() {
         ? (todasLigas.find((l) => l.id === ligaId)?.nome ?? "")
         : (minhaLiga?.nome ?? "");
       setPosts((prev) => [
-        { ...novoPost, liga_nome: ligaNome, autor_nome: novoPost.autor_nome ?? "Você" },
+        { ...novoPost, liga_nome: ligaNome, autor_nome: novoPost.autor_nome ?? nomeUsuario },
         ...prev,
       ]);
-      setNovoConteudo("");
-      removerImagem();
-      setModalAberto(false);
+      fecharModal();
       toast.success("Post publicado.");
     } finally {
       setPublicando(false);
@@ -274,279 +434,310 @@ export function MuralPage() {
     );
   }
 
-  const ligaParaPublicar = isStaff ? todasLigas.find((l) => l.id === ligaSelecionadaId) : minhaLiga;
-
-  const podeExibirFormulario = podePublicar && (isStaff ? todasLigas.length > 0 : !!minhaLiga);
-
   return (
-    <div className="max-w-5xl mx-auto px-8 py-10">
-      {/* Cabeçalho */}
-      <div className="mb-10">
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">Mural</h1>
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
-          Publicações · Link School of Business
-        </p>
-      </div>
-
-      <div className="max-w-3xl space-y-0">
-        {/* Trigger card de criar postagem */}
-        {podeExibirFormulario && (
+    <div className="p-8 max-w-3xl mx-auto">
+      {/* Header */}
+      <div className="mb-10 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground">
+            Mural
+          </h1>
+          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50 mt-1">
+            Postagens
+          </p>
+        </div>
+        {podePublicar && (
           <button
             onClick={() => setModalAberto(true)}
-            className="w-full border border-navy/20 mb-10 px-6 py-5 flex items-center justify-between hover:border-navy/60 hover:bg-navy/[0.02] transition-colors group text-left"
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors flex-shrink-0"
           >
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 flex-shrink-0 bg-navy/5 border border-navy/10 flex items-center justify-center group-hover:bg-navy group-hover:border-navy transition-colors">
-                <Plus className="h-4 w-4 text-navy/60 group-hover:text-white transition-colors" />
-              </div>
-              <div>
-                <p className="font-plex-sans font-semibold text-[13px] text-navy">Criar postagem</p>
-                <p className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-navy/50 mt-0.5">
-                  Compartilhe com a comunidade
-                </p>
-              </div>
-            </div>
-            <span className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-2.5 group-hover:bg-navy/90 transition-colors">
-              Publicar
-            </span>
+            + Criar postagem
           </button>
         )}
+      </div>
 
-        {/* Modal de criar postagem */}
-        <Dialog open={modalAberto} onOpenChange={setModalAberto}>
-          <DialogContent className="sm:max-w-[560px] p-0 gap-0 border-navy/20 rounded-none">
-            <DialogHeader className="px-6 py-4 border-b border-navy/10">
-              <DialogTitle className="font-display font-bold text-[16px] text-navy">
-                Criar postagem
-              </DialogTitle>
-            </DialogHeader>
-            <div className="px-6 py-5">
-              {/* Seletor de liga para staff */}
-              {isStaff ? (
-                <div className="mb-3">
-                  <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mb-1.5">
-                    Publicar como
-                  </p>
-                  <select
-                    value={ligaSelecionadaId}
-                    onChange={(e) => setLigaSelecionadaId(e.target.value)}
-                    className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2 bg-white focus:outline-none focus:border-navy/60"
-                  >
-                    {todasLigas.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.nome}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : (
-                <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mb-3">
-                  Publicar como {ligaParaPublicar?.nome}
-                </p>
-              )}
+      {/* Abas de filtro */}
+      <AnimatedTabs
+        tabs={[
+          { id: "publica", label: "Públicas" },
+          { id: "liga", label: "Minha Liga" },
+        ]}
+        activeTab={filtro}
+        onChange={(id) => setFiltro(id as typeof filtro)}
+        wrapperClassName="border-foreground/[0.08] mb-6"
+        inactiveTabClassName="text-foreground/40 hover:text-foreground/60"
+      />
 
-              <textarea
-                value={novoConteudo}
-                onChange={(e) => setNovoConteudo(e.target.value)}
-                placeholder="O que está acontecendo na sua liga?"
-                rows={5}
-                autoFocus
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60 resize-none"
-              />
-
-              {/* Preview de imagem */}
-              {imagemPreview && (
-                <div className="relative mt-3 inline-block">
-                  <img
-                    src={imagemPreview}
-                    alt=""
-                    className="max-h-48 border border-navy/10 object-cover"
-                  />
-                  <button
-                    onClick={removerImagem}
-                    className="absolute top-1 right-1 bg-navy text-white p-0.5 hover:bg-red-600 transition-colors"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between mt-4">
-                <div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png"
-                    className="hidden"
-                    onChange={selecionarImagem}
-                  />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-1.5 font-plex-mono text-[11px] uppercase tracking-[0.12em] text-navy/50 hover:text-navy transition-colors"
-                  >
-                    <ImageIcon className="h-3.5 w-3.5" />
-                    Imagem
-                  </button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setModalAberto(false)}
-                    className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy/60 px-4 py-2.5 hover:text-navy transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={() => void publicar()}
-                    disabled={publicando || enviandoImagem || !novoConteudo.trim()}
-                    className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-2.5 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {publicando ? "Publicando..." : "Publicar"}
-                  </button>
+      {/* Feed */}
+      {carregando ? (
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="border border-foreground/[0.08] rounded-lg p-5">
+              {/* Header: avatar + author info */}
+              <div className="flex items-start gap-3 mb-3">
+                <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-4 w-14 rounded-sm" />
+                  </div>
+                  <Skeleton className="h-3 w-36" />
                 </div>
               </div>
+              {/* Content: 2-3 lines of text */}
+              <Skeleton className="h-3.5 w-full mb-1.5" />
+              <Skeleton className="h-3.5 w-full mb-1.5" />
+              <Skeleton className="h-3.5 w-2/3 mb-3" />
+              {/* Footer: likes + comments */}
+              <div className="flex items-center gap-6 mt-2">
+                <Skeleton className="h-4 w-10" />
+                <Skeleton className="h-4 w-10" />
+              </div>
             </div>
-          </DialogContent>
-        </Dialog>
-
-        <SectionHeader numero="01" eyebrow="Feed" titulo="Publicações das Ligas" />
-
-        {carregando ? (
-          <p className="font-plex-sans text-[13px] text-navy/50">Carregando publicações…</p>
-        ) : posts.length === 0 ? (
-          <p className="font-plex-sans text-[13px] text-navy/50">
-            Nenhuma publicação ainda. Seja a primeira liga a postar!
-          </p>
-        ) : (
-          <div className="border-t border-navy">
-            {posts.map((post) => (
-              <article key={post.id} className="border-b border-navy/10 py-6">
-                <header className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    {/* Avatar */}
-                    <div className="h-10 w-10 flex-shrink-0 overflow-hidden bg-navy flex items-center justify-center">
-                      {post.autor_avatar_url ? (
-                        <img
-                          src={post.autor_avatar_url}
-                          alt={post.autor_nome ?? ""}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span className="font-plex-mono text-[11px] text-white">
-                          {iniciais(post.autor_nome ?? post.liga_nome ?? "LI")}
+          ))}
+        </div>
+      ) : posts.length === 0 ? (
+        <p className="font-plex-sans text-[13px] text-foreground/50">
+          Nenhuma publicação ainda. Seja a primeira liga a postar!
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {posts.map((post) => (
+            <article
+              key={post.id}
+              className="border border-foreground/[0.08] rounded-lg p-5 hover:border-foreground/[0.15] transition-colors"
+            >
+              <header className="flex items-start justify-between mb-3">
+                <div className="flex items-start gap-3">
+                  <div className="h-9 w-9 rounded-full bg-navy flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {post.autor_avatar_url ? (
+                      <img
+                        src={post.autor_avatar_url}
+                        alt={post.autor_nome ?? ""}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-white font-bold text-[11px]">
+                        {iniciais(post.autor_nome ?? post.liga_nome ?? "LI")}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-display font-bold text-[13px] text-navy dark:text-foreground">
+                        {post.autor_nome}
+                      </span>
+                      {post.autor_role && (
+                        <span className="font-plex-mono text-[8px] uppercase tracking-[0.18em] border border-foreground/20 text-foreground/50 px-1.5 py-0.5 rounded-sm">
+                          {ROLE_LABELS[post.autor_role] ?? post.autor_role}
                         </span>
                       )}
                     </div>
-
-                    <div>
-                      {/* Nome · Role · Liga */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-plex-sans font-semibold text-[13px] text-navy">
-                          {post.autor_nome}
-                        </p>
-                        {post.autor_role && (
-                          <span className="font-plex-mono text-[9px] uppercase tracking-[0.14em] text-white bg-navy/60 px-1.5 py-0.5">
-                            {ROLE_LABELS[post.autor_role] ?? post.autor_role}
-                          </span>
-                        )}
-                        {post.liga_nome && (
-                          <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-navy/70">
-                            {post.liga_nome}
-                          </span>
-                        )}
-                      </div>
-                      {/* Data */}
-                      <p className="font-plex-mono text-[10px] text-navy/50 mt-0.5">
-                        <span title={formatarDataCompleta(post.criado_em)}>
-                          {formatarDataRelativa(post.criado_em)}
-                        </span>
-                      </p>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className="font-plex-sans text-[11px] text-foreground/50">
+                        {post.liga_nome} · {formatarDataRelativa(post.criado_em)}
+                      </span>
                     </div>
                   </div>
-                  {podePublicar && (
-                    <button
-                      onClick={() => void remover(post.id)}
-                      className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-navy/40 hover:text-red-600 transition-colors"
-                    >
-                      Remover
-                    </button>
+                </div>
+                {(role === "staff" || (role === "diretor" && post.liga_id === minhaLiga?.id)) && (
+                  <button
+                    onClick={() => void remover(post.id)}
+                    className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/30 hover:text-red-500 transition-colors flex-shrink-0 ml-2"
+                  >
+                    Remover
+                  </button>
+                )}
+              </header>
+
+              <p className="font-plex-sans text-[13px] text-foreground/80 leading-relaxed whitespace-pre-wrap mb-3">
+                {post.conteudo}
+              </p>
+
+              {post.imagem_url && (
+                <img
+                  src={post.imagem_url}
+                  alt=""
+                  className="w-full rounded-lg mb-3 max-h-96 object-cover"
+                />
+              )}
+
+              <footer className="flex items-center gap-6 mt-2">
+                <button
+                  onClick={() => void curtir(post.id)}
+                  className={cn(
+                    "flex items-center gap-1.5 font-plex-mono text-[11px] transition-colors",
+                    post.curtido_por_mim ? "text-red-500" : "text-foreground/40 hover:text-red-500",
                   )}
-                </header>
+                >
+                  <Heart className={cn("h-3.5 w-3.5", post.curtido_por_mim && "fill-red-500")} />
+                  {post.curtidas ?? 0}
+                </button>
+                <button
+                  onClick={() => void toggleComentarios(post.id)}
+                  className="flex items-center gap-1.5 font-plex-mono text-[11px] text-foreground/40 hover:text-foreground transition-colors"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  {post.total_comentarios ?? 0}
+                </button>
+              </footer>
 
-                <p className="font-plex-sans text-[13px] text-navy mt-4 whitespace-pre-wrap leading-relaxed">
-                  {post.conteudo}
-                </p>
-
-                {post.imagem_url && (
-                  <img
-                    src={post.imagem_url}
-                    alt=""
-                    className="mt-4 border border-navy/10 w-full object-cover max-h-96"
-                  />
-                )}
-
-                <footer className="flex items-center gap-6 mt-5">
-                  <button
-                    onClick={() => void curtir(post.id)}
-                    className={cn(
-                      "flex items-center gap-1.5 font-plex-mono text-[11px] transition-colors",
-                      post.curtido_por_mim ? "text-red-500" : "text-navy/40 hover:text-red-500",
-                    )}
-                  >
-                    <Heart className={cn("h-3.5 w-3.5", post.curtido_por_mim && "fill-red-500")} />
-                    {post.curtidas ?? 0}
-                  </button>
-                  <button
-                    onClick={() => void toggleComentarios(post.id)}
-                    className="flex items-center gap-1.5 font-plex-mono text-[11px] text-navy/40 hover:text-navy transition-colors"
-                  >
-                    <MessageCircle className="h-3.5 w-3.5" />
-                    {post.total_comentarios ?? 0}
-                  </button>
-                </footer>
-
-                {comentariosAbertos[post.id] && (
-                  <div className="mt-5 border-t border-navy/10 pt-5 space-y-3">
-                    {(comentariosPorPost[post.id] ?? []).map((c) => (
-                      <div key={c.id} className="flex gap-3">
-                        <div className="h-7 w-7 flex-shrink-0 bg-navy/10 flex items-center justify-center">
-                          <span className="font-plex-mono text-[9px] text-navy">
-                            {iniciais(c.autor_nome ?? "U")}
-                          </span>
-                        </div>
-                        <div className="flex-1 bg-navy/[0.02] border border-navy/10 px-3 py-2">
-                          <p className="font-plex-mono text-[9px] uppercase tracking-[0.14em] text-navy/60">
-                            {c.autor_nome}
-                          </p>
-                          <p className="font-plex-sans text-[12px] text-navy mt-1">{c.conteudo}</p>
-                        </div>
+              {comentariosAbertos[post.id] && (
+                <div className="mt-4 border-t border-foreground/[0.08] pt-4 space-y-3">
+                  {(comentariosPorPost[post.id] ?? []).map((c) => (
+                    <div key={c.id} className="flex gap-3">
+                      <div className="h-7 w-7 rounded-full bg-foreground/10 flex items-center justify-center flex-shrink-0">
+                        <span className="font-plex-mono text-[9px] text-foreground/60">
+                          {iniciais(c.autor_nome ?? "U")}
+                        </span>
                       </div>
-                    ))}
-                    <div className="flex gap-2 mt-3">
-                      <input
-                        value={novoComentario[post.id] ?? ""}
-                        onChange={(e) =>
-                          setNovoComentario((prev) => ({ ...prev, [post.id]: e.target.value }))
-                        }
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") void comentar(post.id);
-                        }}
-                        placeholder="Escreva um comentário…"
-                        className="flex-1 border border-navy/20 px-3 py-2 font-plex-sans text-[12px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
-                      />
-                      <button
-                        onClick={() => void comentar(post.id)}
-                        className="border border-navy/20 px-3 py-2 text-navy hover:bg-navy hover:text-white transition-colors"
-                      >
-                        <Send className="h-3.5 w-3.5" />
-                      </button>
+                      <div className="flex-1 bg-foreground/[0.02] border border-foreground/[0.06] rounded px-3 py-2">
+                        <p className="font-plex-mono text-[9px] uppercase tracking-[0.14em] text-foreground/50">
+                          {c.autor_nome}
+                        </p>
+                        <p className="font-plex-sans text-[12px] text-foreground/80 mt-1">
+                          {c.conteudo}
+                        </p>
+                      </div>
                     </div>
+                  ))}
+                  <div className="flex gap-2 mt-3">
+                    <input
+                      value={novoComentario[post.id] ?? ""}
+                      onChange={(e) =>
+                        setNovoComentario((prev) => ({ ...prev, [post.id]: e.target.value }))
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") void comentar(post.id);
+                      }}
+                      placeholder="Escreva um comentário…"
+                      className="flex-1 border border-foreground/[0.12] rounded px-3 py-2 font-plex-sans text-[12px] text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-foreground/30 bg-transparent"
+                    />
+                    <button
+                      onClick={() => void comentar(post.id)}
+                      className="border border-foreground/[0.12] rounded px-3 py-2 text-foreground/50 hover:text-foreground hover:border-foreground/30 transition-colors"
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                    </button>
                   </div>
-                )}
-              </article>
-            ))}
+                </div>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
+
+      {/* Modal de criar postagem */}
+      <Dialog open={modalAberto} onOpenChange={fecharModal}>
+        <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
+          {/* Header do modal */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-foreground/[0.08]">
+            <h2 className="font-display font-bold text-[16px] tracking-[-0.02em] text-navy dark:text-foreground">
+              Criar postagem
+            </h2>
           </div>
-        )}
-      </div>
+
+          {/* Linha de autor */}
+          <div className="flex items-start gap-3 px-5 pt-5">
+            <div className="h-10 w-10 rounded-full bg-navy flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={nomeUsuario} className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-white font-bold text-[12px]">
+                  {iniciais(nomeUsuario || "U")}
+                </span>
+              )}
+            </div>
+            <div>
+              <p className="font-display font-bold text-[13px] text-navy dark:text-foreground">
+                {nomeUsuario || "Você"}
+              </p>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                {isStaff ? (
+                  <LigaPill
+                    ligas={todasLigas}
+                    ligaSelecionadaId={ligaSelecionadaId}
+                    onChange={setLigaSelecionadaId}
+                  />
+                ) : (
+                  <span className="font-plex-sans text-[11px] text-foreground/50">
+                    {minhaLiga?.nome ?? ""}
+                  </span>
+                )}
+                <VisibilidadePill value={visibilidade} onChange={setVisibilidade} />
+              </div>
+            </div>
+          </div>
+
+          {/* Textarea */}
+          <textarea
+            className="w-full px-5 pt-4 pb-2 font-plex-sans text-[13px] text-foreground placeholder:text-foreground/25 resize-none border-none outline-none bg-transparent min-h-[180px]"
+            placeholder="Sobre o que você quer falar?"
+            value={novoConteudo}
+            onChange={(e) => setNovoConteudo(e.target.value)}
+            maxLength={5000}
+            autoFocus
+          />
+
+          {/* Preview de imagem */}
+          {imagemPreview && (
+            <div className="relative mx-5 mb-3">
+              <img
+                src={imagemPreview}
+                alt="Preview"
+                className="w-full rounded-lg max-h-48 object-cover"
+              />
+              <button
+                onClick={removerImagem}
+                className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          )}
+
+          {/* Toolbar + footer */}
+          <div className="px-5 py-4 border-t border-foreground/[0.08] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png"
+                className="hidden"
+                onChange={selecionarImagem}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={enviandoImagem}
+                className="flex items-center gap-1.5 font-plex-mono text-[9px] uppercase tracking-[0.12em] text-foreground/40 hover:text-foreground/60 transition-colors disabled:opacity-40"
+              >
+                <ImageIcon className="h-4 w-4" />
+                Imagem
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={fecharModal}
+                className="font-plex-mono text-[10px] uppercase tracking-[0.1em] text-foreground/40 hover:text-foreground/60 px-3 py-2 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => void publicar()}
+                disabled={
+                  publicando ||
+                  enviandoImagem ||
+                  !novoConteudo.trim() ||
+                  (isStaff && !ligaSelecionadaId)
+                }
+                className="bg-navy text-white font-plex-mono text-[10px] uppercase tracking-[0.1em] px-4 py-2 rounded-full hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {publicando ? "Publicando..." : "Publicar →"}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

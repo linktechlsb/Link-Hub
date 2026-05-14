@@ -1,6 +1,9 @@
+import { Activity, FolderKanban, UserCheck, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+import { Progress } from "@/components/ui/progress";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
+import { cn } from "@/lib/utils";
 
 import { AlertList, EditorialTable, KpiRow, SectionHeader, type AlertV1Item } from "./primitives";
 
@@ -47,10 +50,26 @@ export function HomeStaffViewV1({ pendentes, ligas, ranking }: HomeStaffViewV1Pr
   const totalPresencas = ranking.reduce((acc, r) => acc + (r.presencas ?? 0), 0);
 
   const metricas = [
-    { label: "Ligas ativas", valor: String(ligas.length) },
-    { label: "Membros", valor: String(totalMembros) },
-    { label: "Projetos ativos", valor: String(totalProjetos) },
-    { label: "Presenças", valor: String(totalPresencas) },
+    {
+      label: "Ligas ativas",
+      valor: String(ligas.length),
+      icon: <Users className="h-4 w-4 text-muted-foreground" />,
+    },
+    {
+      label: "Membros",
+      valor: String(totalMembros),
+      icon: <UserCheck className="h-4 w-4 text-muted-foreground" />,
+    },
+    {
+      label: "Projetos ativos",
+      valor: String(totalProjetos),
+      icon: <FolderKanban className="h-4 w-4 text-muted-foreground" />,
+    },
+    {
+      label: "Presenças",
+      valor: String(totalPresencas),
+      icon: <Activity className="h-4 w-4 text-muted-foreground" />,
+    },
   ];
 
   const engajamento = [
@@ -100,29 +119,21 @@ export function HomeStaffViewV1({ pendentes, ligas, ranking }: HomeStaffViewV1Pr
     .slice(0, 5);
   const maxPresencas = Math.max(...presencaOrdenada.map((r) => r.presencas ?? 0), 1);
 
-  let secao = 1;
-
   return (
-    <div className="space-y-12">
+    <div className="space-y-6">
       <section>
-        <SectionHeader
-          numero={String(secao++).padStart(2, "0")}
-          eyebrow="Métricas globais"
-          titulo="Estado das ligas"
-        />
+        <SectionHeader titulo="Estado das Ligas" />
         <KpiRow items={metricas} />
       </section>
 
       {alertasCompletos.length > 0 && (
         <section>
           <SectionHeader
-            numero={String(secao++).padStart(2, "0")}
-            eyebrow="Alertas de atenção"
-            titulo="Ação necessária"
+            titulo="Alertas de Atenção"
             acao={
               <button
                 onClick={() => navigate("/super-admin")}
-                className="font-plex-mono text-[10px] uppercase tracking-[0.2em] text-navy border-b border-navy pb-0.5"
+                className="text-xs font-semibold text-link-blue hover:underline"
               >
                 Ver todos →
               </button>
@@ -134,44 +145,47 @@ export function HomeStaffViewV1({ pendentes, ligas, ranking }: HomeStaffViewV1Pr
 
       {presencaOrdenada.length > 0 && (
         <section>
-          <SectionHeader
-            numero={String(secao++).padStart(2, "0")}
-            eyebrow="Ranking de presença"
-            titulo="Comparativo por liga"
-          />
+          <SectionHeader titulo="Ranking de Presença" />
           <EditorialTable
             columns={["#", "Liga", "Presenças", "Barra"]}
             rows={presencaOrdenada.map((r, i) => {
               const percent = Math.round(((r.presencas ?? 0) / maxPresencas) * 100);
               const baixa = percent < 33;
               const media = percent < 66;
+              const barClass = baixa
+                ? "[&>div]:bg-red-500"
+                : media
+                  ? "[&>div]:bg-amber-500"
+                  : "[&>div]:bg-green-500";
               return [
                 <span
                   key="i"
-                  className={`font-plex-mono text-[11px] tracking-[0.14em] ${baixa ? "text-navy" : "text-navy/60"}`}
+                  className={cn(
+                    "text-xs font-bold text-center",
+                    baixa ? "text-red-400" : "text-muted-foreground",
+                  )}
                 >
-                  {String(i + 1).padStart(2, "0")}
+                  {i + 1}º
                 </span>,
                 <span
                   key="n"
-                  className={`font-plex-sans ${baixa ? "font-bold text-navy" : "font-medium text-navy/80"}`}
+                  className={cn(
+                    "text-sm",
+                    baixa ? "font-bold text-foreground" : "font-medium text-foreground/70",
+                  )}
                 >
                   {r.nome}
                 </span>,
                 <span
                   key="p"
-                  className={`font-plex-sans font-bold text-[16px] tracking-[-0.02em] ${
-                    baixa ? "text-navy" : media ? "text-navy/80" : "text-navy"
-                  }`}
+                  className={cn(
+                    "text-sm font-bold",
+                    baixa ? "text-red-400" : media ? "text-amber-400" : "text-green-500",
+                  )}
                 >
                   {r.presencas ?? 0}
                 </span>,
-                <div key="bar" className="relative h-px bg-navy/10 w-32">
-                  <div
-                    className={`absolute left-0 top-0 h-px ${baixa ? "bg-navy" : "bg-navy/60"}`}
-                    style={{ width: `${percent}%` }}
-                  />
-                </div>,
+                <Progress key="bar" value={percent} className={cn("h-1.5 w-28", barClass)} />,
               ];
             })}
           />
@@ -179,11 +193,7 @@ export function HomeStaffViewV1({ pendentes, ligas, ranking }: HomeStaffViewV1Pr
       )}
 
       <section>
-        <SectionHeader
-          numero={String(secao++).padStart(2, "0")}
-          eyebrow="Engajamento global"
-          titulo="Indicadores de participação"
-        />
+        <SectionHeader titulo="Engajamento Global" />
         <KpiRow items={engajamento} />
       </section>
     </div>

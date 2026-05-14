@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sidebar Nav Style</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0a; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 32px; }
+  h1 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 28px; }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+  .card {
+    border-radius: 12px; border: 2px solid #222; overflow: hidden;
+    cursor: pointer; transition: border-color 0.15s, transform 0.15s; background: #111;
+  }
+  .card:hover { border-color: #444; transform: translateY(-2px); }
+  .card.selected { border-color: #5b8af5; }
+
+  .card-label {
+    padding: 12px 16px 10px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; color: #888;
+    border-bottom: 1px solid #1c1c1c; display: flex; align-items: center; justify-content: space-between;
+  }
+  .card.selected .card-label { color: #5b8af5; }
+
+  .sidebar-preview {
+    background: #050505; padding: 16px 12px; height: 320px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .logo { font-size: 11px; font-weight: 700; color: #fff; padding: 4px 8px; margin-bottom: 10px; }
+  .logo small { font-size: 9px; font-weight: 400; color: #444; display: block; margin-top: 1px; }
+  .section { font-size: 8px; color: #444; letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 8px 2px; margin-top: 2px; }
+
+  /* A — só texto */
+  .nav-text { font-size: 12px; color: #777; padding: 5px 8px; border-radius: 5px; }
+  .nav-text.active { color: #fff; background: #1a1a1a; }
+
+  /* B — ícone + texto */
+  .nav-icon { font-size: 12px; color: #777; padding: 5px 8px; border-radius: 5px; display: flex; align-items: center; gap: 8px; }
+  .nav-icon.active { color: #fff; background: #1a1a1a; }
+  .icon { font-size: 13px; width: 16px; text-align: center; flex-shrink: 0; }
+
+  /* C — ícone só (collapsed look) */
+  .nav-icon-only { padding: 7px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #666; width: 32px; margin: 1px auto; }
+  .nav-icon-only.active { color: #fff; background: #1e1e1e; }
+  .sidebar-preview.collapsed { align-items: center; }
+  .logo-collapsed { width: 24px; height: 24px; background: #1a1a1a; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #fff; margin: 0 auto 14px; }
+
+  .card-desc { padding: 14px 16px; border-top: 1px solid #1c1c1c; }
+  .card-desc h3 { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .card-desc p { font-size: 11px; color: #666; line-height: 1.5; }
+  .badge-rec { font-size: 9px; padding: 2px 7px; border-radius: 999px; font-weight: 600; background: #1a2a1a; color: #4caf72; border: 1px solid #2a3a2a; }
+</style>
+</head>
+<body>
+<h1>Como devem ser os itens de navegação da sidebar?</h1>
+<p class="subtitle">Escolha o estilo de nav que mais combina com a direção neutro escuro.</p>
+
+<div class="cards">
+
+  <!-- A — Só texto -->
+  <div class="card" data-choice="a" onclick="select(this)">
+    <div class="card-label">A — Só texto <span class="badge-rec">Inspiração</span></div>
+    <div class="sidebar-preview">
+      <div class="logo">Link Leagues <small>Link School of Business</small></div>
+      <div class="section">Plataforma</div>
+      <div class="nav-text active">Home</div>
+      <div class="nav-text">Ligas</div>
+      <div class="nav-text">Projetos</div>
+      <div class="nav-text">Agenda</div>
+      <div class="nav-text">Mural</div>
+      <div class="section">Gestão</div>
+      <div class="nav-text">Super Admin</div>
+      <div class="nav-text">Formulários</div>
+      <div class="nav-text">Gerenciamento</div>
+    </div>
+    <div class="card-desc">
+      <h3>Só texto</h3>
+      <p>Mais limpo, exatamente como na referência (Programa). Sem distrações — o foco vai para o conteúdo, não para os ícones.</p>
+    </div>
+  </div>
+
+  <!-- B — Ícone + Texto -->
+  <div class="card" data-choice="b" onclick="select(this)">
+    <div class="card-label">B — Ícone + Texto</div>
+    <div class="sidebar-preview">
+      <div class="logo">Link Leagues <small>Link School of Business</small></div>
+      <div class="section">Plataforma</div>
+      <div class="nav-icon active"><span class="icon">⌂</span>Home</div>
+      <div class="nav-icon"><span class="icon">◎</span>Ligas</div>
+      <div class="nav-icon"><span class="icon">▤</span>Projetos</div>
+      <div class="nav-icon"><span class="icon">◷</span>Agenda</div>
+      <div class="nav-icon"><span class="icon">▣</span>Mural</div>
+      <div class="section">Gestão</div>
+      <div class="nav-icon"><span class="icon">✦</span>Super Admin</div>
+      <div class="nav-icon"><span class="icon">◈</span>Formulários</div>
+    </div>
+    <div class="card-desc">
+      <h3>Ícone + Texto</h3>
+      <p>O que o app já tem hoje (Lucide icons). Mais familiar para usuários, escaneia mais rápido. Ícones sutis no estilo Lucide combinam bem com o dark neutro.</p>
+    </div>
+  </div>
+
+  <!-- C — Ícone + Texto compacto -->
+  <div class="card" data-choice="c" onclick="select(this)">
+    <div class="card-label">C — Compacto com ícones</div>
+    <div class="sidebar-preview">
+      <div class="logo">Link Leagues <small>Link School of Business</small></div>
+      <div class="section">Plataforma</div>
+      <div class="nav-icon active" style="padding:5px 8px;display:flex;align-items:center;gap:8px;border-radius:5px;"><span class="icon" style="font-size:11px;">⌂</span><span style="font-size:11px;">Home</span></div>
+      <div class="nav-icon" style="padding:5px 8px;display:flex;align-items:center;gap:8px;border-radius:5px;"><span class="icon" style="font-size:11px;">◎</span><span style="font-size:11px;">Ligas</span></div>
+      <div class="nav-icon" style="padding:5px 8px;display:flex;align-items:center;gap:8px;border-radius:5px;"><span class="icon" style="font-size:11px;">▤</span><span style="font-size:11px;">Projetos</span></div>
+      <div class="nav-icon" style="padding:5px 8px;display:flex;align-items:center;gap:8px;border-radius:5px;"><span class="icon" style="font-size:11px;">◷</span><span style="font-size:11px;">Agenda</span></div>
+      <div class="nav-icon" style="padding:5px 8px;display:flex;align-items:center;gap:8px;border-radius:5px;"><span class="icon" style="font-size:11px;">▣</span><span style="font-size:11px;">Mural</span></div>
+      <div class="nav-icon" style="padding:5px 8px;display:flex;align-items:center;gap:8px;border-radius:5px;"><span class="icon" style="font-size:11px;">★</span><span style="font-size:11px;">Ranking</span></div>
+      <div class="section">Gestão</div>
+      <div class="nav-icon" style="padding:5px 8px;display:flex;align-items:center;gap:8px;border-radius:5px;color:#555;"><span class="icon" style="font-size:11px;">✦</span><span style="font-size:11px;color:#555;">Super Admin</span></div>
+      <div class="nav-icon" style="padding:5px 8px;display:flex;align-items:center;gap:8px;border-radius:5px;color:#555;"><span class="icon" style="font-size:11px;">◈</span><span style="font-size:11px;color:#555;">Formulários</span></div>
+    </div>
+    <div class="card-desc">
+      <h3>Compacto com ícones</h3>
+      <p>Ícones pequenos (11px) + texto reduzido. Cabe mais itens visíveis sem scroll. Diferencia itens de "Gestão" com cor mais apagada vs "Plataforma".</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function select(el) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    fetch('/select', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({type:'click', choice: el.dataset.choice, text: el.querySelector('h3').textContent}) }).catch(()=>{});
+  }
+</script>
+</body>
+</html>

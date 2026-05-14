@@ -1,11 +1,35 @@
-import { Search, MoreVertical, Pencil, Trash2, Users, Archive } from "lucide-react";
+import {
+  Archive,
+  Check,
+  MoreHorizontal,
+  Pencil,
+  Search,
+  SlidersHorizontal,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { EditorialTable, KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
+import { SectionHeader } from "@/pages/home/v1/primitives";
 import { LigaSheet } from "@/pages/ligas/LigaSheet";
 
+import { CriarUsuarioCard } from "./CriarUsuarioCard";
 import { LigaMembrosSheet } from "./LigaMembrosSheet";
 import { UsuarioSheet } from "./UsuarioSheet";
 
@@ -35,31 +59,39 @@ async function getToken(): Promise<string> {
   return data.session?.access_token ?? "";
 }
 
-const ROLE_BADGE_CLASS: Record<UserRole, string> = {
-  staff: "bg-brand-yellow text-navy",
-  diretor: "bg-navy/10 text-navy",
-  membro: "bg-navy/[0.05] text-navy/60",
-  professor: "bg-blue-100 text-blue-700",
-  estudante: "bg-navy/[0.03] text-navy/50",
+const ROLE_BADGE: Record<UserRole, { label: string; className: string }> = {
+  staff: { label: "Staff", className: "bg-brand-yellow/20 text-navy border-brand-yellow/30" },
+  diretor: { label: "Diretor", className: "bg-navy/10 text-navy border-navy/15" },
+  membro: {
+    label: "Membro",
+    className: "bg-foreground/[0.07] text-foreground/60 border-foreground/10",
+  },
+  professor: { label: "Professor", className: "bg-blue-50 text-blue-700 border-blue-100" },
+  estudante: {
+    label: "Estudante",
+    className: "bg-foreground/[0.04] text-foreground/50 border-foreground/[0.07]",
+  },
 };
 
-const ROLE_LABEL: Record<UserRole, string> = {
-  staff: "Staff",
-  diretor: "Diretor",
-  membro: "Membro",
-  professor: "Professor",
-  estudante: "Estudante",
-};
+const ROLES: { value: UserRole | "todos"; label: string }[] = [
+  { value: "todos", label: "Todos os cargos" },
+  { value: "staff", label: "Staff" },
+  { value: "diretor", label: "Diretor" },
+  { value: "membro", label: "Membro" },
+  { value: "professor", label: "Professor" },
+  { value: "estudante", label: "Estudante" },
+];
 
 function RoleBadge({ role }: { role: UserRole }) {
+  const { label, className } = ROLE_BADGE[role];
   return (
     <span
       className={cn(
-        "font-plex-mono text-[9px] uppercase tracking-[0.14em] px-2 py-0.5",
-        ROLE_BADGE_CLASS[role],
+        "font-plex-mono text-[10px] font-semibold uppercase tracking-[0.08em] border px-2 py-0.5 rounded-full",
+        className,
       )}
     >
-      {ROLE_LABEL[role]}
+      {label}
     </span>
   );
 }
@@ -69,19 +101,22 @@ function RoleBadge({ role }: { role: UserRole }) {
 type Aba = "ligas" | "aprovacoes" | "usuarios";
 
 export function SuperAdminPage() {
-  const [abaAtiva, setAbaAtiva] = useState<Aba>("ligas");
+  const location = useLocation();
+  const locationState = location.state as { aba?: Aba; abrirCriar?: boolean } | null;
+  const estadoConsumido = useRef(false);
+
+  const [abaAtiva, setAbaAtiva] = useState<Aba>(locationState?.aba ?? "ligas");
+  const [cardCriarAberto, setCardCriarAberto] = useState(false);
   const [usuarios, setUsuarios] = useState<UsuarioAdmin[]>([]);
   const [ligas, setLigas] = useState<Liga[]>([]);
   const [presencaMedia, setPresencaMedia] = useState<number | null>(null);
   const [carregando, setCarregando] = useState(true);
 
   const [busca, setBusca] = useState("");
+  const [filtroRole, setFiltroRole] = useState<UserRole | "todos">("todos");
+  const [filtroLiga, setFiltroLiga] = useState<string>("todas");
   const [confirmarRemocaoId, setConfirmarRemocaoId] = useState<string | null>(null);
   const [confirmarArquivoId, setConfirmarArquivoId] = useState<string | null>(null);
-  const [dropdownLigaId, setDropdownLigaId] = useState<string | null>(null);
-  const [dropdownUsuarioId, setDropdownUsuarioId] = useState<string | null>(null);
-  const dropdownLigaRef = useRef<HTMLDivElement>(null);
-  const dropdownUsuarioRef = useRef<HTMLDivElement>(null);
 
   const [sheetUsuarioOpen, setSheetUsuarioOpen] = useState(false);
   const [usuarioParaEditar, setUsuarioParaEditar] = useState<UsuarioAdmin | undefined>(undefined);
@@ -189,22 +224,11 @@ export function SuperAdminPage() {
   }, []);
 
   useEffect(() => {
-    function fechar(e: MouseEvent) {
-      if (dropdownLigaRef.current && !dropdownLigaRef.current.contains(e.target as Node))
-        setDropdownLigaId(null);
+    if (!estadoConsumido.current && locationState?.abrirCriar) {
+      estadoConsumido.current = true;
+      setCardCriarAberto(true);
     }
-    document.addEventListener("mousedown", fechar);
-    return () => document.removeEventListener("mousedown", fechar);
-  }, []);
-
-  useEffect(() => {
-    function fechar(e: MouseEvent) {
-      if (dropdownUsuarioRef.current && !dropdownUsuarioRef.current.contains(e.target as Node))
-        setDropdownUsuarioId(null);
-    }
-    document.addEventListener("mousedown", fechar);
-    return () => document.removeEventListener("mousedown", fechar);
-  }, []);
+  }, [locationState]);
 
   async function removerUsuario(id: string) {
     const token = await getToken();
@@ -229,11 +253,14 @@ export function SuperAdminPage() {
   const totalProjetos = ligas.reduce((acc, l) => acc + (l.projetos_ativos ?? 0), 0);
   const totalPendentes = pendentes.projetos.length + pendentes.eventos.length;
 
-  const usuariosFiltrados = usuarios.filter(
-    (u) =>
+  const usuariosFiltrados = usuarios.filter((u) => {
+    const buscaOk =
       u.nome.toLowerCase().includes(busca.toLowerCase()) ||
-      u.email.toLowerCase().includes(busca.toLowerCase()),
-  );
+      u.email.toLowerCase().includes(busca.toLowerCase());
+    const roleOk = filtroRole === "todos" || u.role === filtroRole;
+    const ligaOk = filtroLiga === "todas" || u.liga_id === filtroLiga;
+    return buscaOk && roleOk && ligaOk;
+  });
 
   const kpis = [
     { label: "Usuários", valor: carregando ? "—" : String(usuarios.length) },
@@ -247,355 +274,572 @@ export function SuperAdminPage() {
 
   const ABAS: { id: Aba; label: string }[] = [
     { id: "ligas", label: "Ligas" },
-    { id: "aprovacoes", label: "Aprovações" },
+    {
+      id: "aprovacoes",
+      label: totalPendentes > 0 ? `Aprovações (${totalPendentes})` : "Aprovações",
+    },
     { id: "usuarios", label: "Usuários" },
   ];
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-10">
       {/* Cabeçalho */}
-      <div className="mb-10">
+      <div className="mb-8">
         <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
           Super Admin
         </h1>
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
-          Gestão de usuários, ligas e visão geral da plataforma
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mt-1">
+          Gestão da Link Leagues
         </p>
       </div>
 
-      <div className="space-y-10">
-        <KpiRow items={kpis} />
-
-        <div>
-          {/* Navegação de abas */}
-          <div className="border-b border-[#DBDFE4]">
-            <div className="flex">
-              {ABAS.map((aba) => (
-                <button
-                  key={aba.id}
-                  onClick={() => setAbaAtiva(aba.id)}
-                  className={cn(
-                    "px-5 py-3 font-plex-mono text-[10px] uppercase tracking-[0.14em] transition-colors border-b-2 -mb-px flex items-center gap-2",
-                    abaAtiva === aba.id
-                      ? "border-navy text-navy"
-                      : "border-transparent text-navy/40 hover:text-navy",
-                  )}
-                >
-                  {aba.label}
-                  {aba.id === "aprovacoes" && totalPendentes > 0 && (
-                    <span className="font-plex-mono text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5">
-                      {totalPendentes}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
+      {/* KPIs */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        {kpis.map((kpi) => (
+          <div
+            key={kpi.label}
+            className="border border-foreground/[0.08] rounded-lg px-5 py-4 bg-foreground/[0.01]"
+          >
+            <p className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 mb-1.5">
+              {kpi.label}
+            </p>
+            <p className="font-display font-bold text-[26px] tracking-[-0.02em] text-navy leading-none">
+              {kpi.valor}
+            </p>
           </div>
+        ))}
+      </div>
 
-          {/* Aba: Ligas */}
-          {abaAtiva === "ligas" && (
-            <div>
-              <SectionHeader
-                numero="01"
-                eyebrow="Gestão"
-                titulo="Ligas"
-                acao={
-                  <button
-                    onClick={() => {
-                      setLigaParaEditar(undefined);
-                      setSheetLigaOpen(true);
-                    }}
-                    className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors"
+      {/* Abas */}
+      <AnimatedTabs
+        tabs={ABAS.map(({ id, label }) => ({ id, label }))}
+        activeTab={abaAtiva}
+        onChange={(id) => setAbaAtiva(id as Aba)}
+        wrapperClassName="border-foreground/[0.08] mb-8"
+        activeTabClassName="text-navy"
+        inactiveTabClassName="text-foreground/40 hover:text-foreground/60"
+      />
+
+      {/* ── Aba: Ligas ── */}
+      {abaAtiva === "ligas" && (
+        <div className="space-y-6">
+          <SectionHeader
+            numero="01"
+            eyebrow="Gestão"
+            titulo="Ligas"
+            acao={
+              <button
+                onClick={() => {
+                  setLigaParaEditar(undefined);
+                  setSheetLigaOpen(true);
+                }}
+                className="font-plex-sans text-[11px] font-semibold text-foreground/45 border border-foreground/[0.15] px-3 py-1.5 rounded-full bg-transparent hover:border-foreground/30 transition-colors"
+              >
+                + Nova Liga
+              </button>
+            }
+          />
+
+          {carregando ? (
+            <p className="font-plex-sans text-[13px] text-foreground/50">Carregando...</p>
+          ) : ligas.length === 0 ? (
+            <p className="font-plex-sans text-[13px] text-foreground/50">
+              Nenhuma liga cadastrada.
+            </p>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-foreground/[0.08]">
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                    Nome
+                  </th>
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+                    Diretores
+                  </th>
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden md:table-cell">
+                    Projetos
+                  </th>
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden md:table-cell">
+                    Status
+                  </th>
+                  <th className="py-3 px-4 w-10" />
+                </tr>
+              </thead>
+              <tbody>
+                {ligas.map((l) => (
+                  <tr
+                    key={l.id}
+                    className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
                   >
-                    + Nova Liga
-                  </button>
-                }
-              />
-
-              {carregando ? (
-                <p className="font-plex-sans text-[13px] text-navy/50">Carregando...</p>
-              ) : ligas.length === 0 ? (
-                <p className="font-plex-sans text-[13px] text-navy/50">Nenhuma liga cadastrada.</p>
-              ) : (
-                <EditorialTable
-                  columns={["Liga", "Líder", "Projetos", "Status", "Ações"]}
-                  rows={ligas.map((l) => [
-                    <span key="n" className="font-medium">
-                      {l.nome}
-                    </span>,
-                    l.diretores && l.diretores.length > 0
-                      ? l.diretores.map((d) => primeiroUltimoNome(d.nome)).join(", ")
-                      : "—",
-                    String(l.projetos_ativos ?? 0),
-                    <span
-                      key="s"
-                      className="font-plex-mono text-[9px] uppercase tracking-[0.14em] px-2 py-0.5 bg-navy/10 text-navy"
-                    >
-                      ativa
-                    </span>,
-                    confirmarArquivoId === l.id ? (
-                      <div key="conf" className="flex items-center gap-3">
-                        <span className="font-plex-sans text-[12px] text-red-600">Arquivar?</span>
-                        <button
-                          onClick={() => void arquivarLiga(l.id)}
-                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-600 hover:text-red-800 transition-colors"
-                        >
-                          Sim
-                        </button>
-                        <button
-                          onClick={() => setConfirmarArquivoId(null)}
-                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
-                        >
-                          Não
-                        </button>
-                      </div>
-                    ) : (
-                      <div
-                        key="acoes"
-                        className="relative"
-                        ref={dropdownLigaId === l.id ? dropdownLigaRef : null}
-                      >
-                        <button
-                          onClick={() => setDropdownLigaId(dropdownLigaId === l.id ? null : l.id)}
-                          className="text-navy/40 hover:text-navy transition-colors p-1"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                        {dropdownLigaId === l.id && (
-                          <div className="absolute right-0 top-7 z-50 bg-white border border-navy/15 min-w-[130px] shadow-sm">
-                            <button
+                    <td className="py-4 px-4">
+                      <span className="font-plex-sans font-semibold text-[13px] text-foreground">
+                        {l.nome}
+                      </span>
+                      {l.descricao && (
+                        <p className="font-plex-sans text-[11px] text-foreground/40 mt-0.5 leading-snug">
+                          {l.descricao}
+                        </p>
+                      )}
+                    </td>
+                    <td className="py-4 px-4 hidden sm:table-cell">
+                      {l.diretores && l.diretores.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {l.diretores.map((d) => (
+                            <span
+                              key={d.id}
+                              className="font-plex-mono text-[10px] text-foreground/70 bg-foreground/[0.07] border border-foreground/[0.08] px-2 py-0.5 rounded-full"
+                            >
+                              {primeiroUltimoNome(d.nome)}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="font-plex-mono text-[12px] text-foreground/25">—</span>
+                      )}
+                    </td>
+                    <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60 hidden md:table-cell">
+                      {l.projetos_ativos ?? 0}
+                    </td>
+                    <td className="py-4 px-4 hidden md:table-cell">
+                      {confirmarArquivoId === l.id ? (
+                        <div className="flex items-center gap-3">
+                          <span className="font-plex-sans text-[12px] text-red-600">Arquivar?</span>
+                          <button
+                            onClick={() => void arquivarLiga(l.id)}
+                            className="font-plex-sans text-[12px] font-semibold text-red-600 hover:text-red-800 transition-colors"
+                          >
+                            Sim
+                          </button>
+                          <button
+                            onClick={() => setConfirmarArquivoId(null)}
+                            className="font-plex-sans text-[12px] text-foreground/40 hover:text-foreground transition-colors"
+                          >
+                            Não
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="font-plex-mono text-[10px] font-semibold uppercase tracking-[0.08em] border border-foreground/[0.15] text-foreground/50 px-2 py-0.5 rounded-full">
+                          Ativa
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
+                      {confirmarArquivoId === l.id ? null : (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="p-1 rounded hover:bg-foreground/[0.08] text-foreground/40 hover:text-foreground/70 transition-colors">
+                              <MoreHorizontal size={14} />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="min-w-[150px]">
+                            <DropdownMenuItem
+                              className="text-[12px] cursor-pointer"
                               onClick={() => {
                                 setLigaParaEditar(l);
                                 setSheetLigaOpen(true);
-                                setDropdownLigaId(null);
                               }}
-                              className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-navy hover:bg-navy/5 transition-colors flex items-center gap-2"
                             >
-                              <Pencil className="h-3.5 w-3.5" />
+                              <Pencil className="h-3.5 w-3.5 mr-2" />
                               Editar
-                            </button>
-                            <button
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-[12px] cursor-pointer"
                               onClick={() => {
                                 setLigaMembros(l);
                                 setSheetMembrosOpen(true);
-                                setDropdownLigaId(null);
                               }}
-                              className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-navy hover:bg-navy/5 transition-colors flex items-center gap-2"
                             >
-                              <Users className="h-3.5 w-3.5" />
+                              <Users className="h-3.5 w-3.5 mr-2" />
                               Membros
-                            </button>
-                            <button
-                              onClick={() => {
-                                setConfirmarArquivoId(l.id);
-                                setDropdownLigaId(null);
-                              }}
-                              className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2"
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-[12px] cursor-pointer text-red-500 focus:text-red-600"
+                              onClick={() => setConfirmarArquivoId(l.id)}
                             >
-                              <Archive className="h-3.5 w-3.5" />
+                              <Archive className="h-3.5 w-3.5 mr-2" />
                               Arquivar
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ),
-                  ])}
-                />
-              )}
-            </div>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
+        </div>
+      )}
 
-          {/* Aba: Aprovações */}
-          {abaAtiva === "aprovacoes" && (
-            <div>
-              <SectionHeader numero="02" eyebrow="Pendências" titulo="Aprovações Pendentes" />
+      {/* ── Aba: Aprovações ── */}
+      {abaAtiva === "aprovacoes" && (
+        <div className="space-y-6">
+          <SectionHeader numero="02" eyebrow="Pendências" titulo="Aprovações Pendentes" />
 
-              {pendentes.projetos.length === 0 && pendentes.eventos.length === 0 ? (
-                <p className="font-plex-sans text-[13px] text-navy/50">
-                  Nenhuma aprovação pendente. Tudo em dia!
-                </p>
-              ) : (
-                <EditorialTable
-                  columns={["Tipo", "Nome", "Liga", "Enviado em", "Ações"]}
-                  rows={[
-                    ...pendentes.projetos.map((p) => [
-                      <span
-                        key="t"
-                        className="font-plex-mono text-[9px] uppercase tracking-[0.14em] px-2 py-0.5 bg-navy/10 text-navy"
-                      >
+          {pendentes.projetos.length === 0 && pendentes.eventos.length === 0 ? (
+            <p className="font-plex-sans text-[13px] text-foreground/50">
+              Nenhuma aprovação pendente. Tudo em dia!
+            </p>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-foreground/[0.08]">
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                    Tipo
+                  </th>
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                    Nome
+                  </th>
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+                    Liga
+                  </th>
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden md:table-cell">
+                    Enviado em
+                  </th>
+                  <th className="text-right py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendentes.projetos.map((p) => (
+                  <tr
+                    key={p.id}
+                    className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
+                  >
+                    <td className="py-4 px-4">
+                      <span className="font-plex-mono text-[10px] font-semibold uppercase tracking-[0.08em] border border-foreground/[0.15] text-foreground/50 px-2 py-0.5 rounded-full">
                         Projeto
-                      </span>,
-                      <span key="n" className="font-medium">
+                      </span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className="font-plex-sans font-semibold text-[13px] text-foreground">
                         {p.titulo}
-                      </span>,
-                      p.liga?.nome ?? "—",
-                      new Date(p.criado_em).toLocaleDateString("pt-BR"),
-                      <div key="a" className="flex items-center gap-4">
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 font-plex-sans text-[13px] text-foreground/60 hidden sm:table-cell">
+                      {p.liga?.nome ?? "—"}
+                    </td>
+                    <td className="py-4 px-4 font-plex-mono text-[11px] text-foreground/50 hidden md:table-cell">
+                      {new Date(p.criado_em).toLocaleDateString("pt-BR")}
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center justify-end gap-2">
                         <button
                           disabled={aprovando === p.id}
                           onClick={() => void aprovarProjeto(p.id)}
-                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-green-700 hover:text-green-900 transition-colors disabled:opacity-40"
+                          className="font-plex-sans text-[11px] font-semibold text-white bg-navy px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40"
                         >
                           Aprovar
                         </button>
                         <button
                           disabled={aprovando === p.id}
                           onClick={() => void rejeitarProjeto(p.id)}
-                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-500 hover:text-red-700 transition-colors disabled:opacity-40"
+                          className="font-plex-sans text-[11px] font-semibold text-red-600 border border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50 transition-colors disabled:opacity-40"
                         >
                           Rejeitar
                         </button>
-                      </div>,
-                    ]),
-                    ...pendentes.eventos.map((e) => [
-                      <span
-                        key="t"
-                        className="font-plex-mono text-[9px] uppercase tracking-[0.14em] px-2 py-0.5 bg-navy/[0.05] text-navy/70"
-                      >
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {pendentes.eventos.map((e) => (
+                  <tr
+                    key={e.id}
+                    className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
+                  >
+                    <td className="py-4 px-4">
+                      <span className="font-plex-mono text-[10px] font-semibold uppercase tracking-[0.08em] border border-foreground/[0.15] text-foreground/50 px-2 py-0.5 rounded-full">
                         {e.categoria}
-                      </span>,
-                      <span key="n" className="font-medium">
+                      </span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className="font-plex-sans font-semibold text-[13px] text-foreground">
                         {e.titulo}
-                      </span>,
-                      e.liga?.nome ?? "—",
-                      new Date(e.criado_em).toLocaleDateString("pt-BR"),
-                      <div key="a" className="flex items-center gap-4">
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 font-plex-sans text-[13px] text-foreground/60 hidden sm:table-cell">
+                      {e.liga?.nome ?? "—"}
+                    </td>
+                    <td className="py-4 px-4 font-plex-mono text-[11px] text-foreground/50 hidden md:table-cell">
+                      {new Date(e.criado_em).toLocaleDateString("pt-BR")}
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center justify-end gap-2">
                         <button
                           disabled={aprovando === e.id}
                           onClick={() => void aprovarEvento(e.id)}
-                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-green-700 hover:text-green-900 transition-colors disabled:opacity-40"
+                          className="font-plex-sans text-[11px] font-semibold text-white bg-navy px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40"
                         >
                           Aprovar
                         </button>
                         <button
                           disabled={aprovando === e.id}
                           onClick={() => void rejeitarEvento(e.id)}
-                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-500 hover:text-red-700 transition-colors disabled:opacity-40"
+                          className="font-plex-sans text-[11px] font-semibold text-red-600 border border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50 transition-colors disabled:opacity-40"
                         >
                           Rejeitar
                         </button>
-                      </div>,
-                    ]),
-                  ]}
-                />
-              )}
-            </div>
-          )}
-
-          {/* Aba: Usuários */}
-          {abaAtiva === "usuarios" && (
-            <div>
-              <SectionHeader
-                numero="03"
-                eyebrow="Gestão"
-                titulo="Usuários"
-                acao={
-                  <button
-                    onClick={() => {
-                      setUsuarioParaEditar(undefined);
-                      setSheetUsuarioOpen(true);
-                    }}
-                    className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors"
-                  >
-                    + Novo Usuário
-                  </button>
-                }
-              />
-
-              {/* Busca */}
-              <div className="relative max-w-sm mb-6">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-navy/30" />
-                <input
-                  type="text"
-                  placeholder="Buscar por nome ou email..."
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                  className="w-full pl-9 pr-4 border border-navy/20 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
-                />
-              </div>
-
-              {carregando ? (
-                <p className="font-plex-sans text-[13px] text-navy/50">Carregando...</p>
-              ) : usuariosFiltrados.length === 0 ? (
-                <p className="font-plex-sans text-[13px] text-navy/50">
-                  Nenhum usuário encontrado.
-                </p>
-              ) : (
-                <EditorialTable
-                  columns={["Nome", "Email", "Role", "Liga", "Ações"]}
-                  rows={usuariosFiltrados.map((u) => [
-                    <span key="n" className="font-medium">
-                      {u.nome}
-                    </span>,
-                    <span key="e" className="text-navy/60">
-                      {u.email}
-                    </span>,
-                    <RoleBadge key="r" role={u.role} />,
-                    u.liga_nome ?? "—",
-                    confirmarRemocaoId === u.id ? (
-                      <div key="conf" className="flex items-center gap-3">
-                        <span className="font-plex-sans text-[12px] text-red-600">Confirmar?</span>
-                        <button
-                          onClick={() => void removerUsuario(u.id)}
-                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-600 hover:text-red-800 transition-colors"
-                        >
-                          Sim
-                        </button>
-                        <button
-                          onClick={() => setConfirmarRemocaoId(null)}
-                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
-                        >
-                          Não
-                        </button>
                       </div>
-                    ) : (
-                      <div
-                        key="acoes"
-                        className="relative"
-                        ref={dropdownUsuarioId === u.id ? dropdownUsuarioRef : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {/* ── Aba: Usuários ── */}
+      {abaAtiva === "usuarios" && (
+        <div className="space-y-6">
+          <SectionHeader
+            numero="03"
+            eyebrow="Gestão"
+            titulo="Usuários"
+            acao={
+              <button
+                onClick={() => setCardCriarAberto(true)}
+                className="font-plex-sans text-[11px] font-semibold text-foreground/45 border border-foreground/[0.15] px-3 py-1.5 rounded-full bg-transparent hover:border-foreground/30 transition-colors"
+              >
+                + Novo Usuário
+              </button>
+            }
+          />
+
+          {/* Barra de filtros */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/30" />
+              <input
+                type="text"
+                placeholder="Buscar por nome ou email..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="w-full pl-9 pr-4 border border-border bg-muted/50 py-2.5 font-plex-sans text-[13px] text-foreground placeholder:text-foreground/25 focus:outline-none focus:border-foreground/30 rounded"
+              />
+            </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="relative p-2 border border-border bg-muted/50 rounded text-foreground/50 hover:text-foreground/80 hover:border-foreground/30 transition-colors">
+                  <SlidersHorizontal size={15} />
+                  {(filtroRole !== "todos" || filtroLiga !== "todas") && (
+                    <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-navy" />
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[180px]">
+                <DropdownMenuLabel className="font-plex-mono text-[10px] uppercase tracking-[0.12em] text-foreground/40 font-normal">
+                  Filtrar por
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="font-plex-sans text-[13px] cursor-pointer">
+                    Cargo
+                    {filtroRole !== "todos" && (
+                      <span className="ml-auto font-plex-mono text-[10px] text-foreground/50 capitalize">
+                        {filtroRole}
+                      </span>
+                    )}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {ROLES.map(({ value, label }) => (
+                      <DropdownMenuItem
+                        key={value}
+                        className="font-plex-sans text-[13px] cursor-pointer"
+                        onClick={() => setFiltroRole(value)}
                       >
-                        <button
-                          onClick={() =>
-                            setDropdownUsuarioId(dropdownUsuarioId === u.id ? null : u.id)
-                          }
-                          className="text-navy/40 hover:text-navy transition-colors p-1"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                        {dropdownUsuarioId === u.id && (
-                          <div className="absolute right-0 top-7 z-50 bg-white border border-navy/15 min-w-[130px] shadow-sm">
-                            <button
+                        <Check
+                          className={cn(
+                            "h-3.5 w-3.5 mr-2 shrink-0",
+                            filtroRole === value ? "opacity-100" : "opacity-0",
+                          )}
+                        />
+                        {label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="font-plex-sans text-[13px] cursor-pointer">
+                    Liga
+                    {filtroLiga !== "todas" && (
+                      <span className="ml-auto font-plex-mono text-[10px] text-foreground/50 truncate max-w-[80px]">
+                        {ligas.find((l) => l.id === filtroLiga)?.nome ?? ""}
+                      </span>
+                    )}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem
+                      className="font-plex-sans text-[13px] cursor-pointer"
+                      onClick={() => setFiltroLiga("todas")}
+                    >
+                      <Check
+                        className={cn(
+                          "h-3.5 w-3.5 mr-2 shrink-0",
+                          filtroLiga === "todas" ? "opacity-100" : "opacity-0",
+                        )}
+                      />
+                      Todas as ligas
+                    </DropdownMenuItem>
+                    {ligas.map((l) => (
+                      <DropdownMenuItem
+                        key={l.id}
+                        className="font-plex-sans text-[13px] cursor-pointer"
+                        onClick={() => setFiltroLiga(l.id)}
+                      >
+                        <Check
+                          className={cn(
+                            "h-3.5 w-3.5 mr-2 shrink-0",
+                            filtroLiga === l.id ? "opacity-100" : "opacity-0",
+                          )}
+                        />
+                        {l.nome}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+
+                {(filtroRole !== "todos" || filtroLiga !== "todas") && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="font-plex-sans text-[13px] cursor-pointer text-foreground/50"
+                      onClick={() => {
+                        setFiltroRole("todos");
+                        setFiltroLiga("todas");
+                      }}
+                    >
+                      Limpar filtros
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {carregando ? (
+            <p className="font-plex-sans text-[13px] text-foreground/50">Carregando...</p>
+          ) : usuariosFiltrados.length === 0 ? (
+            <p className="font-plex-sans text-[13px] text-foreground/50">
+              Nenhum usuário encontrado.
+            </p>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-foreground/[0.08]">
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                    Nome
+                  </th>
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+                    Email
+                  </th>
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                    Role
+                  </th>
+                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden md:table-cell">
+                    Liga
+                  </th>
+                  <th className="py-3 px-4 w-10" />
+                </tr>
+              </thead>
+              <tbody>
+                {usuariosFiltrados.map((u) => (
+                  <tr
+                    key={u.id}
+                    className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
+                  >
+                    <td className="py-4 px-4">
+                      <span className="font-plex-sans font-semibold text-[13px] text-foreground">
+                        {u.nome}
+                      </span>
+                      <span className="block font-plex-mono text-[10px] text-foreground/40 mt-0.5 sm:hidden">
+                        {u.email}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 font-plex-sans text-[13px] text-foreground/60 hidden sm:table-cell">
+                      {u.email}
+                    </td>
+                    <td className="py-4 px-4">
+                      {confirmarRemocaoId === u.id ? (
+                        <div className="flex items-center gap-3">
+                          <span className="font-plex-sans text-[12px] text-red-600">Remover?</span>
+                          <button
+                            onClick={() => void removerUsuario(u.id)}
+                            className="font-plex-sans text-[12px] font-semibold text-red-600 hover:text-red-800 transition-colors"
+                          >
+                            Sim
+                          </button>
+                          <button
+                            onClick={() => setConfirmarRemocaoId(null)}
+                            className="font-plex-sans text-[12px] text-foreground/40 hover:text-foreground transition-colors"
+                          >
+                            Não
+                          </button>
+                        </div>
+                      ) : (
+                        <RoleBadge role={u.role} />
+                      )}
+                    </td>
+                    <td className="py-4 px-4 font-plex-sans text-[13px] text-foreground/60 hidden md:table-cell">
+                      {u.liga_nome ?? "—"}
+                    </td>
+                    <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
+                      {confirmarRemocaoId === u.id ? null : (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="p-1 rounded hover:bg-foreground/[0.08] text-foreground/40 hover:text-foreground/70 transition-colors">
+                              <MoreHorizontal size={14} />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="min-w-[140px]">
+                            <DropdownMenuItem
+                              className="text-[12px] cursor-pointer"
                               onClick={() => {
                                 setUsuarioParaEditar(u);
                                 setSheetUsuarioOpen(true);
-                                setDropdownUsuarioId(null);
                               }}
-                              className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-navy hover:bg-navy/5 transition-colors flex items-center gap-2"
                             >
-                              <Pencil className="h-3.5 w-3.5" />
+                              <Pencil className="h-3.5 w-3.5 mr-2" />
                               Editar
-                            </button>
-                            <button
-                              onClick={() => {
-                                setConfirmarRemocaoId(u.id);
-                                setDropdownUsuarioId(null);
-                              }}
-                              className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2"
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-[12px] cursor-pointer text-red-500 focus:text-red-600"
+                              onClick={() => setConfirmarRemocaoId(u.id)}
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash2 className="h-3.5 w-3.5 mr-2" />
                               Remover
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ),
-                  ])}
-                />
-              )}
-            </div>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
-      </div>
+      )}
+
+      {/* Dialog — Criar Usuário */}
+      <Dialog
+        open={cardCriarAberto}
+        onOpenChange={(o) => {
+          if (!o) setCardCriarAberto(false);
+        }}
+      >
+        <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
+          <CriarUsuarioCard
+            ligas={ligas}
+            onSalvo={carregarDados}
+            onFechar={() => setCardCriarAberto(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Sheets */}
       <UsuarioSheet

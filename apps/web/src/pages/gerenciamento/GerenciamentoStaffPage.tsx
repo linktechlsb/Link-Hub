@@ -1,11 +1,11 @@
 import {
+  MoreHorizontal,
   X,
-  Pencil,
-  Trash2,
   Plus,
+  Pencil,
+  Image,
   Link,
   FileText,
-  Image,
   Globe,
   Folder,
   BookOpen,
@@ -13,15 +13,34 @@ import {
   Video,
   Music,
   Star,
-  ChevronDown,
-  AlertTriangle,
+  Upload,
+  Check,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { SectionHeader, KpiRow } from "@/pages/home/v1/primitives";
 
 import type { RankingLiga } from "@link-leagues/types";
 
@@ -118,7 +137,7 @@ function apiParaRecurso(r: RecursoAPI): Recurso {
 }
 
 const inputClass =
-  "w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60";
+  "w-full border border-border bg-muted/50 rounded px-3 py-2.5 font-plex-sans text-[13px] text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 transition-colors";
 
 // ─── picker de ícone/cor ──────────────────────────────────────────────────────
 
@@ -164,73 +183,67 @@ function IconeCor({
   cor: string;
   onChange: (i: string, c: string) => void;
 }) {
-  const [aberto, setAberto] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function fechar(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setAberto(false);
-    }
-    document.addEventListener("mousedown", fechar);
-    return () => document.removeEventListener("mousedown", fechar);
-  }, []);
-
   return (
-    <div ref={ref} className="relative shrink-0">
-      <button
-        type="button"
-        onClick={() => setAberto((v) => !v)}
-        className="h-9 w-9 flex items-center justify-center border-2 border-transparent hover:border-navy/20 transition-colors"
-        style={{ backgroundColor: cor }}
-        title="Escolher ícone e cor"
-      >
-        <RecursoIcone id={icone} />
-      </button>
-      {aberto && (
-        <div className="absolute left-0 top-11 z-50 bg-white border border-navy/15 p-3 w-56">
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
-            Ícone
-          </p>
-          <div className="grid grid-cols-5 gap-1.5 mb-3">
-            {ICONES.map((ic) => {
-              const Comp = ic.componente;
-              return (
-                <button
-                  key={ic.id}
-                  type="button"
-                  onClick={() => onChange(ic.id, cor)}
-                  className={cn(
-                    "h-8 w-8 flex items-center justify-center transition-colors",
-                    icone === ic.id
-                      ? "bg-navy text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200",
-                  )}
-                >
-                  <Comp className="h-4 w-4" />
-                </button>
-              );
-            })}
-          </div>
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
-            Cor
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {CORES_PICKER.map((c) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="group relative h-9 w-9 flex items-center justify-center rounded-full border-2 border-transparent hover:border-navy/20 transition-colors shrink-0 outline-none"
+          style={{ backgroundColor: cor }}
+          title="Escolher ícone e cor"
+        >
+          <span className="group-hover:opacity-0 transition-opacity">
+            <RecursoIcone id={icone} />
+          </span>
+          <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <Pencil className="h-3.5 w-3.5 text-white" />
+          </span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56 p-3">
+        <DropdownMenuLabel className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 px-0 pb-2">
+          Ícone
+        </DropdownMenuLabel>
+        <div className="grid grid-cols-5 gap-1.5">
+          {ICONES.map((ic) => {
+            const Comp = ic.componente;
+            return (
               <button
-                key={c}
+                key={ic.id}
                 type="button"
-                onClick={() => onChange(icone, c)}
+                onClick={() => onChange(ic.id, cor)}
                 className={cn(
-                  "h-6 w-6 rounded-full border-2 transition-colors",
-                  cor === c ? "border-navy scale-110" : "border-transparent",
+                  "h-8 w-8 flex items-center justify-center rounded transition-colors",
+                  icone === ic.id
+                    ? "bg-navy text-white"
+                    : "bg-foreground/[0.06] text-foreground/60 hover:bg-foreground/[0.10]",
                 )}
-                style={{ backgroundColor: c }}
-              />
-            ))}
-          </div>
+              >
+                <Comp className="h-4 w-4" />
+              </button>
+            );
+          })}
         </div>
-      )}
-    </div>
+        <DropdownMenuSeparator className="my-3" />
+        <DropdownMenuLabel className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 px-0 pb-2">
+          Cor
+        </DropdownMenuLabel>
+        <div className="flex flex-wrap gap-1.5">
+          {CORES_PICKER.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => onChange(icone, c)}
+              className={cn(
+                "h-6 w-6 rounded-full border-2 transition-all",
+                cor === c ? "border-navy scale-110" : "border-transparent hover:scale-105",
+              )}
+              style={{ backgroundColor: c }}
+            />
+          ))}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -327,62 +340,73 @@ function AbaInformacoes({
     setBannerPreview(URL.createObjectURL(file));
   }
 
+  const inputCls = inputClass;
+
   return (
-    <div className="space-y-4">
-      {/* Dados gerais */}
-      <div className="border border-navy/15 p-5 space-y-4">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
-          Dados Gerais
-        </p>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            Nome da liga
-          </label>
-          <input
-            value={form.nome}
-            onChange={(e) => setForm({ ...form, nome: e.target.value })}
-            className={inputClass}
-          />
+    <div className="space-y-8">
+      {/* Dados Gerais */}
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Dados Gerais"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+          acao={
+            alterado ? (
+              <div className="flex items-center gap-3">
+                {salvo && <span className="font-plex-sans text-[12px] text-green-600">Salvo!</span>}
+                {erro && <span className="font-plex-sans text-[12px] text-red-600">{erro}</span>}
+                <button
+                  onClick={() => void salvar()}
+                  disabled={salvando}
+                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white transition-colors disabled:opacity-40"
+                >
+                  {salvando ? "Salvando…" : "Salvar alterações"}
+                </button>
+              </div>
+            ) : null
+          }
+        />
+        <div className="space-y-4">
+          {[
+            { label: "Nome da liga", field: "nome" as const, placeholder: "" },
+            { label: "Área de atuação", field: "area" as const, placeholder: "" },
+            {
+              label: "Semestre de fundação",
+              field: "semestre" as const,
+              placeholder: "ex: 2023.1",
+            },
+          ].map(({ label, field, placeholder }) => (
+            <div key={field}>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2 block">
+                {label}
+              </label>
+              <input
+                value={form[field]}
+                onChange={(e) => setForm({ ...form, [field]: e.target.value })}
+                placeholder={placeholder}
+                className={inputCls}
+              />
+            </div>
+          ))}
+          <div>
+            <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2 block">
+              Descrição
+            </label>
+            <textarea
+              value={form.descricao}
+              onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+              rows={3}
+              className={cn(inputCls, "resize-none")}
+            />
+          </div>
         </div>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            Área de atuação
-          </label>
-          <input
-            value={form.area}
-            onChange={(e) => setForm({ ...form, area: e.target.value })}
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            Descrição
-          </label>
-          <textarea
-            value={form.descricao}
-            onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-            rows={3}
-            className={cn(inputClass, "resize-none")}
-          />
-        </div>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            Semestre de fundação
-          </label>
-          <input
-            value={form.semestre}
-            onChange={(e) => setForm({ ...form, semestre: e.target.value })}
-            placeholder="ex: 2023.1"
-            className={inputClass}
-          />
-        </div>
-      </div>
+      </section>
 
       {/* Foto / Banner */}
-      <div className="border border-navy/15 p-5 space-y-3">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
-          Foto / Banner da Liga
-        </p>
+      <section className="space-y-3">
+        <SectionHeader
+          titulo="Foto / Banner da Liga"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        />
         {bannerPreview ? (
           <div className="relative overflow-hidden border border-navy/15 h-36">
             <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
@@ -392,7 +416,7 @@ function AbaInformacoes({
                 setBannerFile(null);
                 setForm((prev) => ({ ...prev, bannerUrl: "" }));
               }}
-              className="absolute top-2 right-2 bg-white/80 hover:bg-white text-red-500 p-1 transition-colors"
+              className="absolute top-2 right-2 bg-background/80 hover:bg-background text-red-500 p-1 transition-colors"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -408,88 +432,69 @@ function AbaInformacoes({
           {bannerPreview ? "Trocar imagem" : "Selecionar imagem"}
           <input type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
         </label>
-      </div>
+      </section>
 
       {/* Contatos */}
-      <div className="border border-navy/15 p-5 space-y-4">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
-          Contatos da Liga
-        </p>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            E-mail de contato
-          </label>
-          <input
-            type="email"
-            value={form.emailContato}
-            onChange={(e) => setForm({ ...form, emailContato: e.target.value })}
-            placeholder="contato@faculdade.edu"
-            className={inputClass}
-          />
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Contatos da Liga"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        />
+        <div className="space-y-4">
+          {[
+            {
+              label: "E-mail de contato",
+              field: "emailContato" as const,
+              type: "email",
+              placeholder: "contato@faculdade.edu",
+            },
+            { label: "Instagram", field: "instagram" as const, type: "text", placeholder: "@liga" },
+            {
+              label: "LinkedIn",
+              field: "linkedin" as const,
+              type: "text",
+              placeholder: "liga-faculdade",
+            },
+          ].map(({ label, field, type, placeholder }) => (
+            <div key={field}>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2 block">
+                {label}
+              </label>
+              <input
+                type={type}
+                value={form[field]}
+                onChange={(e) => setForm({ ...form, [field]: e.target.value })}
+                placeholder={placeholder}
+                className={inputCls}
+              />
+            </div>
+          ))}
         </div>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            Instagram
-          </label>
-          <input
-            value={form.instagram}
-            onChange={(e) => setForm({ ...form, instagram: e.target.value })}
-            placeholder="@liga"
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            LinkedIn
-          </label>
-          <input
-            value={form.linkedin}
-            onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
-            placeholder="liga-faculdade"
-            className={inputClass}
-          />
-        </div>
-      </div>
+      </section>
 
-      {/* Professor mentor */}
-      <div className="border border-navy/15 p-5 space-y-3">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
-          Professor Mentor
-        </p>
+      {/* Professor Mentor */}
+      <section className="space-y-3">
+        <SectionHeader
+          titulo="Professor Mentor"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        />
         <input
           value={form.professorMentor}
           onChange={(e) => setForm({ ...form, professorMentor: e.target.value })}
           placeholder="Nome do professor mentor"
-          className={inputClass}
+          className={inputCls}
         />
-      </div>
+      </section>
 
-      {/* Botão salvar */}
-      {alterado && (
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => void salvar()}
-            disabled={salvando}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {salvando ? "Salvando…" : "Salvar alterações"}
-          </button>
-          {salvo && (
-            <span className="font-plex-sans text-[12px] text-green-600">Salvo com sucesso!</span>
-          )}
-          {erro && <span className="font-plex-sans text-[12px] text-red-600">{erro}</span>}
-        </div>
-      )}
-
-      {/* Zona de perigo */}
-      <div className="border border-red-200 p-5 space-y-3">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-red-500 flex items-center gap-1.5">
-          <AlertTriangle className="h-3.5 w-3.5" />
-          Zona de Perigo
-        </p>
-        <p className="font-plex-sans text-[13px] text-navy/50">
-          Arquivar a liga a tornará inativa e ela não aparecerá mais para os membros. Esta ação pode
-          ser revertida pelo Super Admin.
+      {/* Zona de Perigo */}
+      <section className="space-y-3">
+        <SectionHeader
+          titulo="Zona de Perigo"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-red-500"
+        />
+        <p className="font-plex-sans text-[13px] text-foreground/50">
+          Arquivar a liga a tornará inativa e não aparecerá mais para os membros. Pode ser revertido
+          pelo Super Admin.
         </p>
         {confirmandoArquivar ? (
           <div className="flex items-center gap-4">
@@ -512,12 +517,12 @@ function AbaInformacoes({
         ) : (
           <button
             onClick={() => setConfirmandoArquivar(true)}
-            className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-500 hover:text-red-700 transition-colors"
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-red-500 hover:text-red-700 border border-red-200 px-3 py-1.5 rounded-full transition-colors"
           >
             Arquivar liga
           </button>
         )}
-      </div>
+      </section>
     </div>
   );
 }
@@ -526,14 +531,17 @@ function AbaInformacoes({
 function AbaRecursos({ ligaId }: { ligaId: string }) {
   const [recursos, setRecursos] = useState<Recurso[]>([]);
   const [novoNome, setNovoNome] = useState("");
-  const [novoTipo, setNovoTipo] = useState("Link");
+  const [novoTipo, setNovoTipo] = useState("URL");
   const [novoUrl, setNovoUrl] = useState("");
   const [novoIcone, setNovoIcone] = useState("link");
   const [novoCor, setNovoCor] = useState("#546484");
+  const [novoEnviando, setNovoEnviando] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Recurso>>({});
+  const [editEnviando, setEditEnviando] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+  const [sheetAberto, setSheetAberto] = useState(false);
 
   const [prevId, setPrevId] = useState(ligaId);
   if (ligaId !== prevId) {
@@ -541,6 +549,46 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
     setRecursos([]);
     setEditandoId(null);
     setCarregando(true);
+  }
+
+  async function uploadArquivo(
+    file: File,
+    setUrl: (url: string) => void,
+    setEnviando: (v: boolean) => void,
+  ) {
+    const tiposPermitidos = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "video/mp4",
+      "video/webm",
+      "video/quicktime",
+    ];
+    const tamanhoMaximoMB = 50;
+    if (!tiposPermitidos.includes(file.type)) {
+      setErro("Tipo de ficheiro não permitido.");
+      return;
+    }
+    if (file.size > tamanhoMaximoMB * 1024 * 1024) {
+      setErro(`O ficheiro não pode ter mais de ${tamanhoMaximoMB} MB.`);
+      return;
+    }
+    setEnviando(true);
+    const ext = file.name.split(".").pop() ?? "bin";
+    const path = `${ligaId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("recursos").upload(path, file, { upsert: false });
+    if (error) {
+      setErro("Falha ao enviar o ficheiro. Tente novamente.");
+      setEnviando(false);
+      return;
+    }
+    const { data } = supabase.storage.from("recursos").getPublicUrl(path);
+    setUrl(data.publicUrl);
+    setEnviando(false);
   }
 
   useEffect(() => {
@@ -585,8 +633,10 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
       setRecursos((prev) => [apiParaRecurso(criado), ...prev]);
       setNovoNome("");
       setNovoUrl("");
+      setNovoTipo("URL");
       setNovoIcone("link");
       setNovoCor("#546484");
+      setNovoEnviando(false);
     } else {
       const body = (await res.json().catch(() => ({}))) as { error?: string };
       setErro(body.error ?? `Erro ${res.status}.`);
@@ -605,6 +655,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
   function iniciarEdicao(r: Recurso) {
     setEditandoId(r.id);
     setEditForm({ nome: r.nome, tipo: r.tipo, url: r.url, icone: r.icone, cor: r.cor });
+    setSheetAberto(true);
   }
 
   async function salvarEdicao(id: string) {
@@ -631,143 +682,284 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
     return <p className="font-plex-sans text-[13px] text-navy/50">Carregando recursos…</p>;
 
   return (
-    <div className="space-y-4">
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Recursos ({recursos.length})
-        </p>
-        {recursos.length === 0 ? (
-          <p className="font-plex-sans text-[13px] text-navy/50">Nenhum recurso cadastrado.</p>
-        ) : (
-          <div className="border-t border-navy/15">
-            {recursos.map((r) => (
-              <div key={r.id} className="border-b border-navy/10 py-3">
-                {editandoId === r.id ? (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex gap-2 items-center">
-                      <IconeCor
-                        icone={editForm.icone ?? "link"}
-                        cor={editForm.cor ?? "#546484"}
-                        onChange={(ic, c) => setEditForm({ ...editForm, icone: ic, cor: c })}
-                      />
-                      <input
-                        value={editForm.nome ?? ""}
-                        onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
-                        placeholder="Nome"
-                        className="flex-1 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <input
-                        value={editForm.url ?? ""}
-                        onChange={(e) => setEditForm({ ...editForm, url: e.target.value })}
-                        placeholder="URL"
-                        className="flex-1 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
-                      />
-                      <input
-                        value={editForm.tipo ?? ""}
-                        onChange={(e) => setEditForm({ ...editForm, tipo: e.target.value })}
-                        placeholder="Tipo"
-                        className="w-36 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
-                      />
-                    </div>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => void salvarEdicao(r.id)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-white bg-navy px-3 py-1.5 hover:bg-navy/90 transition-colors"
-                      >
-                        Salvar
-                      </button>
-                      <button
-                        onClick={() => setEditandoId(null)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="h-9 w-9 flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: r.cor }}
-                      >
-                        <RecursoIcone id={r.icone} />
-                      </div>
-                      <div>
-                        <p className="font-plex-sans font-semibold text-[13px] text-navy">
-                          {r.nome}
-                        </p>
-                        <p className="font-plex-mono text-[10px] text-navy/50">{r.tipo}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => iniciarEdicao(r)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
-                        title="Editar"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={() => void remover(r.id)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-400 hover:text-red-600 transition-colors"
-                        title="Remover"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Adicionar */}
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Adicionar Recurso
-        </p>
-        <div className="flex gap-2 flex-wrap items-center">
-          <IconeCor
-            icone={novoIcone}
-            cor={novoCor}
-            onChange={(ic, c) => {
-              setNovoIcone(ic);
-              setNovoCor(c);
-            }}
-          />
-          <input
-            value={novoNome}
-            onChange={(e) => setNovoNome(e.target.value)}
-            placeholder="Nome do recurso"
-            className="flex-1 min-w-[140px] border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
-          />
-          <input
-            value={novoUrl}
-            onChange={(e) => setNovoUrl(e.target.value)}
-            placeholder="URL"
-            className="flex-1 min-w-[160px] border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
-          />
-          <input
-            value={novoTipo}
-            onChange={(e) => setNovoTipo(e.target.value)}
-            placeholder="Tipo (ex: Documento)"
-            className="w-36 border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
-          />
+    <div className="space-y-6">
+      <SectionHeader
+        titulo="Recursos"
+        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        acao={
           <button
-            onClick={() => void adicionar()}
-            className="flex items-center gap-1.5 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-2.5 hover:bg-navy/90 transition-colors"
+            onClick={() => {
+              setNovoNome("");
+              setNovoTipo("URL");
+              setNovoUrl("");
+              setNovoIcone("link");
+              setNovoCor("#546484");
+              setEditandoId(null);
+              setSheetAberto(true);
+            }}
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
           >
-            <Plus className="h-3.5 w-3.5" />
-            Adicionar
+            + Adicionar
           </button>
-        </div>
-        {erro && <p className="font-plex-sans text-[12px] text-red-600 mt-2">{erro}</p>}
-      </div>
+        }
+      />
+
+      {recursos.length === 0 ? (
+        <p className="font-plex-sans text-[13px] text-navy/40">Nenhum recurso cadastrado.</p>
+      ) : (
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-foreground/[0.08]">
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Recurso
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+                URL
+              </th>
+              <th className="py-3 px-4 w-10" />
+            </tr>
+          </thead>
+          <tbody>
+            {recursos.map((r) => (
+              <tr
+                key={r.id}
+                className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
+              >
+                <td className="py-4 px-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="h-8 w-8 flex items-center justify-center shrink-0 rounded-full"
+                      style={{ backgroundColor: r.cor }}
+                    >
+                      <RecursoIcone id={r.icone} />
+                    </div>
+                    <div>
+                      <span className="font-plex-sans font-semibold text-[13px] text-foreground">
+                        {r.nome}
+                      </span>
+                      <span className="block font-plex-mono text-[10px] text-foreground/40">
+                        {r.tipo}
+                      </span>
+                    </div>
+                  </div>
+                </td>
+                <td className="py-4 px-4 hidden sm:table-cell">
+                  <span className="font-plex-mono text-[11px] text-foreground/40 truncate max-w-[200px] block">
+                    {r.url}
+                  </span>
+                </td>
+                <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-1 rounded hover:bg-foreground/[0.08] text-foreground/40 hover:text-foreground/70 transition-colors">
+                        <MoreHorizontal size={14} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[140px]">
+                      <DropdownMenuItem
+                        className="text-[12px] cursor-pointer"
+                        onClick={() => iniciarEdicao(r)}
+                      >
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-[12px] cursor-pointer text-red-500 focus:text-red-600"
+                        onClick={() => void remover(r.id)}
+                      >
+                        Remover
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <Sheet open={sheetAberto} onOpenChange={(v) => !v && setSheetAberto(false)}>
+        <SheetContent side="right" className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0">
+          <div className="flex-shrink-0">
+            <div className="h-px bg-foreground/20" />
+            <div className="px-8 pt-8 pb-6">
+              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
+                Recursos
+              </p>
+              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
+                {editandoId ? "Editar Recurso" : "Adicionar Recurso"}
+              </h2>
+            </div>
+            <div className="h-px bg-foreground/[0.08]" />
+          </div>
+          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+            <div>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                Nome
+              </label>
+              <div className="flex items-center gap-3">
+                <IconeCor
+                  icone={editandoId ? (editForm.icone ?? "link") : novoIcone}
+                  cor={editandoId ? (editForm.cor ?? "#546484") : novoCor}
+                  onChange={(ic, c) => {
+                    if (editandoId) setEditForm({ ...editForm, icone: ic, cor: c });
+                    else {
+                      setNovoIcone(ic);
+                      setNovoCor(c);
+                    }
+                  }}
+                />
+                <input
+                  value={editandoId ? (editForm.nome ?? "") : novoNome}
+                  onChange={(e) =>
+                    editandoId
+                      ? setEditForm({ ...editForm, nome: e.target.value })
+                      : setNovoNome(e.target.value)
+                  }
+                  placeholder="Nome do recurso"
+                  className="flex-1 font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                Tipo
+              </label>
+              <Select
+                value={editandoId ? (editForm.tipo ?? "URL") : novoTipo}
+                onValueChange={(v) =>
+                  editandoId ? setEditForm({ ...editForm, tipo: v }) : setNovoTipo(v)
+                }
+              >
+                <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[
+                    "URL",
+                    "PDF",
+                    "Apresentação",
+                    "Documento",
+                    "Notion",
+                    "Planilha",
+                    "Vídeo",
+                    "Outro",
+                  ].map((t) => (
+                    <SelectItem key={t} value={t} className="font-plex-sans text-[13px]">
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {(() => {
+              const tipo = editandoId ? (editForm.tipo ?? "URL") : novoTipo;
+              const ehMidia =
+                tipo === "PDF" ||
+                tipo === "Documento" ||
+                tipo === "Vídeo" ||
+                tipo === "Apresentação";
+              const currentUrl = editandoId ? (editForm.url ?? "") : novoUrl;
+              const enviando = editandoId ? editEnviando : novoEnviando;
+              const setUrl = (url: string) =>
+                editandoId ? setEditForm({ ...editForm, url }) : setNovoUrl(url);
+              const setEnviando = editandoId ? setEditEnviando : setNovoEnviando;
+              const accept =
+                tipo === "Vídeo"
+                  ? "video/*"
+                  : tipo === "PDF"
+                    ? ".pdf"
+                    : tipo === "Apresentação"
+                      ? ".pdf,.ppt,.pptx"
+                      : ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx";
+
+              return (
+                <div>
+                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                    {ehMidia ? "Arquivo" : "URL"}
+                  </label>
+                  {ehMidia ? (
+                    <label
+                      className={cn(
+                        "flex flex-col items-center justify-center gap-2 w-full h-24 border border-dashed rounded cursor-pointer transition-colors",
+                        currentUrl
+                          ? "border-foreground/30 bg-muted/30"
+                          : "border-foreground/20 hover:border-foreground/40",
+                      )}
+                    >
+                      {enviando ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-foreground/40" />
+                      ) : currentUrl ? (
+                        <>
+                          <Check className="h-4 w-4 text-green-600" />
+                          <span className="font-plex-mono text-[10px] text-foreground/50 max-w-[220px] truncate">
+                            {currentUrl.split("/").pop()}
+                          </span>
+                          <span className="font-plex-mono text-[9px] uppercase tracking-[0.12em] text-foreground/30">
+                            Trocar arquivo
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-5 w-5 text-foreground/30" />
+                          <span className="font-plex-sans text-[12px] text-foreground/40">
+                            Clique para selecionar
+                          </span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept={accept}
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          void uploadArquivo(file, setUrl, setEnviando);
+                        }}
+                      />
+                    </label>
+                  ) : (
+                    <input
+                      value={currentUrl}
+                      onChange={(e) => setUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                    />
+                  )}
+                </div>
+              );
+            })()}
+            {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
+          </div>
+          <div className="flex-shrink-0">
+            <div className="h-px bg-foreground/[0.08]" />
+            <div className="px-8 py-6 flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  if (editandoId) void salvarEdicao(editandoId).then(() => setSheetAberto(false));
+                  else
+                    void adicionar().then(() => {
+                      if (!erro) setSheetAberto(false);
+                    });
+                }}
+                disabled={
+                  editandoId
+                    ? !(editForm.nome ?? "").trim() || !(editForm.url ?? "").trim()
+                    : !novoNome.trim() || !novoUrl.trim()
+                }
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {editandoId ? "Salvar alterações" : "Adicionar recurso"}
+              </button>
+              <button
+                onClick={() => setSheetAberto(false)}
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
@@ -781,9 +973,6 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
   const scoreMaxRanking = ranking.reduce((acc, r) => Math.max(acc, r.pontuacao ?? 0), 0);
   const scoreMax = Math.max(scoreMaxRanking, 1);
   const porcentagem = Math.round((score / scoreMax) * 100);
-
-  const formatarMoeda = (valor: number) =>
-    valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
   const composicao = [
     {
@@ -809,169 +998,146 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
   const posicao = minha?.posicao ?? rankingOrdenado.findIndex((l) => l.id === liga.id) + 1;
 
   return (
-    <div className="space-y-4">
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-4">
-          Score Atual
-        </p>
-        <div className="flex items-end justify-between mb-3">
-          <div>
-            <span className="font-display font-bold text-4xl text-navy">{score}</span>
-            <span className="font-plex-sans text-lg text-navy/40 ml-1">pts</span>
-          </div>
-          {posicao > 0 && (
-            <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-brand-yellow text-navy px-2 py-0.5">
-              {posicao}º lugar
-            </span>
-          )}
-        </div>
-        <div className="w-full bg-navy/10 h-px overflow-hidden">
-          <div
-            className="h-px transition-all duration-500"
-            style={{
-              width: `${porcentagem}%`,
-              background: "linear-gradient(90deg, #10284E, #546484)",
-            }}
-          />
-        </div>
-        <div className="flex justify-between mt-2 font-plex-mono text-[10px] text-navy/40">
-          <span>0 pts</span>
-          <span>{porcentagem}% do máximo</span>
-          <span>{scoreMax} pts</span>
-        </div>
-      </div>
-
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Resumo
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {[
-            {
-              label: "Projetos concluídos",
-              valor: String(minha?.projetos_concluidos ?? 0),
-              cor: "text-green-600",
-            },
-            {
-              label: "Em andamento",
-              valor: String(minha?.projetos_em_andamento ?? 0),
-              cor: "text-blue-600",
-            },
-            {
-              label: "Receita total",
-              valor: formatarMoeda(Number(minha?.receita_total ?? 0)),
-              cor: "text-amber-600",
-            },
-            {
-              label: "Presenças",
-              valor: String(minha?.presencas ?? 0),
-              cor: "text-purple-600",
-            },
-            {
-              label: "Publicações",
-              valor: String(minha?.posts ?? 0),
-              cor: "text-navy",
-            },
-          ].map((r) => (
-            <div key={r.label} className="border border-navy/10 p-3">
-              <p className={cn("font-display font-bold text-xl", r.cor)}>{r.valor}</p>
-              <p className="font-plex-sans text-[12px] text-navy/50 mt-0.5">{r.label}</p>
+    <div className="space-y-8">
+      {/* Score */}
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Score Atual"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        />
+        <div className="border border-navy/15 p-5 rounded-lg">
+          <div className="flex items-end justify-between mb-3">
+            <div>
+              <span className="font-display font-bold text-4xl text-navy">{score}</span>
+              <span className="font-plex-sans text-lg text-navy/40 ml-1">pts</span>
             </div>
-          ))}
+            {posicao > 0 && (
+              <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-brand-yellow text-navy px-2 py-0.5 rounded-full">
+                {posicao}º lugar
+              </span>
+            )}
+          </div>
+          <div className="w-full bg-navy/10 h-px overflow-hidden">
+            <div
+              className="h-px transition-all duration-500"
+              style={{
+                width: `${porcentagem}%`,
+                background: "linear-gradient(90deg, #10284E, #546484)",
+              }}
+            />
+          </div>
+          <div className="flex justify-between mt-2 font-plex-mono text-[10px] text-navy/40">
+            <span>0 pts</span>
+            <span>{porcentagem}% do máximo</span>
+            <span>{scoreMax} pts</span>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Indicadores
-        </p>
+      {/* KPIs resumo */}
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Resumo"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        />
+        <KpiRow
+          items={[
+            { label: "Projetos concluídos", valor: String(minha?.projetos_concluidos ?? 0) },
+            { label: "Em andamento", valor: String(minha?.projetos_em_andamento ?? 0) },
+            { label: "Presenças", valor: String(minha?.presencas ?? 0) },
+            { label: "Publicações", valor: String(minha?.posts ?? 0) },
+          ]}
+          cols={4}
+        />
+      </section>
+
+      {/* Indicadores */}
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Indicadores"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        />
         <div className="space-y-4">
           {composicao.map((c) => (
             <div key={c.label}>
               <div className="flex items-center justify-between mb-2">
-                <span className="font-plex-sans font-semibold text-[13px] text-navy">
+                <span className="font-plex-sans font-semibold text-[13px] text-foreground">
                   {c.label}
                 </span>
-                <span className="font-plex-mono text-[12px] text-navy">{c.valor}</span>
+                <span className="font-plex-mono text-[12px] text-foreground">{c.valor}</span>
               </div>
               <div className="w-full bg-navy/10 h-px overflow-hidden">
                 <div
                   className={cn("h-px", c.cor)}
-                  style={{
-                    width: `${Math.round((c.valor / composicaoMax) * 100)}%`,
-                  }}
+                  style={{ width: `${Math.round((c.valor / composicaoMax) * 100)}%` }}
                 />
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Comparativo — Ranking Geral
-        </p>
-        <div className="space-y-1">
-          {rankingOrdenado.map((l, i) => {
-            const isAtual = l.id === liga.id;
-            const pct = Math.round((l.pontos / scoreMax) * 100);
-            return (
-              <div
-                key={l.id}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 transition-colors",
-                  isAtual ? "bg-navy/5 border border-navy/15" : "hover:bg-navy/[0.02]",
-                )}
-              >
-                <span
+      {/* Ranking comparativo */}
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Comparativo — Ranking Geral"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        />
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-foreground/[0.08]">
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal w-10">
+                #
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Liga
+              </th>
+              <th className="text-right py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Score
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rankingOrdenado.map((l, i) => {
+              const isLast = i === rankingOrdenado.length - 1;
+              return (
+                <tr
+                  key={l.id}
                   className={cn(
-                    "font-plex-mono text-[10px] w-5 text-center",
-                    isAtual ? "text-navy" : "text-navy/40",
+                    "transition-colors",
+                    !isLast ? "border-b border-foreground/[0.06]" : "",
+                    l.id === liga.id ? "bg-foreground/[0.02]" : "hover:bg-foreground/[0.03]",
                   )}
                 >
-                  {i + 1}º
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span
-                      className={cn(
-                        "font-plex-sans font-semibold text-[13px] truncate",
-                        isAtual ? "text-navy" : "text-navy/70",
-                      )}
-                    >
-                      {l.nome}
-                      {isAtual && (
-                        <span className="ml-2 font-plex-mono text-[9px] uppercase tracking-[0.10em] bg-navy text-white px-1.5 py-0.5 align-middle">
-                          atual
+                  <td className="py-4 px-4 font-plex-mono text-[12px] text-foreground/40">
+                    {i + 1}º
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "font-plex-sans text-[13px] font-semibold",
+                          l.id === liga.id ? "text-foreground" : "text-foreground/70",
+                        )}
+                      >
+                        {l.nome}
+                      </span>
+                      {l.id === liga.id && (
+                        <span className="font-plex-mono text-[8px] uppercase tracking-[0.2em] text-foreground/50 border border-foreground/20 px-1.5 py-0.5 rounded-sm">
+                          Minha
                         </span>
                       )}
-                    </span>
-                    <span
-                      className={cn(
-                        "font-plex-mono text-[11px] ml-3 shrink-0",
-                        isAtual ? "text-navy" : "text-navy/40",
-                      )}
-                    >
-                      {l.pontos} pts
-                    </span>
-                  </div>
-                  <div className="w-full bg-navy/10 h-px overflow-hidden">
-                    <div
-                      className="h-px transition-all duration-500"
-                      style={{
-                        width: `${pct}%`,
-                        background: isAtual
-                          ? "linear-gradient(90deg, #10284E, #546484)"
-                          : "#CBCBCB",
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-right font-plex-mono text-[13px] text-foreground/60">
+                    {l.pontos}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </section>
     </div>
   );
 }
@@ -985,7 +1151,6 @@ export function GerenciamentoStaffPage() {
   const [ligas, setLigas] = useState<Liga[]>([]);
   const [ligaSelecionadaId, setLigaSelecionadaId] = useState<string | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<Aba>("Informações");
-  const [seletorAberto, setSeletorAberto] = useState(false);
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
@@ -1011,7 +1176,6 @@ export function GerenciamentoStaffPage() {
   function selecionarLiga(id: string) {
     setLigaSelecionadaId(id);
     setAbaAtiva("Informações");
-    setSeletorAberto(false);
   }
 
   function arquivarLiga() {
@@ -1056,90 +1220,28 @@ export function GerenciamentoStaffPage() {
       </div>
 
       {/* Seletor de liga */}
-      <div className="relative mb-8">
-        <button
-          onClick={() => setSeletorAberto((v) => !v)}
-          className="flex items-center gap-3 bg-white border border-navy/15 px-4 py-3 hover:border-navy/30 transition-colors w-full sm:w-auto"
-        >
-          <div
-            className="h-8 w-8 flex items-center justify-center text-white font-plex-mono text-[11px] shrink-0"
-            style={{ background: "linear-gradient(135deg, #10284E, #546484)" }}
-          >
-            {liga.nome.charAt(0)}
-          </div>
-          <div className="text-left">
-            <p className="font-plex-sans font-semibold text-[13px] text-navy">{liga.nome}</p>
-            <p className="font-plex-mono text-[10px] text-navy/50">
-              {liga.info.area || "Sem área definida"}
-            </p>
-          </div>
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 text-navy/40 ml-auto transition-transform",
-              seletorAberto && "rotate-180",
-            )}
-          />
-        </button>
-
-        {seletorAberto && (
-          <div className="absolute top-full left-0 mt-1 z-20 bg-white border border-navy/15 overflow-hidden w-full sm:w-80">
+      <div className="mb-8">
+        <Select value={ligaSelecionadaId ?? ""} onValueChange={selecionarLiga}>
+          <SelectTrigger className="w-full sm:w-[280px] font-plex-sans text-[13px] border-border bg-muted/50 rounded focus:outline-none">
+            <SelectValue placeholder="Selecionar liga" />
+          </SelectTrigger>
+          <SelectContent>
             {ligas.map((l) => (
-              <button
-                key={l.id}
-                onClick={() => selecionarLiga(l.id)}
-                className={cn(
-                  "flex items-center gap-3 w-full px-4 py-3 hover:bg-navy/[0.03] transition-colors text-left border-b border-navy/10 last:border-0",
-                  l.id === ligaSelecionadaId && "bg-navy/5",
-                )}
-              >
-                <div
-                  className="h-7 w-7 flex items-center justify-center text-white font-plex-mono text-[10px] shrink-0"
-                  style={{ background: "linear-gradient(135deg, #10284E, #546484)" }}
-                >
-                  {l.nome.charAt(0)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p
-                    className={cn(
-                      "font-plex-sans font-semibold text-[13px] truncate",
-                      l.id === ligaSelecionadaId ? "text-navy" : "text-navy/70",
-                    )}
-                  >
-                    {l.nome}
-                  </p>
-                  <p className="font-plex-mono text-[10px] text-navy/50 truncate">
-                    {l.info.area || "Sem área"}
-                  </p>
-                </div>
-              </button>
+              <SelectItem key={l.id} value={l.id} className="font-plex-sans text-[13px]">
+                {l.nome}
+              </SelectItem>
             ))}
-          </div>
-        )}
-
-        {seletorAberto && (
-          <div className="fixed inset-0 z-10" onClick={() => setSeletorAberto(false)} />
-        )}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Abas */}
-      <div className="border-b border-navy/15 mb-8">
-        <div className="flex">
-          {ABAS.map((aba) => (
-            <button
-              key={aba}
-              onClick={() => setAbaAtiva(aba)}
-              className={cn(
-                "px-5 py-3 font-plex-mono text-[10px] uppercase tracking-[0.14em] transition-colors border-b-2 -mb-px",
-                abaAtiva === aba
-                  ? "border-navy text-navy"
-                  : "border-transparent text-navy/40 hover:text-navy",
-              )}
-            >
-              {aba}
-            </button>
-          ))}
-        </div>
-      </div>
+      <AnimatedTabs
+        tabs={ABAS}
+        activeTab={abaAtiva}
+        onChange={(aba) => setAbaAtiva(aba as Aba)}
+        wrapperClassName="mb-8"
+      />
 
       {/* Conteúdo */}
       {abaAtiva === "Informações" && (

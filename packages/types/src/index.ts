@@ -7,3 +7,4 @@ export * from "./recurso.js";
 export * from "./mural.js";
 export * from "./ranking.js";
 export * from "./crm.js";
+export * from "./formularios.js";

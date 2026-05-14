@@ -1,117 +1,183 @@
+import Autoplay from "embla-carousel-autoplay";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@/components/ui/carousel";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import type { Liga, RankingLiga } from "@link-leagues/types";
 
 interface LigasCarouselProps {
   ligas: Liga[];
   ranking?: RankingLiga[];
+  loading?: boolean;
 }
 
-export function LigasCarousel({ ligas, ranking = [] }: LigasCarouselProps) {
+export function LigasCarousel({ ligas, ranking = [], loading = false }: LigasCarouselProps) {
   const navigate = useNavigate();
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const [current, setCurrent] = useState(0);
+  const [api, setApi] = useState<CarouselApi>();
+  const autoplay = useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true }),
+  );
 
   useEffect(() => {
-    if (ligas.length === 0) return;
-    timerRef.current = setInterval(() => {
-      setCurrentIndex((i) => (i + 1) % ligas.length);
-    }, 4000);
-    return () => clearInterval(timerRef.current);
-  }, [ligas.length]);
+    if (!api) return;
+    setCurrent(api.selectedScrollSnap());
+    const onSelect = () => setCurrent(api.selectedScrollSnap());
+    api.on("select", onSelect);
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api]);
 
-  function irPara(index: number) {
-    clearInterval(timerRef.current);
-    setCurrentIndex((index + ligas.length) % ligas.length);
-    timerRef.current = setInterval(() => {
-      setCurrentIndex((i) => (i + 1) % ligas.length);
-    }, 4000);
+  if (loading) {
+    return (
+      <div className="rounded-xl border border-border shadow-sm overflow-hidden bg-background">
+        {/* Header — espelha px-4 pt-4 pb-3 com título e botões nav */}
+        <div className="px-4 pt-4 pb-3 flex items-center justify-between border-b border-border">
+          <Skeleton className="h-4 w-10" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-3 w-9" />
+            <div className="flex gap-1">
+              <Skeleton className="h-7 w-7 rounded-lg" />
+              <Skeleton className="h-7 w-7 rounded-lg" />
+            </div>
+          </div>
+        </div>
+
+        {/* Área da imagem — h-36 igual ao CarouselItem */}
+        <Skeleton className="h-36 w-full rounded-none" />
+
+        {/* Corpo — px-4 py-3 com nome, diretor e badges */}
+        <div className="px-4 py-3">
+          <Skeleton className="h-4 w-44 mb-1.5" />
+          <Skeleton className="h-3 w-36 mt-0.5 mb-3" />
+          <div className="flex gap-2 mt-3">
+            {/* Badge pts — bg-navy/5 border rounded-lg px-2.5 py-1.5 */}
+            <Skeleton className="h-7 w-14 rounded-lg" />
+            {/* Badge projetos — bg-brand-yellow/10 border rounded-lg px-2.5 py-1.5 */}
+            <Skeleton className="h-7 w-20 rounded-lg" />
+          </div>
+        </div>
+
+        {/* Dots — espelha o indicador ativo (w-4) + 2 inativos (w-1.5) */}
+        <div className="flex justify-center gap-1.5 py-3 border-t border-border">
+          <Skeleton className="h-1.5 w-4 rounded-full" />
+          <Skeleton className="h-1.5 w-1.5 rounded-full" />
+          <Skeleton className="h-1.5 w-1.5 rounded-full" />
+        </div>
+      </div>
+    );
   }
 
   if (ligas.length === 0) return null;
 
-  const liga = ligas[currentIndex];
-  if (!liga) return null;
-
-  const score = ranking.find((r) => r.liga_id === liga.id)?.pontuacao ?? 0;
-
   return (
-    <div className="rounded-xl overflow-hidden border border-border shadow-sm">
-      {/* Slide */}
-      <div
-        className="relative h-52 cursor-pointer"
-        style={{ background: "linear-gradient(135deg, #10284E 0%, #546484 100%)" }}
-        onClick={() => navigate(`/ligas/${liga.id}`)}
-      >
-        {liga.imagem_url && (
-          <img
-            src={liga.imagem_url}
-            alt={liga.nome}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
+    <div className="rounded-xl border border-border shadow-sm overflow-hidden bg-background">
+      {/* Header — padrão dos cards da home */}
+      <div className="px-4 pt-4 pb-3 flex items-center justify-between border-b border-border">
+        <p className="font-semibold text-sm text-navy">Ligas</p>
+        {ligas.length > 1 && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {String(current + 1).padStart(2, "0")} / {String(ligas.length).padStart(2, "0")}
+            </span>
+            <div className="flex gap-1">
+              <button
+                onClick={() => api?.scrollPrev()}
+                className="h-7 w-7 rounded-lg border border-[#191919] bg-background flex items-center justify-center text-navy hover:bg-navy/5 transition-colors"
+                aria-label="Liga anterior"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => api?.scrollNext()}
+                className="h-7 w-7 rounded-lg border border-[#191919] bg-background flex items-center justify-center text-navy hover:bg-navy/5 transition-colors"
+                aria-label="Próxima liga"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/40 to-transparent" />
+      </div>
 
-        {/* Seta esquerda */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            irPara(currentIndex - 1);
-          }}
-          className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 rounded-full p-1.5 text-white transition-colors backdrop-blur-sm"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
+      <Carousel
+        opts={{ loop: true, align: "start" }}
+        plugins={ligas.length > 1 ? [autoplay.current] : []}
+        setApi={setApi}
+      >
+        <CarouselContent className="-ml-0">
+          {ligas.map((liga) => {
+            const score = ranking.find((r) => r.liga_id === liga.id)?.pontuacao ?? 0;
+            return (
+              <CarouselItem key={liga.id} className="pl-0">
+                {/* Imagem limpa — sem texto sobreposto */}
+                <div
+                  className="relative h-36 cursor-pointer bg-gradient-to-br from-navy to-link-blue"
+                  onClick={() => navigate(`/ligas/${liga.id}`)}
+                >
+                  {liga.imagem_url && (
+                    <img
+                      src={liga.imagem_url}
+                      alt={liga.nome}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  )}
+                </div>
 
-        {/* Seta direita */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            irPara(currentIndex + 1);
-          }}
-          className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 rounded-full p-1.5 text-white transition-colors backdrop-blur-sm"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
+                {/* Corpo — tipografia e badges do design system */}
+                <div className="px-4 py-3">
+                  <p className="font-semibold text-sm text-navy truncate">{liga.nome}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    Diretor:{" "}
+                    {liga.diretores && liga.diretores.length > 0
+                      ? liga.diretores.map((d) => d.nome).join(", ")
+                      : "—"}
+                  </p>
+                  <div className="flex gap-2 mt-3">
+                    <div className="flex items-center gap-1.5 bg-navy/5 border border-navy/10 rounded-lg px-2.5 py-1.5">
+                      <span className="text-xs font-bold text-navy">{score}</span>
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                        pts
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-brand-yellow/10 border border-brand-yellow/30 rounded-lg px-2.5 py-1.5">
+                      <span className="text-xs font-bold text-navy">
+                        {liga.projetos_ativos ?? 0}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                        projetos
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+            );
+          })}
+        </CarouselContent>
+      </Carousel>
 
-        {/* Conteúdo */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
-          <div>
-            <h2 className="font-display font-bold text-white text-lg leading-tight">{liga.nome}</h2>
-            <p className="text-white/60 text-xs mt-0.5">
-              Diretor:{" "}
-              {liga.diretores && liga.diretores.length > 0
-                ? liga.diretores.map((d) => d.nome).join(", ")
-                : "—"}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <div className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 text-center">
-              <div className="text-brand-yellow font-bold text-sm">{score}</div>
-              <div className="text-white/70 text-xs">Score</div>
-            </div>
-            <div className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 text-center">
-              <div className="text-brand-yellow font-bold text-sm">{liga.projetos_ativos ?? 0}</div>
-              <div className="text-white/70 text-xs">Projetos</div>
-            </div>
-          </div>
+      {/* Dots indicadores */}
+      {ligas.length > 1 && (
+        <div className="flex justify-center gap-1.5 py-3 border-t border-border">
+          {ligas.map((_, i) => (
+            <div
+              key={i}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i === current ? "w-4 bg-navy dark:bg-white" : "w-1.5 bg-foreground/20"
+              }`}
+            />
+          ))}
         </div>
-      </div>
-
-      {/* Dots */}
-      <div className="flex justify-center gap-1.5 py-3 bg-white border-t border-border">
-        {ligas.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => irPara(i)}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === currentIndex ? "w-4 bg-navy" : "w-1.5 bg-slate-200 hover:bg-slate-300"
-            }`}
-          />
-        ))}
-      </div>
+      )}
     </div>
   );
 }

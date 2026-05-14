@@ -40,7 +40,7 @@ export function MinhaLigaCard({ liga }: MinhaLigaCardProps) {
           Ver detalhes →
         </button>
       </div>
-      <div className="grid grid-cols-4 divide-x divide-border bg-white">
+      <div className="grid grid-cols-4 divide-x divide-border bg-background">
         {stats.map(({ valor, label, cor }) => (
           <div key={label} className="px-3 py-3 text-center">
             <div className={`font-bold text-xl leading-none ${cor}`}>{valor}</div>

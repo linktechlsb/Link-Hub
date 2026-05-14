@@ -124,25 +124,25 @@ export function LigaMembrosSheet({ open, onOpenChange, liga, onSalvo }: LigaMemb
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-white"
+        className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-white dark:bg-[#030303]"
       >
         <div className="flex-shrink-0">
-          <div className="h-px bg-navy/90" />
+          <div className="h-px bg-navy/90 dark:bg-white/20" />
           <div className="px-8 pt-8 pb-6">
-            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50">
+            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 dark:text-white/40">
               Membros
             </p>
-            <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy mt-1">
+            <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy dark:text-white mt-1">
               {liga?.nome ?? "—"}
             </h2>
           </div>
-          <div className="h-px bg-navy/15" />
+          <div className="h-px bg-navy/15 dark:bg-white/10" />
         </div>
 
         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
           {/* Adicionar membro */}
           <div>
-            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
+            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 dark:text-white/50 mb-3">
               Adicionar membro
             </p>
 
@@ -154,24 +154,28 @@ export function LigaMembrosSheet({ open, onOpenChange, liga, onSalvo }: LigaMemb
                   if (usuarioSelecionado) setUsuarioSelecionado(null);
                 }}
                 placeholder="Buscar por e-mail..."
-                className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+                className="w-full border border-navy/20 dark:border-white/15 rounded px-3 py-2.5 bg-white dark:bg-white/5 font-plex-sans text-[13px] text-navy dark:text-white placeholder:text-navy/30 dark:placeholder:text-white/25 focus:outline-none focus:border-navy/60 dark:focus:border-white/40"
               />
               {resultados.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-10 bg-white border border-navy/15 overflow-hidden">
+                <div className="absolute top-full left-0 right-0 z-10 bg-white dark:bg-[#030303] border border-navy/15 dark:border-white/15 rounded overflow-hidden">
                   {resultados.map((u) => (
                     <button
                       key={u.id}
-                      className="w-full text-left px-4 py-3 hover:bg-navy/[0.03] border-b border-navy/10 last:border-0 flex items-center gap-3 transition-colors"
+                      className="w-full text-left px-4 py-3 hover:bg-navy/[0.03] dark:hover:bg-white/5 border-b border-navy/10 dark:border-white/10 last:border-0 flex items-center gap-3 transition-colors"
                       onClick={() => selecionarUsuario(u)}
                     >
-                      <div className="h-7 w-7 bg-navy flex items-center justify-center flex-shrink-0">
+                      <div className="h-7 w-7 bg-navy flex items-center justify-center flex-shrink-0 rounded">
                         <span className="font-plex-mono text-[10px] text-white">
                           {u.nome.charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div>
-                        <p className="font-plex-sans font-medium text-[13px] text-navy">{u.nome}</p>
-                        <p className="font-plex-mono text-[10px] text-navy/50">{u.email}</p>
+                        <p className="font-plex-sans font-medium text-[13px] text-navy dark:text-white">
+                          {u.nome}
+                        </p>
+                        <p className="font-plex-mono text-[10px] text-navy/50 dark:text-white/40">
+                          {u.email}
+                        </p>
                       </div>
                     </button>
                   ))}
@@ -184,14 +188,14 @@ export function LigaMembrosSheet({ open, onOpenChange, liga, onSalvo }: LigaMemb
                 value={cargoNovo}
                 onChange={(e) => setCargoNovo(e.target.value)}
                 placeholder="Cargo (ex: Diretor, Membro...)"
-                className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 mt-3"
+                className="w-full border border-navy/20 dark:border-white/15 rounded px-3 py-2.5 bg-white dark:bg-white/5 font-plex-sans text-[13px] text-navy dark:text-white placeholder:text-navy/30 dark:placeholder:text-white/25 focus:outline-none focus:border-navy/60 dark:focus:border-white/40 mt-3"
               />
             )}
 
             <button
               onClick={() => void adicionarMembro()}
               disabled={!usuarioSelecionado || salvando}
-              className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed mt-3"
+              className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy dark:bg-white dark:text-navy px-4 py-3 rounded hover:bg-navy/90 dark:hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed mt-3"
             >
               {salvando ? "Adicionando..." : "Adicionar membro"}
             </button>
@@ -199,38 +203,40 @@ export function LigaMembrosSheet({ open, onOpenChange, liga, onSalvo }: LigaMemb
 
           {/* Lista de membros */}
           <div>
-            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
+            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 dark:text-white/50 mb-3">
               Membros atuais{membros.length > 0 && ` (${membros.length})`}
             </p>
 
             {carregando ? (
-              <p className="font-plex-sans text-[13px] text-navy/50">Carregando...</p>
+              <p className="font-plex-sans text-[13px] text-navy/50 dark:text-white/40">
+                Carregando...
+              </p>
             ) : membros.length === 0 ? (
-              <p className="font-plex-sans text-[13px] text-navy/50">
+              <p className="font-plex-sans text-[13px] text-navy/50 dark:text-white/40">
                 Nenhum membro nesta liga ainda.
               </p>
             ) : (
-              <div className="border-t border-navy/15">
+              <div className="border-t border-navy/15 dark:border-white/10">
                 {membros.map((m) => (
                   <div
                     key={m.id}
-                    className="border-b border-navy/10 py-3 flex items-center justify-between gap-3"
+                    className="border-b border-navy/10 dark:border-white/10 py-3 flex items-center justify-between gap-3"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-8 w-8 bg-navy flex items-center justify-center flex-shrink-0">
+                      <div className="h-8 w-8 bg-navy rounded flex items-center justify-center flex-shrink-0">
                         <span className="font-plex-mono text-[10px] text-white">
                           {m.nome.charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <p className="font-plex-sans font-semibold text-[13px] text-navy truncate">
+                        <p className="font-plex-sans font-semibold text-[13px] text-navy dark:text-white truncate">
                           {m.nome}
                         </p>
-                        <p className="font-plex-mono text-[10px] text-navy/50 truncate">
+                        <p className="font-plex-mono text-[10px] text-navy/50 dark:text-white/40 truncate">
                           {m.email}
                         </p>
                         {m.cargo && (
-                          <span className="font-plex-mono text-[9px] uppercase tracking-[0.14em] text-navy/60">
+                          <span className="font-plex-mono text-[9px] uppercase tracking-[0.14em] text-navy/60 dark:text-white/40">
                             {m.cargo}
                           </span>
                         )}
@@ -238,7 +244,7 @@ export function LigaMembrosSheet({ open, onOpenChange, liga, onSalvo }: LigaMemb
                     </div>
                     <button
                       onClick={() => void removerMembro(m.usuario_id)}
-                      className="flex-shrink-0 text-navy/30 hover:text-red-500 transition-colors"
+                      className="flex-shrink-0 text-navy/30 dark:text-white/30 hover:text-red-500 transition-colors"
                       title="Remover membro"
                     >
                       <X className="h-4 w-4" />

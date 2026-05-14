@@ -34,14 +34,33 @@ const mainNav: NavMainItem[] = [
   { title: "Home", url: "/home", icon: Home },
   { title: "Ligas", url: "/ligas", icon: Users },
   { title: "Projetos", url: "/projetos", icon: FolderKanban },
-  { title: "Agenda", url: "/agenda", icon: Calendar },
+  {
+    title: "Eventos",
+    url: "/calendario",
+    icon: Calendar,
+    children: [
+      { title: "Calendário", url: "/calendario" },
+      {
+        title: "Solicitar eventos",
+        url: "/calendario/solicitar-eventos",
+        roles: ["staff", "diretor", "lider"],
+      },
+      { title: "Marcar encontros", url: "/calendario/marcar-encontros" },
+      { title: "Guia", url: "/calendario/guia" },
+    ],
+  },
   { title: "Mural", url: "/mural", icon: MessageSquare },
   { title: "Ranking", url: "/ranking", icon: Trophy },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { role } = useUser();
-  const [user, setUser] = useState<NavUserData>({ name: "", email: "", avatarUrl: null });
+  const [user, setUser] = useState<NavUserData>({
+    name: "",
+    email: "",
+    avatarUrl: null,
+    role: null,
+  });
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   useEffect(() => {
@@ -58,6 +77,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         name: (usuario?.nome as string | undefined) ?? "",
         email,
         avatarUrl: (usuario?.avatar_url as string | null | undefined) ?? null,
+        role,
       });
     });
   }, []);
@@ -71,54 +91,51 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
   if (canManage) {
     manageNav.push({
-      title: "Processo Seletivo",
-      url: "/processo-seletivo",
+      title: "Formulários",
+      url: "/formularios",
       icon: ClipboardList,
+      disabled: true,
     });
     manageNav.push({ title: "Gerenciamento", url: "/gerenciamento", icon: Settings });
   }
 
   return (
-    <Sidebar
-      collapsible="icon"
-      {...props}
-      style={
-        {
-          "--sidebar-background": "218 66% 18%",
-          "--sidebar-foreground": "0 0% 95%",
-          "--sidebar-accent": "218 50% 26%",
-          "--sidebar-accent-foreground": "0 0% 100%",
-          "--sidebar-border": "218 50% 28%",
-          "--sidebar-ring": "43 98% 63%",
-          "--sidebar-primary": "43 98% 63%",
-          "--sidebar-primary-foreground": "218 66% 18%",
-        } as React.CSSProperties
-      }
-    >
+    <Sidebar variant="inset" collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              className="rounded-none hover:bg-transparent active:bg-transparent"
-            >
-              <div className="flex aspect-square size-8 items-center justify-center">
-                <img src="/link_logo.png" alt="Link" className="size-8 object-contain" />
-              </div>
-              <div className="grid flex-1 text-left leading-tight">
-                <span className="font-display font-bold text-base tracking-tight whitespace-nowrap">
-                  Link Leagues
-                </span>
-                <span className="truncate text-xs text-sidebar-foreground/70">
-                  Link School of Business
-                </span>
-              </div>
+            <SidebarMenuButton size="lg" asChild>
+              <a href="/home">
+                <div className="flex aspect-square size-8 items-center justify-center">
+                  <img src="/link_logo.png" alt="Link" className="size-8 object-contain" />
+                </div>
+                <div className="grid flex-1 text-left leading-tight">
+                  <span className="font-display font-bold text-base tracking-tight whitespace-nowrap">
+                    Link Leagues
+                  </span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    Link School of Business
+                  </span>
+                </div>
+              </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={mainNav} label="Plataforma" />
+        <NavMain
+          items={mainNav.map((item) =>
+            item.children
+              ? {
+                  ...item,
+                  children: item.children.filter(
+                    (child) => !child.roles || child.roles.includes(role ?? ""),
+                  ),
+                }
+              : item,
+          )}
+          label="Plataforma"
+        />
         {manageNav.length > 0 && <NavMain items={manageNav} label="Gestão" />}
       </SidebarContent>
       <SidebarFooter>
@@ -139,8 +156,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </TooltipProvider>
         <NavUser user={user} />
       </SidebarFooter>
-      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <SidebarRail />
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </Sidebar>
   );
 }

@@ -1,8 +1,8 @@
-import { Camera, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
-import { cn } from "@/lib/utils";
 import { TrocarSenhaSection } from "@/pages/conta/TrocarSenhaSection";
 import { SectionHeader } from "@/pages/home/v1/primitives";
 
@@ -31,7 +31,7 @@ function gerarIniciais(nome: string) {
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/60 mb-1.5">
+    <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
       {children}
     </label>
   );
@@ -50,14 +50,14 @@ function Campo({
     <div>
       <Label>{label}</Label>
       {children}
-      {dica && <p className="font-plex-sans text-[11px] text-navy/40 mt-1">{dica}</p>}
+      {dica && <p className="font-plex-sans text-[11px] text-foreground/40 mt-1">{dica}</p>}
     </div>
   );
 }
 
 function Toast({ mensagem, onFechar }: { mensagem: string; onFechar: () => void }) {
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-navy text-white font-plex-sans text-[13px] px-4 py-3 shadow-lg">
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-navy text-white font-plex-sans text-[13px] px-4 py-3 shadow-lg rounded">
       {mensagem}
       <button onClick={onFechar} className="text-white/60 hover:text-white transition-colors">
         <X className="h-4 w-4" />
@@ -70,64 +70,16 @@ function Toast({ mensagem, onFechar }: { mensagem: string; onFechar: () => void 
 
 function AbaPerfil({
   dados,
-  avatarUrl,
-  uploadandoAvatar,
   onChange,
   onSalvar,
-  onAvatarChange,
 }: {
   dados: DadosUsuario;
-  avatarUrl: string | null;
-  uploadandoAvatar: boolean;
   onChange: (campo: keyof DadosUsuario, valor: string) => void;
   onSalvar: () => void;
-  onAvatarChange: (file: File) => void;
 }) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const iniciais = gerarIniciais(dados.nome);
-
   return (
     <div className="space-y-6">
       <SectionHeader numero="01" eyebrow="Conta" titulo="Perfil" />
-
-      <div className="flex items-center gap-4">
-        <div
-          className="relative group cursor-pointer shrink-0"
-          onClick={() => fileRef.current?.click()}
-        >
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="Avatar" className="h-16 w-16 rounded-full object-cover" />
-          ) : (
-            <div className="h-16 w-16 rounded-full bg-navy text-white text-xl font-bold flex items-center justify-center">
-              {iniciais}
-            </div>
-          )}
-          <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            {uploadandoAvatar ? (
-              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Camera className="h-5 w-5 text-white" />
-            )}
-          </div>
-        </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/jpeg,image/png"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onAvatarChange(file);
-            e.target.value = "";
-          }}
-        />
-        <div>
-          <p className="font-plex-sans font-medium text-[14px] text-navy">{dados.nome}</p>
-          <p className="font-plex-sans text-[12px] text-navy/40 mt-0.5">
-            Clique na foto para alterar
-          </p>
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Campo label="Nome completo">
@@ -136,7 +88,7 @@ function AbaPerfil({
             value={dados.nome}
             onChange={(e) => onChange("nome", e.target.value)}
             placeholder="Seu nome completo"
-            className="w-full px-3 py-2.5 border border-navy/20 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 placeholder:text-navy/30"
+            className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 placeholder:text-foreground/20 rounded"
           />
         </Campo>
         <Campo label="E-mail institucional" dica="Somente leitura">
@@ -144,7 +96,7 @@ function AbaPerfil({
             type="text"
             value={dados.email}
             readOnly
-            className="w-full px-3 py-2.5 border border-navy/20 bg-navy/[0.02] font-plex-sans text-[13px] text-navy/40 cursor-default focus:outline-none"
+            className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground/40 cursor-default focus:outline-none rounded"
           />
         </Campo>
       </div>
@@ -159,13 +111,13 @@ function AbaPerfil({
           maxLength={160}
           rows={3}
           placeholder="Conte um pouco sobre você..."
-          className="w-full px-3 py-2.5 border border-navy/20 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 resize-none placeholder:text-navy/30"
+          className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 resize-none placeholder:text-foreground/20 rounded"
         />
       </Campo>
 
       <button
         onClick={onSalvar}
-        className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors"
+        className="bg-navy text-white font-plex-sans text-[13px] font-semibold px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity"
       >
         Salvar alterações
       </button>
@@ -203,16 +155,13 @@ export function ContaStaffView() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadandoAvatar, setUploadandoAvatar] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const fileCardRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     carregarUsuarioMe().then((usuario) => {
       if (!usuario) return;
       setAvatarUrl(usuario.avatar_url);
-      setDados({
-        nome: usuario.nome,
-        email: usuario.email,
-        bio: usuario.biografia ?? "",
-      });
+      setDados({ nome: usuario.nome, email: usuario.email, bio: usuario.biografia ?? "" });
     });
   }, []);
 
@@ -243,44 +192,72 @@ export function ContaStaffView() {
     }
   }
 
+  const iniciais = gerarIniciais(dados.nome);
+
   return (
-    <div className="max-w-3xl mx-auto px-8 py-10">
-      <div className="mb-10">
+    <div className="max-w-5xl mx-auto px-8 py-10">
+      <div className="mb-6">
         <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
           Minha conta
         </h1>
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
+        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mt-1">
           Gerencie suas informações e preferências
         </p>
       </div>
 
-      <div className="border-b border-[#DBDFE4]">
-        <div className="flex">
-          {ABAS.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setAbaAtiva(key)}
-              className={cn(
-                "px-5 py-3 font-plex-mono text-[10px] uppercase tracking-[0.14em] transition-colors border-b-2 -mb-px",
-                abaAtiva === key
-                  ? "border-navy text-navy"
-                  : "border-transparent text-navy/40 hover:text-navy",
-              )}
-            >
-              {label}
-            </button>
-          ))}
+      <div className="flex items-center gap-4 px-5 py-4 rounded-lg bg-foreground/[0.02] border border-foreground/[0.06] mb-6">
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt="Avatar"
+            className="w-[52px] h-[52px] rounded-full object-cover shrink-0"
+          />
+        ) : (
+          <div className="w-[52px] h-[52px] rounded-full bg-navy flex items-center justify-center text-white font-bold text-lg shrink-0">
+            {iniciais}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="font-plex-sans font-bold text-[14px] text-navy truncate">{dados.nome}</p>
+          <p className="font-plex-sans text-[11px] text-foreground/40 mt-0.5">{dados.email}</p>
+          <span className="inline-block font-plex-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-foreground/50 border border-foreground/[0.15] px-2 py-0.5 rounded-full mt-1.5">
+            Staff
+          </span>
         </div>
+        <button
+          onClick={() => fileCardRef.current?.click()}
+          disabled={uploadandoAvatar}
+          className="shrink-0 font-plex-sans text-[11px] font-semibold text-foreground/45 border border-foreground/[0.15] px-3 py-1.5 rounded-full bg-transparent hover:border-foreground/30 transition-colors disabled:opacity-40"
+        >
+          {uploadandoAvatar ? "Enviando..." : "Alterar foto"}
+        </button>
+        <input
+          ref={fileCardRef}
+          type="file"
+          accept="image/jpeg,image/png"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleAvatarChange(file);
+            e.target.value = "";
+          }}
+        />
       </div>
+
+      <AnimatedTabs
+        tabs={ABAS.map(({ key, label }) => ({ id: key, label }))}
+        activeTab={abaAtiva}
+        onChange={(key) => setAbaAtiva(key as Aba)}
+        wrapperClassName="border-foreground/[0.08] mb-8"
+        activeTabClassName="text-navy"
+        inactiveTabClassName="text-foreground/40 hover:text-foreground/60"
+      />
 
       {abaAtiva === "perfil" && (
         <AbaPerfil
           dados={dados}
-          avatarUrl={avatarUrl}
-          uploadandoAvatar={uploadandoAvatar}
           onChange={(campo, valor) => setDados((prev) => ({ ...prev, [campo]: valor }))}
           onSalvar={salvarPerfil}
-          onAvatarChange={handleAvatarChange}
         />
       )}
       {abaAtiva === "seguranca" && <AbaSeguranca onToast={exibirToast} />}

@@ -17,14 +17,45 @@ import {
   Upload,
   Loader2,
   MoreVertical,
+  MoreHorizontal,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
 
 import { AbaCRM } from "./AbaCRM";
 import { AbaPresenca } from "./AbaPresenca";
@@ -100,74 +131,67 @@ function IconeCor({
   cor: string;
   onChange: (icone: string, cor: string) => void;
 }) {
-  const [aberto, setAberto] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function fechar(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setAberto(false);
-    }
-    document.addEventListener("mousedown", fechar);
-    return () => document.removeEventListener("mousedown", fechar);
-  }, []);
-
   return (
-    <div ref={ref} className="relative shrink-0">
-      <button
-        type="button"
-        onClick={() => setAberto((v) => !v)}
-        className="h-9 w-9 flex items-center justify-center border-2 border-transparent hover:border-navy/20 transition-colors"
-        style={{ backgroundColor: cor }}
-        title="Escolher ícone e cor"
-      >
-        <RecursoIcone id={icone} />
-      </button>
-
-      {aberto && (
-        <div className="absolute left-0 top-11 z-50 bg-white border border-navy/15 p-3 w-56">
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
-            Ícone
-          </p>
-          <div className="grid grid-cols-5 gap-1.5 mb-3">
-            {ICONES.map((ic) => {
-              const Comp = ic.componente;
-              return (
-                <button
-                  key={ic.id}
-                  type="button"
-                  onClick={() => onChange(ic.id, cor)}
-                  className={cn(
-                    "h-8 w-8 flex items-center justify-center transition-colors",
-                    icone === ic.id
-                      ? "bg-navy text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200",
-                  )}
-                >
-                  <Comp className="h-4 w-4" />
-                </button>
-              );
-            })}
-          </div>
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
-            Cor
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {CORES_PICKER.map((c) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="group relative h-9 w-9 flex items-center justify-center rounded-full border-2 border-transparent hover:border-navy/20 transition-colors shrink-0 outline-none"
+          style={{ backgroundColor: cor }}
+          title="Escolher ícone e cor"
+        >
+          <span className="group-hover:opacity-0 transition-opacity">
+            <RecursoIcone id={icone} />
+          </span>
+          <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <Pencil className="h-3.5 w-3.5 text-white" />
+          </span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56 p-3">
+        <DropdownMenuLabel className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 px-0 pb-2">
+          Ícone
+        </DropdownMenuLabel>
+        <div className="grid grid-cols-5 gap-1.5">
+          {ICONES.map((ic) => {
+            const Comp = ic.componente;
+            return (
               <button
-                key={c}
+                key={ic.id}
                 type="button"
-                onClick={() => onChange(icone, c)}
+                onClick={() => onChange(ic.id, cor)}
                 className={cn(
-                  "h-6 w-6 rounded-full border-2 transition-colors",
-                  cor === c ? "border-navy scale-110" : "border-transparent",
+                  "h-8 w-8 flex items-center justify-center rounded transition-colors",
+                  icone === ic.id
+                    ? "bg-navy text-white"
+                    : "bg-foreground/[0.06] text-foreground/60 hover:bg-foreground/[0.10]",
                 )}
-                style={{ backgroundColor: c }}
-              />
-            ))}
-          </div>
+              >
+                <Comp className="h-4 w-4" />
+              </button>
+            );
+          })}
         </div>
-      )}
-    </div>
+        <DropdownMenuSeparator className="my-3" />
+        <DropdownMenuLabel className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 px-0 pb-2">
+          Cor
+        </DropdownMenuLabel>
+        <div className="flex flex-wrap gap-1.5">
+          {CORES_PICKER.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => onChange(icone, c)}
+              className={cn(
+                "h-6 w-6 rounded-full border-2 transition-all",
+                cor === c ? "border-navy scale-110" : "border-transparent hover:scale-105",
+              )}
+              style={{ backgroundColor: c }}
+            />
+          ))}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -229,9 +253,9 @@ function apiParaMembro(m: MembroAPI): MembroAtivo {
 }
 
 function cargoBadgeClass(cargo: Cargo) {
-  if (cargo === "Diretor") return "bg-purple-100 text-purple-700";
-  if (cargo === "Admin") return "bg-red-100 text-red-700";
-  return "bg-gray-100 text-gray-600";
+  if (cargo === "Diretor") return "bg-link-blue/10 text-link-blue";
+  if (cargo === "Admin") return "bg-brand-yellow/20 text-navy";
+  return "bg-foreground/[0.07] text-foreground/50";
 }
 
 async function getToken() {
@@ -247,26 +271,17 @@ const inputClass =
 // ── Membros ──
 function AbaMembros({ ligaId }: { ligaId: string | null }) {
   const [membros, setMembros] = useState<MembroAtivo[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [sheetAberto, setSheetAberto] = useState(false);
+  const [sheetModo, setSheetModo] = useState<"adicionar" | "editar">("adicionar");
+  const [editandoId, setEditandoId] = useState<string | null>(null);
   const [emailConvite, setEmailConvite] = useState("");
   const [cargoConvite, setCargoConvite] = useState<Cargo>("Membro");
   const [enviandoConvite, setEnviandoConvite] = useState(false);
-  const [editandoId, setEditandoId] = useState<string | null>(null);
   const [novoCargoEdit, setNovoCargoEdit] = useState<Cargo>("Membro");
   const [salvandoEdicaoId, setSalvandoEdicaoId] = useState<string | null>(null);
   const [confirmandoRemoverId, setConfirmandoRemoverId] = useState<string | null>(null);
   const [removendoId, setRemovendoId] = useState<string | null>(null);
-  const [dropdownAbertoId, setDropdownAbertoId] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const [carregando, setCarregando] = useState(true);
-
-  useEffect(() => {
-    function fechar(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
-        setDropdownAbertoId(null);
-    }
-    document.addEventListener("mousedown", fechar);
-    return () => document.removeEventListener("mousedown", fechar);
-  }, []);
 
   useEffect(() => {
     if (!ligaId) {
@@ -291,7 +306,42 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
   }, [ligaId]);
 
   if (carregando)
-    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando membros…</p>;
+    return (
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b border-foreground/[0.08]">
+            <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+              Nome
+            </th>
+            <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+              Cargo
+            </th>
+            <th className="py-3 px-4 w-10" />
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <tr key={i} className="border-b border-foreground/[0.06]">
+              <td className="py-4 px-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-8 w-8 shrink-0" />
+                  <div>
+                    <Skeleton className="h-4 w-32 mb-1" />
+                    <Skeleton className="h-3 w-44" />
+                  </div>
+                </div>
+              </td>
+              <td className="py-4 px-4">
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </td>
+              <td className="py-4 px-4">
+                <Skeleton className="h-6 w-6 rounded" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
 
   async function convidar() {
     if (!ligaId) {
@@ -309,10 +359,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
       const res = await fetch(`/api/ligas/${ligaId}/membros`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          email,
-          cargo: cargoConvite === "Diretor" ? "Diretor" : null,
-        }),
+        body: JSON.stringify({ email, cargo: cargoConvite === "Diretor" ? "Diretor" : null }),
       });
       const body = (await res.json().catch(() => ({}))) as { error?: string } & MembroAPI;
       if (!res.ok) {
@@ -327,20 +374,13 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
         cargo: body.cargo ?? (cargoConvite === "Diretor" ? "Diretor" : null),
         role: body.role ?? null,
       });
-      setMembros((prev) => {
-        const semDuplicata = prev.filter((m) => m.id !== novo.id);
-        return [{ ...novo, novo: true }, ...semDuplicata];
-      });
+      setMembros((prev) => [{ ...novo, novo: true }, ...prev.filter((m) => m.id !== novo.id)]);
       setEmailConvite("");
+      setSheetAberto(false);
       toast.success("Membro adicionado.");
     } finally {
       setEnviandoConvite(false);
     }
-  }
-
-  function iniciarEdicao(membro: MembroAtivo) {
-    setEditandoId(membro.id);
-    setNovoCargoEdit(membro.cargo);
   }
 
   async function salvarEdicao(id: string) {
@@ -351,9 +391,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
       const res = await fetch(`/api/ligas/${ligaId}/membros/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          cargo: novoCargoEdit === "Diretor" ? "Diretor" : null,
-        }),
+        body: JSON.stringify({ cargo: novoCargoEdit === "Diretor" ? "Diretor" : null }),
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -361,7 +399,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
         return;
       }
       setMembros((prev) => prev.map((m) => (m.id === id ? { ...m, cargo: novoCargoEdit } : m)));
-      setEditandoId(null);
+      setSheetAberto(false);
       toast.success("Cargo atualizado.");
     } finally {
       setSalvandoEdicaoId(null);
@@ -390,183 +428,259 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
     }
   }
 
-  const diretor = membros.find((m) => m.cargo === "Diretor");
+  function abrirEditar(membro: MembroAtivo) {
+    setEditandoId(membro.id);
+    setNovoCargoEdit(membro.cargo);
+    setSheetModo("editar");
+    setSheetAberto(true);
+  }
 
   return (
-    <div className="space-y-8">
-      {/* Adicionar */}
-      <section className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Adicionar Novo Membro
-        </p>
-        <div className="flex gap-2 flex-wrap">
-          <input
-            type="email"
-            placeholder="E-mail institucional…"
-            value={emailConvite}
-            onChange={(e) => setEmailConvite(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !enviandoConvite) void convidar();
-            }}
-            className="flex-1 min-w-[200px] border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
-          />
-          <select
-            value={cargoConvite}
-            onChange={(e) => setCargoConvite(e.target.value as Cargo)}
-            className="w-36 border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60"
-          >
-            <option value="Membro">Membro</option>
-            <option value="Diretor">Diretor</option>
-          </select>
+    <div className="space-y-6">
+      <SectionHeader
+        titulo="Membros da liga"
+        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        acao={
           <button
-            onClick={() => void convidar()}
-            disabled={enviandoConvite}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-2.5 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            onClick={() => {
+              setSheetModo("adicionar");
+              setEmailConvite("");
+              setCargoConvite("Membro");
+              setSheetAberto(true);
+            }}
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
           >
-            {enviandoConvite ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Adicionar"}
+            + Novo membro
           </button>
-        </div>
-        <p className="font-plex-sans text-[12px] text-navy/40 mt-2">
-          O usuário precisa já estar cadastrado no sistema (e-mail institucional).
-        </p>
-      </section>
+        }
+      />
 
-      {/* Membros ativos */}
-      <section className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Membros Ativos ({membros.length})
-        </p>
-        <div className="border-t border-navy/15">
-          {membros.map((m) => (
-            <div
-              key={m.id}
-              className="flex items-center justify-between py-3 border-b border-navy/10"
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="h-9 w-9 shrink-0 overflow-hidden flex items-center justify-center text-white font-plex-mono text-[11px]"
-                  style={m.avatarUrl ? undefined : { backgroundColor: m.cor }}
-                >
-                  {m.avatarUrl ? (
-                    <img src={m.avatarUrl} alt={m.nome} className="h-full w-full object-cover" />
-                  ) : (
-                    m.iniciais
-                  )}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-plex-sans font-semibold text-[13px] text-navy">{m.nome}</p>
-                    {m.novo && (
-                      <span className="font-plex-mono text-[9px] uppercase tracking-[0.10em] bg-green-100 text-green-700 px-1.5 py-0.5">
-                        Novo
-                      </span>
-                    )}
-                  </div>
-                  <p className="font-plex-mono text-[10px] text-navy/50">{m.email}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                {editandoId === m.id ? (
-                  <>
-                    <select
-                      value={novoCargoEdit}
-                      onChange={(e) => setNovoCargoEdit(e.target.value as Cargo)}
-                      className="border border-navy/20 px-2 py-1.5 bg-white font-plex-sans text-[12px] text-navy focus:outline-none focus:border-navy/60"
-                    >
-                      <option value="Membro">Membro</option>
-                      <option value="Diretor">Diretor</option>
-                    </select>
-                    <button
-                      onClick={() => void salvarEdicao(m.id)}
-                      disabled={salvandoEdicaoId === m.id}
-                      className="text-green-600 hover:text-green-800 transition-colors disabled:opacity-40"
-                    >
-                      {salvandoEdicaoId === m.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Check className="h-4 w-4" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setEditandoId(null)}
-                      className="text-navy/40 hover:text-navy transition-colors"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </>
-                ) : confirmandoRemoverId === m.id ? (
+      {membros.length === 0 ? (
+        <p className="font-plex-sans text-[13px] text-navy/40">Nenhum membro cadastrado.</p>
+      ) : (
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-foreground/[0.08]">
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Nome
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Cargo
+              </th>
+              <th className="py-3 px-4 w-10" />
+            </tr>
+          </thead>
+          <tbody>
+            {membros.map((m) => (
+              <tr
+                key={m.id}
+                className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
+              >
+                <td className="py-4 px-4">
                   <div className="flex items-center gap-3">
-                    <span className="font-plex-sans text-[12px] text-red-600">Remover?</span>
-                    <button
-                      onClick={() => void remover(m.id)}
-                      disabled={removendoId === m.id}
-                      className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-600 hover:text-red-800 transition-colors disabled:opacity-40"
+                    <div
+                      className="h-8 w-8 shrink-0 flex items-center justify-center text-white font-plex-mono text-[11px] overflow-hidden"
+                      style={m.avatarUrl ? undefined : { backgroundColor: m.cor }}
                     >
-                      {removendoId === m.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      {m.avatarUrl ? (
+                        <img
+                          src={m.avatarUrl}
+                          alt={m.nome}
+                          className="h-full w-full object-cover"
+                        />
                       ) : (
-                        "Sim"
+                        m.iniciais
                       )}
-                    </button>
-                    <button
-                      onClick={() => setConfirmandoRemoverId(null)}
-                      className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
-                    >
-                      Não
-                    </button>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-plex-sans font-semibold text-[13px] text-foreground">
+                          {m.nome}
+                        </span>
+                        {m.novo && (
+                          <span className="font-plex-mono text-[9px] uppercase tracking-[0.10em] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                            Novo
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-plex-mono text-[10px] text-foreground/40">
+                        {m.email}
+                      </span>
+                    </div>
                   </div>
-                ) : (
-                  <>
+                </td>
+                <td className="py-4 px-4">
+                  {confirmandoRemoverId === m.id ? (
+                    <div className="flex items-center gap-3">
+                      <span className="font-plex-sans text-[12px] text-red-600">Remover?</span>
+                      <button
+                        onClick={() => void remover(m.id)}
+                        disabled={removendoId === m.id}
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-600 hover:text-red-800 transition-colors disabled:opacity-40"
+                      >
+                        {removendoId === m.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          "Sim"
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setConfirmandoRemoverId(null)}
+                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
+                      >
+                        Não
+                      </button>
+                    </div>
+                  ) : (
                     <span
                       className={cn(
-                        "font-plex-mono text-[9px] uppercase tracking-[0.10em] px-2 py-0.5",
+                        "font-plex-mono text-[9px] uppercase tracking-[0.10em] px-2 py-0.5 rounded-full",
                         cargoBadgeClass(m.cargo),
                       )}
                     >
                       {m.cargo}
                     </span>
-                    <div className="relative" ref={dropdownAbertoId === m.id ? dropdownRef : null}>
-                      <button
-                        onClick={() => setDropdownAbertoId(dropdownAbertoId === m.id ? null : m.id)}
-                        className="text-navy/40 hover:text-navy transition-colors p-1"
-                      >
-                        <MoreVertical className="h-4 w-4" />
+                  )}
+                </td>
+                <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-1 rounded hover:bg-foreground/[0.08] text-foreground/40 hover:text-foreground/70 transition-colors">
+                        <MoreHorizontal size={14} />
                       </button>
-                      {dropdownAbertoId === m.id && (
-                        <div className="absolute right-0 top-7 z-50 bg-white border border-navy/15 min-w-[130px] shadow-sm">
-                          <button
-                            onClick={() => {
-                              iniciarEdicao(m);
-                              setDropdownAbertoId(null);
-                            }}
-                            className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-navy hover:bg-navy/5 transition-colors flex items-center gap-2"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                            Editar
-                          </button>
-                          {m.id !== diretor?.id && (
-                            <button
-                              onClick={() => {
-                                setConfirmandoRemoverId(m.id);
-                                setDropdownAbertoId(null);
-                              }}
-                              className="w-full text-left px-3 py-2 font-plex-sans text-[13px] text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                              Remover
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[140px]">
+                      <DropdownMenuItem
+                        className="text-[12px] cursor-pointer"
+                        onClick={() => abrirEditar(m)}
+                      >
+                        Editar cargo
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-[12px] cursor-pointer text-red-500 focus:text-red-600"
+                        onClick={() => setConfirmandoRemoverId(m.id)}
+                      >
+                        Remover
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {/* Sheet Adicionar/Editar */}
+      <Sheet open={sheetAberto} onOpenChange={(v) => !v && setSheetAberto(false)}>
+        <SheetContent side="right" className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0">
+          <div className="flex-shrink-0">
+            <div className="h-px bg-foreground/20" />
+            <div className="px-8 pt-8 pb-6">
+              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
+                Membros
+              </p>
+              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
+                {sheetModo === "adicionar" ? "Adicionar Membro" : "Editar Cargo"}
+              </h2>
             </div>
-          ))}
-        </div>
-      </section>
+            <div className="h-px bg-foreground/[0.08]" />
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+            {sheetModo === "adicionar" ? (
+              <>
+                <div>
+                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                    E-mail institucional
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="usuario@faculdade.edu"
+                    value={emailConvite}
+                    onChange={(e) => setEmailConvite(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !enviandoConvite) void convidar();
+                    }}
+                    className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                  />
+                  <p className="font-plex-sans text-[11px] text-foreground/40 mt-1.5">
+                    O usuário precisa já estar cadastrado no sistema.
+                  </p>
+                </div>
+                <div>
+                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                    Cargo
+                  </label>
+                  <Select value={cargoConvite} onValueChange={(v) => setCargoConvite(v as Cargo)}>
+                    <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Membro" className="font-plex-sans text-[13px]">
+                        Membro
+                      </SelectItem>
+                      <SelectItem value="Diretor" className="font-plex-sans text-[13px]">
+                        Diretor
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            ) : (
+              <div>
+                <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                  Cargo
+                </label>
+                <Select value={novoCargoEdit} onValueChange={(v) => setNovoCargoEdit(v as Cargo)}>
+                  <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Membro" className="font-plex-sans text-[13px]">
+                      Membro
+                    </SelectItem>
+                    <SelectItem value="Diretor" className="font-plex-sans text-[13px]">
+                      Diretor
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <div className="flex-shrink-0">
+            <div className="h-px bg-foreground/[0.08]" />
+            <div className="px-8 py-6 flex flex-col gap-3">
+              {sheetModo === "adicionar" ? (
+                <button
+                  onClick={() => void convidar()}
+                  disabled={enviandoConvite || !emailConvite.trim()}
+                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {enviandoConvite && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  Adicionar membro
+                </button>
+              ) : (
+                <button
+                  onClick={() => editandoId && void salvarEdicao(editandoId)}
+                  disabled={salvandoEdicaoId !== null}
+                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {salvandoEdicaoId && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  Salvar alterações
+                </button>
+              )}
+              <button
+                onClick={() => setSheetAberto(false)}
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
@@ -633,62 +747,74 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
     setBannerPreview(URL.createObjectURL(file));
   }
 
+  const inputCls =
+    "w-full border border-border px-3 py-2.5 bg-muted/50 font-plex-sans text-[13px] text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded";
+
   return (
-    <div className="space-y-4">
-      {/* Dados gerais */}
-      <div className="border border-navy/15 p-5 space-y-4">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
-          Dados Gerais
-        </p>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            Nome da liga
-          </label>
-          <input
-            value={form.nome}
-            onChange={(e) => setForm({ ...form, nome: e.target.value })}
-            className={inputClass}
-          />
+    <div className="space-y-8">
+      {/* Dados Gerais */}
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Dados Gerais"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+          acao={
+            alterado ? (
+              <div className="flex items-center gap-3">
+                {salvo && <span className="font-plex-sans text-[12px] text-green-600">Salvo!</span>}
+                {erro && <span className="font-plex-sans text-[12px] text-red-600">{erro}</span>}
+                <button
+                  onClick={() => void salvar()}
+                  disabled={salvando}
+                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white transition-colors disabled:opacity-40"
+                >
+                  {salvando ? "Salvando…" : "Salvar alterações"}
+                </button>
+              </div>
+            ) : null
+          }
+        />
+        <div className="space-y-4">
+          {[
+            { label: "Nome da liga", field: "nome" as const, placeholder: "" },
+            { label: "Área de atuação", field: "area" as const, placeholder: "" },
+            {
+              label: "Semestre de fundação",
+              field: "semestre" as const,
+              placeholder: "ex: 2023.1",
+            },
+          ].map(({ label, field, placeholder }) => (
+            <div key={field}>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                {label}
+              </label>
+              <input
+                value={form[field]}
+                onChange={(e) => setForm({ ...form, [field]: e.target.value })}
+                placeholder={placeholder}
+                className={inputCls}
+              />
+            </div>
+          ))}
+          <div>
+            <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+              Descrição
+            </label>
+            <textarea
+              value={form.descricao}
+              onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+              rows={3}
+              className={cn(inputCls, "resize-none")}
+            />
+          </div>
         </div>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            Área de atuação
-          </label>
-          <input
-            value={form.area}
-            onChange={(e) => setForm({ ...form, area: e.target.value })}
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            Descrição
-          </label>
-          <textarea
-            value={form.descricao}
-            onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-            rows={3}
-            className={cn(inputClass, "resize-none")}
-          />
-        </div>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            Semestre de fundação
-          </label>
-          <input
-            value={form.semestre}
-            onChange={(e) => setForm({ ...form, semestre: e.target.value })}
-            placeholder="ex: 2023.1"
-            className={inputClass}
-          />
-        </div>
-      </div>
+      </section>
 
       {/* Foto / Banner */}
-      <div className="border border-navy/15 p-5 space-y-3">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
-          Foto / Banner da Liga
-        </p>
+      <section className="space-y-3">
+        <SectionHeader
+          titulo="Foto / Banner da Liga"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        />
         {bannerPreview ? (
           <div className="relative overflow-hidden border border-navy/15 h-36">
             <img src={bannerPreview} alt="Banner da liga" className="w-full h-full object-cover" />
@@ -697,8 +823,7 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
                 setBannerPreview("");
                 setForm((prev) => ({ ...prev, bannerUrl: "" }));
               }}
-              className="absolute top-2 right-2 bg-white/80 hover:bg-white text-red-500 p-1 transition-colors"
-              title="Remover imagem"
+              className="absolute top-2 right-2 bg-background/80 hover:bg-background text-red-500 p-1 transition-colors"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -714,65 +839,50 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
           {bannerPreview ? "Trocar imagem" : "Selecionar imagem"}
           <input type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
         </label>
-      </div>
+      </section>
 
       {/* Contatos */}
-      <div className="border border-navy/15 p-5 space-y-4">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60">
-          Contatos da Liga
-        </p>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            E-mail de contato
-          </label>
-          <input
-            type="email"
-            value={form.emailContato}
-            onChange={(e) => setForm({ ...form, emailContato: e.target.value })}
-            placeholder="contato@faculdade.edu"
-            className={inputClass}
-          />
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Contatos da Liga"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        />
+        <div className="space-y-4">
+          {[
+            {
+              label: "E-mail de contato",
+              field: "emailContato" as const,
+              type: "email",
+              placeholder: "contato@faculdade.edu",
+            },
+            {
+              label: "Instagram",
+              field: "instagram" as const,
+              type: "text",
+              placeholder: "@ligatech",
+            },
+            {
+              label: "LinkedIn",
+              field: "linkedin" as const,
+              type: "text",
+              placeholder: "liga-tech-faculdade",
+            },
+          ].map(({ label, field, type, placeholder }) => (
+            <div key={field}>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                {label}
+              </label>
+              <input
+                type={type}
+                value={form[field]}
+                onChange={(e) => setForm({ ...form, [field]: e.target.value })}
+                placeholder={placeholder}
+                className={inputCls}
+              />
+            </div>
+          ))}
         </div>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            Instagram
-          </label>
-          <input
-            value={form.instagram}
-            onChange={(e) => setForm({ ...form, instagram: e.target.value })}
-            placeholder="@ligatech"
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block">
-            LinkedIn
-          </label>
-          <input
-            value={form.linkedin}
-            onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
-            placeholder="liga-tech-faculdade"
-            className={inputClass}
-          />
-        </div>
-      </div>
-
-      {/* Botão salvar */}
-      {alterado && (
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => void salvar()}
-            disabled={salvando}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {salvando ? "Salvando…" : "Salvar alterações"}
-          </button>
-          {salvo && (
-            <span className="font-plex-sans text-[12px] text-green-600">Salvo com sucesso!</span>
-          )}
-          {erro && <span className="font-plex-sans text-[12px] text-red-600">{erro}</span>}
-        </div>
-      )}
+      </section>
     </div>
   );
 }
@@ -813,6 +923,9 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
   const [editEnviando, setEditEnviando] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+  const [sheetAberto, setSheetAberto] = useState(false);
+  const [confirmandoDeletar, setConfirmandoDeletar] = useState<Recurso | null>(null);
+  const [deletando, setDeletando] = useState(false);
 
   async function uploadArquivo(
     file: File,
@@ -820,14 +933,18 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
     setEnviando: (v: boolean) => void,
   ) {
     const tiposPermitidos = [
-      "image/jpeg",
-      "image/png",
-      "image/gif",
       "application/pdf",
-      "text/plain",
-      "application/zip",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "video/mp4",
+      "video/webm",
+      "video/quicktime",
     ];
-    const tamanhoMaximoMB = 5;
+    const tamanhoMaximoMB = 50;
     if (!tiposPermitidos.includes(file.type)) {
       setErro("Tipo de ficheiro não permitido. Use imagens, PDF, TXT ou ZIP.");
       return;
@@ -873,19 +990,19 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
     void carregar();
   }, [ligaId]);
 
-  async function adicionar() {
+  async function adicionar(): Promise<boolean> {
     setErro(null);
     if (!novoNome.trim()) {
       setErro("Informe o nome do recurso.");
-      return;
+      return false;
     }
     if (!novoUrl.trim()) {
       setErro("Informe a URL.");
-      return;
+      return false;
     }
     if (!ligaId) {
       setErro("Liga não identificada. Recarregue a página.");
-      return;
+      return false;
     }
     const token = await getToken();
     const res = await fetch("/api/recursos", {
@@ -907,26 +1024,38 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
       setNovoUrl("");
       setNovoIcone("link");
       setNovoCor("#546484");
+      return true;
     } else {
       const body = (await res.json().catch(() => ({}))) as { error?: string };
       setErro(body.error ?? `Erro ${res.status} ao salvar.`);
+      return false;
     }
   }
 
   async function remover(id: string) {
-    const token = await getToken();
-    const res = await fetch(`/api/recursos/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      setRecursos((prev) => prev.filter((r) => r.id !== id));
+    setDeletando(true);
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/recursos/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setRecursos((prev) => prev.filter((r) => r.id !== id));
+        toast.success("Recurso removido.");
+      } else {
+        toast.error("Erro ao remover recurso.");
+      }
+    } finally {
+      setDeletando(false);
+      setConfirmandoDeletar(null);
     }
   }
 
   function iniciarEdicao(r: Recurso) {
     setEditandoId(r.id);
     setEditForm({ nome: r.nome, tipo: r.tipo, url: r.url, icone: r.icone, cor: r.cor });
+    setSheetAberto(true);
   }
 
   async function salvarEdicao(id: string) {
@@ -949,249 +1078,372 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
     setEditandoId(null);
   }
 
-  if (carregando) {
-    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando recursos…</p>;
-  }
+  if (carregando)
+    return (
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b border-foreground/[0.08]">
+            <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+              Recurso
+            </th>
+            <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+              URL
+            </th>
+            <th className="py-3 px-4 w-10" />
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <tr key={i} className="border-b border-foreground/[0.06]">
+              <td className="py-4 px-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                  <div>
+                    <Skeleton className="h-4 w-32 mb-1" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+              </td>
+              <td className="py-4 px-4 hidden sm:table-cell">
+                <Skeleton className="h-3 w-48" />
+              </td>
+              <td className="py-4 px-4">
+                <Skeleton className="h-6 w-6 rounded" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
 
   return (
-    <div className="space-y-4">
-      {/* Lista */}
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Recursos ({recursos.length})
-        </p>
-        {recursos.length === 0 ? (
-          <p className="font-plex-sans text-[13px] text-navy/50">
-            Nenhum recurso cadastrado ainda.
-          </p>
-        ) : (
-          <div className="border-t border-navy/15">
-            {recursos.map((r) => (
-              <div key={r.id} className="border-b border-navy/10 py-3">
-                {editandoId === r.id ? (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex gap-2 items-center">
-                      <IconeCor
-                        icone={editForm.icone ?? "link"}
-                        cor={editForm.cor ?? "#546484"}
-                        onChange={(ic, c) => setEditForm({ ...editForm, icone: ic, cor: c })}
-                      />
-                      <input
-                        value={editForm.nome ?? ""}
-                        onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
-                        placeholder="Nome"
-                        className="flex-1 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <select
-                        value={editForm.tipo ?? "URL"}
-                        onChange={(e) => setEditForm({ ...editForm, tipo: e.target.value })}
-                        className="w-36 border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
-                      >
-                        <option>URL</option>
-                        <option>Documento</option>
-                        <option>Notion</option>
-                        <option>Planilha</option>
-                        <option>Apresentação</option>
-                        <option>Vídeo</option>
-                        <option>Outro</option>
-                      </select>
-                    </div>
-                    {(TIPOS_COM_ARQUIVO as readonly string[]).includes(editForm.tipo ?? "") ? (
-                      <div>
-                        <label
-                          className={cn(
-                            "flex items-center gap-2 w-full border border-dashed px-3 py-2 cursor-pointer transition-colors font-plex-sans text-[13px]",
-                            editEnviando
-                              ? "border-navy/30 bg-navy/5 text-navy/60 cursor-not-allowed"
-                              : "border-navy/20 hover:border-navy/40 text-navy/50 hover:text-navy",
-                          )}
-                        >
-                          {editEnviando ? (
-                            <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                          ) : (
-                            <Upload className="h-4 w-4 shrink-0" />
-                          )}
-                          <span className="truncate text-[12px]">
-                            {editEnviando
-                              ? "Enviando…"
-                              : editForm.url
-                                ? "Arquivo enviado — clique para substituir"
-                                : "Clique para enviar arquivo"}
-                          </span>
-                          <input
-                            type="file"
-                            className="sr-only"
-                            disabled={editEnviando}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file)
-                                void uploadArquivo(
-                                  file,
-                                  (url) => setEditForm((f) => ({ ...f, url })),
-                                  setEditEnviando,
-                                );
-                              e.target.value = "";
-                            }}
-                          />
-                        </label>
-                        {editForm.url && (
-                          <p className="mt-1 font-plex-sans text-[12px] text-green-600 truncate">
-                            ✓ {editForm.url}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <input
-                        value={editForm.url ?? ""}
-                        onChange={(e) => setEditForm({ ...editForm, url: e.target.value })}
-                        placeholder="URL"
-                        className="w-full border border-navy/20 px-3 py-1.5 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
-                      />
-                    )}
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => void salvarEdicao(r.id)}
-                        disabled={editEnviando}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-white bg-navy px-3 py-1.5 hover:bg-navy/90 transition-colors disabled:opacity-40"
-                      >
-                        Salvar
-                      </button>
-                      <button
-                        onClick={() => setEditandoId(null)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="h-9 w-9 flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: r.cor }}
-                      >
-                        <RecursoIcone id={r.icone} />
-                      </div>
-                      <div>
-                        <p className="font-plex-sans font-semibold text-[13px] text-navy">
-                          {r.nome}
-                        </p>
-                        <p className="font-plex-mono text-[10px] text-navy/50">{r.tipo}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => iniciarEdicao(r)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
-                        title="Editar"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={() => void remover(r.id)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-400 hover:text-red-600 transition-colors"
-                        title="Remover"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Adicionar novo recurso */}
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Adicionar Recurso
-        </p>
-        <div className="flex gap-2 flex-wrap items-center">
-          <IconeCor
-            icone={novoIcone}
-            cor={novoCor}
-            onChange={(ic, c) => {
-              setNovoIcone(ic);
-              setNovoCor(c);
-            }}
-          />
-          <input
-            value={novoNome}
-            onChange={(e) => setNovoNome(e.target.value)}
-            placeholder="Nome do recurso"
-            className="flex-1 min-w-[140px] border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
-          />
-          <select
-            value={novoTipo}
-            onChange={(e) => setNovoTipo(e.target.value)}
-            className="w-36 border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 bg-white"
-          >
-            <option>URL</option>
-            <option>Documento</option>
-            <option>Notion</option>
-            <option>Planilha</option>
-            <option>Apresentação</option>
-            <option>Vídeo</option>
-            <option>Outro</option>
-          </select>
+    <div className="space-y-6">
+      <SectionHeader
+        titulo="Recursos"
+        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        acao={
           <button
-            onClick={() => void adicionar()}
-            disabled={novoEnviando}
-            className="flex items-center gap-1.5 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-2.5 hover:bg-navy/90 transition-colors disabled:opacity-40"
+            onClick={() => {
+              setNovoNome("");
+              setNovoTipo("URL");
+              setNovoUrl("");
+              setNovoIcone("link");
+              setNovoCor("#546484");
+              setEditandoId(null);
+              setSheetAberto(true);
+            }}
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
           >
-            <Plus className="h-3.5 w-3.5" />
-            Adicionar
+            + Novo recurso
           </button>
-        </div>
-        <div className="mt-3">
-          {(TIPOS_COM_ARQUIVO as readonly string[]).includes(novoTipo) ? (
-            <label
-              className={cn(
-                "flex items-center gap-2 w-full border border-dashed px-4 py-3 cursor-pointer transition-colors font-plex-sans text-[13px]",
-                novoEnviando
-                  ? "border-navy/30 bg-navy/5 text-navy/60 cursor-not-allowed"
-                  : "border-navy/20 hover:border-navy/40 text-navy/50 hover:text-navy",
-              )}
+        }
+      />
+
+      {recursos.length === 0 ? (
+        <p className="font-plex-sans text-[13px] text-navy/40">Nenhum recurso cadastrado ainda.</p>
+      ) : (
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-foreground/[0.08]">
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Recurso
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+                URL
+              </th>
+              <th className="py-3 px-4 w-10" />
+            </tr>
+          </thead>
+          <tbody>
+            {recursos.map((r) => (
+              <tr
+                key={r.id}
+                className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
+              >
+                <td className="py-4 px-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="h-8 w-8 flex items-center justify-center shrink-0 rounded-full"
+                      style={{ backgroundColor: r.cor }}
+                    >
+                      <RecursoIcone id={r.icone} />
+                    </div>
+                    <div>
+                      <span className="font-plex-sans font-semibold text-[13px] text-foreground">
+                        {r.nome}
+                      </span>
+                      <span className="block font-plex-mono text-[10px] text-foreground/40">
+                        {r.tipo}
+                      </span>
+                    </div>
+                  </div>
+                </td>
+                <td className="py-4 px-4 hidden sm:table-cell">
+                  <span className="font-plex-mono text-[11px] text-foreground/40 truncate max-w-[200px] block">
+                    {r.url}
+                  </span>
+                </td>
+                <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-1 rounded hover:bg-foreground/[0.08] text-foreground/40 hover:text-foreground/70 transition-colors">
+                        <MoreHorizontal size={14} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[140px]">
+                      <DropdownMenuItem
+                        className="text-[12px] cursor-pointer"
+                        onClick={() => iniciarEdicao(r)}
+                      >
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-[12px] cursor-pointer text-red-500 focus:text-red-600"
+                        onClick={() => setConfirmandoDeletar(r)}
+                      >
+                        Remover
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {/* Dialog de confirmação de deleção */}
+      <AlertDialog
+        open={!!confirmandoDeletar}
+        onOpenChange={(v) => {
+          if (!v && !deletando) setConfirmandoDeletar(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display font-bold text-[18px] text-navy">
+              Remover recurso
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-plex-sans text-[13px] text-foreground/60">
+              Tem certeza que deseja remover{" "}
+              <span className="font-semibold text-foreground">{confirmandoDeletar?.nome}</span>?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={deletando}
+              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase"
             >
-              {novoEnviando ? (
-                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deletando}
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmandoDeletar) void remover(confirmandoDeletar.id);
+              }}
+              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deletando ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Removendo…
+                </span>
               ) : (
-                <Upload className="h-4 w-4 shrink-0" />
+                "Remover"
               )}
-              <span className="truncate">
-                {novoEnviando
-                  ? "Enviando arquivo…"
-                  : novoUrl
-                    ? "Arquivo enviado — clique para substituir"
-                    : "Clique para selecionar arquivo"}
-              </span>
-              <input
-                type="file"
-                className="sr-only"
-                disabled={novoEnviando}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) void uploadArquivo(file, setNovoUrl, setNovoEnviando);
-                  e.target.value = "";
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Sheet Adicionar/Editar */}
+      <Sheet open={sheetAberto} onOpenChange={(v) => !v && setSheetAberto(false)}>
+        <SheetContent side="right" className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0">
+          <div className="flex-shrink-0">
+            <div className="h-px bg-foreground/20" />
+            <div className="px-8 pt-8 pb-6">
+              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
+                Recursos
+              </p>
+              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
+                {editandoId ? "Editar Recurso" : "Adicionar Recurso"}
+              </h2>
+            </div>
+            <div className="h-px bg-foreground/[0.08]" />
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+            <div>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                Nome
+              </label>
+              <div className="flex items-center gap-3">
+                <IconeCor
+                  icone={editandoId ? (editForm.icone ?? "link") : novoIcone}
+                  cor={editandoId ? (editForm.cor ?? "#546484") : novoCor}
+                  onChange={(ic, c) => {
+                    if (editandoId) setEditForm({ ...editForm, icone: ic, cor: c });
+                    else {
+                      setNovoIcone(ic);
+                      setNovoCor(c);
+                    }
+                  }}
+                />
+                <input
+                  value={editandoId ? (editForm.nome ?? "") : novoNome}
+                  onChange={(e) =>
+                    editandoId
+                      ? setEditForm({ ...editForm, nome: e.target.value })
+                      : setNovoNome(e.target.value)
+                  }
+                  placeholder="Nome do recurso"
+                  className="flex-1 font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                Tipo
+              </label>
+              <Select
+                value={editandoId ? (editForm.tipo ?? "URL") : novoTipo}
+                onValueChange={(v) =>
+                  editandoId ? setEditForm({ ...editForm, tipo: v }) : setNovoTipo(v)
+                }
+              >
+                <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[
+                    "URL",
+                    "PDF",
+                    "Apresentação",
+                    "Documento",
+                    "Notion",
+                    "Planilha",
+                    "Vídeo",
+                    "Outro",
+                  ].map((t) => (
+                    <SelectItem key={t} value={t} className="font-plex-sans text-[13px]">
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {(() => {
+              const tipo = editandoId ? (editForm.tipo ?? "URL") : novoTipo;
+              const ehMidia =
+                tipo === "PDF" ||
+                tipo === "Documento" ||
+                tipo === "Vídeo" ||
+                tipo === "Apresentação";
+              const currentUrl = editandoId ? (editForm.url ?? "") : novoUrl;
+              const enviando = editandoId ? editEnviando : novoEnviando;
+              const setUrl = (url: string) =>
+                editandoId ? setEditForm({ ...editForm, url }) : setNovoUrl(url);
+              const setEnviando = editandoId ? setEditEnviando : setNovoEnviando;
+              const accept =
+                tipo === "Vídeo"
+                  ? "video/*"
+                  : tipo === "PDF"
+                    ? ".pdf"
+                    : tipo === "Apresentação"
+                      ? ".pdf,.ppt,.pptx"
+                      : ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx";
+
+              return (
+                <div>
+                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                    {ehMidia ? "Arquivo" : "URL"}
+                  </label>
+                  {ehMidia ? (
+                    <label
+                      className={cn(
+                        "flex flex-col items-center justify-center gap-2 w-full h-24 border border-dashed rounded cursor-pointer transition-colors",
+                        currentUrl
+                          ? "border-foreground/30 bg-muted/30"
+                          : "border-foreground/20 hover:border-foreground/40",
+                      )}
+                    >
+                      {enviando ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-foreground/40" />
+                      ) : currentUrl ? (
+                        <>
+                          <Check className="h-4 w-4 text-green-600" />
+                          <span className="font-plex-mono text-[10px] text-foreground/50 max-w-[220px] truncate">
+                            {currentUrl.split("/").pop()}
+                          </span>
+                          <span className="font-plex-mono text-[9px] uppercase tracking-[0.12em] text-foreground/30">
+                            Trocar arquivo
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-5 w-5 text-foreground/30" />
+                          <span className="font-plex-sans text-[12px] text-foreground/40">
+                            Clique para selecionar
+                          </span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept={accept}
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          void uploadArquivo(file, setUrl, setEnviando);
+                        }}
+                      />
+                    </label>
+                  ) : (
+                    <input
+                      value={currentUrl}
+                      onChange={(e) => setUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                    />
+                  )}
+                </div>
+              );
+            })()}
+            {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
+          </div>
+
+          <div className="flex-shrink-0">
+            <div className="h-px bg-foreground/[0.08]" />
+            <div className="px-8 py-6 flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  if (editandoId) void salvarEdicao(editandoId).then(() => setSheetAberto(false));
+                  else
+                    void adicionar().then((ok) => {
+                      if (ok) setSheetAberto(false);
+                    });
                 }}
-              />
-            </label>
-          ) : (
-            <input
-              value={novoUrl}
-              onChange={(e) => setNovoUrl(e.target.value)}
-              placeholder="URL do recurso"
-              className="w-full border border-navy/20 px-3 py-2 font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 bg-white"
-            />
-          )}
-        </div>
-        {erro && <p className="font-plex-sans text-[12px] text-red-600 mt-2">{erro}</p>}
-      </div>
+                disabled={
+                  editandoId
+                    ? !(editForm.nome ?? "").trim() || !(editForm.url ?? "").trim()
+                    : !novoNome.trim() || !novoUrl.trim()
+                }
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {editandoId ? "Salvar alterações" : "Adicionar recurso"}
+              </button>
+              <button
+                onClick={() => setSheetAberto(false)}
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
@@ -1246,6 +1498,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
   const [novoValor, setNovoValor] = useState("");
   const [novaData, setNovaData] = useState(new Date().toISOString().slice(0, 10));
   const [enviando, setEnviando] = useState(false);
+  const [sheetAberto, setSheetAberto] = useState(false);
 
   useEffect(() => {
     if (!ligaId) {
@@ -1308,6 +1561,8 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
         setNovoValor("");
         setNovaRecorrencia("unico");
         setNovaData(new Date().toISOString().slice(0, 10));
+        toast.success("Lançamento adicionado.");
+        setSheetAberto(false);
       } else {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         setErro(body.error ?? `Erro ${res.status} ao salvar.`);
@@ -1334,216 +1589,338 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
   const totalCustos = registros.filter((r) => r.tipo === "custo").reduce((s, r) => s + r.valor, 0);
   const saldo = totalReceitas - totalCustos;
 
-  if (carregando) {
-    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando financeiro…</p>;
-  }
+  if (carregando)
+    return (
+      <div className="space-y-8">
+        {/* KPI skeletons — 3 cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-border shadow-sm p-5">
+              <Skeleton className="h-8 w-20 mb-2" />
+              <Skeleton className="h-3 w-24 mt-2" />
+            </div>
+          ))}
+        </div>
+        {/* Table skeleton */}
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-foreground/[0.08]">
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Descrição
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+                Data
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden md:table-cell">
+                Recorrência
+              </th>
+              <th className="text-right py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Valor
+              </th>
+              <th className="py-3 px-4 w-10" />
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <tr key={i} className="border-b border-foreground/[0.06]">
+                <td className="py-4 px-4">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-5 w-5 rounded-full shrink-0" />
+                    <Skeleton className="h-4 w-36" />
+                  </div>
+                </td>
+                <td className="py-4 px-4 hidden sm:table-cell">
+                  <Skeleton className="h-4 w-20" />
+                </td>
+                <td className="py-4 px-4 hidden md:table-cell">
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                </td>
+                <td className="py-4 px-4 text-right">
+                  <Skeleton className="h-4 w-20 ml-auto" />
+                </td>
+                <td className="py-4 px-4">
+                  <Skeleton className="h-6 w-6 rounded" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
 
   return (
-    <div className="space-y-4">
-      {/* Resumo KPI */}
-      <div className="grid grid-cols-3">
-        <div className="border border-navy/15 p-5 border-r-0">
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
-            Receitas
-          </p>
-          <p className="font-display font-bold text-[22px] tracking-[-0.02em] text-green-600">
-            {formatarMoeda(totalReceitas)}
-          </p>
-        </div>
-        <div className="border border-navy/15 p-5 border-r-0">
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
-            Custos
-          </p>
-          <p className="font-display font-bold text-[22px] tracking-[-0.02em] text-red-500">
-            {formatarMoeda(totalCustos)}
-          </p>
-        </div>
-        <div className="border border-navy/15 p-5">
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2">
-            Saldo
-          </p>
-          <p
-            className={cn(
-              "font-display font-bold text-[22px] tracking-[-0.02em]",
-              saldo >= 0 ? "text-navy" : "text-red-500",
-            )}
-          >
-            {formatarMoeda(saldo)}
-          </p>
-        </div>
-      </div>
+    <div className="space-y-8">
+      {/* KPIs */}
+      <KpiRow
+        items={[
+          { label: "Receitas", valor: formatarMoeda(totalReceitas) },
+          { label: "Custos", valor: formatarMoeda(totalCustos) },
+          { label: "Saldo", valor: formatarMoeda(saldo) },
+        ]}
+        cols={3}
+      />
 
-      {/* Lista */}
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Lançamentos ({registros.length})
-        </p>
+      {/* Lista de lançamentos */}
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Lançamentos"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+          acao={
+            <button
+              onClick={() => {
+                setNovoTipo("receita");
+                setNovaRecorrencia("unico");
+                setNovaDescricao("");
+                setNovaObs("");
+                setNovoValor("");
+                setNovaData(new Date().toISOString().slice(0, 10));
+                setSheetAberto(true);
+              }}
+              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
+            >
+              + Adicionar
+            </button>
+          }
+        />
+
         {registros.length === 0 ? (
-          <p className="font-plex-sans text-[13px] text-navy/50">Nenhum lançamento ainda.</p>
+          <p className="font-plex-sans text-[13px] text-navy/40">Nenhum lançamento ainda.</p>
         ) : (
-          <div className="border-t border-navy/15">
-            {registros.map((r) => (
-              <div
-                key={r.id}
-                className="border-b border-navy/10 py-3 flex items-start justify-between gap-3"
-              >
-                <div className="flex items-start gap-3">
-                  <div
-                    className={cn(
-                      "h-7 w-7 flex items-center justify-center shrink-0 mt-0.5 text-white font-plex-mono text-[11px]",
-                      r.tipo === "receita" ? "bg-green-500" : "bg-red-400",
-                    )}
-                  >
-                    {r.tipo === "receita" ? "+" : "−"}
-                  </div>
-                  <div>
-                    <p className="font-plex-sans font-semibold text-[13px] text-navy">
-                      {r.descricao}
-                    </p>
-                    {r.observacao && (
-                      <p className="font-plex-sans text-[12px] text-navy/50 mt-0.5">
-                        {r.observacao}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="font-plex-mono text-[10px] text-navy/50">
-                        {new Date(r.data + "T00:00:00").toLocaleDateString("pt-BR")}
-                      </p>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-foreground/[0.08]">
+                <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                  Descrição
+                </th>
+                <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+                  Data
+                </th>
+                <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden md:table-cell">
+                  Recorrência
+                </th>
+                <th className="text-right py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                  Valor
+                </th>
+                <th className="py-3 px-4 w-10" />
+              </tr>
+            </thead>
+            <tbody>
+              {registros.map((r) => (
+                <tr
+                  key={r.id}
+                  className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
+                >
+                  <td className="py-4 px-4">
+                    <div className="flex items-center gap-2">
                       <span
                         className={cn(
-                          "font-plex-mono text-[9px] uppercase tracking-[0.10em] px-1.5 py-0.5",
-                          r.recorrencia === "recorrente"
-                            ? "bg-blue-100 text-blue-600"
-                            : "bg-gray-100 text-gray-500",
+                          "font-plex-mono text-[10px] uppercase px-1.5 py-0.5 rounded-full font-bold shrink-0",
+                          r.tipo === "receita"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-600",
                         )}
                       >
-                        {r.recorrencia === "recorrente" ? "Recorrente" : "Único"}
+                        {r.tipo === "receita" ? "+" : "−"}
                       </span>
+                      <div>
+                        <span className="font-plex-sans font-semibold text-[13px] text-foreground">
+                          {r.descricao}
+                        </span>
+                        {r.observacao && (
+                          <span className="block font-plex-sans text-[11px] text-foreground/40">
+                            {r.observacao}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span
-                    className={cn(
-                      "font-plex-mono text-[12px]",
-                      r.tipo === "receita" ? "text-green-600" : "text-red-500",
-                    )}
-                  >
-                    {r.tipo === "receita" ? "+" : "−"}
-                    {formatarMoeda(r.valor)}
-                  </span>
-                  <button
-                    onClick={() => void remover(r.id)}
-                    className="text-red-400 hover:text-red-600 transition-colors"
-                    title="Remover"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+                  </td>
+                  <td className="py-4 px-4 font-plex-mono text-[11px] text-foreground/50 hidden sm:table-cell">
+                    {new Date(r.data + "T00:00:00").toLocaleDateString("pt-BR")}
+                  </td>
+                  <td className="py-4 px-4 hidden md:table-cell">
+                    <span
+                      className={cn(
+                        "font-plex-mono text-[9px] uppercase tracking-[0.10em] px-2 py-0.5 rounded-full",
+                        r.recorrencia === "recorrente"
+                          ? "bg-blue-100 text-blue-600"
+                          : "bg-foreground/[0.06] text-foreground/50",
+                      )}
+                    >
+                      {r.recorrencia === "recorrente" ? "Recorrente" : "Único"}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4 text-right">
+                    <span
+                      className={cn(
+                        "font-plex-mono text-[12px]",
+                        r.tipo === "receita" ? "text-green-600" : "text-red-500",
+                      )}
+                    >
+                      {r.tipo === "receita" ? "+" : "−"}
+                      {formatarMoeda(r.valor)}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="p-1 rounded hover:bg-foreground/[0.08] text-foreground/40 hover:text-foreground/70 transition-colors">
+                          <MoreHorizontal size={14} />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="min-w-[140px]">
+                        <DropdownMenuItem
+                          className="text-[12px] cursor-pointer text-red-500 focus:text-red-600"
+                          onClick={() => void remover(r.id)}
+                        >
+                          Remover
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
-      </div>
+      </section>
 
-      {/* Adicionar */}
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Adicionar Lançamento
-        </p>
-        <div className="space-y-3">
-          {/* Tipo */}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setNovoTipo("receita")}
-              className={cn(
-                "flex-1 py-2 font-plex-mono text-[10px] tracking-[0.14em] uppercase border-2 transition-colors",
-                novoTipo === "receita"
-                  ? "border-green-500 bg-green-50 text-green-700"
-                  : "border-navy/15 text-navy/40 hover:border-green-300",
-              )}
-            >
-              + Receita
-            </button>
-            <button
-              type="button"
-              onClick={() => setNovoTipo("custo")}
-              className={cn(
-                "flex-1 py-2 font-plex-mono text-[10px] tracking-[0.14em] uppercase border-2 transition-colors",
-                novoTipo === "custo"
-                  ? "border-red-400 bg-red-50 text-red-600"
-                  : "border-navy/15 text-navy/40 hover:border-red-300",
-              )}
-            >
-              − Custo
-            </button>
+      {/* Sheet Adicionar Lançamento */}
+      <Sheet open={sheetAberto} onOpenChange={(v) => !v && setSheetAberto(false)}>
+        <SheetContent side="right" className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0">
+          <div className="flex-shrink-0">
+            <div className="h-px bg-foreground/20" />
+            <div className="px-8 pt-8 pb-6">
+              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
+                Financeiro
+              </p>
+              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
+                Adicionar Lançamento
+              </h2>
+            </div>
+            <div className="h-px bg-foreground/[0.08]" />
           </div>
 
-          {/* Recorrência */}
-          <select
-            value={novaRecorrencia}
-            onChange={(e) => setNovaRecorrencia(e.target.value as "unico" | "recorrente")}
-            className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60"
-          >
-            <option value="unico">Único</option>
-            <option value="recorrente">Recorrente</option>
-          </select>
+          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+            {/* Tipo */}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setNovoTipo("receita")}
+                className={cn(
+                  "flex-1 py-2 font-plex-mono text-[10px] tracking-[0.14em] uppercase border-2 transition-colors rounded-full",
+                  novoTipo === "receita"
+                    ? "border-green-500 bg-green-50 text-green-700"
+                    : "border-foreground/15 text-foreground/40 hover:border-green-300",
+                )}
+              >
+                + Receita
+              </button>
+              <button
+                type="button"
+                onClick={() => setNovoTipo("custo")}
+                className={cn(
+                  "flex-1 py-2 font-plex-mono text-[10px] tracking-[0.14em] uppercase border-2 transition-colors rounded-full",
+                  novoTipo === "custo"
+                    ? "border-red-400 bg-red-50 text-red-600"
+                    : "border-foreground/15 text-foreground/40 hover:border-red-300",
+                )}
+              >
+                − Custo
+              </button>
+            </div>
 
-          {/* Descrição */}
-          <input
-            value={novaDescricao}
-            onChange={(e) => setNovaDescricao(e.target.value)}
-            placeholder="Descrição"
-            className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
-          />
+            <div>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                Recorrência
+              </label>
+              <Select
+                value={novaRecorrencia}
+                onValueChange={(v) => setNovaRecorrencia(v as "unico" | "recorrente")}
+              >
+                <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unico" className="font-plex-sans text-[13px]">
+                    Único
+                  </SelectItem>
+                  <SelectItem value="recorrente" className="font-plex-sans text-[13px]">
+                    Recorrente
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Observação */}
-          <input
-            value={novaObs}
-            onChange={(e) => setNovaObs(e.target.value)}
-            placeholder="Observação (opcional)"
-            className="w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
-          />
-
-          {/* Valor + Data */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-plex-sans text-[13px] text-navy/50 pointer-events-none">
-                R$
-              </span>
+            <div>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                Descrição
+              </label>
               <input
-                type="text"
-                inputMode="decimal"
-                value={novoValor}
-                onChange={(e) => {
-                  const v = e.target.value.replace(/[^0-9.,]/g, "");
-                  setNovoValor(v);
-                }}
-                placeholder="0,00"
-                className="w-full border border-navy/20 pl-9 pr-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+                value={novaDescricao}
+                onChange={(e) => setNovaDescricao(e.target.value)}
+                placeholder="Ex: Patrocínio empresa X"
+                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
               />
             </div>
-            <input
-              type="date"
-              value={novaData}
-              onChange={(e) => setNovaData(e.target.value)}
-              className="w-40 border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60"
-            />
+
+            <div>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                Observação (opcional)
+              </label>
+              <input
+                value={novaObs}
+                onChange={(e) => setNovaObs(e.target.value)}
+                placeholder="Detalhes adicionais"
+                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-plex-sans text-[13px] text-foreground/40 pointer-events-none">
+                  R$
+                </span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={novoValor}
+                  onChange={(e) => setNovoValor(e.target.value.replace(/[^0-9.,]/g, ""))}
+                  placeholder="0,00"
+                  className="w-full font-plex-sans text-[13px] text-foreground border border-border pl-9 pr-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                />
+              </div>
+              <input
+                type="date"
+                value={novaData}
+                onChange={(e) => setNovaData(e.target.value)}
+                className="w-40 font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 focus:outline-none focus:border-foreground/30 rounded"
+              />
+            </div>
+
+            {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
           </div>
 
-          {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
-
-          <button
-            onClick={() => void adicionar()}
-            disabled={enviando}
-            className="flex items-center gap-1.5 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            {enviando ? "Salvando…" : "Adicionar"}
-          </button>
-        </div>
-      </div>
+          <div className="flex-shrink-0">
+            <div className="h-px bg-foreground/[0.08]" />
+            <div className="px-8 py-6 flex flex-col gap-3">
+              <button
+                onClick={() => void adicionar()}
+                disabled={enviando || !novaDescricao.trim() || !novoValor.trim()}
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {enviando && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Adicionar lançamento
+              </button>
+              <button
+                onClick={() => setSheetAberto(false)}
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
@@ -1583,7 +1960,6 @@ function AbaDesempenho({ ligaId }: { ligaId: string | null }) {
       valor: formatarMoeda(Number(minha?.receita_total ?? 0)),
       cor: "text-amber-600",
     },
-    { label: "Presenças", valor: String(minha?.presencas ?? 0), cor: "text-purple-600" },
     {
       label: "Membros ativos",
       valor: String(ligaInfo?.total_membros ?? 0),
@@ -1608,67 +1984,68 @@ function AbaDesempenho({ ligaId }: { ligaId: string | null }) {
   const composicaoMax = Math.max(...composicao.map((c) => c.valor), 1);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       {/* Score */}
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-4">
-          Score Atual
-        </p>
-        <div className="flex items-end justify-between mb-3">
-          <div>
-            <span className="font-display font-bold text-4xl text-navy">{score}</span>
-            <span className="font-plex-sans text-lg text-navy/40 ml-1">pts</span>
-          </div>
-          {posicao !== null && (
-            <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-brand-yellow text-navy px-2 py-0.5">
-              {posicao}º lugar
-            </span>
-          )}
-        </div>
-        <div className="w-full bg-navy/10 h-px overflow-hidden">
-          <div
-            className="h-px transition-all duration-500"
-            style={{
-              width: `${porcentagem}%`,
-              background: "linear-gradient(90deg, #10284E, #546484)",
-            }}
-          />
-        </div>
-        <div className="flex justify-between mt-2 font-plex-mono text-[10px] text-navy/40">
-          <span>0 pts</span>
-          <span>{porcentagem}% do máximo</span>
-          <span>{scoreMax} pts</span>
-        </div>
-      </div>
-
-      {/* Resumo */}
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Resumo
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {resumo.map((r) => (
-            <div key={r.label} className="border border-navy/10 p-3">
-              <p className={cn("font-display font-bold text-xl", r.cor)}>{r.valor}</p>
-              <p className="font-plex-sans text-[12px] text-navy/50 mt-0.5">{r.label}</p>
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Score Atual"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        />
+        <div className="border border-navy/15 p-5 rounded-lg">
+          <div className="flex items-end justify-between mb-3">
+            <div>
+              <span className="font-display font-bold text-4xl text-navy">{score}</span>
+              <span className="font-plex-sans text-lg text-navy/40 ml-1">pts</span>
             </div>
-          ))}
+            {posicao !== null && (
+              <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-brand-yellow text-navy px-2 py-0.5 rounded-full">
+                {posicao}º lugar
+              </span>
+            )}
+          </div>
+          <div className="w-full bg-navy/10 h-px overflow-hidden">
+            <div
+              className="h-px transition-all duration-500"
+              style={{
+                width: `${porcentagem}%`,
+                background: "linear-gradient(90deg, #10284E, #546484)",
+              }}
+            />
+          </div>
+          <div className="flex justify-between mt-2 font-plex-mono text-[10px] text-navy/40">
+            <span>0 pts</span>
+            <span>{porcentagem}% do máximo</span>
+            <span>{scoreMax} pts</span>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Indicadores que compõem o score */}
-      <div className="border border-navy/15 p-5">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3">
-          Indicadores
-        </p>
+      {/* KPIs */}
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Resumo"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        />
+        <KpiRow
+          items={resumo.map((r) => ({ label: r.label, valor: r.valor }))}
+          cols={resumo.length <= 3 ? 3 : 4}
+        />
+      </section>
+
+      {/* Indicadores */}
+      <section className="space-y-4">
+        <SectionHeader
+          titulo="Indicadores"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        />
         <div className="space-y-4">
           {composicao.map((c) => (
             <div key={c.label}>
               <div className="flex items-center justify-between mb-2">
-                <span className="font-plex-sans font-semibold text-[13px] text-navy">
+                <span className="font-plex-sans font-semibold text-[13px] text-foreground">
                   {c.label}
                 </span>
-                <span className="font-plex-mono text-[12px] text-navy">{c.valor}</span>
+                <span className="font-plex-mono text-[12px] text-foreground">{c.valor}</span>
               </div>
               <div className="w-full bg-navy/10 h-px overflow-hidden">
                 <div
@@ -1679,14 +2056,21 @@ function AbaDesempenho({ ligaId }: { ligaId: string | null }) {
             </div>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }
 
 // ─── página principal ─────────────────────────────────────────────────────────
 
-type Aba = "Membros" | "Informações" | "Recursos" | "Receita" | "Presença" | "CRM" | "Desempenho";
+type Aba =
+  | "Membros"
+  | "Informações"
+  | "Recursos"
+  | "Receita"
+  | "Presença"
+  | "Contatos"
+  | "Desempenho";
 
 const ABAS: Aba[] = [
   "Membros",
@@ -1694,7 +2078,7 @@ const ABAS: Aba[] = [
   "Recursos",
   "Receita",
   "Presença",
-  "CRM",
+  "Contatos",
   "Desempenho",
 ];
 
@@ -1710,7 +2094,9 @@ const INFO_VAZIA: InfoLiga = {
 };
 
 export function GerenciamentoPage() {
-  const [abaAtiva, setAbaAtiva] = useState<Aba>("Membros");
+  const location = useLocation();
+  const abaInicial = (location.state as { aba?: Aba } | null)?.aba ?? "Membros";
+  const [abaAtiva, setAbaAtiva] = useState<Aba>(abaInicial);
   const [ligaNome, setLigaNome] = useState("");
   const [diretorNome, setDiretorNome] = useState("");
   const [ligaId, setLigaId] = useState<string | null>(null);
@@ -1770,29 +2156,16 @@ export function GerenciamentoPage() {
         </h1>
         <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
           {ligaNome || "Carregando…"}
-          {diretorNome ? ` · ${diretorNome}` : ""}
         </p>
       </div>
 
       {/* Abas */}
-      <div className="border-b border-navy/15 mb-8">
-        <div className="flex">
-          {ABAS.map((aba) => (
-            <button
-              key={aba}
-              onClick={() => setAbaAtiva(aba)}
-              className={cn(
-                "px-5 py-3 font-plex-mono text-[10px] uppercase tracking-[0.14em] transition-colors border-b-2 -mb-px",
-                abaAtiva === aba
-                  ? "border-navy text-navy"
-                  : "border-transparent text-navy/40 hover:text-navy",
-              )}
-            >
-              {aba}
-            </button>
-          ))}
-        </div>
-      </div>
+      <AnimatedTabs
+        tabs={ABAS}
+        activeTab={abaAtiva}
+        onChange={(aba) => setAbaAtiva(aba as Aba)}
+        wrapperClassName="mb-8"
+      />
 
       {/* Conteúdo da aba */}
       {abaAtiva === "Membros" && <AbaMembros ligaId={ligaId} />}
@@ -1800,7 +2173,7 @@ export function GerenciamentoPage() {
       {abaAtiva === "Recursos" && <AbaRecursos ligaId={ligaId} />}
       {abaAtiva === "Receita" && <AbaReceita ligaId={ligaId} />}
       {abaAtiva === "Presença" && <AbaPresenca ligaId={ligaId} />}
-      {abaAtiva === "CRM" && <AbaCRM ligaId={ligaId} />}
+      {abaAtiva === "Contatos" && <AbaCRM ligaId={ligaId} />}
       {abaAtiva === "Desempenho" && <AbaDesempenho ligaId={ligaId} />}
     </div>
   );

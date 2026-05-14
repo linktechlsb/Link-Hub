@@ -10,10 +10,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
-import { EditorialTable, KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
+import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
+
+import { CriarProjetoDialog } from "./CriarProjetoDialog";
 
 type ProjetoAPI = {
   id: string;
@@ -52,13 +62,13 @@ type ProjetoForm = {
 };
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  rascunho: { label: "Rascunho", className: "text-navy/50" },
+  rascunho: { label: "Rascunho", className: "text-foreground/40" },
   em_aprovacao: { label: "Em aprovação", className: "text-amber-600" },
   aprovado: { label: "Aprovado", className: "text-blue-600" },
   rejeitado: { label: "Rejeitado", className: "text-red-600" },
   em_andamento: { label: "Em andamento", className: "text-blue-600" },
-  concluido: { label: "Concluído", className: "text-green-700" },
-  cancelado: { label: "Cancelado", className: "text-navy/40" },
+  concluido: { label: "Concluído", className: "text-green-600" },
+  cancelado: { label: "Cancelado", className: "text-foreground/30" },
 };
 
 async function getToken() {
@@ -78,7 +88,7 @@ const FORM_VAZIO: ProjetoForm = {
   tipo_projeto: "",
 };
 
-export function ProjetosLiderView() {
+export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
   const { data: liga } = useCachedFetch<MinhaLiga>("/api/ligas/minha");
   const ligaId = liga?.id ?? null;
   const { data: projetosData, refetch: refetchProjetos } = useCachedFetch<ProjetoAPI[]>(
@@ -102,6 +112,7 @@ export function ProjetosLiderView() {
     if (filtroStatus && p.status !== filtroStatus) return false;
     return true;
   });
+  const [dialogCriar, setDialogCriar] = useState(false);
   const [sheetProjeto, setSheetProjeto] = useState<ProjetoAPI | "novo" | null>(null);
   const [form, setForm] = useState<ProjetoForm>(FORM_VAZIO);
   const [salvando, setSalvando] = useState(false);
@@ -109,6 +120,10 @@ export function ProjetosLiderView() {
   const [concluindo, setConcluindo] = useState<string | null>(null);
   const [confirmarConclusao, setConfirmarConclusao] = useState<ProjetoAPI | null>(null);
   const [professorDaLiga, setProfessorDaLiga] = useState<ProfessorAPI>(null);
+
+  useEffect(() => {
+    if (abrirCriar && ligaId) setDialogCriar(true);
+  }, [abrirCriar, ligaId]);
 
   useEffect(() => {
     if (!ligaId) return;
@@ -168,10 +183,12 @@ export function ProjetosLiderView() {
         titulo: form.titulo.trim(),
         descricao: form.descricao.trim() || undefined,
         prazo: form.prazo || undefined,
-        responsavel_id: form.responsavel_id || undefined,
+        responsavel_id:
+          form.responsavel_id && form.responsavel_id !== "none" ? form.responsavel_id : undefined,
         liga_id: liga.id,
         impacto: form.impacto.trim() || undefined,
-        professor_id: form.professor_id || undefined,
+        professor_id:
+          form.professor_id && form.professor_id !== "none" ? form.professor_id : undefined,
         empresa_parceira: form.empresa_parceira.trim() || undefined,
         tipo_projeto: form.tipo_projeto || undefined,
         ...(submeter ? { status: "em_aprovacao" } : {}),
@@ -260,11 +277,12 @@ export function ProjetosLiderView() {
             numero="01"
             eyebrow="Iniciativas"
             titulo={aba === "liga" ? "Projetos da Liga" : "Todos os Projetos"}
+            tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
             acao={
               aba === "liga" ? (
                 <button
                   onClick={abrirNovo}
-                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors"
+                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
                 >
                   + Novo Projeto
                 </button>
@@ -272,158 +290,249 @@ export function ProjetosLiderView() {
             }
           />
 
-          <div className="flex gap-6 mb-6 border-b border-navy/15">
-            <button
-              onClick={() => setAba("liga")}
-              className={`font-plex-mono text-[11px] tracking-[0.14em] uppercase pb-3 -mb-px border-b-2 transition-colors ${
-                aba === "liga"
-                  ? "text-navy border-navy"
-                  : "text-navy/50 border-transparent hover:text-navy"
-              }`}
-            >
-              Da Liga
-            </button>
-            <button
-              onClick={() => setAba("todos")}
-              className={`font-plex-mono text-[11px] tracking-[0.14em] uppercase pb-3 -mb-px border-b-2 transition-colors ${
-                aba === "todos"
-                  ? "text-navy border-navy"
-                  : "text-navy/50 border-transparent hover:text-navy"
-              }`}
-            >
-              Todos os Projetos
-            </button>
-          </div>
+          <AnimatedTabs
+            tabs={[
+              { id: "liga", label: "Da Liga" },
+              { id: "todos", label: "Todos os Projetos" },
+            ]}
+            activeTab={aba}
+            onChange={(id) => setAba(id as typeof aba)}
+            wrapperClassName="border-foreground/[0.08] mb-6"
+            innerClassName="gap-6"
+            tabClassName="px-0 py-3"
+            activeTabClassName="text-foreground"
+            inactiveTabClassName="text-foreground/40 hover:text-foreground"
+            indicatorClassName="bg-foreground"
+          />
 
           {aba === "liga" &&
             (projetos.length === 0 ? (
-              <p className="font-plex-sans text-[13px] text-navy/50">Nenhum projeto cadastrado.</p>
+              <p className="font-plex-sans text-[13px] text-foreground/50">
+                Nenhum projeto cadastrado.
+              </p>
             ) : (
-              <EditorialTable
-                columns={["Projeto", "Responsável", "Prazo", "Status", ""]}
-                rows={projetos.map((p) => {
-                  const s = STATUS_CONFIG[p.status] ?? {
-                    label: p.status,
-                    className: "text-navy/50",
-                  };
-                  const podSubmeter = p.status === "rascunho" || p.status === "rejeitado";
-                  const podConcluir = p.status === "aprovado" || p.status === "em_andamento";
-                  return [
-                    <div key="t">
-                      <span className="font-medium">{p.titulo}</span>
-                      {p.status === "rejeitado" && p.motivo_recusa && (
-                        <p className="font-plex-mono text-[10px] text-red-600 mt-0.5">
-                          {p.motivo_recusa}
-                        </p>
-                      )}
-                    </div>,
-                    responsavelNome(p),
-                    p.prazo
-                      ? new Date(p.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString("pt-BR", {
-                          day: "2-digit",
-                          month: "short",
-                        })
-                      : "—",
-                    <span key="s" className={`font-medium ${s.className}`}>
-                      {s.label}
-                    </span>,
-                    <div key="acoes" className="flex items-center gap-3">
-                      <button
-                        onClick={() => abrirEditar(p)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors"
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-foreground/[0.08]">
+                    <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                      Projeto
+                    </th>
+                    <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                      Responsável
+                    </th>
+                    <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                      Prazo
+                    </th>
+                    <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                      Status
+                    </th>
+                    <th className="py-3 px-4" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {projetos.map((p, idx) => {
+                    const s = STATUS_CONFIG[p.status] ?? {
+                      label: p.status,
+                      className: "text-foreground/50",
+                    };
+                    const podSubmeter = p.status === "rascunho" || p.status === "rejeitado";
+                    const podConcluir = p.status === "aprovado" || p.status === "em_andamento";
+                    const isLast = idx === projetos.length - 1;
+                    return (
+                      <tr
+                        key={p.id}
+                        className={`hover:bg-foreground/[0.03] transition-colors ${!isLast ? "border-b border-foreground/[0.06]" : ""}`}
                       >
-                        Editar
-                      </button>
-                      {podSubmeter && (
-                        <button
-                          onClick={() => handleSubmeter(p.id)}
-                          disabled={submetendo === p.id}
-                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors disabled:opacity-40"
-                        >
-                          {submetendo === p.id ? "..." : "Submeter →"}
-                        </button>
-                      )}
-                      {podConcluir && (
-                        <button
-                          onClick={() => setConfirmarConclusao(p)}
-                          disabled={concluindo === p.id}
-                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-green-700 hover:text-green-800 transition-colors disabled:opacity-40"
-                        >
-                          {concluindo === p.id ? "..." : "Concluir →"}
-                        </button>
-                      )}
-                    </div>,
-                  ];
-                })}
-              />
+                        <td className="py-4 px-4">
+                          <span className="font-plex-sans text-[13px] text-foreground font-semibold">
+                            {p.titulo}
+                          </span>
+                          {p.status === "rejeitado" && p.motivo_recusa && (
+                            <p className="font-plex-mono text-[10px] text-red-500 mt-0.5">
+                              {p.motivo_recusa}
+                            </p>
+                          )}
+                        </td>
+                        <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                          {responsavelNome(p)}
+                        </td>
+                        <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                          {p.prazo
+                            ? new Date(p.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString(
+                                "pt-BR",
+                                {
+                                  day: "2-digit",
+                                  month: "short",
+                                },
+                              )
+                            : "—"}
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className={`font-plex-mono text-[12px] font-medium ${s.className}`}>
+                            {s.label}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => abrirEditar(p)}
+                              className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-foreground/50 hover:text-foreground transition-colors"
+                            >
+                              Editar
+                            </button>
+                            {podSubmeter && (
+                              <button
+                                onClick={() => handleSubmeter(p.id)}
+                                disabled={submetendo === p.id}
+                                className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-foreground/50 hover:text-foreground transition-colors disabled:opacity-40"
+                              >
+                                {submetendo === p.id ? "..." : "Submeter →"}
+                              </button>
+                            )}
+                            {podConcluir && (
+                              <button
+                                onClick={() => setConfirmarConclusao(p)}
+                                disabled={concluindo === p.id}
+                                className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-green-600 hover:text-green-700 transition-colors disabled:opacity-40"
+                              >
+                                {concluindo === p.id ? "..." : "Concluir →"}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             ))}
 
           {aba === "todos" && (
             <>
               <div className="flex gap-3 mb-6">
-                <select
+                <Select
                   value={filtroLiga}
-                  onChange={(e) => setFiltroLiga(e.target.value)}
-                  className="font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2 bg-white focus:outline-none focus:border-navy/60"
+                  onValueChange={(v) => setFiltroLiga(v === "all" ? "" : v)}
                 >
-                  <option value="">Todas as ligas</option>
-                  {ligas.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {l.nome}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={filtroStatus}
-                  onChange={(e) => setFiltroStatus(e.target.value)}
-                  className="font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2 bg-white focus:outline-none focus:border-navy/60"
-                >
-                  <option value="">Todos os status</option>
-                  {Object.entries(STATUS_CONFIG)
-                    .filter(([k]) => k !== "rascunho")
-                    .map(([k, v]) => (
-                      <option key={k} value={k}>
-                        {v.label}
-                      </option>
+                  <SelectTrigger className="font-plex-sans text-[13px] w-auto min-w-[160px]">
+                    <SelectValue placeholder="Todas as ligas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="font-plex-sans text-[13px]">
+                      Todas as ligas
+                    </SelectItem>
+                    {ligas.map((l) => (
+                      <SelectItem key={l.id} value={l.id} className="font-plex-sans text-[13px]">
+                        {l.nome}
+                      </SelectItem>
                     ))}
-                </select>
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={filtroStatus}
+                  onValueChange={(v) => setFiltroStatus(v === "all" ? "" : v)}
+                >
+                  <SelectTrigger className="font-plex-sans text-[13px] w-auto min-w-[160px]">
+                    <SelectValue placeholder="Todos os status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="font-plex-sans text-[13px]">
+                      Todos os status
+                    </SelectItem>
+                    {Object.entries(STATUS_CONFIG)
+                      .filter(([k]) => k !== "rascunho")
+                      .map(([k, v]) => (
+                        <SelectItem key={k} value={k} className="font-plex-sans text-[13px]">
+                          {v.label}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {filtrados.length === 0 ? (
-                <p className="font-plex-sans text-[13px] text-navy/50">
+                <p className="font-plex-sans text-[13px] text-foreground/50">
                   Nenhum projeto encontrado.
                 </p>
               ) : (
-                <EditorialTable
-                  columns={["Projeto", "Liga", "Responsável", "Prazo", "Status"]}
-                  rows={filtrados.map((p) => {
-                    const s = STATUS_CONFIG[p.status] ?? {
-                      label: p.status,
-                      className: "text-navy/50",
-                    };
-                    return [
-                      <span key="t" className="font-medium">
-                        {p.titulo}
-                      </span>,
-                      p.liga?.nome ?? "—",
-                      responsavelNome(p),
-                      p.prazo
-                        ? new Date(p.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString("pt-BR", {
-                            day: "2-digit",
-                            month: "short",
-                          })
-                        : "—",
-                      <span key="s" className={`font-medium ${s.className}`}>
-                        {s.label}
-                      </span>,
-                    ];
-                  })}
-                />
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-foreground/[0.08]">
+                      <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                        Projeto
+                      </th>
+                      <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                        Liga
+                      </th>
+                      <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                        Responsável
+                      </th>
+                      <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                        Prazo
+                      </th>
+                      <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtrados.map((p, idx) => {
+                      const s = STATUS_CONFIG[p.status] ?? {
+                        label: p.status,
+                        className: "text-foreground/50",
+                      };
+                      const isLast = idx === filtrados.length - 1;
+                      return (
+                        <tr
+                          key={p.id}
+                          className={`hover:bg-foreground/[0.03] transition-colors ${!isLast ? "border-b border-foreground/[0.06]" : ""}`}
+                        >
+                          <td className="py-4 px-4">
+                            <span className="font-plex-sans text-[13px] text-foreground font-semibold">
+                              {p.titulo}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                            {p.liga?.nome ?? "—"}
+                          </td>
+                          <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                            {responsavelNome(p)}
+                          </td>
+                          <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                            {p.prazo
+                              ? new Date(p.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString(
+                                  "pt-BR",
+                                  {
+                                    day: "2-digit",
+                                    month: "short",
+                                  },
+                                )
+                              : "—"}
+                          </td>
+                          <td className="py-4 px-4">
+                            <span
+                              className={`font-plex-mono text-[12px] font-medium ${s.className}`}
+                            >
+                              {s.label}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               )}
             </>
           )}
         </div>
       </div>
+
+      <CriarProjetoDialog
+        open={dialogCriar}
+        onClose={() => setDialogCriar(false)}
+        ligaId={ligaId ?? undefined}
+        onCriado={refetchProjetos}
+      />
 
       <AlertDialog
         open={confirmarConclusao !== null}
@@ -461,28 +570,25 @@ export function ProjetosLiderView() {
           if (!o) setSheetProjeto(null);
         }}
       >
-        <SheetContent
-          side="right"
-          className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-white"
-        >
+        <SheetContent side="right" className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0">
           <div className="flex-shrink-0">
-            <div className="h-px bg-navy/90" />
+            <div className="h-px bg-foreground/20" />
             <div className="px-8 pt-8 pb-6">
-              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50">
+              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
                 {isNovo ? "Novo" : "Editar"}
               </p>
-              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy mt-1">
+              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
                 {isNovo ? "Adicionar projeto" : projetoAtual?.titulo}
               </h2>
             </div>
-            <div className="h-px bg-navy/15" />
+            <div className="h-px bg-foreground/[0.08]" />
           </div>
 
           <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
             <div>
               <label
                 htmlFor="proj-titulo"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
               >
                 Título
               </label>
@@ -491,80 +597,97 @@ export function ProjetosLiderView() {
                 value={form.titulo}
                 onChange={(e) => setForm((f) => ({ ...f, titulo: e.target.value }))}
                 placeholder="Nome do projeto"
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="proj-responsavel"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
-              >
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
                 Responsável
               </label>
-              <select
-                id="proj-responsavel"
+              <Select
                 value={form.responsavel_id}
-                onChange={(e) => setForm((f) => ({ ...f, responsavel_id: e.target.value }))}
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                onValueChange={(v) => setForm((f) => ({ ...f, responsavel_id: v }))}
               >
-                <option value="">Nenhum</option>
-                {membros.map((m) => (
-                  <option key={m.usuario_id} value={m.usuario_id}>
-                    {m.nome}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                  <SelectValue placeholder="Nenhum" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none" className="font-plex-sans text-[13px]">
+                    Nenhum
+                  </SelectItem>
+                  {membros.map((m) => (
+                    <SelectItem
+                      key={m.usuario_id}
+                      value={m.usuario_id}
+                      className="font-plex-sans text-[13px]"
+                    >
+                      {m.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
-              <label
-                htmlFor="proj-tipo"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
-              >
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
                 Tipo de Projeto
               </label>
-              <select
-                id="proj-tipo"
+              <Select
                 value={form.tipo_projeto}
-                onChange={(e) => setForm((f) => ({ ...f, tipo_projeto: e.target.value }))}
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                onValueChange={(v) => setForm((f) => ({ ...f, tipo_projeto: v }))}
               >
-                <option value="">Selecionar tipo...</option>
-                <option value="iniciacao_cientifica">Iniciação Científica</option>
-                <option value="projeto_interno">Projeto Interno</option>
-                <option value="projeto_externo">Projeto Externo (com parceiros)</option>
-                <option value="projeto_estruturante">
-                  Projeto Estruturante (Interdisciplinar e/ou Inovação)
-                </option>
-              </select>
+                <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                  <SelectValue placeholder="Selecionar tipo..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="iniciacao_cientifica" className="font-plex-sans text-[13px]">
+                    Iniciação Científica
+                  </SelectItem>
+                  <SelectItem value="projeto_interno" className="font-plex-sans text-[13px]">
+                    Projeto Interno
+                  </SelectItem>
+                  <SelectItem value="projeto_externo" className="font-plex-sans text-[13px]">
+                    Projeto Externo (com parceiros)
+                  </SelectItem>
+                  <SelectItem value="projeto_estruturante" className="font-plex-sans text-[13px]">
+                    Projeto Estruturante (Interdisciplinar e/ou Inovação)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
-              <label
-                htmlFor="proj-professor"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
-              >
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
                 Professor Mentor Alocado
               </label>
-              <select
-                id="proj-professor"
+              <Select
                 value={form.professor_id}
-                onChange={(e) => setForm((f) => ({ ...f, professor_id: e.target.value }))}
+                onValueChange={(v) => setForm((f) => ({ ...f, professor_id: v }))}
                 disabled={!professorDaLiga}
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <option value="">{professorDaLiga ? "Nenhum" : "Nenhum professor na liga"}</option>
-                {professorDaLiga && (
-                  <option value={professorDaLiga.id}>{professorDaLiga.nome}</option>
-                )}
-              </select>
+                <SelectTrigger className="w-full font-plex-sans text-[13px] disabled:opacity-40">
+                  <SelectValue
+                    placeholder={professorDaLiga ? "Nenhum" : "Nenhum professor na liga"}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none" className="font-plex-sans text-[13px]">
+                    Nenhum
+                  </SelectItem>
+                  {professorDaLiga && (
+                    <SelectItem value={professorDaLiga.id} className="font-plex-sans text-[13px]">
+                      {professorDaLiga.nome}
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
               <label
                 htmlFor="proj-descricao"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
               >
                 Descrição
               </label>
@@ -574,14 +697,14 @@ export function ProjetosLiderView() {
                 onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))}
                 placeholder="Descreva o projeto..."
                 rows={3}
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60 resize-none"
+                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 resize-none rounded"
               />
             </div>
 
             <div>
               <label
                 htmlFor="proj-impacto"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
               >
                 Impacto Projetado/Realizado
               </label>
@@ -591,14 +714,14 @@ export function ProjetosLiderView() {
                 onChange={(e) => setForm((f) => ({ ...f, impacto: e.target.value }))}
                 placeholder="Descreva o impacto esperado ou realizado..."
                 rows={3}
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60 resize-none"
+                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 resize-none rounded"
               />
             </div>
 
             <div>
               <label
                 htmlFor="proj-empresa"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
               >
                 Empresa Parceira Envolvida
               </label>
@@ -607,14 +730,14 @@ export function ProjetosLiderView() {
                 value={form.empresa_parceira}
                 onChange={(e) => setForm((f) => ({ ...f, empresa_parceira: e.target.value }))}
                 placeholder="Ex: Empresa XYZ"
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white placeholder:text-navy/30 focus:outline-none focus:border-navy/60"
+                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
               />
             </div>
 
             <div>
               <label
                 htmlFor="proj-prazo"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-3 block"
+                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
               >
                 Prazo
               </label>
@@ -623,13 +746,13 @@ export function ProjetosLiderView() {
                 type="date"
                 value={form.prazo}
                 onChange={(e) => setForm((f) => ({ ...f, prazo: e.target.value }))}
-                className="w-full font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2.5 bg-white focus:outline-none focus:border-navy/60"
+                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 focus:outline-none focus:border-foreground/30 rounded"
               />
             </div>
           </div>
 
           <div className="flex-shrink-0">
-            <div className="h-px bg-navy/15" />
+            <div className="h-px bg-foreground/[0.08]" />
             <div className="px-8 py-6 flex flex-col gap-3">
               {(isNovo ||
                 projetoAtual?.status === "rascunho" ||
@@ -637,7 +760,7 @@ export function ProjetosLiderView() {
                 <button
                   onClick={() => handleSalvar(true)}
                   disabled={salvando || !form.titulo.trim()}
-                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy px-4 py-3 hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {salvando ? "Salvando..." : "Salvar e submeter para aprovação"}
                 </button>
@@ -645,7 +768,7 @@ export function ProjetosLiderView() {
               <button
                 onClick={() => handleSalvar(false)}
                 disabled={salvando || !form.titulo.trim()}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-4 py-3 hover:bg-navy hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {salvando ? "Salvando..." : "Salvar rascunho"}
               </button>

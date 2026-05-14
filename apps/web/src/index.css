@@ -2,47 +2,145 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dark mode circular reveal transition */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  clip-path: circle(0px at var(--vt-x, 50%) var(--vt-y, 50%));
+  animation: vt-reveal 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+::view-transition-old(root) {
+  z-index: 0;
+}
+
+::view-transition-new(root) {
+  z-index: 1;
+}
+
+@keyframes vt-reveal {
+  from {
+    clip-path: circle(0px at var(--vt-x, 50%) var(--vt-y, 50%));
+  }
+  to {
+    clip-path: circle(var(--vt-r, 100vmax) at var(--vt-x, 50%) var(--vt-y, 50%));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-new(root) {
+    animation-duration: 0.01ms;
+  }
+}
+
 @layer base {
   :root {
-    /* Link brand: Azul Marinho como primary */
-    --background: 0 0% 100%;
-    --foreground: 215 65% 18%; /* #10284E */
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 0 0% 4%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 215 65% 18%;
+    --card: 0 0% 96.1%; /* #F5F5F5 */
+    --card-foreground: 0 0% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 65% 18%;
+    --popover-foreground: 0 0% 4%;
 
-    --primary: 215 65% 18%; /* #10284E - Azul Marinho */
-    --primary-foreground: 0 0% 100%;
+    --primary: 0 0% 4%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 215 22% 40%; /* #546484 - Azul Link */
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 4%;
 
-    --muted: 0 0% 92%; /* #EAEAEA */
-    --muted-foreground: 215 22% 40%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 43 99% 63%; /* #FEC641 - Amarelo */
-    --accent-foreground: 215 65% 18%;
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 4%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 92%; /* #EAEAEA */
-    --input: 0 0% 92%;
-    --ring: 215 65% 18%;
+    --border: 0 0% 89.4%; /* #E4E4E4 */
+    --input: 0 0% 90%;
+    --ring: 0 0% 4%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 215 66% 18%; /* #10284F navy */
+    --sidebar-background: 219 66% 18%; /* #10254D */
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 43 99% 63%; /* #FEC641 brand-yellow */
-    --sidebar-primary-foreground: 215 66% 18%;
-    --sidebar-accent: 215 50% 26%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 219 66% 18%;
+    --sidebar-accent: 219 55% 26%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 215 30% 30%;
-    --sidebar-ring: 43 99% 63%;
+    --sidebar-border: 219 45% 28%;
+    --sidebar-ring: 0 0% 100%;
+  }
+
+  .dark {
+    --background: 0 0% 1.2%; /* #030303 */
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 5.1%; /* #0D0D0D */
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 5.1%; /* #0D0D0D */
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 4%;
+
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 10%;
+    --input: 0 0% 10%;
+    --ring: 0 0% 100%;
+
+    --sidebar-background: 0 0% 5.1%; /* #0D0D0D */
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 4%;
+    --sidebar-accent: 0 0% 9%; /* nav ativo bg */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 9%;
+    --sidebar-ring: 0 0% 100%;
+  }
+
+  .force-light {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 4%;
+    --card: 0 0% 96.1%;
+    --card-foreground: 0 0% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 4%;
+    --primary: 0 0% 4%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 4%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 4%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 89.4%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 4%;
+    color-scheme: light;
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--background));
   }
 
   * {
@@ -61,20 +159,72 @@
   h6 {
     @apply font-display;
   }
-  .dark {
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* Dark mode: navy hardcoded colors become white/foreground */
+.dark .text-navy {
+  color: hsl(var(--foreground));
+}
+.dark .text-navy\/40 {
+  color: hsl(var(--foreground) / 0.4);
+}
+.dark .text-navy\/50 {
+  color: hsl(var(--foreground) / 0.5);
+}
+.dark .text-navy\/60 {
+  color: hsl(var(--foreground) / 0.6);
+}
+.dark .text-navy\/70 {
+  color: hsl(var(--foreground) / 0.7);
+}
+.dark .text-navy\/80 {
+  color: hsl(var(--foreground) / 0.8);
+}
+
+.dark .border-navy {
+  border-color: hsl(var(--foreground) / 0.25);
+}
+.dark .border-navy\/10 {
+  border-color: hsl(var(--foreground) / 0.1);
+}
+.dark .border-navy\/15 {
+  border-color: hsl(var(--foreground) / 0.15);
+}
+.dark .border-navy\/80 {
+  border-color: hsl(var(--foreground) / 0.8);
+}
+
+.dark .bg-navy\/10 {
+  background-color: hsl(var(--foreground) / 0.05);
+}
+.dark .bg-navy\/40 {
+  background-color: hsl(var(--foreground) / 0.1);
+}
+.dark .bg-navy\/60 {
+  background-color: hsl(var(--foreground) / 0.15);
+}
+
+.dark .hover\:bg-navy:hover {
+  background-color: hsl(var(--foreground) / 0.1);
+}
+.dark .hover\:text-white:hover {
+  color: hsl(var(--foreground));
+}
+
+/* Sidebar light mode: muted text legível sobre fundo navy */
+[data-sidebar] .text-muted-foreground,
+[data-sidebar="sidebar"] .text-muted-foreground {
+  color: hsl(0 0% 100% / 0.6);
+}
+
+/* Cards sem borda (light mode) */
+.rounded-lg.border.bg-card,
+.rounded-xl.border.bg-card {
+  border-color: transparent;
 }

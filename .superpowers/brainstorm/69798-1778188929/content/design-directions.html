@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Directions</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0a; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 32px; }
+  h1 { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 28px; }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+  .card {
+    border-radius: 12px;
+    border: 2px solid #222;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+    background: #111;
+  }
+  .card:hover { border-color: #444; transform: translateY(-2px); }
+  .card.selected { border-color: #5b8af5; }
+
+  .card-label {
+    padding: 12px 16px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #888;
+    border-bottom: 1px solid #1c1c1c;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card.selected .card-label { color: #5b8af5; }
+  .badge { font-size: 10px; padding: 2px 7px; border-radius: 999px; font-weight: 600; }
+  .badge-rec { background: #1a2a1a; color: #4caf72; border: 1px solid #2a3a2a; }
+
+  .mockup { width: 100%; display: flex; height: 340px; }
+
+  /* ─── DIREÇÃO A — Neutro escuro (inspiração) ─── */
+  .a-sidebar {
+    width: 38%; background: #050505; border-right: 1px solid #1a1a1a;
+    padding: 14px 12px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .a-logo { font-size: 11px; font-weight: 700; color: #fff; padding: 6px 8px; margin-bottom: 8px; }
+  .a-logo span { font-size: 9px; font-weight: 400; color: #555; display: block; margin-top: 1px; }
+  .a-nav { font-size: 11px; color: #888; padding: 5px 8px; border-radius: 5px; cursor: pointer; }
+  .a-nav.active { color: #fff; background: #1a1a1a; }
+  .a-section { font-size: 9px; color: #444; letter-spacing: 0.1em; text-transform: uppercase; padding: 8px 8px 2px; margin-top: 4px; }
+  .a-main { flex: 1; background: #101010; padding: 14px; overflow: hidden; }
+  .a-page-title { font-size: 13px; font-weight: 600; color: #fff; }
+  .a-date { font-size: 9px; color: #555; margin-top: 2px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .a-card { background: #171717; border: 1px solid #222; border-radius: 8px; padding: 10px 12px; margin-top: 10px; }
+  .a-card-label { font-size: 8px; color: #555; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .a-card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+  .a-stat { background: #1e1e1e; border: 1px solid #222; border-radius: 5px; padding: 6px 8px; }
+  .a-stat-val { font-size: 13px; font-weight: 700; color: #fff; }
+  .a-stat-lab { font-size: 8px; color: #555; text-transform: uppercase; margin-top: 1px; }
+  .a-hero { background: linear-gradient(135deg, #1a1a1a, #222); border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px; margin-top: 10px; height: 60px; display: flex; align-items: flex-end; }
+  .a-hero-title { font-size: 13px; font-weight: 700; color: #fff; }
+  .a-hero-sub { font-size: 9px; color: #888; margin-top: 1px; }
+
+  /* ─── DIREÇÃO B — Marca navy com dark ─── */
+  .b-sidebar {
+    width: 38%; background: #040404; border-right: 1px solid #1a1a1a;
+    padding: 14px 12px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .b-logo { font-size: 11px; font-weight: 700; color: #fff; padding: 6px 8px; margin-bottom: 8px; }
+  .b-logo span { font-size: 9px; font-weight: 400; color: #546484; display: block; margin-top: 1px; }
+  .b-nav { font-size: 11px; color: #777; padding: 5px 8px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .b-nav-dot { width: 4px; height: 4px; border-radius: 50%; background: #333; flex-shrink: 0; }
+  .b-nav.active { color: #fff; }
+  .b-nav.active .b-nav-dot { background: #FEC641; }
+  .b-section { font-size: 9px; color: #333; letter-spacing: 0.1em; text-transform: uppercase; padding: 8px 8px 2px; margin-top: 4px; }
+  .b-main { flex: 1; background: #101010; padding: 14px; overflow: hidden; }
+  .b-page-title { font-size: 13px; font-weight: 700; color: #fff; }
+  .b-date { font-size: 9px; color: #546484; margin-top: 2px; }
+  .b-card { background: #161616; border: 1px solid #1f1f1f; border-radius: 8px; padding: 10px 12px; margin-top: 10px; border-left: 2px solid #10284E; }
+  .b-card-label { font-size: 8px; color: #546484; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .b-card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+  .b-stat { background: #1a1a1a; border: 1px solid #222; border-radius: 5px; padding: 6px 8px; }
+  .b-stat-val { font-size: 13px; font-weight: 700; color: #fff; }
+  .b-stat-lab { font-size: 8px; color: #546484; text-transform: uppercase; margin-top: 1px; }
+  .b-hero { background: linear-gradient(135deg, #10284E, #546484); border-radius: 8px; padding: 12px; margin-top: 10px; height: 60px; display: flex; align-items: flex-end; }
+  .b-hero-title { font-size: 13px; font-weight: 700; color: #fff; }
+  .b-hero-sub { font-size: 9px; color: rgba(255,255,255,0.6); margin-top: 1px; }
+
+  /* ─── DIREÇÃO C — Editorial minimalista ─── */
+  .c-sidebar {
+    width: 38%; background: #040404; border-right: 1px solid #1e1e1e;
+    padding: 14px 12px; display: flex; flex-direction: column; gap: 2px;
+  }
+  .c-logo { font-size: 13px; font-weight: 800; color: #fff; padding: 6px 8px; margin-bottom: 10px; letter-spacing: -0.03em; }
+  .c-logo span { font-size: 8px; font-weight: 400; color: #444; display: block; letter-spacing: 0.05em; margin-top: 2px; }
+  .c-nav { font-size: 12px; color: #666; padding: 5px 8px; letter-spacing: -0.01em; }
+  .c-nav.active { color: #fff; font-weight: 600; }
+  .c-section { font-size: 8px; color: #333; letter-spacing: 0.14em; text-transform: uppercase; padding: 10px 8px 2px; }
+  .c-main { flex: 1; background: #0c0c0c; padding: 14px; overflow: hidden; }
+  .c-header { border-bottom: 1px solid #1c1c1c; padding-bottom: 10px; margin-bottom: 10px; }
+  .c-page-title { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: -0.03em; }
+  .c-date { font-size: 8px; color: #444; margin-top: 3px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .c-divider { height: 1px; background: #1c1c1c; margin: 10px 0; }
+  .c-row { display: flex; gap: 10px; }
+  .c-stat-big { flex: 1; }
+  .c-stat-big-val { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.03em; line-height: 1; }
+  .c-stat-big-lab { font-size: 8px; color: #444; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 3px; }
+  .c-label { font-size: 8px; color: #444; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+  .c-item { padding: 6px 0; border-bottom: 1px solid #1a1a1a; }
+  .c-item-title { font-size: 11px; color: #fff; font-weight: 500; }
+  .c-item-sub { font-size: 9px; color: #444; }
+
+  .card-desc { padding: 14px 16px; border-top: 1px solid #1c1c1c; }
+  .card-desc h3 { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .card-desc p { font-size: 11px; color: #666; line-height: 1.5; }
+
+  .check { display: none; width: 18px; height: 18px; border-radius: 50%; background: #5b8af5; align-items: center; justify-content: center; font-size: 10px; }
+  .card.selected .check { display: flex; }
+</style>
+</head>
+<body>
+<h1>Qual direção de design você quer seguir?</h1>
+<p class="subtitle">Clique em um card para selecionar. Todas as 3 são no dark mode já configurado.</p>
+
+<div class="cards">
+
+  <!-- DIREÇÃO A -->
+  <div class="card" data-choice="a" onclick="select(this)">
+    <div class="card-label">A — Neutro Escuro <span style="display:flex;gap:6px;align-items:center"><span class="badge badge-rec">Recomendado</span><span class="check">✓</span></span></div>
+    <div class="mockup">
+      <div class="a-sidebar">
+        <div class="a-logo">Link Leagues <span>Link School of Business</span></div>
+        <div class="a-section">Plataforma</div>
+        <div class="a-nav active">Home</div>
+        <div class="a-nav">Ligas</div>
+        <div class="a-nav">Projetos</div>
+        <div class="a-nav">Agenda</div>
+        <div class="a-section">Gestão</div>
+        <div class="a-nav">Formulários</div>
+        <div class="a-nav">Super Admin</div>
+      </div>
+      <div class="a-main">
+        <div class="a-page-title">Olá, Diogo</div>
+        <div class="a-date">QUI, 07 DE MAI 2026</div>
+        <div class="a-hero">
+          <div>
+            <div class="a-hero-title">Agro</div>
+            <div class="a-hero-sub">Liga de Agronegócios</div>
+          </div>
+        </div>
+        <div class="a-card">
+          <div class="a-card-label">Métricas</div>
+          <div class="a-card-grid">
+            <div class="a-stat"><div class="a-stat-val">9</div><div class="a-stat-lab">Ligas</div></div>
+            <div class="a-stat"><div class="a-stat-val">148</div><div class="a-stat-lab">Membros</div></div>
+            <div class="a-stat"><div class="a-stat-val">6</div><div class="a-stat-lab">Presenças</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-desc">
+      <h3>Neutro Escuro — Inspiração direta</h3>
+      <p>Segue a referência à risca: fundo quase preto, cards com elevação sutil (#171717 sobre #101010), tipografia limpa sem cor de destaque. A identidade da Link some no dark — funciona bem para ferramentas internas.</p>
+    </div>
+  </div>
+
+  <!-- DIREÇÃO B -->
+  <div class="card" data-choice="b" onclick="select(this)">
+    <div class="card-label">B — Marca + Dark <span class="check">✓</span></div>
+    <div class="mockup">
+      <div class="b-sidebar">
+        <div class="b-logo">Link Leagues <span>Link School of Business</span></div>
+        <div class="b-section">Plataforma</div>
+        <div class="b-nav active"><span class="b-nav-dot"></span>Home</div>
+        <div class="b-nav"><span class="b-nav-dot"></span>Ligas</div>
+        <div class="b-nav"><span class="b-nav-dot"></span>Projetos</div>
+        <div class="b-nav"><span class="b-nav-dot"></span>Agenda</div>
+        <div class="b-section">Gestão</div>
+        <div class="b-nav"><span class="b-nav-dot"></span>Formulários</div>
+        <div class="b-nav"><span class="b-nav-dot"></span>Super Admin</div>
+      </div>
+      <div class="b-main">
+        <div class="b-page-title">Olá, Diogo</div>
+        <div class="b-date">Qui, 07 de mai de 2026</div>
+        <div class="b-hero">
+          <div>
+            <div class="b-hero-title">Agro</div>
+            <div class="b-hero-sub">Liga de Agronegócios</div>
+          </div>
+        </div>
+        <div class="b-card">
+          <div class="b-card-label">Métricas Globais</div>
+          <div class="b-card-grid">
+            <div class="b-stat"><div class="b-stat-val">9</div><div class="b-stat-lab">Ligas</div></div>
+            <div class="b-stat"><div class="b-stat-val">148</div><div class="b-stat-lab">Membros</div></div>
+            <div class="b-stat"><div class="b-stat-val">6</div><div class="b-stat-lab">Presenças</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-desc">
+      <h3>Marca + Dark — Melhor dos dois mundos</h3>
+      <p>Mantém o navy (#10284E) como acento no gradiente das ligas e nos separadores, e usa amarelo (#FEC641) como indicador de item ativo na sidebar. A identidade da Link continua presente no dark.</p>
+    </div>
+  </div>
+
+  <!-- DIREÇÃO C -->
+  <div class="card" data-choice="c" onclick="select(this)">
+    <div class="card-label">C — Editorial Minimalista <span class="check">✓</span></div>
+    <div class="mockup">
+      <div class="c-sidebar">
+        <div class="c-logo">Link Leagues <span>Link School of Business</span></div>
+        <div class="c-section">Plataforma</div>
+        <div class="c-nav active">Home</div>
+        <div class="c-nav">Ligas</div>
+        <div class="c-nav">Projetos</div>
+        <div class="c-nav">Agenda</div>
+        <div class="c-section">Gestão</div>
+        <div class="c-nav">Formulários</div>
+      </div>
+      <div class="c-main">
+        <div class="c-header">
+          <div class="c-page-title">Olá, Diogo</div>
+          <div class="c-date">Qui · 07 Mai 2026</div>
+        </div>
+        <div class="c-label">Ligas</div>
+        <div class="c-row">
+          <div class="c-stat-big"><div class="c-stat-big-val">9</div><div class="c-stat-big-lab">Ligas ativas</div></div>
+          <div class="c-stat-big"><div class="c-stat-big-val">148</div><div class="c-stat-big-lab">Membros</div></div>
+          <div class="c-stat-big"><div class="c-stat-big-val">6</div><div class="c-stat-big-lab">Presenças</div></div>
+        </div>
+        <div class="c-divider"></div>
+        <div class="c-label">Ativas</div>
+        <div class="c-item"><div class="c-item-title">Agro</div><div class="c-item-sub">35 membros</div></div>
+        <div class="c-item"><div class="c-item-title">Real Estate</div><div class="c-item-sub">22 membros</div></div>
+      </div>
+    </div>
+    <div class="card-desc">
+      <h3>Editorial — Foco em dados</h3>
+      <p>Inspirado em ferramentas como Linear e Raycast: tipografia grande e bold, nenhum card com border visível, divisores ao invés de boxes. Layout de lista ao invés de grade. Muito limpo mas mais ousado.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function select(el) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    const choice = el.dataset.choice;
+    // report to server
+    fetch('/select', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({type:'click', choice, text: el.querySelector('h3').textContent}) }).catch(()=>{});
+  }
+</script>
+</body>
+</html>

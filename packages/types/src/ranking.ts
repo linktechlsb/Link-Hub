@@ -5,6 +5,7 @@ export interface RankingLiga {
   projetos_concluidos: number;
   projetos_em_andamento: number;
   presencas: number;
+  presenca_percentual: number;
   receita_total: number;
   posts: number;
   pontuacao: number;

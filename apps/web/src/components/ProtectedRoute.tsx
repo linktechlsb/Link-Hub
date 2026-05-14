@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 
+import { cache } from "@/lib/cache";
 import { supabase } from "@/lib/supabase";
 
 import type { UserRole } from "@link-leagues/types";
@@ -27,6 +28,9 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
         setRecoveryMode(true);
       } else if (event === "USER_UPDATED" || event === "SIGNED_OUT") {
         setRecoveryMode(false);
+      }
+      if (event === "SIGNED_OUT" || event === "SIGNED_IN") {
+        cache.limpar();
       }
     });
 

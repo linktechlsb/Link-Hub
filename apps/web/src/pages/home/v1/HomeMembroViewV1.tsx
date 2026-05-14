@@ -52,15 +52,15 @@ export function HomeMembroViewV1({ minhaLiga, ranking, usuarioId }: HomeMembroVi
   }));
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-6">
       <section>
-        <SectionHeader numero="01" eyebrow="Meu desempenho" titulo="Performance pessoal" />
+        <SectionHeader titulo="Meu Desempenho" />
         <KpiRow items={metricas} />
       </section>
 
       {rankingItems.length > 0 && (
         <section>
-          <SectionHeader numero="02" eyebrow="Ranking geral" titulo="Onde sua liga está" />
+          <SectionHeader titulo="Ranking Geral" />
           <RankingList items={rankingItems} />
         </section>
       )}

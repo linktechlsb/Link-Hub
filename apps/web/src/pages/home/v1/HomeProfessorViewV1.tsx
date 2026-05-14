@@ -1,6 +1,10 @@
 import { useNavigate } from "react-router-dom";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
+import { cn } from "@/lib/utils";
 
 import { EditorialTable, KpiRow, SectionHeader } from "./primitives";
 
@@ -52,95 +56,107 @@ export function HomeProfessorViewV1({ minhaLiga, ranking }: HomeProfessorViewV1P
     }));
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-6">
       <section>
-        <SectionHeader numero="01" eyebrow="Métricas da liga" titulo="Indicadores atuais" />
+        <SectionHeader titulo="Indicadores da Liga" />
         <KpiRow items={metricas} />
       </section>
 
       <section>
         <SectionHeader
-          numero="02"
-          eyebrow="Fila de aprovação"
-          titulo="Projetos aguardando revisão"
+          titulo="Fila de Aprovação"
           acao={
             <button
               onClick={() => navigate("/projetos")}
-              className="font-plex-mono text-[10px] uppercase tracking-[0.2em] text-navy border-b border-navy pb-0.5"
+              className="text-xs font-semibold text-link-blue hover:underline"
             >
               Ver todos →
             </button>
           }
         />
         {fila.length === 0 ? (
-          <div className="border-t border-b border-navy/15 py-6 text-center font-plex-sans text-[13px] text-navy/60">
-            Nenhum projeto aguardando sua aprovação.
-          </div>
+          <Card className="shadow-sm">
+            <div className="px-4 py-6 text-sm text-muted-foreground text-center">
+              Nenhum projeto aguardando sua aprovação.
+            </div>
+          </Card>
         ) : (
           <EditorialTable
             columns={["Projeto", "Aguardando", "Status", "Ação"]}
             rows={fila.map((p) => [
-              <span key="nome" className="font-semibold">
+              <span key="nome" className="font-semibold text-foreground">
                 {p.nome}
               </span>,
-              <span key="dias" className="font-plex-mono text-[11px] text-navy/70">
+              <span key="dias" className="text-xs text-muted-foreground">
                 {String(p.diasAguardando).padStart(2, "0")} dia{p.diasAguardando !== 1 ? "s" : ""}
               </span>,
-              <span
+              <Badge
                 key="status"
-                className="font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy border border-navy px-2 py-1"
+                variant="outline"
+                className={cn(
+                  "text-[10px]",
+                  p.diasAguardando > 7
+                    ? "border-red-800/40 text-red-400"
+                    : p.diasAguardando >= 4
+                      ? "border-amber-700/40 text-amber-400"
+                      : "border-foreground/20 text-foreground/50",
+                )}
               >
                 {statusLabel(p.diasAguardando)}
-              </span>,
-              <button
+              </Badge>,
+              <Button
                 key="cta"
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
                 onClick={() => navigate("/projetos")}
-                className="font-plex-mono text-[10px] uppercase tracking-[0.2em] text-navy border-b border-navy pb-0.5"
               >
-                Revisar →
-              </button>,
+                Revisar
+              </Button>,
             ])}
           />
         )}
       </section>
 
       <section>
-        <SectionHeader numero="03" eyebrow="Agenda" titulo="Próximos eventos da liga" />
+        <SectionHeader titulo="Próximos Eventos" />
         {eventos.length === 0 ? (
-          <div className="border-t border-b border-navy/15 py-6 text-center font-plex-sans text-[13px] text-navy/60">
-            Sem eventos programados.
-          </div>
+          <Card className="shadow-sm">
+            <div className="px-4 py-6 text-sm text-muted-foreground text-center">
+              Sem eventos programados.
+            </div>
+          </Card>
         ) : (
-          <ul className="border-t border-navy/15">
-            {eventos.map((e) => {
-              const data = new Date(e.data);
-              const dataFmt = data.toLocaleDateString("pt-BR", {
-                weekday: "short",
-                day: "2-digit",
-                month: "2-digit",
-              });
-              return (
-                <li
-                  key={e.id}
-                  className="border-b border-navy/15 py-4 flex items-baseline justify-between"
-                >
-                  <div>
-                    <div className="font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/60">
-                      {dataFmt}
+          <Card className="shadow-sm overflow-hidden">
+            <ul>
+              {eventos.map((e) => {
+                const data = new Date(e.data);
+                const dataFmt = data.toLocaleDateString("pt-BR", {
+                  weekday: "short",
+                  day: "2-digit",
+                  month: "2-digit",
+                });
+                return (
+                  <li
+                    key={e.id}
+                    className="flex items-center justify-between px-4 py-3 border-b border-[#191919] last:border-b-0"
+                  >
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                        {dataFmt}
+                      </p>
+                      <p className="text-sm font-semibold text-foreground mt-0.5">{e.titulo}</p>
                     </div>
-                    <div className="font-plex-sans font-semibold text-[15px] text-navy mt-1">
-                      {e.titulo}
-                    </div>
-                  </div>
-                  {e.hora_inicio && (
-                    <span className="font-plex-sans font-bold text-[18px] text-navy tracking-[-0.02em]">
-                      {e.hora_inicio.slice(0, 5)}
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+                    {e.hora_inicio && (
+                      <span className="text-sm font-bold text-foreground tabular-nums">
+                        {e.hora_inicio.slice(0, 5)}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </Card>
         )}
       </section>
     </div>

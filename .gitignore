@@ -1,5 +1,7 @@
 # Claude Code local settings (personal, não commitado)
 .claude/settings.local.json
+.claude/worktrees/
+.claude*
 
 # Dependencies
 node_modules

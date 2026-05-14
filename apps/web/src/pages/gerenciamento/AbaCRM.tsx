@@ -1,29 +1,39 @@
 import {
   Loader2,
   Plus,
-  Pencil,
-  Trash2,
   Mail,
   Phone,
   Briefcase,
   Building2,
   Linkedin,
+  MoreHorizontal,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/lib/supabase";
+import { SectionHeader } from "@/pages/home/v1/primitives";
 
 import type { CrmContato, CreateCrmContatoInput, UpdateCrmContatoInput } from "@link-leagues/types";
 
@@ -201,252 +211,275 @@ export function AbaCRM({ ligaId }: Props) {
   if (carregando) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-navy" />
+        <Loader2 className="h-6 w-6 animate-spin text-navy/40" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-navy">Contatos CRM</h2>
-        <Button onClick={abrirFormularioNovo} size="sm" className="gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Contato
-        </Button>
-      </div>
+      <SectionHeader
+        titulo="Contatos da Liga"
+        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        acao={
+          <button
+            onClick={abrirFormularioNovo}
+            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
+          >
+            + Novo Contato
+          </button>
+        }
+      />
 
       {contatos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-brand-gray bg-gray-50 py-16">
-          <p className="text-sm text-muted-foreground">Nenhum contato adicionado ainda</p>
-          <Button onClick={abrirFormularioNovo} variant="link" className="mt-2 text-navy">
+        <div className="border border-dashed border-navy/20 py-16 text-center">
+          <p className="font-plex-sans text-[13px] text-navy/40">
+            Nenhum contato adicionado ainda.
+          </p>
+          <button
+            onClick={abrirFormularioNovo}
+            className="mt-3 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors"
+          >
             Criar primeiro contato
-          </Button>
+          </button>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {contatos.map((contato) => (
-            <div
-              key={contato.id}
-              className="rounded-lg border border-brand-gray bg-white p-4 hover:shadow-md transition-shadow"
-            >
-              <div className="mb-3 flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-navy">{contato.nome}</h3>
-                  {contato.empresa && (
-                    <p className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                      <Building2 className="h-3 w-3" />
-                      {contato.empresa}
-                    </p>
-                  )}
-                </div>
-                <button
-                  onClick={() => abrirFormularioEdicao(contato)}
-                  className="text-muted-foreground hover:text-navy"
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="space-y-2 text-sm">
-                {contato.email && (
-                  <a
-                    href={`mailto:${contato.email}`}
-                    className="flex items-center gap-2 text-muted-foreground hover:text-navy"
-                  >
-                    <Mail className="h-4 w-4" />
-                    <span className="truncate">{contato.email}</span>
-                  </a>
-                )}
-                {contato.telefone && (
-                  <a
-                    href={`tel:${contato.telefone}`}
-                    className="flex items-center gap-2 text-muted-foreground hover:text-navy"
-                  >
-                    <Phone className="h-4 w-4" />
-                    {contato.telefone}
-                  </a>
-                )}
-                {contato.emprego && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Briefcase className="h-4 w-4" />
-                    {contato.emprego}
-                  </div>
-                )}
-                {contato.linkedin && (
-                  <a
-                    href={contato.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-muted-foreground hover:text-navy"
-                  >
-                    <Linkedin className="h-4 w-4" />
-                    LinkedIn
-                  </a>
-                )}
-              </div>
-
-              <button
-                onClick={() => abrirDialogoDeletar(contato)}
-                className="mt-3 w-full rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 flex items-center justify-center gap-1"
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-foreground/[0.08]">
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Nome
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Empresa / Cargo
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Contato
+              </th>
+              <th className="py-3 px-4 w-10" />
+            </tr>
+          </thead>
+          <tbody>
+            {contatos.map((contato) => (
+              <tr
+                key={contato.id}
+                className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
               >
-                <Trash2 className="h-3 w-3" />
-                Remover
-              </button>
-            </div>
-          ))}
-        </div>
+                <td className="py-4 px-4">
+                  <span className="font-plex-sans font-semibold text-[13px] text-foreground">
+                    {contato.nome}
+                  </span>
+                </td>
+                <td className="py-4 px-4">
+                  <div className="space-y-0.5">
+                    {contato.empresa && (
+                      <div className="flex items-center gap-1.5 font-plex-sans text-[12px] text-foreground/60">
+                        <Building2 className="h-3 w-3 shrink-0" />
+                        {contato.empresa}
+                      </div>
+                    )}
+                    {contato.emprego && (
+                      <div className="flex items-center gap-1.5 font-plex-sans text-[12px] text-foreground/60">
+                        <Briefcase className="h-3 w-3 shrink-0" />
+                        {contato.emprego}
+                      </div>
+                    )}
+                  </div>
+                </td>
+                <td className="py-4 px-4">
+                  <div className="space-y-0.5">
+                    {contato.email && (
+                      <a
+                        href={`mailto:${contato.email}`}
+                        className="flex items-center gap-1.5 font-plex-mono text-[11px] text-foreground/60 hover:text-navy transition-colors"
+                      >
+                        <Mail className="h-3 w-3 shrink-0" />
+                        <span className="truncate max-w-[160px]">{contato.email}</span>
+                      </a>
+                    )}
+                    {contato.telefone && (
+                      <a
+                        href={`tel:${contato.telefone}`}
+                        className="flex items-center gap-1.5 font-plex-mono text-[11px] text-foreground/60 hover:text-navy transition-colors"
+                      >
+                        <Phone className="h-3 w-3 shrink-0" />
+                        {contato.telefone}
+                      </a>
+                    )}
+                    {contato.linkedin && (
+                      <a
+                        href={contato.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 font-plex-mono text-[11px] text-foreground/60 hover:text-navy transition-colors"
+                      >
+                        <Linkedin className="h-3 w-3 shrink-0" />
+                        LinkedIn
+                      </a>
+                    )}
+                  </div>
+                </td>
+                <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-1 rounded hover:bg-foreground/[0.08] text-foreground/40 hover:text-foreground/70 transition-colors">
+                        <MoreHorizontal size={14} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[140px]">
+                      <DropdownMenuItem
+                        className="text-[12px] cursor-pointer"
+                        onClick={() => abrirFormularioEdicao(contato)}
+                      >
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-[12px] cursor-pointer text-red-500 focus:text-red-600"
+                        onClick={() => abrirDialogoDeletar(contato)}
+                      >
+                        Remover
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
 
+      {/* Sheet add/edit — mantém lógica existente, atualiza apenas o estilo */}
       <Sheet open={modoSheet !== null} onOpenChange={(aberto) => !aberto && setModoSheet(null)}>
-        <SheetContent className="w-full max-w-md">
-          <SheetHeader>
-            <SheetTitle className="text-navy">
-              {modoSheet === "adicionar" ? "Novo Contato" : "Editar Contato"}
-            </SheetTitle>
-          </SheetHeader>
-
-          <div className="space-y-4 py-6">
-            <div>
-              <label className="block text-sm font-medium text-navy mb-1">
-                Nome <span className="text-red-600">*</span>
-              </label>
-              <Input
-                placeholder="Nome do contato"
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-              />
+        <SheetContent side="right" className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0">
+          <div className="flex-shrink-0">
+            <div className="h-px bg-foreground/20" />
+            <div className="px-8 pt-8 pb-6">
+              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
+                Contatos
+              </p>
+              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
+                {modoSheet === "adicionar" ? "Novo Contato" : "Editar Contato"}
+              </h2>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-navy mb-1">Email</label>
-              <Input
-                type="email"
-                placeholder="email@exemplo.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-navy mb-1">Telefone</label>
-              <Input
-                placeholder="(11) 9999-9999"
-                value={formData.telefone}
-                onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-navy mb-1">Empresa</label>
-              <Input
-                placeholder="Nome da empresa"
-                value={formData.empresa}
-                onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-navy mb-1">Cargo/Emprego</label>
-              <Input
-                placeholder="Cargo do contato"
-                value={formData.emprego}
-                onChange={(e) => setFormData({ ...formData, emprego: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-navy mb-1">LinkedIn</label>
-              <Input
-                placeholder="https://linkedin.com/in/..."
-                value={formData.linkedin}
-                onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
-              />
-            </div>
+            <div className="h-px bg-foreground/[0.08]" />
           </div>
 
-          <div className="flex gap-2 border-t pt-4">
-            <Button
-              variant="outline"
-              onClick={() => setModoSheet(null)}
-              disabled={salvando}
-              className="flex-1"
-            >
-              Cancelar
-            </Button>
-            <Button onClick={salvarContato} disabled={salvando} className="flex-1 gap-2">
-              {salvando && <Loader2 className="h-4 w-4 animate-spin" />}
-              Salvar
-            </Button>
+          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+            {[
+              {
+                label: "Nome *",
+                placeholder: "Nome do contato",
+                field: "nome" as const,
+                type: "text",
+              },
+              {
+                label: "Email",
+                placeholder: "email@exemplo.com",
+                field: "email" as const,
+                type: "email",
+              },
+              {
+                label: "Telefone",
+                placeholder: "(11) 9999-9999",
+                field: "telefone" as const,
+                type: "text",
+              },
+              {
+                label: "Empresa",
+                placeholder: "Nome da empresa",
+                field: "empresa" as const,
+                type: "text",
+              },
+              {
+                label: "Cargo",
+                placeholder: "Cargo do contato",
+                field: "emprego" as const,
+                type: "text",
+              },
+              {
+                label: "LinkedIn",
+                placeholder: "https://linkedin.com/in/...",
+                field: "linkedin" as const,
+                type: "url",
+              },
+            ].map(({ label, placeholder, field, type }) => (
+              <div key={field}>
+                <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                  {label}
+                </label>
+                <input
+                  type={type}
+                  placeholder={placeholder}
+                  value={formData[field]}
+                  onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
+                  className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="flex-shrink-0">
+            <div className="h-px bg-foreground/[0.08]" />
+            <div className="px-8 py-6 flex flex-col gap-3">
+              <button
+                onClick={salvarContato}
+                disabled={salvando || !formData.nome.trim()}
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {salvando && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Salvar
+              </button>
+              <button
+                onClick={() => setModoSheet(null)}
+                disabled={salvando}
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
 
+      {/* Dialog de confirmação de remoção */}
       <Dialog
         open={!!contatoDeletando}
         onOpenChange={(aberto) => !aberto && setContatoDeletando(null)}
       >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-red-600">Remover Contato</DialogTitle>
-            <DialogDescription>
-              Você está prestes a remover este contato permanentemente. Esta ação não pode ser
-              desfeita.
-            </DialogDescription>
+        <DialogContent className="sm:max-w-sm p-0 gap-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4">
+            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1">
+              Contatos
+            </p>
+            <DialogTitle className="font-display font-bold text-[18px] tracking-[-0.02em] text-foreground">
+              Remover contato
+            </DialogTitle>
+            {contatoDeletando && (
+              <DialogDescription className="font-plex-sans text-[13px] text-foreground/60 mt-1">
+                Tem certeza que deseja remover{" "}
+                <span className="font-semibold text-foreground">{contatoDeletando.nome}</span>? Esta
+                ação não pode ser desfeita.
+              </DialogDescription>
+            )}
           </DialogHeader>
-
-          {contatoDeletando && (
-            <div className="space-y-4 py-4">
-              <div className="rounded-lg border border-brand-gray bg-gray-50 p-4">
-                <h3 className="font-semibold text-navy mb-2">{contatoDeletando.nome}</h3>
-                <div className="space-y-1 text-sm text-muted-foreground">
-                  {contatoDeletando.empresa && (
-                    <p className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4" />
-                      {contatoDeletando.empresa}
-                    </p>
-                  )}
-                  {contatoDeletando.emprego && (
-                    <p className="flex items-center gap-2">
-                      <Briefcase className="h-4 w-4" />
-                      {contatoDeletando.emprego}
-                    </p>
-                  )}
-                  {contatoDeletando.email && (
-                    <p className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      {contatoDeletando.email}
-                    </p>
-                  )}
-                  {contatoDeletando.telefone && (
-                    <p className="flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      {contatoDeletando.telefone}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
+          <div className="h-px bg-foreground/[0.08]" />
+          <div className="px-6 py-4 flex items-center gap-2">
+            <button
               onClick={() => setContatoDeletando(null)}
               disabled={deletando}
+              className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
             >
               Cancelar
-            </Button>
-            <Button
-              variant="destructive"
+            </button>
+            <button
               onClick={confirmarDeletar}
               disabled={deletando}
-              className="gap-2"
+              className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-red-500 hover:bg-red-600 px-4 py-3 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {deletando && <Loader2 className="h-4 w-4 animate-spin" />}
-              Deletar
-            </Button>
-          </DialogFooter>
+              {deletando && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              Remover
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

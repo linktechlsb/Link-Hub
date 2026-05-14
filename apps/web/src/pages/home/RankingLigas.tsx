@@ -42,7 +42,7 @@ export function RankingLigas({ ranking }: RankingLigasProps) {
               <span
                 className={cn(
                   "text-sm font-semibold truncate",
-                  r.minhaLiga ? "text-navy" : "text-slate-700",
+                  r.minhaLiga ? "text-navy" : "text-foreground",
                 )}
               >
                 {r.nome}
@@ -57,7 +57,7 @@ export function RankingLigas({ ranking }: RankingLigasProps) {
             </div>
             <Progress
               value={Math.round((r.score / maxScore) * 100)}
-              className={cn("h-1.5", r.minhaLiga ? "[&>div]:bg-navy" : "[&>div]:bg-slate-300")}
+              className={cn("h-1.5", r.minhaLiga ? "[&>div]:bg-navy" : "[&>div]:bg-foreground/20")}
             />
           </div>
         </div>
