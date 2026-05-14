@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
-import { EditorialTable, SectionHeader } from "@/pages/home/v1/primitives";
+import { SectionHeader } from "@/pages/home/v1/primitives";
 
 import type { Projeto, StatusProjeto } from "@link-leagues/types";
 
@@ -45,39 +45,79 @@ export function ProjetosTab({ ligaId }: Props) {
   }, [ligaId]);
 
   if (carregando) {
-    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando projetos...</p>;
+    return (
+      <p className="font-plex-sans text-[13px] text-navy/50 dark:text-white/40">
+        Carregando projetos...
+      </p>
+    );
   }
 
   return (
     <div>
       <SectionHeader numero="04" eyebrow="Iniciativas" titulo="Projetos da Liga" />
       {projetos.length === 0 ? (
-        <p className="font-plex-sans text-[13px] text-navy/50">Nenhum projeto cadastrado.</p>
+        <p className="font-plex-sans text-[13px] text-navy/50 dark:text-white/40">
+          Nenhum projeto cadastrado.
+        </p>
       ) : (
-        <EditorialTable
-          columns={["Projeto", "Responsável", "Prazo", "Status", "%"]}
-          rows={projetos.map((p) => {
-            const s = STATUS_CONFIG[p.status];
-            return [
-              <span key={p.id} className="font-medium">
-                {p.titulo}
-              </span>,
-              p.responsavel_nome ?? "—",
-              p.prazo
-                ? new Date(p.prazo).toLocaleDateString("pt-BR", {
-                    day: "2-digit",
-                    month: "short",
-                  })
-                : "—",
-              <span key={`s-${p.id}`} className={`font-medium ${s.className}`}>
-                {s.label}
-              </span>,
-              <span key={`pct-${p.id}`} className="font-plex-mono text-navy/70">
-                {p.percentual_concluido}
-              </span>,
-            ];
-          })}
-        />
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-foreground/[0.08]">
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Projeto
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Responsável
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Prazo
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Status
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                %
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {projetos.map((p, idx) => {
+              const s = STATUS_CONFIG[p.status];
+              const isLast = idx === projetos.length - 1;
+              return (
+                <tr
+                  key={p.id}
+                  className={`hover:bg-foreground/[0.03] transition-colors ${!isLast ? "border-b border-foreground/[0.06]" : ""}`}
+                >
+                  <td className="py-4 px-4">
+                    <span className="font-plex-sans text-[13px] text-foreground font-semibold">
+                      {p.titulo}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                    {p.responsavel_nome ?? "—"}
+                  </td>
+                  <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                    {p.prazo
+                      ? new Date(p.prazo).toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "short",
+                        })
+                      : "—"}
+                  </td>
+                  <td className="py-4 px-4">
+                    <span className={`font-plex-mono text-[12px] font-medium ${s.className}`}>
+                      {s.label}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                    {p.percentual_concluido}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       )}
     </div>
   );

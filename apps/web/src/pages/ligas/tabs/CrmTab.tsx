@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/lib/supabase";
-import { EditorialTable, SectionHeader } from "@/pages/home/v1/primitives";
+import { SectionHeader } from "@/pages/home/v1/primitives";
 
 import type { CrmContato, CreateCrmContatoInput, UpdateCrmContatoInput } from "@link-leagues/types";
 
@@ -119,18 +119,22 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
   }
 
   if (carregando) {
-    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando contatos...</p>;
+    return (
+      <p className="font-plex-sans text-[13px] text-navy/50 dark:text-white/40">
+        Carregando contatos...
+      </p>
+    );
   }
 
   const contadorAcao = (
     <div className="flex items-center gap-4">
-      <span className="font-plex-mono text-[11px] tracking-[0.14em] text-navy/60">
+      <span className="font-plex-mono text-[11px] tracking-[0.14em] text-navy/60 dark:text-white/40">
         {contatos.length}
       </span>
       {podeEditar && (
         <button
           onClick={abrirCriar}
-          className="font-plex-mono text-[11px] tracking-[0.14em] uppercase bg-navy text-white px-3 py-1.5 hover:bg-navy/80 transition-colors"
+          className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
         >
           + Novo contato
         </button>
@@ -138,84 +142,120 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
     </div>
   );
 
-  const colunas = podeEditar
-    ? ["Nome", "Emprego", "Empresa", "Telefone", "E-mail", "LinkedIn", ""]
-    : ["Nome", "Emprego", "Empresa", "Telefone", "E-mail", "LinkedIn"];
-
   return (
     <div>
-      <SectionHeader numero="06" eyebrow="Relacionamentos" titulo="CRM" acao={contadorAcao} />
+      <SectionHeader numero="06" eyebrow="Relacionamentos" titulo="Contatos" acao={contadorAcao} />
 
       {contatos.length === 0 ? (
-        <p className="font-plex-sans text-[13px] text-navy/50">Nenhum contato cadastrado.</p>
+        <p className="font-plex-sans text-[13px] text-navy/50 dark:text-white/40">
+          Nenhum contato cadastrado.
+        </p>
       ) : (
-        <EditorialTable
-          columns={colunas}
-          rows={contatos.map((c) => {
-            const cells = [
-              <span key="nome" className="font-medium">
-                {c.nome}
-              </span>,
-              c.emprego ?? "—",
-              c.empresa ?? "—",
-              c.telefone ?? "—",
-              c.email ?? "—",
-              c.linkedin ? (
-                <a
-                  key="linkedin"
-                  href={c.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-navy underline underline-offset-2 hover:text-navy/70 transition-colors"
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-foreground/[0.08]">
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Nome
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Emprego
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Empresa
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                Telefone
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                E-mail
+              </th>
+              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                LinkedIn
+              </th>
+              {podeEditar && <th className="py-3 px-4 w-16" />}
+            </tr>
+          </thead>
+          <tbody>
+            {contatos.map((c, idx) => {
+              const isLast = idx === contatos.length - 1;
+              return (
+                <tr
+                  key={c.id}
+                  className={`hover:bg-foreground/[0.03] transition-colors ${!isLast ? "border-b border-foreground/[0.06]" : ""}`}
                 >
-                  Abrir
-                </a>
-              ) : (
-                "—"
-              ),
-            ];
-
-            if (podeEditar) {
-              cells.push(
-                confirmandoDeletar === c.id ? (
-                  <span key="acoes" className="flex items-center gap-2">
-                    <button
-                      onClick={() => deletar(c.id)}
-                      className="font-plex-mono text-[10px] uppercase tracking-[0.12em] text-red-600 hover:text-red-800 transition-colors"
-                    >
-                      Confirmar
-                    </button>
-                    <button
-                      onClick={() => setConfirmandoDeletar(null)}
-                      className="font-plex-mono text-[10px] uppercase tracking-[0.12em] text-navy/50 hover:text-navy transition-colors"
-                    >
-                      Cancelar
-                    </button>
-                  </span>
-                ) : (
-                  <span key="acoes" className="flex items-center gap-3">
-                    <button
-                      onClick={() => abrirEditar(c)}
-                      className="text-navy/40 hover:text-navy transition-colors"
-                      title="Editar"
-                    >
-                      <Pencil size={13} />
-                    </button>
-                    <button
-                      onClick={() => setConfirmandoDeletar(c.id)}
-                      className="text-navy/40 hover:text-red-600 transition-colors"
-                      title="Excluir"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </span>
-                ),
+                  <td className="py-4 px-4">
+                    <span className="font-plex-sans text-[13px] text-foreground font-semibold">
+                      {c.nome}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                    {c.emprego ?? "—"}
+                  </td>
+                  <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                    {c.empresa ?? "—"}
+                  </td>
+                  <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                    {c.telefone ?? "—"}
+                  </td>
+                  <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                    {c.email ?? "—"}
+                  </td>
+                  <td className="py-4 px-4">
+                    {c.linkedin ? (
+                      <a
+                        href={c.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-plex-mono text-[13px] text-foreground/60 underline underline-offset-2 hover:text-foreground transition-colors"
+                      >
+                        Abrir
+                      </a>
+                    ) : (
+                      <span className="font-plex-mono text-[13px] text-foreground/60">—</span>
+                    )}
+                  </td>
+                  {podeEditar && (
+                    <td className="py-4 px-4">
+                      {confirmandoDeletar === c.id ? (
+                        <span className="flex items-center gap-2">
+                          <button
+                            onClick={() => deletar(c.id)}
+                            className="font-plex-mono text-[10px] uppercase tracking-[0.12em] text-red-500 hover:text-red-700 transition-colors"
+                          >
+                            Confirmar
+                          </button>
+                          <button
+                            onClick={() => setConfirmandoDeletar(null)}
+                            className="font-plex-mono text-[10px] uppercase tracking-[0.12em] text-foreground/40 hover:text-foreground transition-colors"
+                          >
+                            Cancelar
+                          </button>
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-3">
+                          <button
+                            onClick={() => abrirEditar(c)}
+                            className="text-foreground/30 hover:text-foreground transition-colors"
+                            title="Editar"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            onClick={() => setConfirmandoDeletar(c.id)}
+                            className="text-foreground/30 hover:text-red-500 transition-colors"
+                            title="Excluir"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </span>
+                      )}
+                    </td>
+                  )}
+                </tr>
               );
-            }
-
-            return cells;
-          })}
-        />
+            })}
+          </tbody>
+        </table>
       )}
 
       <Sheet open={sheetAberto} onOpenChange={setSheetAberto}>

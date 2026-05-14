@@ -13,6 +13,7 @@ import { rankingRouter } from "./ranking.js";
 import { receitasRouter } from "./receitas.js";
 import { recursosRouter } from "./recursos.js";
 import { salasRouter } from "./salas.js";
+import { solicitacoesRouter } from "./solicitacoes.js";
 import { usuariosRouter } from "./usuarios.js";
 
 export const router: IRouter = Router();
@@ -35,3 +36,4 @@ router.use("/ranking", rankingRouter);
 router.use("/crm", crmRouter);
 router.use("/feedbacks", feedbacksRouter);
 router.use("/formularios", formulariosRouter);
+router.use("/solicitacoes", solicitacoesRouter);

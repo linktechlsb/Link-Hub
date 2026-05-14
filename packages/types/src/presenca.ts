@@ -7,6 +7,7 @@ export type CategoriaEvento = "encontro" | "aula" | "cowork" | "evento" | "hub";
 export interface Evento {
   id: string;
   liga_id: string;
+  liga?: { id: string; nome: string; sigla?: string };
   titulo: string;
   descricao?: string;
   data: string;

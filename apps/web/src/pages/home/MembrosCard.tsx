@@ -39,9 +39,9 @@ export function MembrosCard({ ligaId }: MembrosCardProps) {
   const membros = membrosData ?? [];
 
   return (
-    <Card className="shadow-sm flex flex-col h-full">
+    <Card className="shadow-sm flex flex-col h-full overflow-hidden">
       <CardContent className="pt-5 pb-3 flex flex-col h-full min-h-0">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 shrink-0">
           <p className="font-semibold text-sm text-navy">Membros</p>
           {membros.length > 0 && (
             <span className="text-xs text-muted-foreground font-medium">

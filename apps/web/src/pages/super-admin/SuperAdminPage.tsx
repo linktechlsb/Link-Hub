@@ -8,9 +8,11 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { SectionHeader } from "@/pages/home/v1/primitives";
 import { LigaSheet } from "@/pages/ligas/LigaSheet";
 
+import { CriarUsuarioCard } from "./CriarUsuarioCard";
 import { LigaMembrosSheet } from "./LigaMembrosSheet";
 import { UsuarioSheet } from "./UsuarioSheet";
 
@@ -98,7 +101,12 @@ function RoleBadge({ role }: { role: UserRole }) {
 type Aba = "ligas" | "aprovacoes" | "usuarios";
 
 export function SuperAdminPage() {
-  const [abaAtiva, setAbaAtiva] = useState<Aba>("ligas");
+  const location = useLocation();
+  const locationState = location.state as { aba?: Aba; abrirCriar?: boolean } | null;
+  const estadoConsumido = useRef(false);
+
+  const [abaAtiva, setAbaAtiva] = useState<Aba>(locationState?.aba ?? "ligas");
+  const [cardCriarAberto, setCardCriarAberto] = useState(false);
   const [usuarios, setUsuarios] = useState<UsuarioAdmin[]>([]);
   const [ligas, setLigas] = useState<Liga[]>([]);
   const [presencaMedia, setPresencaMedia] = useState<number | null>(null);
@@ -214,6 +222,13 @@ export function SuperAdminPage() {
   useEffect(() => {
     void carregarDados();
   }, []);
+
+  useEffect(() => {
+    if (!estadoConsumido.current && locationState?.abrirCriar) {
+      estadoConsumido.current = true;
+      setCardCriarAberto(true);
+    }
+  }, [locationState]);
 
   async function removerUsuario(id: string) {
     const token = await getToken();
@@ -584,10 +599,7 @@ export function SuperAdminPage() {
             titulo="Usuários"
             acao={
               <button
-                onClick={() => {
-                  setUsuarioParaEditar(undefined);
-                  setSheetUsuarioOpen(true);
-                }}
+                onClick={() => setCardCriarAberto(true)}
                 className="font-plex-sans text-[11px] font-semibold text-foreground/45 border border-foreground/[0.15] px-3 py-1.5 rounded-full bg-transparent hover:border-foreground/30 transition-colors"
               >
                 + Novo Usuário
@@ -812,6 +824,22 @@ export function SuperAdminPage() {
           )}
         </div>
       )}
+
+      {/* Dialog — Criar Usuário */}
+      <Dialog
+        open={cardCriarAberto}
+        onOpenChange={(o) => {
+          if (!o) setCardCriarAberto(false);
+        }}
+      >
+        <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
+          <CriarUsuarioCard
+            ligas={ligas}
+            onSalvo={carregarDados}
+            onFechar={() => setCardCriarAberto(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Sheets */}
       <UsuarioSheet

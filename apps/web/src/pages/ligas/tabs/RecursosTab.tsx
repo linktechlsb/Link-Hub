@@ -55,9 +55,9 @@ export function RecursosTab({ ligaId }: Props) {
 
   return (
     <div className="space-y-3">
-      <p className="text-xs font-bold text-link-blue uppercase tracking-wider">
+      <p className="text-xs font-bold text-link-blue dark:text-white uppercase tracking-wider">
         Recursos da Liga{" "}
-        <span className="bg-brand-gray text-link-blue rounded-full px-2 py-0.5 text-xs font-normal ml-1 normal-case">
+        <span className="bg-brand-gray text-link-blue dark:bg-white/10 dark:text-white rounded-full px-2 py-0.5 text-xs font-normal ml-1 normal-case">
           {recursos.length}
         </span>
       </p>
@@ -67,7 +67,7 @@ export function RecursosTab({ ligaId }: Props) {
         recursos.map((r) => (
           <div
             key={r.id}
-            className="bg-white border border-brand-gray rounded-lg px-4 py-3 flex items-center gap-3"
+            className="bg-white dark:bg-white/5 border border-brand-gray dark:border-white/10 rounded-lg px-4 py-3 flex items-center gap-3"
           >
             <div
               className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -76,14 +76,14 @@ export function RecursosTab({ ligaId }: Props) {
               <DynamicIcon name={r.icone} size={18} color="white" />
             </div>
             <div className="flex-1">
-              <div className="font-bold text-navy text-sm">{r.titulo}</div>
+              <div className="font-bold text-navy dark:text-white text-sm">{r.titulo}</div>
               <div className="text-xs text-muted-foreground mt-0.5 capitalize">{r.tipo}</div>
             </div>
             <a
               href={r.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-semibold text-link-blue hover:text-navy transition-colors"
+              className="text-xs font-semibold text-link-blue hover:text-navy dark:text-white/60 dark:hover:text-white transition-colors"
             >
               ↗ Abrir
             </a>

@@ -3,6 +3,16 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { type DayButton } from "react-day-picker";
 import { useSearchParams } from "react-router-dom";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Select,
@@ -972,67 +982,57 @@ export function AgendaPage() {
       </Sheet>
 
       {/* Confirm Exclusão */}
-      {confirmarDeletar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-background border border-foreground/20 w-full max-w-sm mx-4 rounded-lg overflow-hidden">
-            <div className="px-8 py-6">
-              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50">
-                Confirmar
-              </p>
-              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
-                Excluir evento
-              </h2>
-            </div>
-            <div className="h-px bg-foreground/15" />
-            <div className="px-8 py-5">
-              <p className="font-plex-sans text-[13px] text-foreground/70">
-                Tem certeza que deseja excluir{" "}
-                <span className="font-medium text-foreground">
-                  &quot;{confirmarDeletar.titulo}&quot;
-                </span>
-                ? Esta ação não pode ser desfeita.
-              </p>
-            </div>
-            <div className="h-px bg-foreground/15" />
-            <div className="px-8 py-6 flex gap-3">
-              <button
-                onClick={() => setConfirmarDeletar(null)}
-                disabled={deletando}
-                className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-4 py-3 rounded-full hover:bg-foreground hover:text-background transition-colors disabled:opacity-40"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => void handleDeletarEvento()}
-                disabled={deletando}
-                className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-red-600 px-4 py-3 rounded-full hover:bg-red-700 transition-colors disabled:opacity-40"
-              >
-                {deletando ? "..." : "Excluir"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AlertDialog
+        open={!!confirmarDeletar}
+        onOpenChange={(open) => {
+          if (!open) setConfirmarDeletar(null);
+        }}
+      >
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50">
+              Confirmar
+            </p>
+            <AlertDialogTitle className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
+              Excluir evento
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-plex-sans text-[13px] text-foreground/70">
+              Tem certeza que deseja excluir{" "}
+              <span className="font-medium text-foreground">
+                &quot;{confirmarDeletar?.titulo}&quot;
+              </span>
+              ? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel
+              disabled={deletando}
+              className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase border-foreground/40 rounded-full py-3 h-auto hover:bg-foreground hover:text-background transition-colors"
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleDeletarEvento()}
+              disabled={deletando}
+              className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase bg-red-600 text-white rounded-full py-3 h-auto hover:bg-red-700 transition-colors"
+            >
+              {deletando ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Cabeçalho */}
       <div className="mb-10 flex items-start justify-between gap-4">
         <div>
           <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground">
-            Agenda
+            Calendário
           </h1>
           <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50 mt-1">
             Calendário · Link School of Business
           </p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
-          {podeGerenciar && (
-            <button
-              onClick={abrirCriar}
-              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
-            >
-              + Criar evento
-            </button>
-          )}
           <button
             onClick={goToToday}
             className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
@@ -1258,8 +1258,9 @@ export function AgendaPage() {
                         </button>
 
                         {isOpen && podeGerir && (
-                          <div className="pl-5 pb-2">
+                          <div className="pl-5 pb-1">
                             <button
+                              title="Adicionar ao Google Calendar"
                               onClick={() =>
                                 window.open(
                                   buildGoogleCalendarUrl(
@@ -1273,10 +1274,9 @@ export function AgendaPage() {
                                   "_blank",
                                 )
                               }
-                              className="border border-foreground/20 rounded-full px-4 py-2 flex items-center gap-2 hover:shadow-sm transition-shadow text-sm text-foreground cursor-pointer"
+                              className="h-8 w-8 flex items-center justify-center rounded-md border border-foreground/15 hover:border-foreground/30 hover:bg-muted/50 transition-colors cursor-pointer"
                             >
                               <GoogleCalendarIcon />
-                              Adicionar ao Google Calendar
                             </button>
                           </div>
                         )}

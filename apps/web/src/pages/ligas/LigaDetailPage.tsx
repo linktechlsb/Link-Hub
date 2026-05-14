@@ -30,7 +30,7 @@ const ABAS_COMPLETAS: { id: AbaId; label: string }[] = [
   { id: "presenca", label: "Presença" },
   { id: "projetos", label: "Projetos" },
   { id: "recursos", label: "Recursos" },
-  { id: "crm", label: "CRM" },
+  { id: "crm", label: "Contatos" },
 ];
 
 const ABAS_RESTRITAS: { id: AbaId; label: string }[] = [
@@ -201,7 +201,7 @@ export function LigaDetailPage() {
             onChange={(id) => setAbaAtiva(id as typeof abaAtiva)}
             tabClassName="px-0 py-3"
             innerClassName="gap-6"
-            inactiveTabClassName="text-navy/50 hover:text-navy"
+            inactiveTabClassName="text-navy/50 hover:text-navy dark:text-white/40 dark:hover:text-white"
           />
         </div>
       </div>
