@@ -191,7 +191,13 @@ export function HomeView({
           className={`grid gap-4 items-stretch ${role !== "staff" ? "grid-cols-[1fr_280px]" : "grid-cols-1"}`}
         >
           <LigasCarousel ligas={ligas} ranking={ranking} loading={loading} />
-          {role !== "staff" && <MembrosCard ligaId={ligaId} />}
+          {role !== "staff" && (
+            <div className="relative">
+              <div className="absolute inset-0">
+                <MembrosCard ligaId={ligaId} />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
