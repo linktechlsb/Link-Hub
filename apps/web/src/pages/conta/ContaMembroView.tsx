@@ -235,7 +235,7 @@ function CardPerfil({
           </div>
         )}
 
-        {/* Menu de opções (aparece no hover) */}
+        {/* Menu de opções */}
         <button
           ref={menuRef}
           onClick={abrirMenu}
@@ -464,127 +464,150 @@ function CardPerfil({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div
-              className="relative w-[260px] rounded-3xl overflow-hidden shadow-2xl border border-white/10 shrink-0"
-              style={{ height: 360 }}
-            >
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="Avatar"
-                  className="absolute inset-0 w-full h-full object-cover object-top"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-gradient-to-b from-navy to-[#1a3a6e] flex flex-col items-center justify-center gap-3">
-                  <div
-                    className="absolute inset-0 opacity-[0.07]"
-                    style={{
-                      backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
-                      backgroundSize: "20px 20px",
-                    }}
+            <div className="hover-3d">
+              <div
+                className="relative w-[260px] rounded-3xl overflow-hidden shadow-2xl border border-white/10 shrink-0"
+                style={{ height: 360 }}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Avatar"
+                    className="absolute inset-0 w-full h-full object-cover object-top"
                   />
-                  <div className="relative w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-white text-3xl font-bold select-none">
-                    {iniciais || "?"}
-                  </div>
-                  <p className="relative font-plex-mono text-[9px] uppercase tracking-[0.12em] text-white/40">
-                    Sem foto
-                  </p>
-                </div>
-              )}
-              <div
-                className="absolute bottom-0 left-0 right-0 pointer-events-none"
-                style={{
-                  height: "75%",
-                  backdropFilter: "blur(20px)",
-                  WebkitBackdropFilter: "blur(20px)",
-                  maskImage: "linear-gradient(to top, black 25%, transparent 70%)",
-                  WebkitMaskImage: "linear-gradient(to top, black 25%, transparent 70%)",
-                }}
-              />
-              <div
-                className="absolute bottom-0 left-0 right-0 pointer-events-none"
-                style={{
-                  height: "75%",
-                  background:
-                    "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.52) 50%, rgba(0,0,0,0.0) 100%)",
-                }}
-              />
-              <div className="absolute bottom-0 left-0 right-0">
-                <div className="px-4 pt-10 pb-4">
-                  <TooltipProvider delayDuration={0}>
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className="font-display font-bold text-white text-[18px] tracking-tight leading-tight drop-shadow">
-                        {nome || "Seu nome"}
-                      </span>
-                      {isDiretor && (
-                        <Tooltip>
-                          <TooltipTrigger className="cursor-default">
-                            <Crown className="w-[14px] h-[14px] text-amber-400 shrink-0" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Diretor da {liga || "sua liga"}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                      {isAlumni && (
-                        <Tooltip>
-                          <TooltipTrigger className="cursor-default">
-                            <GraduationCap className="w-[14px] h-[14px] text-blue-300 shrink-0" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Alumni</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-b from-navy to-[#1a3a6e] flex flex-col items-center justify-center gap-3">
+                    <div
+                      className="absolute inset-0 opacity-[0.07]"
+                      style={{
+                        backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+                        backgroundSize: "20px 20px",
+                      }}
+                    />
+                    <div className="relative w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-white text-3xl font-bold select-none">
+                      {iniciais || "?"}
                     </div>
-                  </TooltipProvider>
-                  <p
-                    className="font-plex-sans text-[12px] text-white/75 leading-relaxed mb-4"
+                    <p className="relative font-plex-mono text-[9px] uppercase tracking-[0.12em] text-white/40">
+                      Sem foto
+                    </p>
+                  </div>
+                )}
+                {/* Blur via filter:blur() — funciona em contexto 3D ao contrário de backdrop-filter */}
+                {avatarUrl && (
+                  <div
+                    className="absolute bottom-0 left-0 right-0 pointer-events-none overflow-hidden"
                     style={{
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
+                      height: "75%",
+                      maskImage: "linear-gradient(to top, black 25%, transparent 70%)",
+                      WebkitMaskImage: "linear-gradient(to top, black 25%, transparent 70%)",
                     }}
                   >
-                    {bio || "Sua bio aparece aqui..."}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      {instagram && (
-                        <a
-                          href={`https://instagram.com/${instagram}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-white/60 hover:text-white transition-colors"
-                        >
-                          <Instagram className="w-4 h-4" />
-                        </a>
-                      )}
-                      {linkedin && (
-                        <a
-                          href={`https://linkedin.com/in/${linkedin}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-white/60 hover:text-white transition-colors"
-                        >
-                          <Linkedin className="w-4 h-4" />
-                        </a>
-                      )}
-                      {!instagram && !linkedin && badge && (
-                        <span className="font-plex-mono text-[8px] uppercase tracking-[0.1em] text-white/50 border border-white/20 px-2 py-0.5 rounded-full">
-                          {badge}
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: "-20px",
+                        backgroundImage: `url(${avatarUrl})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center top",
+                        filter: "blur(20px)",
+                      }}
+                    />
+                  </div>
+                )}
+                <div
+                  className="absolute bottom-0 left-0 right-0 pointer-events-none"
+                  style={{
+                    height: "75%",
+                    background:
+                      "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.52) 50%, rgba(0,0,0,0.0) 100%)",
+                  }}
+                />
+                <div className="absolute bottom-0 left-0 right-0">
+                  <div className="px-4 pt-10 pb-4">
+                    <TooltipProvider delayDuration={0}>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="font-display font-bold text-white text-[18px] tracking-tight leading-tight drop-shadow">
+                          {nome || "Seu nome"}
+                        </span>
+                        {isDiretor && (
+                          <Tooltip>
+                            <TooltipTrigger className="cursor-default">
+                              <Crown className="w-[14px] h-[14px] text-amber-400 shrink-0" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Diretor da {liga || "sua liga"}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        {isAlumni && (
+                          <Tooltip>
+                            <TooltipTrigger className="cursor-default">
+                              <GraduationCap className="w-[14px] h-[14px] text-blue-300 shrink-0" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Alumni</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </TooltipProvider>
+                    <p
+                      className="font-plex-sans text-[12px] text-white/75 leading-relaxed mb-4"
+                      style={{
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {bio || "Sua bio aparece aqui..."}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        {instagram && (
+                          <a
+                            href={`https://instagram.com/${instagram}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-white/60 hover:text-white transition-colors"
+                          >
+                            <Instagram className="w-4 h-4" />
+                          </a>
+                        )}
+                        {linkedin && (
+                          <a
+                            href={`https://linkedin.com/in/${linkedin}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-white/60 hover:text-white transition-colors"
+                          >
+                            <Linkedin className="w-4 h-4" />
+                          </a>
+                        )}
+                        {!instagram && !linkedin && badge && (
+                          <span className="font-plex-mono text-[8px] uppercase tracking-[0.1em] text-white/50 border border-white/20 px-2 py-0.5 rounded-full">
+                            {badge}
+                          </span>
+                        )}
+                      </div>
+                      {liga && (
+                        <span className="font-plex-mono text-[8px] uppercase tracking-[0.1em] text-white/80 border border-white/25 bg-white/10 px-2.5 py-1 rounded-full shrink-0">
+                          {liga}
                         </span>
                       )}
                     </div>
-                    {liga && (
-                      <span className="font-plex-mono text-[8px] uppercase tracking-[0.1em] text-white/80 border border-white/25 bg-white/10 px-2.5 py-1 rounded-full shrink-0">
-                        {liga}
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>
+              {/* 8 zonas de hover para o efeito 3D */}
+              <div />
+              <div />
+              <div />
+              <div />
+              <div />
+              <div />
+              <div />
+              <div />
             </div>
           </div>
         </div>
