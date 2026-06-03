@@ -1,4 +1,4 @@
-import { Camera, X } from "lucide-react";
+import { Camera, Eye, Instagram, Linkedin, MoreHorizontal, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 import { carregarMinhaLiga, carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
@@ -35,7 +35,7 @@ function gerarIniciais(nome: string) {
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/60 mb-1.5">
+    <label className="block font-plex-mono text-[9px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
       {children}
     </label>
   );
@@ -54,7 +54,7 @@ function Campo({
     <div>
       <Label>{label}</Label>
       {children}
-      {dica && <p className="font-plex-sans text-[11px] text-navy/40 mt-1">{dica}</p>}
+      {dica && <p className="font-plex-sans text-[11px] text-foreground/40 mt-1">{dica}</p>}
     </div>
   );
 }
@@ -76,13 +76,10 @@ function InputTexto({
 }) {
   return (
     <div
-      className={cn(
-        "flex items-center border border-navy/20 overflow-hidden",
-        readOnly && "bg-navy/[0.02]",
-      )}
+      className={cn("flex items-center border border-border overflow-hidden rounded bg-muted/50")}
     >
       {prefix && (
-        <span className="px-3 py-2.5 font-plex-mono text-[11px] text-navy/40 bg-navy/[0.03] border-r border-navy/20 select-none shrink-0">
+        <span className="px-3 py-2.5 font-plex-mono text-[11px] text-foreground/40 bg-foreground/[0.04] border-r border-border select-none shrink-0">
           {prefix}
         </span>
       )}
@@ -95,7 +92,9 @@ function InputTexto({
         onChange={(e) => onChange?.(e.target.value)}
         className={cn(
           "flex-1 px-3 py-2.5 font-plex-sans text-[13px] bg-transparent focus:outline-none",
-          readOnly ? "text-navy/40 cursor-default" : "text-navy placeholder:text-navy/30",
+          readOnly
+            ? "text-foreground/40 cursor-default"
+            : "text-foreground placeholder:text-foreground/20",
         )}
       />
     </div>
@@ -106,7 +105,7 @@ function BotaoSalvar({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy border border-navy px-3 py-1.5 hover:bg-navy hover:text-white transition-colors"
+      className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
     >
       Salvar alterações
     </button>
@@ -121,6 +120,395 @@ function Toast({ mensagem, onFechar }: { mensagem: string; onFechar: () => void 
         <X className="h-4 w-4" />
       </button>
     </div>
+  );
+}
+
+// ─── Card de Perfil ───────────────────────────────────────────────────────────
+
+function CardPerfil({
+  nome,
+  bio,
+  avatarUrl,
+  instagram,
+  linkedin,
+  uploadandoAvatar,
+  onAvatarChange,
+}: {
+  nome: string;
+  bio: string;
+  avatarUrl: string | null;
+  instagram?: string;
+  linkedin?: string;
+  uploadandoAvatar: boolean;
+  onAvatarChange: (file: File) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLButtonElement>(null);
+  const [menuAberto, setMenuAberto] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const [dialogAberto, setDialogAberto] = useState(false);
+  const [previaAberta, setPreviaAberta] = useState(false);
+  const iniciais = gerarIniciais(nome);
+
+  function abrirMenu() {
+    if (menuRef.current) {
+      const rect = menuRef.current.getBoundingClientRect();
+      setMenuPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
+    }
+    setMenuAberto(true);
+  }
+
+  return (
+    <>
+      <div
+        className="relative w-[260px] rounded-3xl overflow-hidden shadow-xl border border-black/[0.08] shrink-0"
+        style={{ height: 360 }}
+      >
+        {/* Background: foto full-bleed ou gradiente navy com iniciais */}
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt="Avatar"
+            className="absolute inset-0 w-full h-full object-cover object-top"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-b from-navy to-[#1a3a6e] flex flex-col items-center justify-center gap-3">
+            <div
+              className="absolute inset-0 opacity-[0.07]"
+              style={{
+                backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+                backgroundSize: "20px 20px",
+              }}
+            />
+            <div className="relative w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-white text-3xl font-bold select-none">
+              {iniciais || "?"}
+            </div>
+            <p className="relative font-plex-mono text-[9px] uppercase tracking-[0.12em] text-white/40">
+              Adicione uma foto
+            </p>
+          </div>
+        )}
+
+        {/* Menu de opções */}
+        <button
+          ref={menuRef}
+          onClick={abrirMenu}
+          className="absolute top-3 right-3 z-10 bg-black/40 backdrop-blur-sm rounded-full p-1.5"
+        >
+          <MoreHorizontal className="h-3.5 w-3.5 text-white" />
+        </button>
+
+        {/* Blur gradual */}
+        <div
+          className="absolute bottom-0 left-0 right-0 pointer-events-none"
+          style={{
+            height: "75%",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            maskImage: "linear-gradient(to top, black 25%, transparent 70%)",
+            WebkitMaskImage: "linear-gradient(to top, black 25%, transparent 70%)",
+          }}
+        />
+
+        {/* Gradiente escuro */}
+        <div
+          className="absolute bottom-0 left-0 right-0 pointer-events-none"
+          style={{
+            height: "75%",
+            background:
+              "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.52) 50%, rgba(0,0,0,0.0) 100%)",
+          }}
+        />
+
+        {/* Conteúdo */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <div className="px-4 pt-10 pb-4">
+            {/* Nome */}
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="font-display font-bold text-white text-[18px] tracking-tight leading-tight drop-shadow">
+                {nome || "Seu nome"}
+              </span>
+            </div>
+
+            {/* Bio */}
+            <p
+              className="font-plex-sans text-[12px] text-white/75 leading-relaxed mb-4"
+              style={{
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {bio || "Sua bio aparece aqui..."}
+            </p>
+
+            {/* Rodapé */}
+            <div className="flex items-center gap-2.5">
+              {instagram && (
+                <a
+                  href={`https://instagram.com/${instagram}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/60 hover:text-white transition-colors"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+              )}
+              {linkedin && (
+                <a
+                  href={`https://linkedin.com/in/${linkedin}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/60 hover:text-white transition-colors"
+                >
+                  <Linkedin className="w-4 h-4" />
+                </a>
+              )}
+              {!instagram && !linkedin && (
+                <span className="font-plex-mono text-[8px] uppercase tracking-[0.1em] text-white/50 border border-white/20 px-2 py-0.5 rounded-full">
+                  Professor
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/jpeg,image/png"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              onAvatarChange(file);
+              setDialogAberto(false);
+            }
+            e.target.value = "";
+          }}
+        />
+      </div>
+
+      {/* Dropdown de opções */}
+      {menuAberto && menuPos && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setMenuAberto(false)} />
+          <div
+            className="fixed z-50 bg-popover border border-border rounded-xl shadow-xl overflow-hidden min-w-[152px]"
+            style={{ top: menuPos.top, right: menuPos.right }}
+          >
+            <button
+              onClick={() => {
+                setMenuAberto(false);
+                setDialogAberto(true);
+              }}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left font-plex-sans text-[13px] text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <Camera className="h-3.5 w-3.5 text-foreground/50 shrink-0" />
+              Editar foto
+            </button>
+            <button
+              onClick={() => {
+                setMenuAberto(false);
+                setPreviaAberta(true);
+              }}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left font-plex-sans text-[13px] text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <Eye className="h-3.5 w-3.5 text-foreground/50 shrink-0" />
+              Exibir
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Dialog de alterar foto */}
+      {dialogAberto && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setDialogAberto(false)}
+        >
+          <div
+            className="bg-popover shadow-xl w-full max-w-sm mx-4 p-6 rounded-2xl border border-border"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-display font-bold text-[18px] tracking-[-0.02em] text-navy">
+                Alterar foto de perfil
+              </h3>
+              <button
+                onClick={() => setDialogAberto(false)}
+                className="text-foreground/30 hover:text-foreground transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div
+              className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center gap-3 cursor-pointer hover:border-foreground/30 hover:bg-muted/30 transition-colors"
+              onClick={() => fileRef.current?.click()}
+            >
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                {uploadandoAvatar ? (
+                  <div className="h-5 w-5 border-2 border-navy border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Camera className="h-5 w-5 text-foreground/40" />
+                )}
+              </div>
+              <div className="text-center">
+                <p className="font-plex-sans font-medium text-[13px] text-foreground">
+                  {uploadandoAvatar ? "Enviando..." : "Clique para escolher uma foto"}
+                </p>
+                <p className="font-plex-sans text-[11px] text-foreground/40 mt-0.5">JPEG ou PNG</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setDialogAberto(false)}
+              className="w-full mt-3 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/40 hover:text-foreground transition-colors py-2"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Prévia do perfil */}
+      {previaAberta && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setPreviaAberta(false)}
+        >
+          <div className="flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between w-[260px]">
+              <p className="font-plex-mono text-[9px] uppercase tracking-[0.18em] text-white/50">
+                Como outros te veem
+              </p>
+              <button
+                onClick={() => setPreviaAberta(false)}
+                className="text-white/50 hover:text-white transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="hover-3d">
+              <div
+                className="relative w-[260px] rounded-3xl overflow-hidden shadow-2xl border border-white/10 shrink-0"
+                style={{ height: 360 }}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Avatar"
+                    className="absolute inset-0 w-full h-full object-cover object-top"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-b from-navy to-[#1a3a6e] flex flex-col items-center justify-center gap-3">
+                    <div
+                      className="absolute inset-0 opacity-[0.07]"
+                      style={{
+                        backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+                        backgroundSize: "20px 20px",
+                      }}
+                    />
+                    <div className="relative w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-white text-3xl font-bold select-none">
+                      {iniciais || "?"}
+                    </div>
+                    <p className="relative font-plex-mono text-[9px] uppercase tracking-[0.12em] text-white/40">
+                      Sem foto
+                    </p>
+                  </div>
+                )}
+                {/* Blur via filter:blur() — funciona em contexto 3D ao contrário de backdrop-filter */}
+                {avatarUrl && (
+                  <div
+                    className="absolute bottom-0 left-0 right-0 pointer-events-none overflow-hidden"
+                    style={{
+                      height: "75%",
+                      maskImage: "linear-gradient(to top, black 25%, transparent 70%)",
+                      WebkitMaskImage: "linear-gradient(to top, black 25%, transparent 70%)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: "-20px",
+                        backgroundImage: `url(${avatarUrl})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center top",
+                        filter: "blur(20px)",
+                      }}
+                    />
+                  </div>
+                )}
+                <div
+                  className="absolute bottom-0 left-0 right-0 pointer-events-none"
+                  style={{
+                    height: "75%",
+                    background:
+                      "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.52) 50%, rgba(0,0,0,0.0) 100%)",
+                  }}
+                />
+                <div className="absolute bottom-0 left-0 right-0">
+                  <div className="px-4 pt-10 pb-4">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="font-display font-bold text-white text-[18px] tracking-tight leading-tight drop-shadow">
+                        {nome || "Seu nome"}
+                      </span>
+                    </div>
+                    <p
+                      className="font-plex-sans text-[12px] text-white/75 leading-relaxed mb-4"
+                      style={{
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {bio || "Sua bio aparece aqui..."}
+                    </p>
+                    <div className="flex items-center gap-2.5">
+                      {instagram && (
+                        <a
+                          href={`https://instagram.com/${instagram}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-white/60 hover:text-white transition-colors"
+                        >
+                          <Instagram className="w-4 h-4" />
+                        </a>
+                      )}
+                      {linkedin && (
+                        <a
+                          href={`https://linkedin.com/in/${linkedin}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-white/60 hover:text-white transition-colors"
+                        >
+                          <Linkedin className="w-4 h-4" />
+                        </a>
+                      )}
+                      {!instagram && !linkedin && (
+                        <span className="font-plex-mono text-[8px] uppercase tracking-[0.1em] text-white/50 border border-white/20 px-2 py-0.5 rounded-full">
+                          Professor
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* 8 zonas de hover para o efeito 3D */}
+              <div />
+              <div />
+              <div />
+              <div />
+              <div />
+              <div />
+              <div />
+              <div />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -141,99 +529,73 @@ function AbaPerfil({
   onSalvar: () => void;
   onAvatarChange: (file: File) => void;
 }) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const iniciais = gerarIniciais(dados.nome);
-
   return (
-    <div className="space-y-6">
-      <SectionHeader numero="01" eyebrow="Conta" titulo="Perfil" />
+    <div className="flex flex-col lg:flex-row gap-10">
+      {/* Formulário */}
+      <div className="flex-1 space-y-6">
+        <SectionHeader numero="01" eyebrow="Conta" titulo="Perfil" />
 
-      <div className="flex items-center gap-4">
-        <div
-          className="relative group cursor-pointer shrink-0"
-          onClick={() => fileRef.current?.click()}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Campo label="Nome completo">
+            <InputTexto
+              value={dados.nome}
+              onChange={(v) => onChange("nome", v)}
+              placeholder="Seu nome completo"
+            />
+          </Campo>
+          <Campo label="E-mail institucional" dica="Somente leitura">
+            <InputTexto value={dados.email} readOnly />
+          </Campo>
+        </div>
+
+        <Campo
+          label={`Bio — ${dados.bio.length}/160 caracteres`}
+          dica="Aparece no seu perfil da plataforma"
         >
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="Avatar" className="h-16 w-16 rounded-full object-cover" />
-          ) : (
-            <div className="h-16 w-16 rounded-full bg-navy text-white text-xl font-bold flex items-center justify-center">
-              {iniciais}
-            </div>
-          )}
-          <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            {uploadandoAvatar ? (
-              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Camera className="h-5 w-5 text-white" />
-            )}
-          </div>
+          <textarea
+            value={dados.bio}
+            onChange={(e) => onChange("bio", e.target.value)}
+            maxLength={160}
+            rows={3}
+            placeholder="Conte um pouco sobre você..."
+            className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 resize-none placeholder:text-foreground/20 rounded"
+          />
+        </Campo>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Campo label="Instagram" dica="Apenas o @usuario">
+            <InputTexto
+              value={dados.instagram}
+              onChange={(v) => onChange("instagram", v.replace(/^@+/, ""))}
+              placeholder="usuario"
+              prefix="@"
+            />
+          </Campo>
+          <Campo label="LinkedIn" dica="Apenas o /in/usuario">
+            <InputTexto
+              value={dados.linkedin}
+              onChange={(v) => onChange("linkedin", v.replace(/^\/in\//, ""))}
+              placeholder="usuario"
+              prefix="/in/"
+            />
+          </Campo>
         </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/jpeg,image/png"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onAvatarChange(file);
-            e.target.value = "";
-          }}
+
+        <BotaoSalvar onClick={onSalvar} />
+      </div>
+
+      {/* Card de perfil */}
+      <div className="flex justify-center lg:justify-start">
+        <CardPerfil
+          nome={dados.nome}
+          bio={dados.bio}
+          avatarUrl={avatarUrl}
+          instagram={dados.instagram}
+          linkedin={dados.linkedin}
+          uploadandoAvatar={uploadandoAvatar}
+          onAvatarChange={onAvatarChange}
         />
-        <div>
-          <p className="font-plex-sans font-medium text-[14px] text-navy">{dados.nome}</p>
-          <p className="font-plex-sans text-[12px] text-navy/40 mt-0.5">
-            Clique na foto para alterar
-          </p>
-        </div>
       </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Campo label="Nome completo">
-          <InputTexto
-            value={dados.nome}
-            onChange={(v) => onChange("nome", v)}
-            placeholder="Seu nome completo"
-          />
-        </Campo>
-        <Campo label="E-mail institucional" dica="Somente leitura">
-          <InputTexto value={dados.email} readOnly />
-        </Campo>
-      </div>
-
-      <Campo
-        label={`Bio — ${dados.bio.length}/160 caracteres`}
-        dica="Aparece no seu perfil da plataforma"
-      >
-        <textarea
-          value={dados.bio}
-          onChange={(e) => onChange("bio", e.target.value)}
-          maxLength={160}
-          rows={3}
-          placeholder="Conte um pouco sobre você..."
-          className="w-full px-3 py-2.5 border border-navy/20 bg-white font-plex-sans text-[13px] text-navy focus:outline-none focus:border-navy/60 resize-none placeholder:text-navy/30"
-        />
-      </Campo>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Campo label="Instagram" dica="Apenas o @usuario">
-          <InputTexto
-            value={dados.instagram}
-            onChange={(v) => onChange("instagram", v.replace(/^@+/, ""))}
-            placeholder="usuario"
-            prefix="@"
-          />
-        </Campo>
-        <Campo label="LinkedIn" dica="Apenas o /in/usuario">
-          <InputTexto
-            value={dados.linkedin}
-            onChange={(v) => onChange("linkedin", v.replace(/^\/in\//, ""))}
-            placeholder="usuario"
-            prefix="/in/"
-          />
-        </Campo>
-      </div>
-
-      <BotaoSalvar onClick={onSalvar} />
     </div>
   );
 }
@@ -262,8 +624,8 @@ function AbaDadosProfissionais({
       </Campo>
 
       <Campo label="Liga que mentora" dica="Para alterar, entre em contato com o Staff">
-        <div className="flex items-center gap-2 px-3 py-2.5 border border-navy/20 bg-navy/[0.02]">
-          <span className="font-plex-mono text-[9px] uppercase tracking-[0.14em] px-2 py-0.5 bg-navy/10 text-navy">
+        <div className="flex items-center gap-2 px-3 py-2.5 border border-border bg-muted/50 rounded">
+          <span className="font-plex-mono text-[9px] uppercase tracking-[0.14em] px-2 py-0.5 bg-foreground/[0.08] text-foreground/60 rounded">
             {dados.liga}
           </span>
         </div>
@@ -379,7 +741,7 @@ export function ContaProfessorView() {
         </p>
       </div>
 
-      <div className="border-b border-[#DBDFE4]">
+      <div className="border-b border-[#DBDFE4] mb-8">
         <div className="flex">
           {ABAS.map(({ key, label }) => (
             <button
@@ -389,7 +751,7 @@ export function ContaProfessorView() {
                 "px-5 py-3 font-plex-mono text-[10px] uppercase tracking-[0.14em] transition-colors border-b-2 -mb-px",
                 abaAtiva === key
                   ? "border-navy text-navy"
-                  : "border-transparent text-navy/40 hover:text-navy",
+                  : "border-transparent text-foreground/40 hover:text-foreground",
               )}
             >
               {label}

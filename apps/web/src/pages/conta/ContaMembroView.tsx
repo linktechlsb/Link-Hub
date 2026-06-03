@@ -1,8 +1,19 @@
-import { AlertTriangle, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Camera,
+  Crown,
+  Eye,
+  GraduationCap,
+  Instagram,
+  Linkedin,
+  MoreHorizontal,
+  X,
+} from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { carregarMinhaLiga, carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
 import { cn } from "@/lib/utils";
 import { TrocarSenhaSection } from "@/pages/conta/TrocarSenhaSection";
@@ -121,7 +132,7 @@ function BotaoSalvar({
   return (
     <button
       onClick={onClick}
-      className="bg-navy text-white font-plex-sans text-[13px] font-semibold px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity"
+      className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
     >
       {label}
     </button>
@@ -150,68 +161,551 @@ function Toggle({ ativo, onToggle }: { ativo: boolean; onToggle: () => void }) {
   );
 }
 
+// ─── Card de Perfil ───────────────────────────────────────────────────────────
+
+function CardPerfil({
+  nome,
+  bio,
+  badge,
+  liga,
+  avatarUrl,
+  instagram,
+  linkedin,
+  isDiretor = false,
+  isAlumni = false,
+  uploadandoAvatar,
+  onAvatarChange,
+}: {
+  nome: string;
+  bio: string;
+  badge: string;
+  liga?: string;
+  avatarUrl: string | null;
+  instagram?: string;
+  linkedin?: string;
+  isDiretor?: boolean;
+  isAlumni?: boolean;
+  uploadandoAvatar: boolean;
+  onAvatarChange: (file: File) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLButtonElement>(null);
+  const [menuAberto, setMenuAberto] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const [dialogAberto, setDialogAberto] = useState(false);
+  const [previaAberta, setPreviaAberta] = useState(false);
+  const iniciais = gerarIniciais(nome);
+
+  function abrirMenu() {
+    if (menuRef.current) {
+      const rect = menuRef.current.getBoundingClientRect();
+      setMenuPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
+    }
+    setMenuAberto(true);
+  }
+
+  return (
+    <>
+      <div
+        className="relative w-[260px] rounded-3xl overflow-hidden shadow-xl border border-black/[0.08] shrink-0"
+        style={{ height: 360 }}
+      >
+        {/* Background: foto full-bleed ou gradiente navy com iniciais */}
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt="Avatar"
+            className="absolute inset-0 w-full h-full object-cover object-top"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-b from-navy to-[#1a3a6e] flex flex-col items-center justify-center gap-3">
+            <div
+              className="absolute inset-0 opacity-[0.07]"
+              style={{
+                backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+                backgroundSize: "20px 20px",
+              }}
+            />
+            <div className="relative w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-white text-3xl font-bold select-none">
+              {iniciais || "?"}
+            </div>
+            <p className="relative font-plex-mono text-[9px] uppercase tracking-[0.12em] text-white/40">
+              Adicione uma foto
+            </p>
+          </div>
+        )}
+
+        {/* Menu de opções */}
+        <button
+          ref={menuRef}
+          onClick={abrirMenu}
+          className="absolute top-3 right-3 z-10 bg-black/40 backdrop-blur-sm rounded-full p-1.5"
+        >
+          <MoreHorizontal className="h-3.5 w-3.5 text-white" />
+        </button>
+
+        {/* Blur gradual */}
+        <div
+          className="absolute bottom-0 left-0 right-0 pointer-events-none"
+          style={{
+            height: "75%",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            maskImage: "linear-gradient(to top, black 25%, transparent 70%)",
+            WebkitMaskImage: "linear-gradient(to top, black 25%, transparent 70%)",
+          }}
+        />
+
+        {/* Gradiente escuro */}
+        <div
+          className="absolute bottom-0 left-0 right-0 pointer-events-none"
+          style={{
+            height: "75%",
+            background:
+              "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.52) 50%, rgba(0,0,0,0.0) 100%)",
+          }}
+        />
+
+        {/* Conteúdo */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <div className="px-4 pt-10 pb-4">
+            {/* Nome + badges */}
+            <TooltipProvider delayDuration={0}>
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="font-display font-bold text-white text-[18px] tracking-tight leading-tight drop-shadow">
+                  {nome || "Seu nome"}
+                </span>
+                {isDiretor && (
+                  <Tooltip>
+                    <TooltipTrigger className="cursor-default">
+                      <Crown className="w-[14px] h-[14px] text-amber-400 shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Diretor da {liga || "sua liga"}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {isAlumni && (
+                  <Tooltip>
+                    <TooltipTrigger className="cursor-default">
+                      <GraduationCap className="w-[14px] h-[14px] text-blue-300 shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Alumni</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+            </TooltipProvider>
+
+            {/* Bio */}
+            <p
+              className="font-plex-sans text-[12px] text-white/75 leading-relaxed mb-4"
+              style={{
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {bio || "Sua bio aparece aqui..."}
+            </p>
+
+            {/* Rodapé */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                {instagram && (
+                  <a
+                    href={`https://instagram.com/${instagram}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white/60 hover:text-white transition-colors"
+                  >
+                    <Instagram className="w-4 h-4" />
+                  </a>
+                )}
+                {linkedin && (
+                  <a
+                    href={`https://linkedin.com/in/${linkedin}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white/60 hover:text-white transition-colors"
+                  >
+                    <Linkedin className="w-4 h-4" />
+                  </a>
+                )}
+                {!instagram && !linkedin && badge && (
+                  <span className="font-plex-mono text-[8px] uppercase tracking-[0.1em] text-white/50 border border-white/20 px-2 py-0.5 rounded-full">
+                    {badge}
+                  </span>
+                )}
+              </div>
+              {liga && (
+                <span className="font-plex-mono text-[8px] uppercase tracking-[0.1em] text-white/80 border border-white/25 bg-white/10 px-2.5 py-1 rounded-full shrink-0">
+                  {liga}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/jpeg,image/png"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              onAvatarChange(file);
+              setDialogAberto(false);
+            }
+            e.target.value = "";
+          }}
+        />
+      </div>
+
+      {/* Dropdown de opções */}
+      {menuAberto && menuPos && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setMenuAberto(false)} />
+          <div
+            className="fixed z-50 bg-popover border border-border rounded-xl shadow-xl overflow-hidden min-w-[152px]"
+            style={{ top: menuPos.top, right: menuPos.right }}
+          >
+            <button
+              onClick={() => {
+                setMenuAberto(false);
+                setDialogAberto(true);
+              }}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left font-plex-sans text-[13px] text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <Camera className="h-3.5 w-3.5 text-foreground/50 shrink-0" />
+              Editar foto
+            </button>
+            <button
+              onClick={() => {
+                setMenuAberto(false);
+                setPreviaAberta(true);
+              }}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left font-plex-sans text-[13px] text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <Eye className="h-3.5 w-3.5 text-foreground/50 shrink-0" />
+              Exibir
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Dialog de alterar foto */}
+      {dialogAberto && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setDialogAberto(false)}
+        >
+          <div
+            className="bg-popover shadow-xl w-full max-w-sm mx-4 p-6 rounded-2xl border border-border"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-display font-bold text-[18px] tracking-[-0.02em] text-navy">
+                Alterar foto de perfil
+              </h3>
+              <button
+                onClick={() => setDialogAberto(false)}
+                className="text-foreground/30 hover:text-foreground transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div
+              className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center gap-3 cursor-pointer hover:border-foreground/30 hover:bg-muted/30 transition-colors"
+              onClick={() => fileRef.current?.click()}
+            >
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                {uploadandoAvatar ? (
+                  <div className="h-5 w-5 border-2 border-navy border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Camera className="h-5 w-5 text-foreground/40" />
+                )}
+              </div>
+              <div className="text-center">
+                <p className="font-plex-sans font-medium text-[13px] text-foreground">
+                  {uploadandoAvatar ? "Enviando..." : "Clique para escolher uma foto"}
+                </p>
+                <p className="font-plex-sans text-[11px] text-foreground/40 mt-0.5">JPEG ou PNG</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setDialogAberto(false)}
+              className="w-full mt-3 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/40 hover:text-foreground transition-colors py-2"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Prévia do perfil */}
+      {previaAberta && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setPreviaAberta(false)}
+        >
+          <div className="flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between w-[260px]">
+              <p className="font-plex-mono text-[9px] uppercase tracking-[0.18em] text-white/50">
+                Como outros te veem
+              </p>
+              <button
+                onClick={() => setPreviaAberta(false)}
+                className="text-white/50 hover:text-white transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="hover-3d">
+              <div
+                className="relative w-[260px] rounded-3xl overflow-hidden shadow-2xl border border-white/10 shrink-0"
+                style={{ height: 360 }}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Avatar"
+                    className="absolute inset-0 w-full h-full object-cover object-top"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-b from-navy to-[#1a3a6e] flex flex-col items-center justify-center gap-3">
+                    <div
+                      className="absolute inset-0 opacity-[0.07]"
+                      style={{
+                        backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+                        backgroundSize: "20px 20px",
+                      }}
+                    />
+                    <div className="relative w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-white text-3xl font-bold select-none">
+                      {iniciais || "?"}
+                    </div>
+                    <p className="relative font-plex-mono text-[9px] uppercase tracking-[0.12em] text-white/40">
+                      Sem foto
+                    </p>
+                  </div>
+                )}
+                {/* Blur via filter:blur() — funciona em contexto 3D ao contrário de backdrop-filter */}
+                {avatarUrl && (
+                  <div
+                    className="absolute bottom-0 left-0 right-0 pointer-events-none overflow-hidden"
+                    style={{
+                      height: "75%",
+                      maskImage: "linear-gradient(to top, black 25%, transparent 70%)",
+                      WebkitMaskImage: "linear-gradient(to top, black 25%, transparent 70%)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: "-20px",
+                        backgroundImage: `url(${avatarUrl})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center top",
+                        filter: "blur(20px)",
+                      }}
+                    />
+                  </div>
+                )}
+                <div
+                  className="absolute bottom-0 left-0 right-0 pointer-events-none"
+                  style={{
+                    height: "75%",
+                    background:
+                      "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.52) 50%, rgba(0,0,0,0.0) 100%)",
+                  }}
+                />
+                <div className="absolute bottom-0 left-0 right-0">
+                  <div className="px-4 pt-10 pb-4">
+                    <TooltipProvider delayDuration={0}>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="font-display font-bold text-white text-[18px] tracking-tight leading-tight drop-shadow">
+                          {nome || "Seu nome"}
+                        </span>
+                        {isDiretor && (
+                          <Tooltip>
+                            <TooltipTrigger className="cursor-default">
+                              <Crown className="w-[14px] h-[14px] text-amber-400 shrink-0" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Diretor da {liga || "sua liga"}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        {isAlumni && (
+                          <Tooltip>
+                            <TooltipTrigger className="cursor-default">
+                              <GraduationCap className="w-[14px] h-[14px] text-blue-300 shrink-0" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Alumni</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </TooltipProvider>
+                    <p
+                      className="font-plex-sans text-[12px] text-white/75 leading-relaxed mb-4"
+                      style={{
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {bio || "Sua bio aparece aqui..."}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        {instagram && (
+                          <a
+                            href={`https://instagram.com/${instagram}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-white/60 hover:text-white transition-colors"
+                          >
+                            <Instagram className="w-4 h-4" />
+                          </a>
+                        )}
+                        {linkedin && (
+                          <a
+                            href={`https://linkedin.com/in/${linkedin}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-white/60 hover:text-white transition-colors"
+                          >
+                            <Linkedin className="w-4 h-4" />
+                          </a>
+                        )}
+                        {!instagram && !linkedin && badge && (
+                          <span className="font-plex-mono text-[8px] uppercase tracking-[0.1em] text-white/50 border border-white/20 px-2 py-0.5 rounded-full">
+                            {badge}
+                          </span>
+                        )}
+                      </div>
+                      {liga && (
+                        <span className="font-plex-mono text-[8px] uppercase tracking-[0.1em] text-white/80 border border-white/25 bg-white/10 px-2.5 py-1 rounded-full shrink-0">
+                          {liga}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* 8 zonas de hover para o efeito 3D */}
+              <div />
+              <div />
+              <div />
+              <div />
+              <div />
+              <div />
+              <div />
+              <div />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ─── Aba: Perfil ──────────────────────────────────────────────────────────────
 
 function AbaPerfil({
   dados,
+  avatarUrl,
+  uploadandoAvatar,
   onChange,
   onSalvar,
+  onAvatarChange,
 }: {
   dados: DadosUsuario;
+  avatarUrl: string | null;
+  uploadandoAvatar: boolean;
   onChange: (campo: keyof DadosUsuario, valor: string) => void;
   onSalvar: () => void;
+  onAvatarChange: (file: File) => void;
 }) {
+  const badge = dados.cargo && dados.liga ? `${dados.cargo} · ${dados.liga}` : dados.cargo || "";
+
   return (
-    <div className="space-y-6">
-      <SectionHeader numero="01" eyebrow="Conta" titulo="Perfil" />
+    <div className="flex flex-col lg:flex-row gap-10">
+      {/* Formulário */}
+      <div className="flex-1 space-y-6">
+        <SectionHeader numero="01" eyebrow="Conta" titulo="Perfil" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Campo label="Nome completo">
-          <InputTexto
-            value={dados.nome}
-            onChange={(v) => onChange("nome", v)}
-            placeholder="Seu nome completo"
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Campo label="Nome completo">
+            <InputTexto
+              value={dados.nome}
+              onChange={(v) => onChange("nome", v)}
+              placeholder="Seu nome completo"
+            />
+          </Campo>
+          <Campo label="E-mail institucional" dica="Somente leitura">
+            <InputTexto value={dados.email} readOnly />
+          </Campo>
+        </div>
+
+        <Campo
+          label={`Bio — ${dados.bio.length}/160 caracteres`}
+          dica="Aparece no seu perfil da liga"
+        >
+          <textarea
+            value={dados.bio}
+            onChange={(e) => onChange("bio", e.target.value)}
+            maxLength={160}
+            rows={3}
+            placeholder="Conte um pouco sobre você..."
+            className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 resize-none placeholder:text-foreground/20 rounded"
           />
         </Campo>
-        <Campo label="E-mail institucional" dica="Somente leitura">
-          <InputTexto value={dados.email} readOnly />
-        </Campo>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Campo label="Instagram" dica="Apenas o @usuario">
+            <InputTexto
+              value={dados.instagram}
+              onChange={(v) => onChange("instagram", v.replace(/^@+/, ""))}
+              placeholder="usuario"
+              prefix="@"
+            />
+          </Campo>
+          <Campo label="LinkedIn" dica="Apenas o /in/usuario">
+            <InputTexto
+              value={dados.linkedin}
+              onChange={(v) => onChange("linkedin", v.replace(/^\/in\//, ""))}
+              placeholder="usuario"
+              prefix="/in/"
+            />
+          </Campo>
+        </div>
+
+        <BotaoSalvar onClick={onSalvar} />
       </div>
 
-      <Campo
-        label={`Bio — ${dados.bio.length}/160 caracteres`}
-        dica="Aparece no seu perfil da liga"
-      >
-        <textarea
-          value={dados.bio}
-          onChange={(e) => onChange("bio", e.target.value)}
-          maxLength={160}
-          rows={3}
-          placeholder="Conte um pouco sobre você..."
-          className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 resize-none placeholder:text-foreground/20 rounded"
+      {/* Card de perfil */}
+      <div className="flex justify-center lg:justify-start">
+        <CardPerfil
+          nome={dados.nome}
+          bio={dados.bio}
+          badge={badge}
+          liga={dados.liga}
+          avatarUrl={avatarUrl}
+          instagram={dados.instagram}
+          linkedin={dados.linkedin}
+          isDiretor={dados.cargo === "Diretor"}
+          isAlumni={dados.semestre === "alumni"}
+          uploadandoAvatar={uploadandoAvatar}
+          onAvatarChange={onAvatarChange}
         />
-      </Campo>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Campo label="Instagram" dica="Apenas o @usuario">
-          <InputTexto
-            value={dados.instagram}
-            onChange={(v) => onChange("instagram", v.replace(/^@+/, ""))}
-            placeholder="usuario"
-            prefix="@"
-          />
-        </Campo>
-        <Campo label="LinkedIn" dica="Apenas o /in/usuario">
-          <InputTexto
-            value={dados.linkedin}
-            onChange={(v) => onChange("linkedin", v.replace(/^\/in\//, ""))}
-            placeholder="usuario"
-            prefix="/in/"
-          />
-        </Campo>
       </div>
-
-      <BotaoSalvar onClick={onSalvar} />
     </div>
   );
 }
@@ -268,79 +762,10 @@ function AbaDadosAcademicos({
 // ─── Aba: Segurança ───────────────────────────────────────────────────────────
 
 function AbaSeguranca({ onToast }: { onToast: (msg: string) => void }) {
-  const [modalDesativar, setModalDesativar] = useState(false);
-  const [textoConfirmacao, setTextoConfirmacao] = useState("");
-
-  function fecharModal() {
-    setModalDesativar(false);
-    setTextoConfirmacao("");
-  }
-
   return (
     <div className="space-y-8">
-      <div>
-        <SectionHeader numero="03" eyebrow="Conta" titulo="Segurança" />
-        <TrocarSenhaSection onToast={onToast} />
-      </div>
-
-      <div className="border-t border-red-200 pt-5">
-        <p className="font-plex-mono text-[9px] uppercase tracking-[0.18em] text-red-500 mb-3 flex items-center gap-2">
-          <AlertTriangle className="h-3.5 w-3.5" />
-          Zona de perigo
-        </p>
-        <p className="font-plex-sans text-[13px] text-foreground/40 mb-4">
-          Desativar sua conta remove o acesso à plataforma. Esta ação pode ser revertida pelo Staff.
-        </p>
-        <button
-          onClick={() => setModalDesativar(true)}
-          className="font-plex-sans text-[13px] font-semibold text-red-600 border border-red-300 px-5 py-2.5 rounded-full hover:bg-red-50 transition-colors"
-        >
-          Desativar conta
-        </button>
-      </div>
-
-      {modalDesativar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white shadow-xl w-full max-w-md mx-4 p-6 rounded-lg">
-            <div className="flex items-start justify-between mb-5">
-              <h3 className="font-display font-bold text-[18px] tracking-[-0.02em] text-navy">
-                Desativar conta
-              </h3>
-              <button
-                onClick={fecharModal}
-                className="text-foreground/30 hover:text-foreground transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <p className="font-plex-sans text-[13px] text-foreground/50 mb-4">
-              Digite <strong className="text-foreground font-bold">DESATIVAR</strong> para
-              confirmar.
-            </p>
-            <input
-              type="text"
-              value={textoConfirmacao}
-              onChange={(e) => setTextoConfirmacao(e.target.value)}
-              placeholder="DESATIVAR"
-              className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 mb-4 placeholder:text-foreground/20 rounded"
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={fecharModal}
-                className="flex-1 font-plex-sans text-[13px] font-semibold border border-foreground/20 text-foreground px-3 py-2.5 rounded-full hover:bg-foreground/[0.04] transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                disabled={textoConfirmacao !== "DESATIVAR"}
-                className="flex-1 font-plex-sans text-[13px] font-semibold bg-red-600 text-white px-3 py-2.5 rounded-full hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Confirmar desativação
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SectionHeader numero="03" eyebrow="Conta" titulo="Segurança" />
+      <TrocarSenhaSection onToast={onToast} />
     </div>
   );
 }
@@ -445,7 +870,6 @@ export function ContaMembroView() {
     presenca: true,
   });
   const [toast, setToast] = useState<string | null>(null);
-  const fileCardRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     Promise.all([carregarUsuarioMe(), carregarMinhaLiga()]).then(([usuario, liga]) => {
@@ -513,9 +937,6 @@ export function ContaMembroView() {
     }
   }
 
-  const iniciais = gerarIniciais(dados.nome);
-  const badge = dados.cargo && dados.liga ? `${dados.cargo} · ${dados.liga}` : dados.cargo || "—";
-
   return (
     <div className="max-w-5xl mx-auto px-8 py-10">
       <div className="mb-6">
@@ -525,45 +946,6 @@ export function ContaMembroView() {
         <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mt-1">
           Gerencie suas informações e preferências
         </p>
-      </div>
-
-      <div className="flex items-center gap-4 px-5 py-4 rounded-lg bg-foreground/[0.02] border border-foreground/[0.06] mb-6">
-        {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt="Avatar"
-            className="w-[52px] h-[52px] rounded-full object-cover shrink-0"
-          />
-        ) : (
-          <div className="w-[52px] h-[52px] rounded-full bg-navy flex items-center justify-center text-white font-bold text-lg shrink-0">
-            {iniciais}
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <p className="font-plex-sans font-bold text-[14px] text-navy truncate">{dados.nome}</p>
-          <p className="font-plex-sans text-[11px] text-foreground/40 mt-0.5">{dados.email}</p>
-          <span className="inline-block font-plex-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-foreground/50 border border-foreground/[0.15] px-2 py-0.5 rounded-full mt-1.5">
-            {badge}
-          </span>
-        </div>
-        <button
-          onClick={() => fileCardRef.current?.click()}
-          disabled={uploadandoAvatar}
-          className="shrink-0 font-plex-sans text-[11px] font-semibold text-foreground/45 border border-foreground/[0.15] px-3 py-1.5 rounded-full bg-transparent hover:border-foreground/30 transition-colors disabled:opacity-40"
-        >
-          {uploadandoAvatar ? "Enviando..." : "Alterar foto"}
-        </button>
-        <input
-          ref={fileCardRef}
-          type="file"
-          accept="image/jpeg,image/png"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handleAvatarChange(file);
-            e.target.value = "";
-          }}
-        />
       </div>
 
       <AnimatedTabs
@@ -576,7 +958,14 @@ export function ContaMembroView() {
       />
 
       {abaAtiva === "perfil" && (
-        <AbaPerfil dados={dados} onChange={alterarDado} onSalvar={salvarPerfil} />
+        <AbaPerfil
+          dados={dados}
+          avatarUrl={avatarUrl}
+          uploadandoAvatar={uploadandoAvatar}
+          onChange={alterarDado}
+          onSalvar={salvarPerfil}
+          onAvatarChange={handleAvatarChange}
+        />
       )}
       {abaAtiva === "academico" && (
         <AbaDadosAcademicos dados={dados} onChange={alterarDado} onSalvar={salvarDadosAcademicos} />

@@ -143,7 +143,7 @@ export function TrocarSenhaSection({ onToast }: { onToast: (msg: string) => void
       <button
         onClick={handleAtualizarSenha}
         disabled={!senhasValidas || loading}
-        className="bg-navy text-white font-plex-sans text-[13px] font-semibold px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+        className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {loading ? "Atualizando..." : "Atualizar senha"}
       </button>
