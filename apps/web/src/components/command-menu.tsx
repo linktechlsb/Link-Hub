@@ -2,10 +2,10 @@ import {
   BookOpen,
   Calendar,
   ClipboardList,
-  Command,
   FolderOpen,
   Home,
   MessageSquare,
+  Search,
   Settings,
   Shield,
   Trophy,
@@ -131,10 +131,14 @@ export function CommandMenu() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex h-7 w-7 items-center justify-center rounded-full border border-brand-gray bg-white text-muted-foreground transition-colors hover:bg-brand-gray dark:border-white/10 dark:bg-white/10 dark:text-white/60 dark:hover:bg-white/20"
+        className="flex h-9 w-full max-w-sm items-center gap-2.5 rounded-full border border-brand-gray bg-white px-3.5 text-sm text-muted-foreground transition-colors hover:bg-brand-gray/40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
         aria-label="Abrir menu de busca"
       >
-        <Command size={13} />
+        <Search size={14} className="shrink-0" />
+        <span className="flex-1 text-left text-[13px]">Buscar páginas, ligas...</span>
+        <span className="hidden shrink-0 font-mono text-[10px] text-muted-foreground sm:inline-flex">
+          ⌘K
+        </span>
       </button>
 
       <CommandDialog

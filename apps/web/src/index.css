@@ -167,6 +167,82 @@
   }
 }
 
+/* ── Premium dark mode enhancements ─────────────────────────── */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Subtle radial amber glow at the top of the page in dark mode */
+.dark body {
+  background-image: radial-gradient(
+    ellipse 80% 45% at 50% -5%,
+    rgba(254, 198, 65, 0.04) 0%,
+    transparent 65%
+  );
+}
+
+/* Glass card surface (dark mode) */
+.dark .glass-card {
+  background: rgba(255, 255, 255, 0.025);
+  border-color: rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Amber glow on hover */
+.amber-glow {
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+.amber-glow:hover {
+  box-shadow:
+    0 0 0 1px rgba(254, 198, 65, 0.18),
+    0 8px 24px rgba(254, 198, 65, 0.07);
+}
+
+/* ── Sidebar: active item amber accent (dark mode) ──────────── */
+/* box-shadow inset evita qualquer mudança no box model / layout */
+.dark [data-sidebar="menu-button"][data-active="true"] {
+  box-shadow: inset 2px 0 0 #fec641;
+  background: rgba(254, 198, 65, 0.09);
+}
+
+/* ── Sidebar group label refinement ────────────────────────── */
+/* Apenas cor e tipografia — sem alterar padding/height (mantém igual ao light mode) */
+.dark [data-sidebar="group-label"] {
+  color: rgba(255, 255, 255, 0.22);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.6rem;
+  font-weight: 600;
+}
+
+/* ── Ranking "Minha" badge ─────────────────────────────────── */
+.minha-badge {
+  background: linear-gradient(135deg, #fec641, #f0a500);
+  color: #10284e;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  font-weight: 700;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
 /* Dark mode: navy hardcoded colors become white/foreground */
 .dark .text-navy {
   color: hsl(var(--foreground));

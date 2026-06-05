@@ -110,10 +110,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <img src="/link_logo.png" alt="Link" className="size-8 object-contain" />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
-                  <span className="font-display font-bold text-base tracking-tight whitespace-nowrap">
+                  <span className="font-display font-bold text-base tracking-[-0.02em] whitespace-nowrap">
                     Link Leagues
                   </span>
-                  <span className="truncate text-xs text-muted-foreground">
+                  <span className="truncate text-xs text-sidebar-foreground/40">
                     Link School of Business
                   </span>
                 </div>

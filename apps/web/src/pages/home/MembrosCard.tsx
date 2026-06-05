@@ -31,6 +31,18 @@ const CARGO_LABEL: Record<string, string> = {
   staff: "Staff",
 };
 
+function ringClass(role?: string): string {
+  if (role === "diretor") return "ring-2 ring-brand-yellow/60 ring-offset-1 ring-offset-background";
+  if (role === "lider") return "ring-2 ring-link-blue/50 ring-offset-1 ring-offset-background";
+  return "";
+}
+
+function roleChipClass(role?: string): string {
+  if (role === "diretor") return "text-brand-yellow/80 dark:text-brand-yellow/70";
+  if (role === "lider") return "text-link-blue dark:text-link-blue-light";
+  return "text-muted-foreground/60";
+}
+
 export function MembrosCard({ ligaId }: MembrosCardProps) {
   const { data: membrosData, carregando: loading } = useCachedFetch<Membro[]>(
     ligaId ? `/api/ligas/${ligaId}/membros` : null,
@@ -39,13 +51,13 @@ export function MembrosCard({ ligaId }: MembrosCardProps) {
   const membros = membrosData ?? [];
 
   return (
-    <Card className="shadow-sm flex flex-col h-full overflow-hidden">
+    <Card className="shadow-[0_4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)] dark:bg-white/[0.025] dark:border-white/[0.06] flex flex-col h-full overflow-hidden">
       <CardContent className="pt-5 pb-3 flex flex-col h-full min-h-0">
         <div className="flex items-center justify-between mb-4 shrink-0">
-          <p className="font-semibold text-sm text-navy">Membros</p>
+          <p className="font-semibold text-sm text-navy dark:text-foreground">Membros</p>
           {membros.length > 0 && (
-            <span className="text-xs text-muted-foreground font-medium">
-              {membros.length} total
+            <span className="text-[10px] font-medium text-muted-foreground/60 border border-border dark:border-white/[0.06] rounded-full px-2 py-0.5">
+              {membros.length}
             </span>
           )}
         </div>
@@ -73,29 +85,43 @@ export function MembrosCard({ ligaId }: MembrosCardProps) {
             <p className="text-xs text-muted-foreground">Nenhum membro encontrado</p>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto space-y-1 min-h-0 pr-1 -mr-1">
+          <div className="flex-1 overflow-y-auto space-y-0 min-h-0 pr-1 -mr-1">
             {membros.map((m, i) => (
               <div
                 key={m.id}
                 className={cn(
-                  "flex items-center gap-3 py-2 px-1",
-                  i < membros.length - 1 && "border-b border-border",
+                  "flex items-center gap-3 py-2.5 px-1",
+                  i < membros.length - 1 && "border-b border-border dark:border-white/[0.04]",
                 )}
               >
                 {m.avatar_url ? (
                   <img
                     src={m.avatar_url}
                     alt={m.nome}
-                    className="h-9 w-9 rounded-full object-cover shrink-0"
+                    className={cn("h-8 w-8 rounded-full object-cover shrink-0", ringClass(m.role))}
                   />
                 ) : (
-                  <div className="h-9 w-9 rounded-full bg-navy/10 flex items-center justify-center shrink-0">
-                    <span className="text-[11px] font-bold text-navy">{iniciais(m.nome)}</span>
+                  <div
+                    className={cn(
+                      "h-8 w-8 rounded-full bg-navy/10 dark:bg-white/[0.06] flex items-center justify-center shrink-0",
+                      ringClass(m.role),
+                    )}
+                  >
+                    <span className="text-[10px] font-semibold text-navy dark:text-white/70">
+                      {iniciais(m.nome)}
+                    </span>
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground truncate">{m.nome}</p>
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="text-sm font-semibold text-foreground truncate leading-tight">
+                    {m.nome}
+                  </p>
+                  <p
+                    className={cn(
+                      "text-[9px] uppercase tracking-wide mt-0.5",
+                      roleChipClass(m.role),
+                    )}
+                  >
                     {m.role ? (CARGO_LABEL[m.role] ?? m.role) : "Membro"}
                   </p>
                 </div>

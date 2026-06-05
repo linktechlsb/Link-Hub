@@ -1,3 +1,4 @@
+import { ShieldCheck, User, UserCog } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,6 +9,14 @@ import { supabase } from "@/lib/supabase";
 import { HomeView } from "./HomeView";
 
 import type { Liga, RankingLiga } from "@link-leagues/types";
+
+const roleBadgeConfig: Record<string, { label: string; Icon: React.ElementType }> = {
+  membro: { label: "Membro", Icon: User },
+  estudante: { label: "Membro", Icon: User },
+  professor: { label: "Membro", Icon: User },
+  diretor: { label: "Diretor", Icon: UserCog },
+  staff: { label: "Staff", Icon: ShieldCheck },
+};
 
 export function HomePage() {
   const { role, usuarioId } = useUser();
@@ -60,15 +69,28 @@ export function HomePage() {
       <div className="mb-10">
         {loadingUser ? (
           <>
-            <Skeleton className="h-6 w-48 mb-2" />
-            <Skeleton className="h-3 w-64" />
+            <Skeleton className="h-8 w-52 mb-2.5" />
+            <Skeleton className="h-2.5 w-44" />
           </>
         ) : (
           <>
-            <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
-              Olá, {nomeUsuario}
-            </h1>
-            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
+            <div className="flex items-center gap-2.5">
+              <h1 className="font-display font-bold text-2xl tracking-[-0.03em] text-navy dark:text-foreground">
+                Olá, {nomeUsuario}
+              </h1>
+              {role &&
+                roleBadgeConfig[role] &&
+                (() => {
+                  const { label, Icon } = roleBadgeConfig[role];
+                  return (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-brand-gray bg-brand-gray/40 text-[11px] font-medium text-muted-foreground dark:border-white/10 dark:bg-white/5">
+                      <Icon size={12} strokeWidth={2} />
+                      {label}
+                    </span>
+                  );
+                })()}
+            </div>
+            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/25 mt-1.5">
               {dataFormatada}
             </p>
           </>
