@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   Select,
@@ -78,6 +79,7 @@ const FORM_VAZIO: NovoForm = {
 };
 
 export function ProjetosStaffView({ abrirCriar }: { abrirCriar?: boolean }) {
+  const navigate = useNavigate();
   const { data: projetosData, refetch: refetchProjetos } =
     useCachedFetch<ProjetoAPI[]>("/api/projetos");
   const { data: ligasData } = useCachedFetch<LigaAPI[]>("/api/ligas");
@@ -409,15 +411,23 @@ export function ProjetosStaffView({ abrirCriar }: { abrirCriar?: boolean }) {
                         </span>
                       </td>
                       <td className="py-4 px-4">
-                        <button
-                          onClick={() => {
-                            setMotivo("");
-                            setSheetRevisar(p);
-                          }}
-                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-foreground/50 hover:text-foreground transition-colors"
-                        >
-                          Revisar →
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => navigate(`/projetos/${p.id}`)}
+                            className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-foreground/50 hover:text-foreground transition-colors"
+                          >
+                            Milestones
+                          </button>
+                          <button
+                            onClick={() => {
+                              setMotivo("");
+                              setSheetRevisar(p);
+                            }}
+                            className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-foreground/50 hover:text-foreground transition-colors"
+                          >
+                            Revisar →
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

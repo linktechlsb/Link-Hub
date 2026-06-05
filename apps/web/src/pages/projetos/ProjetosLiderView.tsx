@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   AlertDialog,
@@ -95,6 +96,7 @@ const FORM_VAZIO: ProjetoForm = {
 };
 
 export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
+  const navigate = useNavigate();
   const { data: liga } = useCachedFetch<MinhaLiga>("/api/ligas/minha");
   const ligaId = liga?.id ?? null;
   const { data: projetosData, refetch: refetchProjetos } = useCachedFetch<ProjetoAPI[]>(
@@ -396,6 +398,12 @@ export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-3">
                             <button
+                              onClick={() => navigate(`/projetos/${p.id}`)}
+                              className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-foreground/50 hover:text-foreground transition-colors"
+                            >
+                              Milestones
+                            </button>
+                            <button
                               onClick={() => abrirEditar(p)}
                               className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-foreground/50 hover:text-foreground transition-colors"
                             >
@@ -494,6 +502,7 @@ export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
                       <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
                         Status
                       </th>
+                      <th className="py-3 px-4" />
                     </tr>
                   </thead>
                   <tbody>
@@ -536,6 +545,14 @@ export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
                             >
                               {s.label}
                             </span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <button
+                              onClick={() => navigate(`/projetos/${p.id}`)}
+                              className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-foreground/50 hover:text-foreground transition-colors"
+                            >
+                              Milestones
+                            </button>
                           </td>
                         </tr>
                       );

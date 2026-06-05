@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,6 +49,7 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 
 export function ProjetosPage() {
   const { role } = useUser();
+  const navigate = useNavigate();
   const location = useLocation();
   const abrirCriar = !!(location.state as { abrirCriar?: boolean } | null)?.abrirCriar;
 
@@ -204,9 +205,13 @@ export function ProjetosPage() {
               rows={filtrados.map((p) => {
                 const s = STATUS_CONFIG[p.status] ?? { label: p.status, className: "text-navy/50" };
                 return [
-                  <span key="t" className="font-medium">
+                  <button
+                    key="t"
+                    onClick={() => navigate(`/projetos/${p.id}`)}
+                    className="font-medium text-left hover:text-navy/70 transition-colors"
+                  >
                     {p.titulo}
-                  </span>,
+                  </button>,
                   p.liga?.nome ?? "—",
                   p.responsavel_nome ?? "—",
                   p.prazo

@@ -25,6 +25,7 @@ import { LigaDetailPage } from "@/pages/ligas/LigaDetailPage";
 import { LigasPage } from "@/pages/ligas/LigasPage";
 import { MuralPage } from "@/pages/mural/MuralPage";
 import { PresencaPage } from "@/pages/presenca/PresencaPage";
+import { ProjetoDetailPage } from "@/pages/projetos/ProjetoDetailPage";
 import { ProjetosPage } from "@/pages/projetos/ProjetosPage";
 import { RankingPage } from "@/pages/ranking/RankingPage";
 import { SuperAdminPage } from "@/pages/super-admin/SuperAdminPage";
@@ -59,6 +60,7 @@ export const router: BrowserRouter = createBrowserRouter([
           { path: "ligas", element: <LigasPage /> },
           { path: "ligas/:id", element: <LigaDetailPage /> },
           { path: "projetos", element: <ProjetosPage /> },
+          { path: "projetos/:projetoId", element: <ProjetoDetailPage /> },
           { path: "agenda", element: <Navigate to="/calendario" replace /> },
           { path: "calendario", element: <AgendaPage /> },
           { path: "calendario/eventos", element: <CriarEventoPage /> },

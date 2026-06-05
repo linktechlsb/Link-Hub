@@ -6,6 +6,7 @@ import { eventosRouter } from "./eventos.js";
 import { feedbacksRouter } from "./feedbacks.js";
 import { formulariosRouter } from "./formularios.js";
 import { ligasRouter } from "./ligas.js";
+import { milestonesRouter } from "./milestones.js";
 import { muralRouter } from "./mural.js";
 import { pendentesRouter } from "./pendentes.js";
 import { presencaRouter } from "./presenca.js";
@@ -26,6 +27,7 @@ router.get("/health", (_req, res) => {
 router.use("/ligas", ligasRouter);
 router.use("/projetos", projetosRouter);
 router.use("/categorias-projeto", categoriasProjetoRouter);
+router.use("/milestones", milestonesRouter);
 router.use("/presenca", presencaRouter);
 router.use("/salas", salasRouter);
 router.use("/usuarios", usuariosRouter);
