@@ -1,5 +1,6 @@
 import { Router, type Router as IRouter } from "express";
 
+import { categoriasProjetoRouter } from "./categorias-projeto.js";
 import { crmRouter } from "./crm.js";
 import { eventosRouter } from "./eventos.js";
 import { feedbacksRouter } from "./feedbacks.js";
@@ -24,6 +25,7 @@ router.get("/health", (_req, res) => {
 
 router.use("/ligas", ligasRouter);
 router.use("/projetos", projetosRouter);
+router.use("/categorias-projeto", categoriasProjetoRouter);
 router.use("/presenca", presencaRouter);
 router.use("/salas", salasRouter);
 router.use("/usuarios", usuariosRouter);

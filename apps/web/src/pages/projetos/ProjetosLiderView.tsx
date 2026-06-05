@@ -14,7 +14,9 @@ import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -45,6 +47,8 @@ type MembroAPI = { id: string; usuario_id: string; nome: string };
 
 type ProfessorAPI = { id: string; nome: string; email: string } | null;
 
+type CategoriaAPI = { id: string; nome: string; liga_id?: string | null };
+
 type MinhaLiga = { id: string; nome: string };
 
 type LigaAPI = { id: string; nome: string };
@@ -59,6 +63,7 @@ type ProjetoForm = {
   professor_id: string;
   empresa_parceira: string;
   tipo_projeto: string;
+  categoria_id: string;
 };
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
@@ -86,6 +91,7 @@ const FORM_VAZIO: ProjetoForm = {
   professor_id: "",
   empresa_parceira: "",
   tipo_projeto: "",
+  categoria_id: "",
 };
 
 export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
@@ -120,10 +126,23 @@ export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
   const [concluindo, setConcluindo] = useState<string | null>(null);
   const [confirmarConclusao, setConfirmarConclusao] = useState<ProjetoAPI | null>(null);
   const [professorDaLiga, setProfessorDaLiga] = useState<ProfessorAPI>(null);
+  const [categorias, setCategorias] = useState<CategoriaAPI[]>([]);
 
   useEffect(() => {
     if (abrirCriar && ligaId) setDialogCriar(true);
   }, [abrirCriar, ligaId]);
+
+  useEffect(() => {
+    if (!ligaId) return;
+    getToken().then((token) =>
+      fetch(`/api/categorias-projeto?liga_id=${ligaId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => r.json())
+        .then((data: CategoriaAPI[]) => setCategorias(Array.isArray(data) ? data : []))
+        .catch(() => setCategorias([])),
+    );
+  }, [ligaId]);
 
   useEffect(() => {
     if (!ligaId) return;
@@ -165,6 +184,7 @@ export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
       professor_id: professorDaLiga?.id ?? "",
       empresa_parceira: "",
       tipo_projeto: "",
+      categoria_id: "",
     });
     setSheetProjeto(p);
   }
@@ -191,6 +211,7 @@ export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
           form.professor_id && form.professor_id !== "none" ? form.professor_id : undefined,
         empresa_parceira: form.empresa_parceira.trim() || undefined,
         tipo_projeto: form.tipo_projeto || undefined,
+        categoria_id: form.categoria_id || undefined,
         ...(submeter ? { status: "em_aprovacao" } : {}),
       };
 
@@ -653,6 +674,63 @@ export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
                   <SelectItem value="projeto_estruturante" className="font-plex-sans text-[13px]">
                     Projeto Estruturante (Interdisciplinar e/ou Inovação)
                   </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                Categoria
+              </label>
+              <Select
+                value={form.categoria_id || "__none__"}
+                onValueChange={(v) =>
+                  setForm((f) => ({ ...f, categoria_id: v === "__none__" ? "" : v }))
+                }
+              >
+                <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                  <SelectValue placeholder="Selecionar categoria..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__" className="font-plex-sans text-[13px]">
+                    Selecionar categoria...
+                  </SelectItem>
+                  {categorias.filter((c) => !c.liga_id).length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel className="font-plex-mono text-[9px] uppercase tracking-[0.16em] text-foreground/30">
+                        Categorias Base
+                      </SelectLabel>
+                      {categorias
+                        .filter((c) => !c.liga_id)
+                        .map((c) => (
+                          <SelectItem
+                            key={c.id}
+                            value={c.id}
+                            className="font-plex-sans text-[13px]"
+                          >
+                            {c.nome}
+                          </SelectItem>
+                        ))}
+                    </SelectGroup>
+                  )}
+                  {categorias.filter((c) => c.liga_id).length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel className="font-plex-mono text-[9px] uppercase tracking-[0.16em] text-foreground/30">
+                        Categorias da Liga
+                      </SelectLabel>
+                      {categorias
+                        .filter((c) => c.liga_id)
+                        .map((c) => (
+                          <SelectItem
+                            key={c.id}
+                            value={c.id}
+                            className="font-plex-sans text-[13px]"
+                          >
+                            {c.nome}
+                          </SelectItem>
+                        ))}
+                    </SelectGroup>
+                  )}
                 </SelectContent>
               </Select>
             </div>
