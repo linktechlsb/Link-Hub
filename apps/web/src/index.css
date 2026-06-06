@@ -61,7 +61,7 @@
     --accent-foreground: 0 0% 4%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: var(--color-red-800);
 
     --border: 0 0% 89.4%; /* #E4E4E4 */
     --input: 0 0% 90%;
@@ -77,6 +77,14 @@
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 219 45% 28%;
     --sidebar-ring: 0 0% 100%;
+    --success: var(--color-emerald-500);
+    --success-foreground: var(--color-emerald-900);
+    --info: var(--color-violet-500);
+    --info-foreground: var(--color-violet-900);
+    --warning: var(--color-yellow-500);
+    --warning-foreground: var(--color-yellow-900);
+    --invert: var(--color-zinc-900);
+    --invert-foreground: var(--color-zinc-50);
   }
 
   .dark {
@@ -102,7 +110,7 @@
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62% 50%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: var(--color-red-600);
 
     --border: 0 0% 10%;
     --input: 0 0% 10%;
@@ -116,6 +124,14 @@
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 9%;
     --sidebar-ring: 0 0% 100%;
+    --success: var(--color-emerald-500);
+    --success-foreground: var(--color-emerald-600);
+    --info: var(--color-violet-500);
+    --info-foreground: var(--color-violet-600);
+    --warning: var(--color-yellow-500);
+    --warning-foreground: var(--color-yellow-600);
+    --invert: var(--color-zinc-700);
+    --invert-foreground: var(--color-zinc-50);
   }
 
   .force-light {

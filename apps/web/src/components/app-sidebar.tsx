@@ -3,6 +3,7 @@ import {
   ClipboardList,
   FolderKanban,
   Home,
+  ListTodo,
   MessageSquare,
   Settings,
   ShieldCheck,
@@ -31,6 +32,7 @@ const mainNav: NavMainItem[] = [
   { title: "Home", url: "/home", icon: Home },
   { title: "Ligas", url: "/ligas", icon: Users },
   { title: "Projetos", url: "/projetos", icon: FolderKanban },
+  { title: "Tarefas", url: "/tarefas", icon: ListTodo },
   {
     title: "Eventos",
     url: "/calendario",

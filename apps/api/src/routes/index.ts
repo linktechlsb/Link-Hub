@@ -16,6 +16,7 @@ import { receitasRouter } from "./receitas.js";
 import { recursosRouter } from "./recursos.js";
 import { salasRouter } from "./salas.js";
 import { solicitacoesRouter } from "./solicitacoes.js";
+import { tarefasRouter } from "./tarefas.js";
 import { usuariosRouter } from "./usuarios.js";
 
 export const router: IRouter = Router();
@@ -28,6 +29,7 @@ router.use("/ligas", ligasRouter);
 router.use("/projetos", projetosRouter);
 router.use("/categorias-projeto", categoriasProjetoRouter);
 router.use("/milestones", milestonesRouter);
+router.use("/tarefas", tarefasRouter);
 router.use("/presenca", presencaRouter);
 router.use("/salas", salasRouter);
 router.use("/usuarios", usuariosRouter);
