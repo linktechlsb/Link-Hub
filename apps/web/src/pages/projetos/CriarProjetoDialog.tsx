@@ -431,7 +431,7 @@ export function CriarProjetoDialog({
             <button
               onClick={() => void handleCriar(true)}
               disabled={salvando || !canSubmit}
-              className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed dark:bg-white dark:text-[#10244D]"
             >
               {salvando ? "Salvando..." : "Salvar e submeter para aprovação"}
             </button>

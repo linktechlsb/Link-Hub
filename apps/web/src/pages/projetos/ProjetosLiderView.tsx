@@ -590,7 +590,7 @@ export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
               <button
                 onClick={() => handleSalvar(true)}
                 disabled={salvando || !form.titulo.trim()}
-                className="w-full rounded-full bg-[#10244D] px-4 py-3 font-plex-mono text-[11px] uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                className="w-full rounded-full bg-[#10244D] px-4 py-3 font-plex-mono text-[11px] uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-[#10244D]"
               >
                 {salvando ? "Salvando..." : "Salvar e submeter para aprovação"}
               </button>

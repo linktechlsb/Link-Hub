@@ -140,7 +140,7 @@ export function CriarTarefaSheet({ open, onOpenChange, onSalvo, ligaId }: Props)
     >
       <SheetContent
         side="right"
-        className="w-[420px] sm:w-[480px] flex flex-col gap-0 p-0 bg-white dark:bg-[#030303]"
+        className="w-[420px] sm:w-[480px] flex flex-col gap-0 p-0 bg-background"
       >
         {/* Header */}
         <div className="flex-shrink-0">

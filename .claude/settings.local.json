@@ -157,7 +157,8 @@
       "Bash(grep -n \"Sheet — novo projeto\\\\|<Sheet$\\\\|open={sheetNovo}\\\\|<SheetContent\\\\|<FieldGroup>\\\\|</FieldGroup>\\\\|<SheetFooter\\\\|</SheetFooter>\\\\|</SheetContent>\\\\|</Sheet>\" src/pages/projetos/ProjetosStaffView.tsx)",
       "Bash(sed -n '1,40p' components/ui/input.tsx)",
       "Bash(sed -n '1,55p' components/ui/select.tsx)",
-      "Bash(python3 -)"
+      "Bash(python3 -)",
+      "Bash(echo \"exit: $?\")"
     ],
     "deny": [
       "Bash(git commit *)",

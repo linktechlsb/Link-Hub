@@ -125,7 +125,7 @@ export function LigaMembrosSheet({ open, onOpenChange, liga, onSalvo }: LigaMemb
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-white dark:bg-[#030303]"
+        className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-background"
       >
         <div className="flex-shrink-0">
           <div className="h-px bg-navy/90 dark:bg-white/20" />
@@ -158,7 +158,7 @@ export function LigaMembrosSheet({ open, onOpenChange, liga, onSalvo }: LigaMemb
                 className="w-full border border-navy/20 dark:border-white/15 rounded px-3 py-2.5 bg-white dark:bg-white/5 font-plex-sans text-[13px] text-navy dark:text-white placeholder:text-navy/30 dark:placeholder:text-white/25 focus:outline-none focus:border-navy/60 dark:focus:border-white/40"
               />
               {resultados.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-10 bg-white dark:bg-[#030303] border border-navy/15 dark:border-white/15 rounded overflow-hidden">
+                <div className="absolute top-full left-0 right-0 z-10 bg-background border border-navy/15 dark:border-white/15 rounded overflow-hidden">
                   {resultados.map((u) => (
                     <button
                       key={u.id}

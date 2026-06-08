@@ -47,7 +47,7 @@ export function FormSheet({
       <SheetContent
         side={side}
         className={cn(
-          "flex w-[400px] flex-col gap-0 bg-white p-0 dark:bg-[#030303] sm:w-[480px]",
+          "flex w-[400px] flex-col gap-0 bg-background p-0 sm:w-[480px]",
           className,
         )}
       >

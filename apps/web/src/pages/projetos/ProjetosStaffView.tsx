@@ -446,7 +446,7 @@ export function ProjetosStaffView({ abrirCriar }: { abrirCriar?: boolean }) {
       >
         <SheetContent
           side="right"
-          className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-white dark:bg-[#030303]"
+          className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-background"
         >
           <div className="flex-shrink-0">
             <div className="h-px bg-navy/90 dark:bg-white/20" />
