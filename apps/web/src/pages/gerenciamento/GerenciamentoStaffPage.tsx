@@ -1,5 +1,5 @@
 import {
-  MoreHorizontal,
+  Trash2,
   X,
   Plus,
   Pencil,
@@ -24,11 +24,11 @@ import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { RowActionsMenu } from "@/components/ui/row-actions-menu";
 import {
   Select,
   SelectContent,
@@ -764,27 +764,17 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                   </span>
                 </td>
                 <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="p-1 rounded hover:bg-foreground/[0.08] text-foreground/40 hover:text-foreground/70 transition-colors">
-                        <MoreHorizontal size={14} />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="min-w-[140px]">
-                      <DropdownMenuItem
-                        className="text-[12px] cursor-pointer"
-                        onClick={() => iniciarEdicao(r)}
-                      >
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-[12px] cursor-pointer text-red-500 focus:text-red-600"
-                        onClick={() => void remover(r.id)}
-                      >
-                        Remover
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <RowActionsMenu
+                    actions={[
+                      { label: "Editar", icon: Pencil, onSelect: () => iniciarEdicao(r) },
+                      {
+                        label: "Remover",
+                        icon: Trash2,
+                        variant: "destructive",
+                        onSelect: () => void remover(r.id),
+                      },
+                    ]}
+                  />
                 </td>
               </tr>
             ))}

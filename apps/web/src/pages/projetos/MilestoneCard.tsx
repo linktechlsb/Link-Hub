@@ -1,7 +1,8 @@
-import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { supabase } from "@/lib/supabase";
+import { DashboardCard } from "@/pages/home/components/DashboardCard";
 
 type StatusTarefa = "pendente" | "em_andamento" | "concluida";
 type StatusMilestone = "pendente" | "em_andamento" | "concluido";
@@ -43,8 +44,8 @@ async function getToken() {
 
 const STATUS_MILESTONE: Record<StatusMilestone, { label: string; className: string }> = {
   pendente: { label: "Pendente", className: "text-foreground/40" },
-  em_andamento: { label: "Em andamento", className: "text-amber-600" },
-  concluido: { label: "Concluído", className: "text-green-600" },
+  em_andamento: { label: "Em andamento", className: "text-amber-600 dark:text-amber-300" },
+  concluido: { label: "Concluído", className: "text-emerald-600 dark:text-emerald-300" },
 };
 
 const STATUS_TAREFA_CYCLE: StatusTarefa[] = ["pendente", "em_andamento", "concluida"];
@@ -138,37 +139,38 @@ export function MilestoneCard({
   }
 
   return (
-    <div className="border border-foreground/[0.08] rounded-lg overflow-hidden">
+    <DashboardCard className="overflow-hidden">
       {/* Cabeçalho do milestone */}
-      <div className="flex items-center gap-3 px-5 py-4 bg-foreground/[0.02] hover:bg-foreground/[0.04] transition-colors">
+      <div className="flex items-center gap-3 px-5 py-4 transition-colors hover:bg-foreground/[0.02]">
         <button
           onClick={() => setExpandido((v) => !v)}
-          className="flex items-center gap-3 flex-1 text-left min-w-0"
+          className="flex min-w-0 flex-1 items-center gap-3 text-left"
         >
-          <span className="text-foreground/30 flex-shrink-0">
-            {expandido ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </span>
+          <ChevronDown
+            size={14}
+            className={`flex-shrink-0 text-foreground/40 transition-transform duration-300 ease-out ${
+              expandido ? "rotate-180" : ""
+            }`}
+          />
           <div className="min-w-0 flex-1">
-            <span className="font-plex-sans text-[14px] font-semibold text-foreground truncate block">
+            <span className="block truncate text-sm font-medium text-foreground">
               {milestone.titulo}
             </span>
             {milestone.descricao && (
-              <p className="font-plex-sans text-[12px] text-foreground/50 mt-0.5 truncate">
-                {milestone.descricao}
-              </p>
+              <p className="mt-0.5 truncate text-xs text-foreground/50">{milestone.descricao}</p>
             )}
           </div>
         </button>
 
-        <div className="flex items-center gap-4 flex-shrink-0">
+        <div className="flex flex-shrink-0 items-center gap-4">
           {total > 0 && (
-            <span className="font-plex-mono text-[11px] text-foreground/50">
+            <span className="text-xs tabular-nums text-foreground/50">
               {concluidas}/{total}
             </span>
           )}
 
           {milestone.prazo && (
-            <span className="font-plex-mono text-[11px] text-foreground/40">
+            <span className="text-xs text-foreground/40">
               {new Date(milestone.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString("pt-BR", {
                 day: "2-digit",
                 month: "short",
@@ -180,23 +182,22 @@ export function MilestoneCard({
             <select
               value={milestone.status}
               onChange={(e) => handleAlterarStatusMilestone(e.target.value as StatusMilestone)}
-              className={`font-plex-mono text-[11px] bg-transparent border-none focus:outline-none cursor-pointer ${statusCfg.className}`}
+              className={`cursor-pointer border-none bg-transparent text-xs font-medium focus:outline-none ${statusCfg.className}`}
             >
               <option value="pendente">Pendente</option>
               <option value="em_andamento">Em andamento</option>
               <option value="concluido">Concluído</option>
             </select>
           ) : (
-            <span className={`font-plex-mono text-[11px] ${statusCfg.className}`}>
-              {statusCfg.label}
-            </span>
+            <span className={`text-xs font-medium ${statusCfg.className}`}>{statusCfg.label}</span>
           )}
 
           {podeEditar && (
             <button
               onClick={handleDeletar}
               disabled={deletando}
-              className="text-foreground/20 hover:text-red-500 transition-colors disabled:opacity-40"
+              className="text-foreground/30 transition-colors hover:text-destructive disabled:opacity-40"
+              aria-label="Remover milestone"
             >
               <Trash2 size={13} />
             </button>
@@ -206,98 +207,110 @@ export function MilestoneCard({
 
       {/* Barra de progresso */}
       {total > 0 && (
-        <div className="h-0.5 bg-foreground/[0.06]">
+        <div className="h-0.5 bg-muted">
           <div
-            className="h-full bg-green-500 transition-all"
+            className="h-full bg-emerald-500 transition-all"
             style={{ width: `${(concluidas / total) * 100}%` }}
           />
         </div>
       )}
 
-      {/* Lista de tarefas */}
-      {expandido && (
-        <div className="px-5 py-3 space-y-1">
-          {tarefas.length === 0 && (
-            <p className="font-plex-sans text-[12px] text-foreground/30 py-2">
-              Nenhuma tarefa ainda.
-            </p>
-          )}
+      {/* Lista de tarefas — expande/colapsa suavemente */}
+      <div
+        className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+          expandido ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div
+            className={`space-y-1 border-t border-border px-5 py-3 transition-opacity duration-300 ${
+              expandido ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            {tarefas.length === 0 && (
+              <p className="py-2 text-xs text-foreground/40">Nenhuma tarefa ainda.</p>
+            )}
 
-          {tarefas.map((tarefa) => {
-            const podeMudar = podeEditar || tarefa.responsavel_id === usuarioId;
-            const concluida = tarefa.status === "concluida";
-            return (
-              <div key={tarefa.id} className="flex items-center gap-3 py-2 group">
-                <button
-                  onClick={() => handleToggleTarefa(tarefa)}
-                  disabled={atualizando === tarefa.id || !podeMudar}
-                  className={`w-4 h-4 rounded flex-shrink-0 border transition-colors ${
-                    concluida
-                      ? "bg-green-500 border-green-500"
-                      : tarefa.status === "em_andamento"
-                        ? "bg-amber-400 border-amber-400"
-                        : "border-foreground/20 hover:border-foreground/50"
-                  } disabled:opacity-40`}
-                >
-                  {concluida && (
-                    <svg viewBox="0 0 12 12" fill="none" className="w-full h-full p-0.5">
-                      <path
-                        d="M2 6l3 3 5-5"
-                        stroke="white"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                </button>
-
-                <div className="flex-1 min-w-0">
-                  <span
-                    className={`font-plex-sans text-[13px] ${concluida ? "line-through text-foreground/30" : "text-foreground"}`}
+            {tarefas.map((tarefa) => {
+              const podeMudar = podeEditar || tarefa.responsavel_id === usuarioId;
+              const concluida = tarefa.status === "concluida";
+              return (
+                <div key={tarefa.id} className="group flex items-center gap-3 py-2">
+                  <button
+                    onClick={() => handleToggleTarefa(tarefa)}
+                    disabled={atualizando === tarefa.id || !podeMudar}
+                    className={`h-4 w-4 flex-shrink-0 rounded border transition-colors ${
+                      concluida
+                        ? "border-emerald-500 bg-emerald-500"
+                        : tarefa.status === "em_andamento"
+                          ? "border-amber-400 bg-amber-400"
+                          : "border-foreground/20 hover:border-foreground/50"
+                    } disabled:opacity-40`}
                   >
-                    {tarefa.titulo}
-                  </span>
-                  {tarefa.responsavel_nome && (
-                    <span className="font-plex-mono text-[10px] text-foreground/40 ml-2">
-                      {tarefa.responsavel_nome}
+                    {concluida && (
+                      <svg viewBox="0 0 12 12" fill="none" className="h-full w-full p-0.5">
+                        <path
+                          d="M2 6l3 3 5-5"
+                          stroke="white"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </button>
+
+                  <div className="min-w-0 flex-1">
+                    <span
+                      className={`text-sm ${concluida ? "text-foreground/30 line-through" : "text-foreground"}`}
+                    >
+                      {tarefa.titulo}
+                    </span>
+                    {tarefa.responsavel_nome && (
+                      <span className="ml-2 text-xs text-foreground/40">
+                        {tarefa.responsavel_nome}
+                      </span>
+                    )}
+                  </div>
+
+                  {tarefa.prazo && (
+                    <span className="flex-shrink-0 text-xs text-foreground/40">
+                      {new Date(tarefa.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString(
+                        "pt-BR",
+                        {
+                          day: "2-digit",
+                          month: "short",
+                        },
+                      )}
                     </span>
                   )}
+
+                  {podeEditar && (
+                    <button
+                      onClick={() => handleDeletarTarefa(tarefa.id)}
+                      disabled={atualizando === tarefa.id}
+                      className="text-foreground/20 opacity-0 transition-all hover:text-destructive group-hover:opacity-100 disabled:opacity-40"
+                      aria-label="Remover tarefa"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
                 </div>
+              );
+            })}
 
-                {tarefa.prazo && (
-                  <span className="font-plex-mono text-[11px] text-foreground/30 flex-shrink-0">
-                    {new Date(tarefa.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString("pt-BR", {
-                      day: "2-digit",
-                      month: "short",
-                    })}
-                  </span>
-                )}
-
-                {podeEditar && (
-                  <button
-                    onClick={() => handleDeletarTarefa(tarefa.id)}
-                    disabled={atualizando === tarefa.id}
-                    className="opacity-0 group-hover:opacity-100 text-foreground/20 hover:text-red-500 transition-all disabled:opacity-40"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                )}
-              </div>
-            );
-          })}
-
-          {podeEditar && (
-            <button
-              onClick={() => onAdicionarTarefa(milestone.id)}
-              className="flex items-center gap-2 mt-2 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/30 hover:text-foreground transition-colors py-1"
-            >
-              <Plus size={12} />
-              Adicionar tarefa
-            </button>
-          )}
+            {podeEditar && (
+              <button
+                onClick={() => onAdicionarTarefa(milestone.id)}
+                className="mt-2 flex items-center gap-1.5 py-1 text-xs text-foreground/40 transition-colors hover:text-foreground"
+              >
+                <Plus size={12} />
+                Adicionar tarefa
+              </button>
+            )}
+          </div>
         </div>
-      )}
-    </div>
+      </div>
+    </DashboardCard>
   );
 }

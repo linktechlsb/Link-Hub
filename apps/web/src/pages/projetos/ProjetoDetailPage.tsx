@@ -4,10 +4,13 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
+import { TabSection } from "@/pages/ligas/tabs/primitives";
 
 import { CriarMilestoneDialog } from "./CriarMilestoneDialog";
 import { CriarTarefaDialog } from "./CriarTarefaDialog";
 import { MilestoneCard } from "./MilestoneCard";
+import { ProjetoDetailSkeleton } from "./ProjetoSkeletons";
+import { STATUS_CONFIG } from "./statusConfig";
 
 type StatusMilestone = "pendente" | "em_andamento" | "concluido";
 type StatusTarefa = "pendente" | "em_andamento" | "concluida";
@@ -44,16 +47,6 @@ type ProjetoAPI = {
 };
 
 type MembroAPI = { id: string; usuario_id: string; nome: string };
-
-const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  rascunho: { label: "Rascunho", className: "text-foreground/40" },
-  em_aprovacao: { label: "Em aprovação", className: "text-amber-600" },
-  aprovado: { label: "Aprovado", className: "text-blue-600" },
-  rejeitado: { label: "Rejeitado", className: "text-red-600" },
-  em_andamento: { label: "Em andamento", className: "text-blue-600" },
-  concluido: { label: "Concluído", className: "text-green-600" },
-  cancelado: { label: "Cancelado", className: "text-foreground/30" },
-};
 
 async function getToken() {
   const { data } = await supabase.auth.getSession();
@@ -129,17 +122,13 @@ export function ProjetoDetailPage() {
   }, [projetoId]);
 
   if (carregando) {
-    return (
-      <div className="max-w-4xl mx-auto px-8 py-10">
-        <p className="font-plex-sans text-[13px] text-foreground/50">Carregando...</p>
-      </div>
-    );
+    return <ProjetoDetailSkeleton />;
   }
 
   if (!projeto) {
     return (
-      <div className="max-w-4xl mx-auto px-8 py-10">
-        <p className="font-plex-sans text-[13px] text-foreground/50">Projeto não encontrado.</p>
+      <div className="mx-auto max-w-5xl px-8 py-10">
+        <p className="text-sm text-foreground/50">Projeto não encontrado.</p>
       </div>
     );
   }
@@ -155,38 +144,32 @@ export function ProjetoDetailPage() {
   );
 
   return (
-    <div className="max-w-4xl mx-auto px-8 py-10">
+    <div className="mx-auto max-w-5xl px-8 py-10">
       {/* Navegação de volta */}
       <button
         onClick={() => navigate("/projetos")}
-        className="flex items-center gap-2 font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 hover:text-foreground transition-colors mb-8"
+        className="mb-8 flex items-center gap-2 text-sm text-foreground/50 transition-colors hover:text-foreground"
       >
-        <ArrowLeft size={12} />
+        <ArrowLeft size={14} />
         Projetos
       </button>
 
       {/* Cabeçalho do projeto */}
-      <div className="mb-10">
+      <div className="mb-8">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1">
-              {projeto.liga?.nome ?? "—"}
-            </p>
-            <h1 className="font-display font-bold text-[26px] tracking-[-0.02em] text-navy">
+            <p className="text-sm text-foreground/50">{projeto.liga?.nome ?? "—"}</p>
+            <h1 className="mt-1 font-display text-2xl font-bold text-foreground">
               {projeto.titulo}
             </h1>
             {projeto.descricao && (
-              <p className="font-plex-sans text-[14px] text-foreground/60 mt-2 max-w-2xl">
-                {projeto.descricao}
-              </p>
+              <p className="mt-2 max-w-2xl text-sm text-foreground/60">{projeto.descricao}</p>
             )}
           </div>
           <div className="flex-shrink-0 text-right">
-            <span className={`font-plex-mono text-[12px] font-medium ${statusCfg.className}`}>
-              {statusCfg.label}
-            </span>
+            <span className={`text-xs font-medium ${statusCfg.className}`}>{statusCfg.label}</span>
             {projeto.prazo && (
-              <p className="font-plex-mono text-[11px] text-foreground/40 mt-1">
+              <p className="mt-1 text-xs text-foreground/40">
                 Prazo:{" "}
                 {new Date(projeto.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString("pt-BR", {
                   day: "2-digit",
@@ -201,13 +184,13 @@ export function ProjetoDetailPage() {
         {/* Progresso geral */}
         {totalTarefas > 0 && (
           <div className="mt-6 flex items-center gap-4">
-            <div className="flex-1 h-1.5 bg-foreground/[0.06] rounded-full overflow-hidden">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full bg-green-500 rounded-full transition-all"
+                className="h-full rounded-full bg-emerald-500 transition-all"
                 style={{ width: `${(tarefasConcluidas / totalTarefas) * 100}%` }}
               />
             </div>
-            <span className="font-plex-mono text-[11px] text-foreground/50 flex-shrink-0">
+            <span className="flex-shrink-0 text-xs tabular-nums text-foreground/50">
               {tarefasConcluidas}/{totalTarefas} tarefas
             </span>
           </div>
@@ -215,36 +198,27 @@ export function ProjetoDetailPage() {
       </div>
 
       {/* Seção de milestones */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/30 mb-1">
-              02
-            </p>
-            <h2 className="font-plex-sans text-[13px] font-bold uppercase tracking-wider text-link-blue dark:text-white">
-              Milestones
-            </h2>
-          </div>
-          {podeEditar && (
+      <TabSection
+        titulo="Milestones"
+        acao={
+          podeEditar ? (
             <button
               onClick={() => setDialogMilestone(true)}
-              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors flex items-center gap-2"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
             >
-              <Plus size={12} />
-              Novo Milestone
+              <Plus className="h-3.5 w-3.5" />
+              Novo milestone
             </button>
-          )}
-        </div>
-
+          ) : null
+        }
+      >
         {milestones.length === 0 ? (
-          <div className="border border-dashed border-foreground/[0.12] rounded-lg p-10 text-center">
-            <p className="font-plex-sans text-[13px] text-foreground/40">
-              Nenhum milestone criado ainda.
-            </p>
+          <div className="rounded-xl border border-dashed border-border p-10 text-center">
+            <p className="text-sm text-foreground/50">Nenhum milestone criado ainda.</p>
             {podeEditar && (
               <button
                 onClick={() => setDialogMilestone(true)}
-                className="mt-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/50 hover:text-foreground transition-colors"
+                className="mt-4 text-xs text-foreground/50 transition-colors hover:text-foreground"
               >
                 + Criar primeiro milestone
               </button>
@@ -265,7 +239,7 @@ export function ProjetoDetailPage() {
             ))}
           </div>
         )}
-      </div>
+      </TabSection>
 
       {/* Dialogs */}
       {projetoId && (

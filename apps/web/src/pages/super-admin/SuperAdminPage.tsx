@@ -1,13 +1,4 @@
-import {
-  Archive,
-  Check,
-  MoreHorizontal,
-  Pencil,
-  Search,
-  SlidersHorizontal,
-  Trash2,
-  Users,
-} from "lucide-react";
+import { Archive, Check, Pencil, Search, SlidersHorizontal, Trash2, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -24,6 +15,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { RowActionsMenu } from "@/components/ui/row-actions-menu";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "@/pages/home/v1/primitives";
@@ -425,42 +417,32 @@ export function SuperAdminPage() {
                     </td>
                     <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
                       {confirmarArquivoId === l.id ? null : (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="p-1 rounded hover:bg-foreground/[0.08] text-foreground/40 hover:text-foreground/70 transition-colors">
-                              <MoreHorizontal size={14} />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="min-w-[150px]">
-                            <DropdownMenuItem
-                              className="text-[12px] cursor-pointer"
-                              onClick={() => {
+                        <RowActionsMenu
+                          actions={[
+                            {
+                              label: "Editar",
+                              icon: Pencil,
+                              onSelect: () => {
                                 setLigaParaEditar(l);
                                 setSheetLigaOpen(true);
-                              }}
-                            >
-                              <Pencil className="h-3.5 w-3.5 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-[12px] cursor-pointer"
-                              onClick={() => {
+                              },
+                            },
+                            {
+                              label: "Membros",
+                              icon: Users,
+                              onSelect: () => {
                                 setLigaMembros(l);
                                 setSheetMembrosOpen(true);
-                              }}
-                            >
-                              <Users className="h-3.5 w-3.5 mr-2" />
-                              Membros
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-[12px] cursor-pointer text-red-500 focus:text-red-600"
-                              onClick={() => setConfirmarArquivoId(l.id)}
-                            >
-                              <Archive className="h-3.5 w-3.5 mr-2" />
-                              Arquivar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              },
+                            },
+                            {
+                              label: "Arquivar",
+                              icon: Archive,
+                              variant: "destructive",
+                              onSelect: () => setConfirmarArquivoId(l.id),
+                            },
+                          ]}
+                        />
                       )}
                     </td>
                   </tr>
@@ -789,32 +771,24 @@ export function SuperAdminPage() {
                     </td>
                     <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
                       {confirmarRemocaoId === u.id ? null : (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="p-1 rounded hover:bg-foreground/[0.08] text-foreground/40 hover:text-foreground/70 transition-colors">
-                              <MoreHorizontal size={14} />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="min-w-[140px]">
-                            <DropdownMenuItem
-                              className="text-[12px] cursor-pointer"
-                              onClick={() => {
+                        <RowActionsMenu
+                          actions={[
+                            {
+                              label: "Editar",
+                              icon: Pencil,
+                              onSelect: () => {
                                 setUsuarioParaEditar(u);
                                 setSheetUsuarioOpen(true);
-                              }}
-                            >
-                              <Pencil className="h-3.5 w-3.5 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-[12px] cursor-pointer text-red-500 focus:text-red-600"
-                              onClick={() => setConfirmarRemocaoId(u.id)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 mr-2" />
-                              Remover
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              },
+                            },
+                            {
+                              label: "Remover",
+                              icon: Trash2,
+                              variant: "destructive",
+                              onSelect: () => setConfirmarRemocaoId(u.id),
+                            },
+                          ]}
+                        />
                       )}
                     </td>
                   </tr>

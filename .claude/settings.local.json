@@ -151,7 +151,13 @@
       "Bash(npx shadcn@latest add @reui/c-avatar-24)",
       "Bash(./node_modules/.bin/eslint --version)",
       "Bash(ls node_modules/@eslint/js/package.json)",
-      "Bash(grep -E \"\\\\.ts$\")"
+      "Bash(grep -E \"\\\\.ts$\")",
+      "Bash(node -e \"console.log\\(require\\('/Users/diogochiapeta/Cursor/Link-Hub/node_modules/eslint/package.json'\\).dependencies.debug || 'not direct dep'\\)\")",
+      "WebFetch(domain:reui.io)",
+      "Bash(grep -n \"Sheet — novo projeto\\\\|<Sheet$\\\\|open={sheetNovo}\\\\|<SheetContent\\\\|<FieldGroup>\\\\|</FieldGroup>\\\\|<SheetFooter\\\\|</SheetFooter>\\\\|</SheetContent>\\\\|</Sheet>\" src/pages/projetos/ProjetosStaffView.tsx)",
+      "Bash(sed -n '1,40p' components/ui/input.tsx)",
+      "Bash(sed -n '1,55p' components/ui/select.tsx)",
+      "Bash(python3 -)"
     ],
     "deny": [
       "Bash(git commit *)",

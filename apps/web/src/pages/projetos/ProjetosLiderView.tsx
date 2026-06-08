@@ -1,3 +1,13 @@
+import {
+  CheckCircle2,
+  Clock,
+  FolderKanban,
+  ListChecks,
+  Pencil,
+  Plus,
+  Send,
+  Trophy,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -12,6 +22,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { FormSheet } from "@/components/ui/form-sheet";
+import { Input } from "@/components/ui/input";
+import { RowActionsMenu } from "@/components/ui/row-actions-menu";
 import {
   Select,
   SelectContent,
@@ -21,12 +35,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
-import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
+import { DashboardCard } from "@/pages/home/components/DashboardCard";
+import { StatStrip } from "@/pages/ligas/tabs/primitives";
 
 import { CriarProjetoDialog } from "./CriarProjetoDialog";
+import { TabelaProjetosSkeleton } from "./ProjetoSkeletons";
+import { STATUS_CONFIG } from "./statusConfig";
 
 type ProjetoAPI = {
   id: string;
@@ -54,6 +70,18 @@ type MinhaLiga = { id: string; nome: string };
 
 type LigaAPI = { id: string; nome: string };
 
+const TH_CLASS =
+  "px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wide text-foreground/40";
+const ROW_CLASS =
+  "border-b border-border transition-colors last:border-0 hover:bg-foreground/[0.03]";
+const ACAO_CLASS = "text-xs text-foreground/50 transition-colors hover:text-foreground";
+const LABEL_CLASS = "font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40";
+const INPUT_CLASS =
+  "border-border bg-muted/50 text-[13px] text-foreground placeholder:text-foreground/20";
+const SELECT_TRIGGER_CLASS = "w-full text-[13px]";
+const TEXTAREA_CLASS =
+  "w-full resize-none rounded border border-border bg-muted/50 px-3 py-2.5 text-[13px] text-foreground placeholder:text-foreground/20 focus:border-foreground/30 focus:outline-none";
+
 type ProjetoForm = {
   titulo: string;
   descricao: string;
@@ -65,16 +93,6 @@ type ProjetoForm = {
   empresa_parceira: string;
   tipo_projeto: string;
   categoria_id: string;
-};
-
-const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  rascunho: { label: "Rascunho", className: "text-foreground/40" },
-  em_aprovacao: { label: "Em aprovação", className: "text-amber-600" },
-  aprovado: { label: "Aprovado", className: "text-blue-600" },
-  rejeitado: { label: "Rejeitado", className: "text-red-600" },
-  em_andamento: { label: "Em andamento", className: "text-blue-600" },
-  concluido: { label: "Concluído", className: "text-green-600" },
-  cancelado: { label: "Cancelado", className: "text-foreground/30" },
 };
 
 async function getToken() {
@@ -97,15 +115,18 @@ const FORM_VAZIO: ProjetoForm = {
 
 export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
   const navigate = useNavigate();
-  const { data: liga } = useCachedFetch<MinhaLiga>("/api/ligas/minha");
+  const { data: liga, carregando: carregandoLiga } = useCachedFetch<MinhaLiga>("/api/ligas/minha");
   const ligaId = liga?.id ?? null;
-  const { data: projetosData, refetch: refetchProjetos } = useCachedFetch<ProjetoAPI[]>(
-    ligaId ? `/api/ligas/${ligaId}/projetos` : null,
-  );
+  const {
+    data: projetosData,
+    carregando: carregandoProjetos,
+    refetch: refetchProjetos,
+  } = useCachedFetch<ProjetoAPI[]>(ligaId ? `/api/ligas/${ligaId}/projetos` : null);
   const { data: membrosData } = useCachedFetch<MembroAPI[]>(
     ligaId ? `/api/ligas/${ligaId}/membros` : null,
   );
-  const { data: todosProjetosData } = useCachedFetch<ProjetoAPI[]>("/api/projetos");
+  const { data: todosProjetosData, carregando: carregandoTodos } =
+    useCachedFetch<ProjetoAPI[]>("/api/projetos");
   const { data: ligasData } = useCachedFetch<LigaAPI[]>("/api/ligas");
   const projetos = projetosData ?? [];
   const membros = membrosData ?? [];
@@ -160,18 +181,21 @@ export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
   }, [ligaId]);
 
   const kpis = [
-    { label: "Total da liga", valor: String(projetos.length) },
+    { icon: FolderKanban, label: "Total da liga", value: String(projetos.length) },
     {
+      icon: Clock,
       label: "Em aprovação",
-      valor: String(projetos.filter((p) => p.status === "em_aprovacao").length),
+      value: String(projetos.filter((p) => p.status === "em_aprovacao").length),
     },
     {
+      icon: CheckCircle2,
       label: "Concluídos (liga)",
-      valor: String(projetos.filter((p) => p.status === "concluido").length),
+      value: String(projetos.filter((p) => p.status === "concluido").length),
     },
     {
+      icon: Trophy,
       label: "Concluídos (total)",
-      valor: String(todosProjetos.filter((p) => p.status === "concluido").length),
+      value: String(todosProjetos.filter((p) => p.status === "concluido").length),
     },
   ];
 
@@ -280,276 +304,225 @@ export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
   const isNovo = sheetProjeto === "novo";
   const projetoAtual = isNovo ? null : (sheetProjeto as ProjetoAPI | null);
 
+  const carregandoAbaLiga = carregandoLiga || carregandoProjetos;
+
   return (
-    <div className="max-w-5xl mx-auto px-8 py-10">
+    <div className="mx-auto max-w-6xl px-8 py-10">
       {/* Cabeçalho */}
-      <div className="mb-10">
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
-          Projetos
-        </h1>
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
-          {liga?.nome ?? "Minha Liga"}
-        </p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Projetos</h1>
+          <p className="mt-1 text-sm text-foreground/50">{liga?.nome ?? "Minha liga"}</p>
+        </div>
+        {aba === "liga" && (
+          <button
+            onClick={abrirNovo}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Novo projeto
+          </button>
+        )}
       </div>
 
-      <div className="space-y-12">
-        <KpiRow items={kpis} />
+      <div className="space-y-8">
+        {!carregandoAbaLiga && <StatStrip items={kpis} />}
 
-        <div>
-          <SectionHeader
-            numero="01"
-            eyebrow="Iniciativas"
-            titulo={aba === "liga" ? "Projetos da Liga" : "Todos os Projetos"}
-            tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
-            acao={
-              aba === "liga" ? (
-                <button
-                  onClick={abrirNovo}
-                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
-                >
-                  + Novo Projeto
-                </button>
-              ) : null
-            }
-          />
+        <AnimatedTabs
+          tabs={[
+            { id: "liga", label: "Da liga" },
+            { id: "todos", label: "Todos os projetos" },
+          ]}
+          activeTab={aba}
+          onChange={(id) => setAba(id as typeof aba)}
+          tabClassName="px-0 py-3"
+          innerClassName="gap-6"
+          wrapperClassName="border-border"
+          activeTabClassName="text-foreground"
+          inactiveTabClassName="text-foreground/40 hover:text-foreground"
+          indicatorClassName="bg-foreground"
+        />
 
-          <AnimatedTabs
-            tabs={[
-              { id: "liga", label: "Da Liga" },
-              { id: "todos", label: "Todos os Projetos" },
-            ]}
-            activeTab={aba}
-            onChange={(id) => setAba(id as typeof aba)}
-            wrapperClassName="border-foreground/[0.08] mb-6"
-            innerClassName="gap-6"
-            tabClassName="px-0 py-3"
-            activeTabClassName="text-foreground"
-            inactiveTabClassName="text-foreground/40 hover:text-foreground"
-            indicatorClassName="bg-foreground"
-          />
-
-          {aba === "liga" &&
-            (projetos.length === 0 ? (
-              <p className="font-plex-sans text-[13px] text-foreground/50">
-                Nenhum projeto cadastrado.
-              </p>
-            ) : (
+        {aba === "liga" &&
+          (carregandoAbaLiga ? (
+            <TabelaProjetosSkeleton />
+          ) : projetos.length === 0 ? (
+            <p className="text-sm text-foreground/50">Nenhum projeto cadastrado.</p>
+          ) : (
+            <DashboardCard className="overflow-hidden">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="border-b border-foreground/[0.08]">
-                    <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                      Projeto
-                    </th>
-                    <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                      Responsável
-                    </th>
-                    <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                      Prazo
-                    </th>
-                    <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                      Status
-                    </th>
-                    <th className="py-3 px-4" />
+                  <tr className="border-b border-border">
+                    {["Projeto", "Responsável", "Prazo", "Status", ""].map((h, i) => (
+                      <th key={h || i} className={TH_CLASS}>
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {projetos.map((p, idx) => {
+                  {projetos.map((p) => {
                     const s = STATUS_CONFIG[p.status] ?? {
                       label: p.status,
                       className: "text-foreground/50",
                     };
                     const podSubmeter = p.status === "rascunho" || p.status === "rejeitado";
                     const podConcluir = p.status === "aprovado" || p.status === "em_andamento";
-                    const isLast = idx === projetos.length - 1;
                     return (
-                      <tr
-                        key={p.id}
-                        className={`hover:bg-foreground/[0.03] transition-colors ${!isLast ? "border-b border-foreground/[0.06]" : ""}`}
-                      >
-                        <td className="py-4 px-4">
-                          <span className="font-plex-sans text-[13px] text-foreground font-semibold">
-                            {p.titulo}
-                          </span>
+                      <tr key={p.id} className={ROW_CLASS}>
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-medium text-foreground">{p.titulo}</span>
                           {p.status === "rejeitado" && p.motivo_recusa && (
-                            <p className="font-plex-mono text-[10px] text-red-500 mt-0.5">
+                            <p className="mt-0.5 text-xs text-red-600 dark:text-red-300">
                               {p.motivo_recusa}
                             </p>
                           )}
                         </td>
-                        <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                        <td className="px-4 py-3 text-sm text-foreground/60">
                           {responsavelNome(p)}
                         </td>
-                        <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                        <td className="px-4 py-3 text-sm text-foreground/60">
                           {p.prazo
                             ? new Date(p.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString(
                                 "pt-BR",
-                                {
-                                  day: "2-digit",
-                                  month: "short",
-                                },
+                                { day: "2-digit", month: "short" },
                               )
                             : "—"}
                         </td>
-                        <td className="py-4 px-4">
-                          <span className={`font-plex-mono text-[12px] font-medium ${s.className}`}>
-                            {s.label}
-                          </span>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs font-medium ${s.className}`}>{s.label}</span>
                         </td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => navigate(`/projetos/${p.id}`)}
-                              className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-foreground/50 hover:text-foreground transition-colors"
-                            >
-                              Milestones
-                            </button>
-                            <button
-                              onClick={() => abrirEditar(p)}
-                              className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-foreground/50 hover:text-foreground transition-colors"
-                            >
-                              Editar
-                            </button>
-                            {podSubmeter && (
-                              <button
-                                onClick={() => handleSubmeter(p.id)}
-                                disabled={submetendo === p.id}
-                                className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-foreground/50 hover:text-foreground transition-colors disabled:opacity-40"
-                              >
-                                {submetendo === p.id ? "..." : "Submeter →"}
-                              </button>
-                            )}
-                            {podConcluir && (
-                              <button
-                                onClick={() => setConfirmarConclusao(p)}
-                                disabled={concluindo === p.id}
-                                className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-green-600 hover:text-green-700 transition-colors disabled:opacity-40"
-                              >
-                                {concluindo === p.id ? "..." : "Concluir →"}
-                              </button>
-                            )}
-                          </div>
+                        <td className="px-4 py-3 text-right">
+                          <RowActionsMenu
+                            ariaLabel="Opções do projeto"
+                            actions={[
+                              {
+                                label: "Milestones",
+                                icon: ListChecks,
+                                onSelect: () => navigate(`/projetos/${p.id}`),
+                              },
+                              { label: "Editar", icon: Pencil, onSelect: () => abrirEditar(p) },
+                              ...(podSubmeter
+                                ? [
+                                    {
+                                      label: submetendo === p.id ? "Submetendo..." : "Submeter",
+                                      icon: Send,
+                                      disabled: submetendo === p.id,
+                                      onSelect: () => handleSubmeter(p.id),
+                                    },
+                                  ]
+                                : []),
+                              ...(podConcluir
+                                ? [
+                                    {
+                                      label: concluindo === p.id ? "Concluindo..." : "Concluir",
+                                      icon: CheckCircle2,
+                                      disabled: concluindo === p.id,
+                                      className:
+                                        "text-emerald-600 focus:text-emerald-700 dark:text-emerald-300",
+                                      onSelect: () => setConfirmarConclusao(p),
+                                    },
+                                  ]
+                                : []),
+                            ]}
+                          />
                         </td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
-            ))}
+            </DashboardCard>
+          ))}
 
-          {aba === "todos" && (
-            <>
-              <div className="flex gap-3 mb-6">
-                <Select
-                  value={filtroLiga}
-                  onValueChange={(v) => setFiltroLiga(v === "all" ? "" : v)}
-                >
-                  <SelectTrigger className="font-plex-sans text-[13px] w-auto min-w-[160px]">
-                    <SelectValue placeholder="Todas as ligas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="font-plex-sans text-[13px]">
-                      Todas as ligas
+        {aba === "todos" && (
+          <div className="space-y-4">
+            <div className="flex gap-3">
+              <Select value={filtroLiga} onValueChange={(v) => setFiltroLiga(v === "all" ? "" : v)}>
+                <SelectTrigger className="w-auto min-w-[160px] text-sm">
+                  <SelectValue placeholder="Todas as ligas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-sm">
+                    Todas as ligas
+                  </SelectItem>
+                  {ligas.map((l) => (
+                    <SelectItem key={l.id} value={l.id} className="text-sm">
+                      {l.nome}
                     </SelectItem>
-                    {ligas.map((l) => (
-                      <SelectItem key={l.id} value={l.id} className="font-plex-sans text-[13px]">
-                        {l.nome}
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={filtroStatus}
+                onValueChange={(v) => setFiltroStatus(v === "all" ? "" : v)}
+              >
+                <SelectTrigger className="w-auto min-w-[160px] text-sm">
+                  <SelectValue placeholder="Todos os status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-sm">
+                    Todos os status
+                  </SelectItem>
+                  {Object.entries(STATUS_CONFIG)
+                    .filter(([k]) => k !== "rascunho")
+                    .map(([k, v]) => (
+                      <SelectItem key={k} value={k} className="text-sm">
+                        {v.label}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={filtroStatus}
-                  onValueChange={(v) => setFiltroStatus(v === "all" ? "" : v)}
-                >
-                  <SelectTrigger className="font-plex-sans text-[13px] w-auto min-w-[160px]">
-                    <SelectValue placeholder="Todos os status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="font-plex-sans text-[13px]">
-                      Todos os status
-                    </SelectItem>
-                    {Object.entries(STATUS_CONFIG)
-                      .filter(([k]) => k !== "rascunho")
-                      .map(([k, v]) => (
-                        <SelectItem key={k} value={k} className="font-plex-sans text-[13px]">
-                          {v.label}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                </SelectContent>
+              </Select>
+            </div>
 
-              {filtrados.length === 0 ? (
-                <p className="font-plex-sans text-[13px] text-foreground/50">
-                  Nenhum projeto encontrado.
-                </p>
-              ) : (
+            {carregandoTodos ? (
+              <TabelaProjetosSkeleton />
+            ) : filtrados.length === 0 ? (
+              <p className="text-sm text-foreground/50">Nenhum projeto encontrado.</p>
+            ) : (
+              <DashboardCard className="overflow-hidden">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="border-b border-foreground/[0.08]">
-                      <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                        Projeto
-                      </th>
-                      <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                        Liga
-                      </th>
-                      <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                        Responsável
-                      </th>
-                      <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                        Prazo
-                      </th>
-                      <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                        Status
-                      </th>
-                      <th className="py-3 px-4" />
+                    <tr className="border-b border-border">
+                      {["Projeto", "Liga", "Responsável", "Prazo", "Status", ""].map((h, i) => (
+                        <th key={h || i} className={TH_CLASS}>
+                          {h}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {filtrados.map((p, idx) => {
+                    {filtrados.map((p) => {
                       const s = STATUS_CONFIG[p.status] ?? {
                         label: p.status,
                         className: "text-foreground/50",
                       };
-                      const isLast = idx === filtrados.length - 1;
                       return (
-                        <tr
-                          key={p.id}
-                          className={`hover:bg-foreground/[0.03] transition-colors ${!isLast ? "border-b border-foreground/[0.06]" : ""}`}
-                        >
-                          <td className="py-4 px-4">
-                            <span className="font-plex-sans text-[13px] text-foreground font-semibold">
-                              {p.titulo}
-                            </span>
+                        <tr key={p.id} className={ROW_CLASS}>
+                          <td className="px-4 py-3">
+                            <span className="text-sm font-medium text-foreground">{p.titulo}</span>
                           </td>
-                          <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                          <td className="px-4 py-3 text-sm text-foreground/60">
                             {p.liga?.nome ?? "—"}
                           </td>
-                          <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                          <td className="px-4 py-3 text-sm text-foreground/60">
                             {responsavelNome(p)}
                           </td>
-                          <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                          <td className="px-4 py-3 text-sm text-foreground/60">
                             {p.prazo
                               ? new Date(p.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString(
                                   "pt-BR",
-                                  {
-                                    day: "2-digit",
-                                    month: "short",
-                                  },
+                                  { day: "2-digit", month: "short" },
                                 )
                               : "—"}
                           </td>
-                          <td className="py-4 px-4">
-                            <span
-                              className={`font-plex-mono text-[12px] font-medium ${s.className}`}
-                            >
-                              {s.label}
-                            </span>
+                          <td className="px-4 py-3">
+                            <span className={`text-xs font-medium ${s.className}`}>{s.label}</span>
                           </td>
-                          <td className="py-4 px-4">
+                          <td className="px-4 py-3">
                             <button
                               onClick={() => navigate(`/projetos/${p.id}`)}
-                              className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-foreground/50 hover:text-foreground transition-colors"
+                              className={ACAO_CLASS}
                             >
                               Milestones
                             </button>
@@ -559,10 +532,10 @@ export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
                     })}
                   </tbody>
                 </table>
-              )}
-            </>
-          )}
-        </div>
+              </DashboardCard>
+            )}
+          </div>
+        )}
       </div>
 
       <CriarProjetoDialog
@@ -602,275 +575,200 @@ export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
       </AlertDialog>
 
       {/* Sheet — criar / editar projeto */}
-      <Sheet
+      <FormSheet
         open={sheetProjeto !== null}
         onOpenChange={(o) => {
           if (!o) setSheetProjeto(null);
         }}
-      >
-        <SheetContent side="right" className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0">
-          <div className="flex-shrink-0">
-            <div className="h-px bg-foreground/20" />
-            <div className="px-8 pt-8 pb-6">
-              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
-                {isNovo ? "Novo" : "Editar"}
-              </p>
-              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
-                {isNovo ? "Adicionar projeto" : projetoAtual?.titulo}
-              </h2>
-            </div>
-            <div className="h-px bg-foreground/[0.08]" />
-          </div>
-
-          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
-            <div>
-              <label
-                htmlFor="proj-titulo"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-              >
-                Título
-              </label>
-              <input
-                id="proj-titulo"
-                value={form.titulo}
-                onChange={(e) => setForm((f) => ({ ...f, titulo: e.target.value }))}
-                placeholder="Nome do projeto"
-                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
-              />
-            </div>
-
-            <div>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                Responsável
-              </label>
-              <Select
-                value={form.responsavel_id}
-                onValueChange={(v) => setForm((f) => ({ ...f, responsavel_id: v }))}
-              >
-                <SelectTrigger className="w-full font-plex-sans text-[13px]">
-                  <SelectValue placeholder="Nenhum" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none" className="font-plex-sans text-[13px]">
-                    Nenhum
-                  </SelectItem>
-                  {membros.map((m) => (
-                    <SelectItem
-                      key={m.usuario_id}
-                      value={m.usuario_id}
-                      className="font-plex-sans text-[13px]"
-                    >
-                      {m.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                Tipo de Projeto
-              </label>
-              <Select
-                value={form.tipo_projeto}
-                onValueChange={(v) => setForm((f) => ({ ...f, tipo_projeto: v }))}
-              >
-                <SelectTrigger className="w-full font-plex-sans text-[13px]">
-                  <SelectValue placeholder="Selecionar tipo..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="iniciacao_cientifica" className="font-plex-sans text-[13px]">
-                    Iniciação Científica
-                  </SelectItem>
-                  <SelectItem value="projeto_interno" className="font-plex-sans text-[13px]">
-                    Projeto Interno
-                  </SelectItem>
-                  <SelectItem value="projeto_externo" className="font-plex-sans text-[13px]">
-                    Projeto Externo (com parceiros)
-                  </SelectItem>
-                  <SelectItem value="projeto_estruturante" className="font-plex-sans text-[13px]">
-                    Projeto Estruturante (Interdisciplinar e/ou Inovação)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                Categoria
-              </label>
-              <Select
-                value={form.categoria_id || "__none__"}
-                onValueChange={(v) =>
-                  setForm((f) => ({ ...f, categoria_id: v === "__none__" ? "" : v }))
-                }
-              >
-                <SelectTrigger className="w-full font-plex-sans text-[13px]">
-                  <SelectValue placeholder="Selecionar categoria..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__" className="font-plex-sans text-[13px]">
-                    Selecionar categoria...
-                  </SelectItem>
-                  {categorias.filter((c) => !c.liga_id).length > 0 && (
-                    <SelectGroup>
-                      <SelectLabel className="font-plex-mono text-[9px] uppercase tracking-[0.16em] text-foreground/30">
-                        Categorias Base
-                      </SelectLabel>
-                      {categorias
-                        .filter((c) => !c.liga_id)
-                        .map((c) => (
-                          <SelectItem
-                            key={c.id}
-                            value={c.id}
-                            className="font-plex-sans text-[13px]"
-                          >
-                            {c.nome}
-                          </SelectItem>
-                        ))}
-                    </SelectGroup>
-                  )}
-                  {categorias.filter((c) => c.liga_id).length > 0 && (
-                    <SelectGroup>
-                      <SelectLabel className="font-plex-mono text-[9px] uppercase tracking-[0.16em] text-foreground/30">
-                        Categorias da Liga
-                      </SelectLabel>
-                      {categorias
-                        .filter((c) => c.liga_id)
-                        .map((c) => (
-                          <SelectItem
-                            key={c.id}
-                            value={c.id}
-                            className="font-plex-sans text-[13px]"
-                          >
-                            {c.nome}
-                          </SelectItem>
-                        ))}
-                    </SelectGroup>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                Professor Mentor Alocado
-              </label>
-              <Select
-                value={form.professor_id}
-                onValueChange={(v) => setForm((f) => ({ ...f, professor_id: v }))}
-                disabled={!professorDaLiga}
-              >
-                <SelectTrigger className="w-full font-plex-sans text-[13px] disabled:opacity-40">
-                  <SelectValue
-                    placeholder={professorDaLiga ? "Nenhum" : "Nenhum professor na liga"}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none" className="font-plex-sans text-[13px]">
-                    Nenhum
-                  </SelectItem>
-                  {professorDaLiga && (
-                    <SelectItem value={professorDaLiga.id} className="font-plex-sans text-[13px]">
-                      {professorDaLiga.nome}
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="proj-descricao"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-              >
-                Descrição
-              </label>
-              <textarea
-                id="proj-descricao"
-                value={form.descricao}
-                onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))}
-                placeholder="Descreva o projeto..."
-                rows={3}
-                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 resize-none rounded"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="proj-impacto"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-              >
-                Impacto Projetado/Realizado
-              </label>
-              <textarea
-                id="proj-impacto"
-                value={form.impacto}
-                onChange={(e) => setForm((f) => ({ ...f, impacto: e.target.value }))}
-                placeholder="Descreva o impacto esperado ou realizado..."
-                rows={3}
-                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 resize-none rounded"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="proj-empresa"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-              >
-                Empresa Parceira Envolvida
-              </label>
-              <input
-                id="proj-empresa"
-                value={form.empresa_parceira}
-                onChange={(e) => setForm((f) => ({ ...f, empresa_parceira: e.target.value }))}
-                placeholder="Ex: Empresa XYZ"
-                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="proj-prazo"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-              >
-                Prazo
-              </label>
-              <input
-                id="proj-prazo"
-                type="date"
-                value={form.prazo}
-                onChange={(e) => setForm((f) => ({ ...f, prazo: e.target.value }))}
-                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 focus:outline-none focus:border-foreground/30 rounded"
-              />
-            </div>
-          </div>
-
-          <div className="flex-shrink-0">
-            <div className="h-px bg-foreground/[0.08]" />
-            <div className="px-8 py-6 flex flex-col gap-3">
-              {(isNovo ||
-                projetoAtual?.status === "rascunho" ||
-                projetoAtual?.status === "rejeitado") && (
-                <button
-                  onClick={() => handleSalvar(true)}
-                  disabled={salvando || !form.titulo.trim()}
-                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {salvando ? "Salvando..." : "Salvar e submeter para aprovação"}
-                </button>
-              )}
+        eyebrow={isNovo ? "Novo" : "Editar"}
+        title={isNovo ? "Adicionar projeto" : projetoAtual?.titulo}
+        footer={
+          <>
+            {(isNovo ||
+              projetoAtual?.status === "rascunho" ||
+              projetoAtual?.status === "rejeitado") && (
               <button
-                onClick={() => handleSalvar(false)}
+                onClick={() => handleSalvar(true)}
                 disabled={salvando || !form.titulo.trim()}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full rounded-full bg-[#10244D] px-4 py-3 font-plex-mono text-[11px] uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {salvando ? "Salvando..." : "Salvar rascunho"}
+                {salvando ? "Salvando..." : "Salvar e submeter para aprovação"}
               </button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+            )}
+            <button
+              onClick={() => handleSalvar(false)}
+              disabled={salvando || !form.titulo.trim()}
+              className="w-full rounded-full border border-foreground/20 px-4 py-3 font-plex-mono text-[11px] uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-foreground/[0.06] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {salvando ? "Salvando..." : "Salvar rascunho"}
+            </button>
+          </>
+        }
+      >
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="proj-titulo" className={LABEL_CLASS}>
+              Título
+            </FieldLabel>
+            <Input
+              id="proj-titulo"
+              value={form.titulo}
+              onChange={(e) => setForm((f) => ({ ...f, titulo: e.target.value }))}
+              placeholder="Nome do projeto"
+              className={INPUT_CLASS}
+            />
+          </Field>
+
+          <Field>
+            <FieldLabel className={LABEL_CLASS}>Responsável</FieldLabel>
+            <Select
+              value={form.responsavel_id}
+              onValueChange={(v) => setForm((f) => ({ ...f, responsavel_id: v }))}
+            >
+              <SelectTrigger className={SELECT_TRIGGER_CLASS}>
+                <SelectValue placeholder="Nenhum" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none" className="text-[13px]">
+                  Nenhum
+                </SelectItem>
+                {membros.map((m) => (
+                  <SelectItem key={m.usuario_id} value={m.usuario_id} className="text-[13px]">
+                    {m.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+
+          <Field>
+            <FieldLabel className={LABEL_CLASS}>Tipo de Projeto</FieldLabel>
+            <Select
+              value={form.tipo_projeto}
+              onValueChange={(v) => setForm((f) => ({ ...f, tipo_projeto: v }))}
+            >
+              <SelectTrigger className={SELECT_TRIGGER_CLASS}>
+                <SelectValue placeholder="Selecionar tipo..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="iniciacao_cientifica" className="text-[13px]">
+                  Iniciação Científica
+                </SelectItem>
+                <SelectItem value="projeto_interno" className="text-[13px]">
+                  Projeto Interno
+                </SelectItem>
+                <SelectItem value="projeto_externo" className="text-[13px]">
+                  Projeto Externo (com parceiros)
+                </SelectItem>
+                <SelectItem value="projeto_estruturante" className="text-[13px]">
+                  Projeto Estruturante (Interdisciplinar e/ou Inovação)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+
+          <Field>
+            <FieldLabel className={LABEL_CLASS}>Categoria</FieldLabel>
+            <Select
+              value={form.categoria_id || "__none__"}
+              onValueChange={(v) =>
+                setForm((f) => ({ ...f, categoria_id: v === "__none__" ? "" : v }))
+              }
+            >
+              <SelectTrigger className={SELECT_TRIGGER_CLASS}>
+                <SelectValue placeholder="Selecionar categoria..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__" className="text-[13px]">
+                  Selecionar categoria...
+                </SelectItem>
+                {categorias.filter((c) => !c.liga_id).length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel className="font-plex-mono text-[9px] uppercase tracking-[0.16em] text-foreground/30">
+                      Categorias Base
+                    </SelectLabel>
+                    {categorias
+                      .filter((c) => !c.liga_id)
+                      .map((c) => (
+                        <SelectItem key={c.id} value={c.id} className="text-[13px]">
+                          {c.nome}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                )}
+                {categorias.filter((c) => c.liga_id).length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel className="font-plex-mono text-[9px] uppercase tracking-[0.16em] text-foreground/30">
+                      Categorias da Liga
+                    </SelectLabel>
+                    {categorias
+                      .filter((c) => c.liga_id)
+                      .map((c) => (
+                        <SelectItem key={c.id} value={c.id} className="text-[13px]">
+                          {c.nome}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                )}
+              </SelectContent>
+            </Select>
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="proj-descricao" className={LABEL_CLASS}>
+              Descrição
+            </FieldLabel>
+            <textarea
+              id="proj-descricao"
+              value={form.descricao}
+              onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))}
+              placeholder="Descreva o projeto..."
+              rows={3}
+              className={TEXTAREA_CLASS}
+            />
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="proj-impacto" className={LABEL_CLASS}>
+              Impacto Projetado/Realizado
+            </FieldLabel>
+            <textarea
+              id="proj-impacto"
+              value={form.impacto}
+              onChange={(e) => setForm((f) => ({ ...f, impacto: e.target.value }))}
+              placeholder="Descreva o impacto esperado ou realizado..."
+              rows={3}
+              className={TEXTAREA_CLASS}
+            />
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="proj-empresa" className={LABEL_CLASS}>
+              Empresa Parceira Envolvida
+            </FieldLabel>
+            <Input
+              id="proj-empresa"
+              value={form.empresa_parceira}
+              onChange={(e) => setForm((f) => ({ ...f, empresa_parceira: e.target.value }))}
+              placeholder="Ex: Empresa XYZ"
+              className={INPUT_CLASS}
+            />
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="proj-prazo" className={LABEL_CLASS}>
+              Prazo
+            </FieldLabel>
+            <Input
+              id="proj-prazo"
+              type="date"
+              value={form.prazo}
+              onChange={(e) => setForm((f) => ({ ...f, prazo: e.target.value }))}
+              className={INPUT_CLASS}
+            />
+          </Field>
+        </FieldGroup>
+      </FormSheet>
     </div>
   );
 }

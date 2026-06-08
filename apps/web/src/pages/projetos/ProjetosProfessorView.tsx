@@ -1,9 +1,14 @@
+import { CheckCircle2, Clock, XCircle } from "lucide-react";
 import { useState } from "react";
 
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
-import { EditorialTable, KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
+import { DashboardCard } from "@/pages/home/components/DashboardCard";
+import { StatStrip, TabSection } from "@/pages/ligas/tabs/primitives";
+
+import { TabelaProjetosSkeleton } from "./ProjetoSkeletons";
+import { STATUS_CONFIG } from "./statusConfig";
 
 type ProjetoAPI = {
   id: string;
@@ -20,15 +25,10 @@ type ProjetoAPI = {
   responsavel?: { nome: string };
 };
 
-const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  rascunho: { label: "Rascunho", className: "text-navy/50" },
-  em_aprovacao: { label: "Em aprovação", className: "text-amber-600" },
-  aprovado: { label: "Aprovado", className: "text-blue-600" },
-  rejeitado: { label: "Rejeitado", className: "text-red-600" },
-  em_andamento: { label: "Em andamento", className: "text-blue-600" },
-  concluido: { label: "Concluído", className: "text-green-700" },
-  cancelado: { label: "Cancelado", className: "text-navy/40" },
-};
+const TH_CLASS =
+  "px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wide text-foreground/40";
+const ROW_CLASS =
+  "border-b border-border transition-colors last:border-0 hover:bg-foreground/[0.03]";
 
 async function getToken() {
   const { data } = await supabase.auth.getSession();
@@ -41,7 +41,7 @@ function diasDesde(data: string) {
 }
 
 export function ProjetosProfessorView() {
-  const { data, refetch } = useCachedFetch<ProjetoAPI[]>("/api/projetos");
+  const { data, carregando, refetch } = useCachedFetch<ProjetoAPI[]>("/api/projetos");
   const projetos = data ?? [];
   const [sheetProjeto, setSheetProjeto] = useState<ProjetoAPI | null>(null);
   const [motivo, setMotivo] = useState("");
@@ -52,9 +52,9 @@ export function ProjetosProfessorView() {
   const recusadosPorMim = projetos.filter((p) => p.aprovacao_professor === "recusado");
 
   const kpis = [
-    { label: "Aguardando decisão", valor: String(aguardando.length) },
-    { label: "Aprovados por mim", valor: String(aprovadosPorMim.length) },
-    { label: "Recusados por mim", valor: String(recusadosPorMim.length) },
+    { icon: Clock, label: "Aguardando decisão", value: String(aguardando.length) },
+    { icon: CheckCircle2, label: "Aprovados por mim", value: String(aprovadosPorMim.length) },
+    { icon: XCircle, label: "Recusados por mim", value: String(recusadosPorMim.length) },
   ];
 
   async function handleAprovar() {
@@ -95,87 +95,123 @@ export function ProjetosProfessorView() {
   const responsavelNome = (p: ProjetoAPI) => p.responsavel_nome ?? p.responsavel?.nome ?? "—";
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-10">
+    <div className="mx-auto max-w-6xl px-8 py-10">
       {/* Cabeçalho */}
-      <div className="mb-10">
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
-          Projetos
-        </h1>
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
-          Revisão Acadêmica
-        </p>
+      <div className="mb-8">
+        <h1 className="font-display text-2xl font-bold text-foreground">Projetos</h1>
+        <p className="mt-1 text-sm text-foreground/50">Revisão acadêmica dos projetos das ligas</p>
       </div>
 
-      <div className="space-y-12">
-        <KpiRow items={kpis} />
+      <div className="space-y-8">
+        {!carregando && <StatStrip items={kpis} />}
 
         {/* Aguardando decisão */}
-        <div>
-          <SectionHeader numero="01" eyebrow="Pendências" titulo="Aguardando Decisão" />
-          {aguardando.length === 0 ? (
-            <p className="font-plex-sans text-[13px] text-navy/50">
-              Nenhum projeto aguardando aprovação.
-            </p>
+        <TabSection titulo="Aguardando decisão">
+          {carregando ? (
+            <TabelaProjetosSkeleton linhas={3} />
+          ) : aguardando.length === 0 ? (
+            <p className="text-sm text-foreground/50">Nenhum projeto aguardando aprovação.</p>
           ) : (
-            <EditorialTable
-              columns={["Projeto", "Liga", "Responsável", "Prazo", "Aguardando", ""]}
-              rows={aguardando.map((p) => [
-                <span key="t" className="font-medium">
-                  {p.titulo}
-                </span>,
-                p.liga?.nome ?? "—",
-                responsavelNome(p),
-                p.prazo
-                  ? new Date(p.prazo + "T00:00:00").toLocaleDateString("pt-BR", {
-                      day: "2-digit",
-                      month: "short",
-                    })
-                  : "—",
-                <span key="d" className="font-plex-mono text-[11px] text-amber-600">
-                  {diasDesde(p.criado_em)}d
-                </span>,
-                <button
-                  key="btn"
-                  onClick={() => {
-                    setMotivo("");
-                    setSheetProjeto(p);
-                  }}
-                  className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors"
-                >
-                  Revisar →
-                </button>,
-              ])}
-            />
+            <DashboardCard className="overflow-hidden">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-border">
+                    {["Projeto", "Liga", "Responsável", "Prazo", "Aguardando", ""].map((h, i) => (
+                      <th key={h || i} className={TH_CLASS}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {aguardando.map((p) => (
+                    <tr key={p.id} className={ROW_CLASS}>
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-medium text-foreground">{p.titulo}</span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-foreground/60">
+                        {p.liga?.nome ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-foreground/60">{responsavelNome(p)}</td>
+                      <td className="px-4 py-3 text-sm text-foreground/60">
+                        {p.prazo
+                          ? new Date(p.prazo + "T00:00:00").toLocaleDateString("pt-BR", {
+                              day: "2-digit",
+                              month: "short",
+                            })
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs font-medium text-amber-600 dark:text-amber-300">
+                          {diasDesde(p.criado_em)}d
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => {
+                            setMotivo("");
+                            setSheetProjeto(p);
+                          }}
+                          className="text-xs text-foreground/50 transition-colors hover:text-foreground"
+                        >
+                          Revisar →
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </DashboardCard>
           )}
-        </div>
+        </TabSection>
 
         {/* Histórico */}
         {(aprovadosPorMim.length > 0 || recusadosPorMim.length > 0) && (
-          <div>
-            <SectionHeader numero="02" eyebrow="Histórico" titulo="Minhas Decisões" />
-            <EditorialTable
-              columns={["Projeto", "Liga", "Decisão", "Data"]}
-              rows={[...aprovadosPorMim, ...recusadosPorMim].map((p) => [
-                p.titulo,
-                p.liga?.nome ?? "—",
-                <span
-                  key="d"
-                  className={
-                    p.aprovacao_professor === "aprovado"
-                      ? "text-green-700 font-medium"
-                      : "text-red-600 font-medium"
-                  }
-                >
-                  {p.aprovacao_professor === "aprovado" ? "Aprovado" : "Recusado"}
-                </span>,
-                new Date(p.criado_em).toLocaleDateString("pt-BR", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                }),
-              ])}
-            />
-          </div>
+          <TabSection titulo="Minhas decisões">
+            <DashboardCard className="overflow-hidden">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-border">
+                    {["Projeto", "Liga", "Decisão", "Data"].map((h) => (
+                      <th key={h} className={TH_CLASS}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...aprovadosPorMim, ...recusadosPorMim].map((p) => (
+                    <tr key={p.id} className={ROW_CLASS}>
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-medium text-foreground">{p.titulo}</span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-foreground/60">
+                        {p.liga?.nome ?? "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`text-xs font-medium ${
+                            p.aprovacao_professor === "aprovado"
+                              ? "text-emerald-600 dark:text-emerald-300"
+                              : "text-red-600 dark:text-red-300"
+                          }`}
+                        >
+                          {p.aprovacao_professor === "aprovado" ? "Aprovado" : "Recusado"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-foreground/60">
+                        {new Date(p.criado_em).toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </DashboardCard>
+          </TabSection>
         )}
       </div>
 
