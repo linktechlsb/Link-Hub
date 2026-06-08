@@ -14,10 +14,10 @@ import { DataGrid, DataGridContainer } from "@/components/reui/data-grid/data-gr
 import { DataGridColumnHeader } from "@/components/reui/data-grid/data-grid-column-header";
 import { DataGridTable } from "@/components/reui/data-grid/data-grid-table";
 import { Filters, type Filter, type FilterFieldConfig } from "@/components/reui/filters";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -68,16 +68,6 @@ function formatPrazo(prazo?: string): string {
   const d = new Date(prazo.includes("T") ? prazo : `${prazo}T00:00:00`);
   if (isNaN(d.getTime())) return "—";
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-}
-
-function iniciais(nome?: string): string {
-  if (!nome) return "?";
-  return nome
-    .split(" ")
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
 }
 
 /** Mantém apenas filtros com valores reais. */
@@ -235,12 +225,7 @@ export function HomeTasksPanel({ data }: { data: HomeData }) {
           const r = row.original;
           return (
             <div className="flex items-center gap-2.5">
-              <Avatar className="size-7">
-                <AvatarImage src={r.responsavel_avatar} alt={r.responsavel_nome ?? ""} />
-                <AvatarFallback className="text-[10px]">
-                  {iniciais(r.responsavel_nome)}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar nome={r.responsavel_nome} src={r.responsavel_avatar} className="size-7" />
               <div className="space-y-px">
                 <div className="text-xs font-medium text-foreground">
                   {r.responsavel_nome ?? "Não atribuída"}

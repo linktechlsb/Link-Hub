@@ -65,6 +65,7 @@ interface Recurso {
   url: string;
   icone: string;
   cor: string;
+  publico: boolean;
 }
 
 interface MetricasLiga {
@@ -90,6 +91,7 @@ type RecursoAPI = {
   url: string;
   icone: string;
   cor: string;
+  publico?: boolean;
 };
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -133,6 +135,7 @@ function apiParaRecurso(r: RecursoAPI): Recurso {
     url: r.url,
     icone: r.icone ?? "link",
     cor: r.cor ?? "#546484",
+    publico: r.publico ?? false,
   };
 }
 
@@ -535,6 +538,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
   const [novoUrl, setNovoUrl] = useState("");
   const [novoIcone, setNovoIcone] = useState("link");
   const [novoCor, setNovoCor] = useState("#546484");
+  const [novoPublico, setNovoPublico] = useState(false);
   const [novoEnviando, setNovoEnviando] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Recurso>>({});
@@ -626,6 +630,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
         url: novoUrl.trim(),
         icone: novoIcone,
         cor: novoCor,
+        publico: novoPublico,
       }),
     });
     if (res.ok) {
@@ -636,6 +641,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
       setNovoTipo("URL");
       setNovoIcone("link");
       setNovoCor("#546484");
+      setNovoPublico(false);
       setNovoEnviando(false);
     } else {
       const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -654,7 +660,14 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
 
   function iniciarEdicao(r: Recurso) {
     setEditandoId(r.id);
-    setEditForm({ nome: r.nome, tipo: r.tipo, url: r.url, icone: r.icone, cor: r.cor });
+    setEditForm({
+      nome: r.nome,
+      tipo: r.tipo,
+      url: r.url,
+      icone: r.icone,
+      cor: r.cor,
+      publico: r.publico,
+    });
     setSheetAberto(true);
   }
 
@@ -669,6 +682,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
         url: editForm.url,
         icone: editForm.icone,
         cor: editForm.cor,
+        publico: editForm.publico,
       }),
     });
     if (res.ok) {
@@ -694,6 +708,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
               setNovoUrl("");
               setNovoIcone("link");
               setNovoCor("#546484");
+              setNovoPublico(false);
               setEditandoId(null);
               setSheetAberto(true);
             }}
@@ -928,6 +943,31 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                 </div>
               );
             })()}
+            <div>
+              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                Visibilidade
+              </label>
+              <Select
+                value={(editandoId ? editForm.publico : novoPublico) ? "publico" : "privado"}
+                onValueChange={(v) => {
+                  const pub = v === "publico";
+                  if (editandoId) setEditForm({ ...editForm, publico: pub });
+                  else setNovoPublico(pub);
+                }}
+              >
+                <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="privado" className="font-plex-sans text-[13px]">
+                    Privado · só membros da liga
+                  </SelectItem>
+                  <SelectItem value="publico" className="font-plex-sans text-[13px]">
+                    Público · visível para todos
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
           </div>
           <div className="flex-shrink-0">

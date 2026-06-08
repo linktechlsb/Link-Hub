@@ -147,7 +147,11 @@
       "Bash(npx skills *)",
       "mcp__agentation__agentation_list_sessions",
       "mcp__agentation__agentation_get_all_pending",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "Bash(npx shadcn@latest add @reui/c-avatar-24)",
+      "Bash(./node_modules/.bin/eslint --version)",
+      "Bash(ls node_modules/@eslint/js/package.json)",
+      "Bash(grep -E \"\\\\.ts$\")"
     ],
     "deny": [
       "Bash(git commit *)",

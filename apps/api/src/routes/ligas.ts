@@ -10,7 +10,12 @@ import multer from "multer";
 import { sql } from "../config/db.js";
 import { supabaseAdmin } from "../config/supabase.js";
 import { authenticate, requireRole, type AuthenticatedRequest } from "../middleware/auth.js";
-import { requireLigaMembership, requireLigaOwnership } from "../middleware/authorization.js";
+import {
+  requireLigaMembership,
+  requireLigaOwnership,
+  usuarioEhProfessorDaLiga,
+  usuarioPertenceALiga,
+} from "../middleware/authorization.js";
 
 export const ligasRouter: IRouter = Router();
 
@@ -224,27 +229,38 @@ ligasRouter.get("/:id/professor", authenticate, async (req, res, next) => {
   }
 });
 
-// GET /ligas/:id/projetos — projetos da liga (somente membros, staff ou professor)
-ligasRouter.get(
-  "/:id/projetos",
-  authenticate,
-  requireLigaMembership("id"),
-  async (req, res, next) => {
-    try {
-      const id = req.params["id"] as string;
-      const projetos = await sql`
-      SELECT p.*, p.nome AS titulo, u.nome AS responsavel_nome
-      FROM projetos p
-      LEFT JOIN usuarios u ON u.id = p.responsavel_id
-      WHERE p.liga_id = ${id}
-      ORDER BY p.criado_em DESC
-    `;
-      res.json(projetos);
-    } catch (err) {
-      next(err);
-    }
-  },
-);
+// GET /ligas/:id/projetos — membros/staff/professor veem todos;
+// pessoas de fora só veem projetos concluídos ou em andamento.
+ligasRouter.get("/:id/projetos", authenticate, async (req, res, next) => {
+  try {
+    const user = (req as AuthenticatedRequest).user!;
+    const id = req.params["id"] as string;
+
+    const acessoCompleto =
+      user.role === "staff" ||
+      (await usuarioEhProfessorDaLiga(user.id, id)) ||
+      (await usuarioPertenceALiga(user.email, id));
+
+    const projetos = acessoCompleto
+      ? await sql`
+          SELECT p.*, p.nome AS titulo, u.nome AS responsavel_nome
+          FROM projetos p
+          LEFT JOIN usuarios u ON u.id = p.responsavel_id
+          WHERE p.liga_id = ${id}
+          ORDER BY p.criado_em DESC
+        `
+      : await sql`
+          SELECT p.*, p.nome AS titulo, u.nome AS responsavel_nome
+          FROM projetos p
+          LEFT JOIN usuarios u ON u.id = p.responsavel_id
+          WHERE p.liga_id = ${id} AND p.status IN ('concluido', 'em_andamento')
+          ORDER BY p.criado_em DESC
+        `;
+    res.json(projetos);
+  } catch (err) {
+    next(err);
+  }
+});
 
 // GET /ligas/:id/presenca — registros de presença agrupados por evento (somente membros)
 ligasRouter.get(
@@ -269,6 +285,7 @@ ligasRouter.get(
       CROSS JOIN eventos e
       LEFT JOIN presencas pr ON pr.evento_id = e.id AND pr.usuario_id = lm.usuario_id
       WHERE lm.liga_id = ${id} AND e.liga_id = ${id} AND e.data <= NOW()
+        AND e.data >= lm.ingressou_em::date
       ORDER BY e.data DESC, u.nome ASC
     `;
       res.json(registros);

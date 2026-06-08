@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { supabase } from "@/lib/supabase";
 
 import type { Liga } from "@link-leagues/types";
@@ -164,11 +165,7 @@ export function LigaMembrosSheet({ open, onOpenChange, liga, onSalvo }: LigaMemb
                       className="w-full text-left px-4 py-3 hover:bg-navy/[0.03] dark:hover:bg-white/5 border-b border-navy/10 dark:border-white/10 last:border-0 flex items-center gap-3 transition-colors"
                       onClick={() => selecionarUsuario(u)}
                     >
-                      <div className="h-7 w-7 bg-navy flex items-center justify-center flex-shrink-0 rounded">
-                        <span className="font-plex-mono text-[10px] text-white">
-                          {u.nome.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
+                      <UserAvatar nome={u.nome} className="size-7 rounded" />
                       <div>
                         <p className="font-plex-sans font-medium text-[13px] text-navy dark:text-white">
                           {u.nome}
@@ -223,11 +220,7 @@ export function LigaMembrosSheet({ open, onOpenChange, liga, onSalvo }: LigaMemb
                     className="border-b border-navy/10 dark:border-white/10 py-3 flex items-center justify-between gap-3"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-8 w-8 bg-navy rounded flex items-center justify-center flex-shrink-0">
-                        <span className="font-plex-mono text-[10px] text-white">
-                          {m.nome.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
+                      <UserAvatar nome={m.nome} className="size-8 rounded" />
                       <div className="min-w-0">
                         <p className="font-plex-sans font-semibold text-[13px] text-navy dark:text-white truncate">
                           {m.nome}

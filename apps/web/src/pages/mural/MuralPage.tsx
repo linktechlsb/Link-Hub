@@ -7,6 +7,7 @@ import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -16,14 +17,6 @@ import type { Liga, Post, PostComentario } from "@link-leagues/types";
 async function getToken(): Promise<string> {
   const { data } = await supabase.auth.getSession();
   return data.session?.access_token ?? "";
-}
-
-function iniciais(nome: string): string {
-  return nome
-    .split(" ")
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("");
 }
 
 function formatarDataRelativa(iso: string): string {
@@ -509,19 +502,11 @@ export function MuralPage() {
             >
               <header className="flex items-start justify-between mb-3">
                 <div className="flex items-start gap-3">
-                  <div className="h-9 w-9 rounded-full bg-navy flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    {post.autor_avatar_url ? (
-                      <img
-                        src={post.autor_avatar_url}
-                        alt={post.autor_nome ?? ""}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-white font-bold text-[11px]">
-                        {iniciais(post.autor_nome ?? post.liga_nome ?? "LI")}
-                      </span>
-                    )}
-                  </div>
+                  <UserAvatar
+                    nome={post.autor_nome ?? post.liga_nome}
+                    src={post.autor_avatar_url}
+                    className="h-9 w-9"
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-display font-bold text-[13px] text-navy dark:text-foreground">
@@ -586,11 +571,7 @@ export function MuralPage() {
                 <div className="mt-4 border-t border-foreground/[0.08] pt-4 space-y-3">
                   {(comentariosPorPost[post.id] ?? []).map((c) => (
                     <div key={c.id} className="flex gap-3">
-                      <div className="h-7 w-7 rounded-full bg-foreground/10 flex items-center justify-center flex-shrink-0">
-                        <span className="font-plex-mono text-[9px] text-foreground/60">
-                          {iniciais(c.autor_nome ?? "U")}
-                        </span>
-                      </div>
+                      <UserAvatar nome={c.autor_nome ?? "U"} className="h-7 w-7" />
                       <div className="flex-1 bg-foreground/[0.02] border border-foreground/[0.06] rounded px-3 py-2">
                         <p className="font-plex-mono text-[9px] uppercase tracking-[0.14em] text-foreground/50">
                           {c.autor_nome}
@@ -639,15 +620,7 @@ export function MuralPage() {
 
           {/* Linha de autor */}
           <div className="flex items-start gap-3 px-5 pt-5">
-            <div className="h-10 w-10 rounded-full bg-navy flex items-center justify-center flex-shrink-0 overflow-hidden">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt={nomeUsuario} className="h-full w-full object-cover" />
-              ) : (
-                <span className="text-white font-bold text-[12px]">
-                  {iniciais(nomeUsuario || "U")}
-                </span>
-              )}
-            </div>
+            <UserAvatar nome={nomeUsuario || "U"} src={avatarUrl} className="h-10 w-10" />
             <div>
               <p className="font-display font-bold text-[13px] text-navy dark:text-foreground">
                 {nomeUsuario || "Você"}

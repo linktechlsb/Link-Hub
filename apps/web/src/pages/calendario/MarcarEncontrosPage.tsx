@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 
@@ -76,14 +77,6 @@ function buildGCalUrl(evento: EventoMarcado, membros: Membro[], selecionados: Se
     url += `&add=${encodeURIComponent(m.email)}`;
   }
   return url;
-}
-
-function iniciais(nome: string): string {
-  return nome
-    .split(" ")
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("");
 }
 
 const fieldCls =
@@ -290,9 +283,7 @@ export function MarcarEncontrosPage() {
                           </svg>
                         )}
                       </div>
-                      <div className="h-7 w-7 rounded-full bg-navy/10 flex items-center justify-center shrink-0">
-                        <span className="text-[10px] font-bold text-navy">{iniciais(m.nome)}</span>
-                      </div>
+                      <UserAvatar nome={m.nome} className="size-7" />
                       <div className="flex-1 min-w-0">
                         <p className="font-plex-sans text-[13px] text-foreground truncate">
                           {m.nome}

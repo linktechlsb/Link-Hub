@@ -1,7 +1,6 @@
 import { ChevronsUpDown, HelpCircle, LogOut, Moon, UserRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -17,6 +16,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Switch } from "@/components/ui/switch";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTheme } from "@/hooks/use-theme";
 import { supabase } from "@/lib/supabase";
 
@@ -42,13 +42,6 @@ export function NavUser({ user }: { user: NavUserData }) {
   const navigate = useNavigate();
   const { theme, toggle } = useTheme();
 
-  const initials = user.name
-    .split(" ")
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
-
   async function handleLogout() {
     await supabase.auth.signOut();
     navigate("/login");
@@ -63,12 +56,12 @@ export function NavUser({ user }: { user: NavUserData }) {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-full">
-                <AvatarImage src={user.avatarUrl ?? undefined} alt={user.name} />
-                <AvatarFallback className="rounded-full text-xs font-medium">
-                  {initials || "?"}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar
+                nome={user.name}
+                src={user.avatarUrl}
+                className="h-8 w-8 rounded-full"
+                fallbackClassName="text-xs"
+              />
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{user.name}</span>
                 <span className="truncate text-xs text-muted-foreground">{user.email}</span>
@@ -85,12 +78,12 @@ export function NavUser({ user }: { user: NavUserData }) {
           >
             {/* Header */}
             <div className="flex items-center gap-2.5 px-2 py-2">
-              <Avatar className="h-8 w-8 rounded-full">
-                <AvatarImage src={user.avatarUrl ?? undefined} alt={user.name} />
-                <AvatarFallback className="rounded-full text-xs font-medium">
-                  {initials || "?"}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar
+                nome={user.name}
+                src={user.avatarUrl}
+                className="h-8 w-8 rounded-full"
+                fallbackClassName="text-xs"
+              />
               <div className="flex flex-1 flex-col text-left leading-tight min-w-0 gap-0.5">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="font-semibold text-sm truncate">{user.name}</span>

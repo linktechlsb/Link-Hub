@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
 
+import { TabSection } from "./primitives";
+
 import type { Recurso } from "@link-leagues/types";
 import type { LucideProps } from "lucide-react";
 
@@ -50,46 +52,55 @@ export function RecursosTab({ ligaId }: Props) {
   }, [ligaId]);
 
   if (carregando) {
-    return <p className="text-sm text-muted-foreground">Carregando recursos...</p>;
+    return <p className="text-sm text-foreground/50">Carregando recursos...</p>;
   }
 
+  const contador = (
+    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground/60">
+      {recursos.length}
+    </span>
+  );
+
   return (
-    <div className="space-y-3">
-      <p className="text-xs font-bold text-link-blue dark:text-white uppercase tracking-wider">
-        Recursos da Liga{" "}
-        <span className="bg-brand-gray text-link-blue dark:bg-white/10 dark:text-white rounded-full px-2 py-0.5 text-xs font-normal ml-1 normal-case">
-          {recursos.length}
-        </span>
-      </p>
+    <TabSection titulo="Recursos da liga" acao={contador}>
       {recursos.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhum recurso cadastrado.</p>
+        <p className="text-sm text-foreground/50">Nenhum recurso cadastrado.</p>
       ) : (
-        recursos.map((r) => (
-          <div
-            key={r.id}
-            className="bg-white dark:bg-white/5 border border-brand-gray dark:border-white/10 rounded-lg px-4 py-3 flex items-center gap-3"
-          >
+        <div className="flex flex-col gap-3">
+          {recursos.map((r) => (
             <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: r.cor }}
+              key={r.id}
+              className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
             >
-              <DynamicIcon name={r.icone} size={18} color="white" />
+              <div
+                className="flex size-9 flex-shrink-0 items-center justify-center rounded-lg"
+                style={{ backgroundColor: r.cor }}
+              >
+                <DynamicIcon name={r.icone} size={18} color="white" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-foreground">{r.titulo}</span>
+                  {r.publico && (
+                    <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-medium text-emerald-600 dark:text-emerald-300">
+                      Público
+                    </span>
+                  )}
+                </div>
+                <div className="mt-0.5 text-xs capitalize text-foreground/50">{r.tipo}</div>
+              </div>
+              <a
+                href={r.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-foreground/60 transition-colors hover:text-foreground"
+              >
+                ↗ Abrir
+              </a>
             </div>
-            <div className="flex-1">
-              <div className="font-bold text-navy dark:text-white text-sm">{r.titulo}</div>
-              <div className="text-xs text-muted-foreground mt-0.5 capitalize">{r.tipo}</div>
-            </div>
-            <a
-              href={r.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-semibold text-link-blue hover:text-navy dark:text-white/60 dark:hover:text-white transition-colors"
-            >
-              ↗ Abrir
-            </a>
-          </div>
-        ))
+          ))}
+        </div>
       )}
-    </div>
+    </TabSection>
   );
 }
