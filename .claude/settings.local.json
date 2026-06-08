@@ -146,7 +146,8 @@
       "Bash(wait)",
       "Bash(npx skills *)",
       "mcp__agentation__agentation_list_sessions",
-      "mcp__agentation__agentation_get_all_pending"
+      "mcp__agentation__agentation_get_all_pending",
+      "Bash(npx eslint *)"
     ],
     "deny": [
       "Bash(git commit *)",

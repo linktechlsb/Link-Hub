@@ -23,14 +23,14 @@ export function KpiStrip({ items, loading = false }: KpiStripProps) {
   if (loading) {
     return (
       <DashboardCard>
-        <div className="grid grid-cols-4 divide-x divide-[#2D2D2D]">
+        <div className="grid grid-cols-4 divide-x divide-border">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="flex flex-col gap-4 p-5">
               <div className="flex items-center gap-2">
-                <Skeleton className="h-4 w-4 rounded-sm bg-white/5" />
-                <Skeleton className="h-3 w-20 bg-white/5" />
+                <Skeleton className="h-4 w-4 rounded-sm bg-foreground/5" />
+                <Skeleton className="h-3 w-20 bg-foreground/5" />
               </div>
-              <Skeleton className="h-8 w-16 bg-white/5" />
+              <Skeleton className="h-8 w-16 bg-foreground/5" />
             </div>
           ))}
         </div>
@@ -40,14 +40,14 @@ export function KpiStrip({ items, loading = false }: KpiStripProps) {
 
   return (
     <DashboardCard>
-      <div className="grid grid-cols-4 divide-x divide-[#2D2D2D]">
+      <div className="grid grid-cols-4 divide-x divide-border">
         {items.map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex flex-col gap-4 p-5">
-            <div className="flex items-center gap-2 text-white/50">
+            <div className="flex items-center gap-2 text-foreground/50">
               <Icon className="h-4 w-4" />
               <span className="text-xs font-medium">{label}</span>
             </div>
-            <span className="font-display text-3xl font-bold text-white">{value}</span>
+            <span className="font-display text-3xl font-bold text-foreground">{value}</span>
           </div>
         ))}
       </div>

@@ -58,12 +58,12 @@ export function MilestonesPanel() {
   }, []);
 
   return (
-    <DashboardCard className="dark flex h-[260px] flex-col gap-3 p-5">
+    <DashboardCard className="flex h-[260px] flex-col gap-3 p-5">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs text-white/40">Próximos marcos</h3>
+        <h3 className="text-xs text-foreground/40">Próximos marcos</h3>
         <Link
           to="/projetos"
-          className="flex items-center gap-1 text-[11px] text-white/40 transition-colors hover:text-white"
+          className="flex items-center gap-1 text-[11px] text-foreground/40 transition-colors hover:text-foreground"
         >
           Ver projetos <ArrowUpRight className="h-3 w-3" />
         </Link>
@@ -74,20 +74,20 @@ export function MilestonesPanel() {
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="flex items-center gap-3 border-b border-[#2D2D2D] py-2.5 last:border-0"
+              className="flex items-center gap-3 border-b border-border py-2.5 last:border-0"
             >
-              <Skeleton className="size-7 rounded-md bg-white/5" />
+              <Skeleton className="size-7 rounded-md bg-foreground/5" />
               <div className="flex-1 space-y-1.5">
-                <Skeleton className="h-3.5 w-2/3 bg-white/5" />
-                <Skeleton className="h-2.5 w-1/3 bg-white/5" />
+                <Skeleton className="h-3.5 w-2/3 bg-foreground/5" />
+                <Skeleton className="h-2.5 w-1/3 bg-foreground/5" />
               </div>
-              <Skeleton className="h-4 w-10 bg-white/5" />
+              <Skeleton className="h-4 w-10 bg-foreground/5" />
             </div>
           ))}
         </div>
       ) : milestones.length === 0 ? (
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-center text-xs text-white/40">Nenhum marco a vencer.</p>
+          <p className="text-center text-xs text-foreground/40">Nenhum marco a vencer.</p>
         </div>
       ) : (
         <ul className="flex min-h-0 flex-1 flex-col overflow-auto">
@@ -95,7 +95,7 @@ export function MilestonesPanel() {
             const dias = diasAte(m.prazo);
             const atrasado = dias != null && dias < 0;
             return (
-              <li key={m.id} className="border-b border-[#2D2D2D] last:border-0">
+              <li key={m.id} className="border-b border-border last:border-0">
                 <Link
                   to={`/projetos/${m.projeto.id}`}
                   className="flex items-center gap-3 py-2.5 transition-colors hover:opacity-80"
@@ -103,21 +103,23 @@ export function MilestonesPanel() {
                   <div
                     className={cn(
                       "flex size-7 shrink-0 items-center justify-center rounded-md",
-                      atrasado ? "bg-red-400/15 text-red-300" : "bg-white/[0.06] text-white/60",
+                      atrasado
+                        ? "bg-red-500/10 text-red-600 dark:text-red-300"
+                        : "bg-foreground/[0.06] text-foreground/60",
                     )}
                   >
                     <Flag className="size-3.5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium text-white">{m.titulo}</p>
-                    <p className="truncate text-[10px] text-white/40">
+                    <p className="truncate text-xs font-medium text-foreground">{m.titulo}</p>
+                    <p className="truncate text-[10px] text-foreground/40">
                       {m.projeto.titulo} · {m.liga.nome}
                     </p>
                   </div>
                   <span
                     className={cn(
                       "shrink-0 text-[11px] font-medium tabular-nums",
-                      atrasado ? "text-red-300" : "text-white/50",
+                      atrasado ? "text-red-600 dark:text-red-300" : "text-foreground/50",
                     )}
                   >
                     {rotuloPrazo(dias)}

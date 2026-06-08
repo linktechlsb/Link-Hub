@@ -46,10 +46,16 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 const STATUS_INFO: Record<string, { label: string; className: string }> = {
-  pendente: { label: "Pendente", className: "bg-amber-400/15 text-amber-300" }, // amarelo
-  em_andamento: { label: "Em andamento", className: "bg-violet-400/15 text-violet-300" }, // roxo
-  concluida: { label: "Concluída", className: "bg-emerald-400/15 text-emerald-300" }, // verde
-  arquivada: { label: "Arquivada", className: "bg-zinc-400/15 text-zinc-300" }, // cinza
+  pendente: { label: "Pendente", className: "bg-amber-500/10 text-amber-600 dark:text-amber-300" }, // amarelo
+  em_andamento: {
+    label: "Em andamento",
+    className: "bg-violet-500/10 text-violet-600 dark:text-violet-300",
+  }, // roxo
+  concluida: {
+    label: "Concluída",
+    className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
+  }, // verde
+  arquivada: { label: "Arquivada", className: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-300" }, // cinza
 };
 
 async function getToken(): Promise<string | null> {
@@ -320,10 +326,10 @@ export function HomeTasksPanel({ data }: { data: HomeData }) {
   });
 
   return (
-    <DashboardCard className="dark flex flex-col gap-3 p-5">
+    <DashboardCard className="flex flex-col gap-3 p-5">
       {/* Header: título + botão de filtro (canto superior direito) */}
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs text-white/40">{ehPessoal ? "Minhas tarefas" : "Tarefas"}</h3>
+        <h3 className="text-xs text-foreground/40">{ehPessoal ? "Minhas tarefas" : "Tarefas"}</h3>
         <div className="flex items-center gap-2">
           {filtrosAtivos(filters).length > 0 && (
             <Button variant="outline" size="sm" onClick={() => setFilters([])}>
@@ -355,7 +361,7 @@ export function HomeTasksPanel({ data }: { data: HomeData }) {
         emptyMessage={ehPessoal ? "Nenhuma tarefa pendente." : "Nenhuma tarefa."}
         tableLayout={{ dense: true }}
       >
-        <DataGridContainer className="border-[#2D2D2D]">
+        <DataGridContainer className="border-border">
           <div className="max-h-[340px] overflow-auto">
             <DataGridTable />
           </div>
@@ -366,7 +372,7 @@ export function HomeTasksPanel({ data }: { data: HomeData }) {
       <div className="mt-auto flex justify-end pt-1">
         <Link
           to="/tarefas"
-          className="flex items-center gap-1 text-[11px] text-white/40 transition-colors hover:text-white"
+          className="flex items-center gap-1 text-[11px] text-foreground/40 transition-colors hover:text-foreground"
         >
           Ver todas <ArrowUpRight className="h-3 w-3" />
         </Link>

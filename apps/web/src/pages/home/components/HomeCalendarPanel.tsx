@@ -61,8 +61,8 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
       }}
       className={cn(
         "relative flex h-9 w-full flex-col items-center justify-center gap-1 rounded-md text-xs transition-colors focus:outline-none",
-        temEventos ? "cursor-pointer hover:bg-white/[0.08]" : "cursor-default",
-        isToday ? "font-bold text-white" : "text-white/60",
+        temEventos ? "cursor-pointer hover:bg-foreground/[0.08]" : "cursor-default",
+        isToday ? "font-bold text-foreground" : "text-foreground/60",
       )}
     >
       <span
@@ -94,17 +94,17 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
       <PopoverTrigger asChild>{cell}</PopoverTrigger>
       <PopoverContent
         align="center"
-        className="z-50 w-64 border-white/10 bg-[#202020]/70 p-0 text-white backdrop-blur-md"
+        className="z-50 w-64 border-border bg-popover/95 p-0 text-popover-foreground backdrop-blur-md"
       >
-        <div className="border-b border-[#2D2D2D] px-3 py-2">
-          <p className="text-xs font-semibold capitalize text-white">
+        <div className="border-b border-border px-3 py-2">
+          <p className="text-xs font-semibold capitalize text-foreground">
             {day.date.toLocaleDateString("pt-BR", {
               weekday: "long",
               day: "numeric",
               month: "long",
             })}
           </p>
-          <p className="text-[10px] text-white/40">
+          <p className="text-[10px] text-foreground/40">
             {eventos.length} evento{eventos.length !== 1 ? "s" : ""}
           </p>
         </div>
@@ -116,17 +116,17 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
             return (
               <div
                 key={evento.id}
-                className="flex items-start gap-2 border-b border-[#2D2D2D] px-3 py-2 last:border-0"
+                className="flex items-start gap-2 border-b border-border px-3 py-2 last:border-0"
               >
                 <span
                   className="mt-1 h-2 w-2 shrink-0 rounded-full"
                   style={{ backgroundColor: corCategoria(evento.categoria) }}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-white">{evento.titulo}</p>
-                  <p className="truncate text-[10px] text-white/50">
+                  <p className="truncate text-xs font-medium text-foreground">{evento.titulo}</p>
+                  <p className="truncate text-[10px] text-foreground/50">
                     {evento.liga?.nome ?? "Liga"}
-                    {horario && <span className="ml-1.5 text-white/40">· {horario}</span>}
+                    {horario && <span className="ml-1.5 text-foreground/40">· {horario}</span>}
                   </p>
                 </div>
               </div>
@@ -177,21 +177,21 @@ export function HomeCalendarPanel() {
     <DashboardCard className="flex flex-col gap-4 p-5">
       {/* Header: título + navegação do mês */}
       <div className="flex items-center justify-between">
-        <h3 className="text-xs text-white/40">Calendário</h3>
+        <h3 className="text-xs text-foreground/40">Calendário</h3>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setViewDate(new Date(year, month - 1, 1))}
-            className="rounded-md p-1 text-white/50 transition-colors hover:bg-white/[0.06] hover:text-white"
+            className="rounded-md p-1 text-foreground/50 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
             aria-label="Mês anterior"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="min-w-[7.5rem] text-center text-xs font-medium text-white/70">
+          <span className="min-w-[7.5rem] text-center text-xs font-medium text-foreground/70">
             {MESES[month]} {year}
           </span>
           <button
             onClick={() => setViewDate(new Date(year, month + 1, 1))}
-            className="rounded-md p-1 text-white/50 transition-colors hover:bg-white/[0.06] hover:text-white"
+            className="rounded-md p-1 text-foreground/50 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
             aria-label="Próximo mês"
           >
             <ChevronRight className="h-4 w-4" />
@@ -215,7 +215,7 @@ export function HomeCalendarPanel() {
             nav: "hidden",
             weekdays: "grid grid-cols-7",
             weekday:
-              "text-center text-[10px] font-medium uppercase tracking-wide text-white/30 pb-1",
+              "text-center text-[10px] font-medium uppercase tracking-wide text-foreground/30 pb-1",
             week: "grid grid-cols-7",
             day: "p-0",
             today: "",
@@ -230,14 +230,14 @@ export function HomeCalendarPanel() {
       </CalendarContext.Provider>
 
       {/* Legenda de categorias */}
-      <div className="flex flex-wrap gap-x-3 gap-y-1.5 border-t border-[#2D2D2D] pt-3">
+      <div className="flex flex-wrap gap-x-3 gap-y-1.5 border-t border-border pt-3">
         {(Object.keys(CATEGORIA_EVENTO) as CategoriaEvento[]).map((cat) => (
           <div key={cat} className="flex items-center gap-1.5">
             <span
               className="h-1.5 w-1.5 rounded-full"
               style={{ backgroundColor: CATEGORIA_EVENTO[cat].cor }}
             />
-            <span className="text-[10px] text-white/40">{CATEGORIA_EVENTO[cat].label}</span>
+            <span className="text-[10px] text-foreground/40">{CATEGORIA_EVENTO[cat].label}</span>
           </div>
         ))}
       </div>

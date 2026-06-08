@@ -67,10 +67,10 @@ function formatarPontos(valor: number): string {
 
 /** Cor do número da posição — pódio em destaque. */
 function corPosicao(pos: number): string {
-  if (pos === 1) return "text-brand-yellow";
-  if (pos === 2) return "text-white/70";
-  if (pos === 3) return "text-white/50";
-  return "text-white/30";
+  if (pos === 1) return "text-amber-500 dark:text-brand-yellow";
+  if (pos === 2) return "text-foreground/70";
+  if (pos === 3) return "text-foreground/50";
+  return "text-foreground/30";
 }
 
 async function getToken(): Promise<string | null> {
@@ -135,20 +135,20 @@ export function RankingPanel({ data }: { data: HomeData }) {
   const linhas = ordenado.slice(0, MAX_LINHAS);
 
   return (
-    <DashboardCard className="dark flex flex-col gap-5 p-5">
+    <DashboardCard className="flex flex-col gap-5 p-5">
       {/* Header: label + posição em destaque */}
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-xs text-white/40">
+          <p className="text-xs text-foreground/40">
             Ranking{ligaDestaque ? ` · ${ligaDestaque.nome}` : ""}
           </p>
-          <p className="mt-1 font-display text-3xl font-bold leading-none text-white">
+          <p className="mt-1 font-display text-3xl font-bold leading-none text-foreground">
             {posicaoDestaque ? `#${posicaoDestaque}` : "—"}
           </p>
         </div>
         <Link
           to="/ranking"
-          className="flex items-center gap-1 text-[11px] text-white/40 transition-colors hover:text-white"
+          className="flex items-center gap-1 text-[11px] text-foreground/40 transition-colors hover:text-foreground"
         >
           Ver ranking <ArrowUpRight className="h-3 w-3" />
         </Link>
@@ -156,17 +156,17 @@ export function RankingPanel({ data }: { data: HomeData }) {
 
       {loading ? (
         <div className="flex flex-col gap-5">
-          <Skeleton className="h-2.5 w-full rounded-full bg-white/5" />
+          <Skeleton className="h-2.5 w-full rounded-full bg-foreground/5" />
           <div className="flex flex-col">
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 border-b border-[#2D2D2D] py-2.5 last:border-0"
+                className="flex items-center gap-3 border-b border-border py-2.5 last:border-0"
               >
-                <Skeleton className="size-4 bg-white/5" />
-                <Skeleton className="size-7 rounded-md bg-white/5" />
-                <Skeleton className="h-4 flex-1 bg-white/5" />
-                <Skeleton className="h-4 w-10 bg-white/5" />
+                <Skeleton className="size-4 bg-foreground/5" />
+                <Skeleton className="size-7 rounded-md bg-foreground/5" />
+                <Skeleton className="h-4 flex-1 bg-foreground/5" />
+                <Skeleton className="h-4 w-10 bg-foreground/5" />
               </div>
             ))}
           </div>
@@ -189,7 +189,7 @@ export function RankingPanel({ data }: { data: HomeData }) {
                 {segmentos.map((s) => (
                   <div key={s.chave} className="flex items-center gap-1.5">
                     <span className="size-2 rounded-full" style={{ backgroundColor: s.cor }} />
-                    <span className="text-[11px] text-white/60">{s.label}</span>
+                    <span className="text-[11px] text-foreground/60">{s.label}</span>
                   </div>
                 ))}
               </div>
@@ -198,10 +198,12 @@ export function RankingPanel({ data }: { data: HomeData }) {
 
           {/* Tabela do ranking */}
           {linhas.length === 0 ? (
-            <p className="py-6 text-center text-xs text-white/40">Ainda não há ligas no ranking.</p>
+            <p className="py-6 text-center text-xs text-foreground/40">
+              Ainda não há ligas no ranking.
+            </p>
           ) : (
             <div className="flex flex-col">
-              <div className="flex items-center gap-3 border-b border-[#2D2D2D] pb-2 text-[10px] uppercase tracking-wide text-white/30">
+              <div className="flex items-center gap-3 border-b border-border pb-2 text-[10px] uppercase tracking-wide text-foreground/30">
                 <span className="w-4" />
                 <span className="flex-1">Liga</span>
                 <span className="w-12 text-right">Share</span>
@@ -214,7 +216,7 @@ export function RankingPanel({ data }: { data: HomeData }) {
                 return (
                   <div
                     key={r.liga_id}
-                    className="flex items-center gap-3 border-b border-[#2D2D2D] py-2.5 last:border-0"
+                    className="flex items-center gap-3 border-b border-border py-2.5 last:border-0"
                   >
                     <span
                       className={cn(
@@ -227,21 +229,21 @@ export function RankingPanel({ data }: { data: HomeData }) {
                     <div className="flex min-w-0 flex-1 items-center gap-2.5">
                       <Avatar className="size-7 rounded-md">
                         <AvatarImage src={r.imagem_url ?? undefined} alt={r.nome} />
-                        <AvatarFallback className="rounded-md bg-white/[0.06] text-[10px] font-medium text-white/70">
+                        <AvatarFallback className="rounded-md bg-foreground/[0.06] text-[10px] font-medium text-foreground/70">
                           {iniciais(r.nome)}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="truncate text-xs font-medium text-white">{r.nome}</span>
+                      <span className="truncate text-xs font-medium text-foreground">{r.nome}</span>
                       {ehMinha && (
-                        <span className="shrink-0 rounded bg-brand-yellow/15 px-1.5 py-0.5 text-[9px] font-medium text-brand-yellow">
+                        <span className="shrink-0 rounded bg-brand-yellow/20 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:text-brand-yellow">
                           sua liga
                         </span>
                       )}
                     </div>
-                    <span className="w-12 text-right text-xs tabular-nums text-white/50">
+                    <span className="w-12 text-right text-xs tabular-nums text-foreground/50">
                       {Math.round(share)}%
                     </span>
-                    <span className="w-14 text-right font-display text-sm font-bold tabular-nums text-white">
+                    <span className="w-14 text-right font-display text-sm font-bold tabular-nums text-foreground">
                       {formatarPontos(r.pontuacao)}
                     </span>
                   </div>

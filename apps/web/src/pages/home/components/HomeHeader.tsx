@@ -27,8 +27,8 @@ export function HomeHeader({ nome, role, loading = false }: HomeHeaderProps) {
   if (loading) {
     return (
       <div className="mb-8 flex flex-col gap-2">
-        <Skeleton className="h-7 w-48 bg-white/5" />
-        <Skeleton className="h-3 w-32 bg-white/5" />
+        <Skeleton className="h-7 w-48 bg-foreground/5" />
+        <Skeleton className="h-3 w-32 bg-foreground/5" />
       </div>
     );
   }
@@ -45,15 +45,17 @@ export function HomeHeader({ nome, role, loading = false }: HomeHeaderProps) {
   return (
     <div className="mb-8 flex flex-col gap-1">
       <div className="flex items-center gap-3">
-        <h1 className="font-display text-2xl font-bold text-white">Olá, {nome || "Usuário"}</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground">
+          Olá, {nome || "Usuário"}
+        </h1>
         {roleConfig && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#282828] px-2.5 py-1 text-xs font-semibold text-white/80">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
             <roleConfig.icon className="h-3.5 w-3.5" />
             {roleConfig.label}
           </span>
         )}
       </div>
-      <p className="text-sm capitalize text-white/50">{dataFormatada}</p>
+      <p className="text-sm capitalize text-foreground/50">{dataFormatada}</p>
     </div>
   );
 }
