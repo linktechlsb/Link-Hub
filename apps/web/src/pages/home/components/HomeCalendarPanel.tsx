@@ -175,11 +175,9 @@ export function HomeCalendarPanel() {
 
   return (
     <DashboardCard className="flex flex-col gap-4 p-5">
-      {/* Header do mês */}
+      {/* Header: título + navegação do mês */}
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-sm font-bold text-white">
-          {MESES[month]} {year}
-        </h3>
+        <h3 className="text-xs text-white/40">Calendário</h3>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setViewDate(new Date(year, month - 1, 1))}
@@ -188,6 +186,9 @@ export function HomeCalendarPanel() {
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
+          <span className="min-w-[7.5rem] text-center text-xs font-medium text-white/70">
+            {MESES[month]} {year}
+          </span>
           <button
             onClick={() => setViewDate(new Date(year, month + 1, 1))}
             className="rounded-md p-1 text-white/50 transition-colors hover:bg-white/[0.06] hover:text-white"

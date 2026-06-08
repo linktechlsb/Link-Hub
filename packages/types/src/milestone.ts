@@ -30,6 +30,16 @@ export interface Milestone {
   tarefas?: Tarefa[];
 }
 
+/** Milestone próximo (agregado entre projetos), para o dashboard da Home. */
+export interface MilestoneProximo {
+  id: string;
+  titulo: string;
+  prazo?: string;
+  status: StatusMilestone;
+  projeto: { id: string; titulo: string };
+  liga: { id: string; nome: string };
+}
+
 export interface CreateMilestoneInput {
   projeto_id: string;
   titulo: string;

@@ -13,6 +13,57 @@ import type {
 
 export const milestonesRouter: IRouter = Router();
 
+// GET /milestones/proximos — milestones a vencer, agregados e escopados por papel
+milestonesRouter.get("/proximos", authenticate, async (req, res, next) => {
+  try {
+    const user = (req as AuthenticatedRequest).user!;
+    const limite = Math.min(Number(req.query["limite"] ?? 6) || 6, 20);
+
+    // Condição de acesso às ligas conforme o papel.
+    let acesso;
+    if (user.role === "staff") {
+      acesso = sql`TRUE`;
+    } else if (user.role === "professor") {
+      acesso = sql`l.professor_id = ${user.id}`;
+    } else if (user.role === "diretor") {
+      acesso = sql`(
+        l.lider_id = ${user.id}
+        OR EXISTS (
+          SELECT 1 FROM liga_membros lm
+          WHERE lm.liga_id = l.id AND lm.usuario_id = ${user.id} AND lm.cargo = 'Diretor'
+        )
+      )`;
+    } else {
+      // membro / estudante
+      acesso = sql`(
+        l.lider_id = ${user.id}
+        OR EXISTS (
+          SELECT 1 FROM liga_membros lm
+          WHERE lm.liga_id = l.id AND lm.usuario_id = ${user.id}
+        )
+      )`;
+    }
+
+    const milestones = await sql`
+      SELECT m.id, m.titulo, m.prazo, m.status,
+        json_build_object('id', p.id, 'titulo', p.nome) AS projeto,
+        json_build_object('id', l.id, 'nome', l.nome) AS liga
+      FROM milestones m
+      JOIN projetos p ON p.id = m.projeto_id
+      JOIN ligas l ON l.id = p.liga_id
+      WHERE m.status <> 'concluido'
+        AND m.prazo IS NOT NULL
+        AND ${acesso}
+      ORDER BY m.prazo ASC
+      LIMIT ${limite}
+    `;
+
+    res.json(milestones);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /milestones?projeto_id=:id
 milestonesRouter.get("/", authenticate, async (req, res, next) => {
   try {

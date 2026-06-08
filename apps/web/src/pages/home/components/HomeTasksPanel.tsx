@@ -323,9 +323,7 @@ export function HomeTasksPanel({ data }: { data: HomeData }) {
     <DashboardCard className="dark flex flex-col gap-3 p-5">
       {/* Header: título + botão de filtro (canto superior direito) */}
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-display text-sm font-bold text-white">
-          {ehPessoal ? "Minhas tarefas" : "Tarefas"}
-        </h3>
+        <h3 className="text-xs text-white/40">{ehPessoal ? "Minhas tarefas" : "Tarefas"}</h3>
         <div className="flex items-center gap-2">
           {filtrosAtivos(filters).length > 0 && (
             <Button variant="outline" size="sm" onClick={() => setFilters([])}>

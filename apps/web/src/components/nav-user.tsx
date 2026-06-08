@@ -104,22 +104,22 @@ export function NavUser({ user }: { user: NavUserData }) {
               </div>
             </div>
 
-            <DropdownMenuSeparator className="my-1" />
+            <DropdownMenuSeparator className="my-0.5" />
 
             <DropdownMenuItem
-              className="gap-2.5 rounded-lg px-2 py-2 text-sm cursor-pointer"
+              className="gap-2.5 rounded-lg px-2 py-1.5 text-[13px] cursor-pointer"
               onClick={() => navigate("/conta")}
             >
-              <UserRound className="size-4 text-muted-foreground" />
+              <UserRound className="size-3.5 text-muted-foreground" />
               Meu perfil
             </DropdownMenuItem>
 
             <DropdownMenuItem
-              className="gap-2.5 rounded-lg px-2 py-2 text-sm cursor-pointer"
+              className="gap-2.5 rounded-lg px-2 py-1.5 text-[13px] cursor-pointer"
               onSelect={(e) => e.preventDefault()}
               onClick={toggle}
             >
-              <Moon className="size-4 text-muted-foreground" />
+              <Moon className="size-3.5 text-muted-foreground" />
               Modo escuro
               <Switch
                 checked={theme === "dark"}
@@ -128,23 +128,23 @@ export function NavUser({ user }: { user: NavUserData }) {
               />
             </DropdownMenuItem>
 
-            <DropdownMenuSeparator className="my-1" />
+            <DropdownMenuSeparator className="my-0.5" />
 
             <DropdownMenuItem
-              className="gap-2.5 rounded-lg px-2 py-2 text-sm cursor-pointer"
+              className="gap-2.5 rounded-lg px-2 py-1.5 text-[13px] cursor-pointer"
               onClick={() => navigate("/ajuda")}
             >
-              <HelpCircle className="size-4 text-muted-foreground" />
+              <HelpCircle className="size-3.5 text-muted-foreground" />
               Ajuda
             </DropdownMenuItem>
 
-            <DropdownMenuSeparator className="my-1" />
+            <DropdownMenuSeparator className="my-0.5" />
 
             <DropdownMenuItem
-              className="gap-2.5 rounded-lg px-2 py-2 text-sm cursor-pointer"
+              className="gap-2.5 rounded-lg px-2 py-1.5 text-[13px] cursor-pointer"
               onClick={handleLogout}
             >
-              <LogOut className="size-4 text-muted-foreground" />
+              <LogOut className="size-3.5 text-muted-foreground" />
               Sair
             </DropdownMenuItem>
           </DropdownMenuContent>
