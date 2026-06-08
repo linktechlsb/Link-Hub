@@ -157,7 +157,7 @@ export function ProjetosPage() {
           </div>
 
           {carregando ? (
-            <Card className="shadow-sm overflow-hidden">
+            <Card className="overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>

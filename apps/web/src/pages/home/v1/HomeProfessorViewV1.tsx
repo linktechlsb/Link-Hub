@@ -75,7 +75,7 @@ export function HomeProfessorViewV1({ minhaLiga, ranking }: HomeProfessorViewV1P
           }
         />
         {fila.length === 0 ? (
-          <Card className="shadow-sm">
+          <Card className="">
             <div className="px-4 py-6 text-sm text-muted-foreground text-center">
               Nenhum projeto aguardando sua aprovação.
             </div>
@@ -121,13 +121,13 @@ export function HomeProfessorViewV1({ minhaLiga, ranking }: HomeProfessorViewV1P
       <section>
         <SectionHeader titulo="Próximos Eventos" />
         {eventos.length === 0 ? (
-          <Card className="shadow-sm">
+          <Card className="">
             <div className="px-4 py-6 text-sm text-muted-foreground text-center">
               Sem eventos programados.
             </div>
           </Card>
         ) : (
-          <Card className="shadow-sm overflow-hidden">
+          <Card className="overflow-hidden">
             <ul>
               {eventos.map((e) => {
                 const data = new Date(e.data);

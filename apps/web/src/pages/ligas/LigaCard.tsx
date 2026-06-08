@@ -21,7 +21,7 @@ export function LigaCard({ liga }: LigaCardProps) {
 
   return (
     <div
-      className="rounded-xl overflow-hidden shadow-sm bg-white border border-brand-gray cursor-pointer hover:shadow-md transition-shadow"
+      className="rounded-xl overflow-hidden bg-white border border-brand-gray cursor-pointer transition-colors"
       onClick={() => navigate(`/ligas/${liga.id}`)}
     >
       {/* Área da imagem */}

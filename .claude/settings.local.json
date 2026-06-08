@@ -143,7 +143,10 @@
       "Bash(npx shadcn@latest add @reui/c-kanban-2 --yes)",
       "Bash(npx shadcn@latest add @reui/c-table-13 --yes)",
       "Bash(kill %1)",
-      "Bash(wait)"
+      "Bash(wait)",
+      "Bash(npx skills *)",
+      "mcp__agentation__agentation_list_sessions",
+      "mcp__agentation__agentation_get_all_pending"
     ],
     "deny": [
       "Bash(git commit *)",

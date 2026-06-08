@@ -88,41 +88,41 @@
   }
 
   .dark {
-    --background: 0 0% 1.2%; /* #030303 */
+    --background: 0 0% 11%; /* #1C1C1C */
     --foreground: 0 0% 100%;
 
-    --card: 0 0% 5.1%; /* #0D0D0D */
+    --card: 0 0% 13%; /* #212121 */
     --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 5.1%; /* #0D0D0D */
+    --popover: 0 0% 13%; /* #212121 */
     --popover-foreground: 0 0% 100%;
 
     --primary: 0 0% 100%;
     --primary-foreground: 0 0% 4%;
 
-    --secondary: 0 0% 10%;
+    --secondary: 0 0% 18%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 10%;
+    --muted: 0 0% 18%;
     --muted-foreground: 0 0% 65%;
 
-    --accent: 0 0% 10%;
+    --accent: 0 0% 18%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: var(--color-red-600);
 
-    --border: 0 0% 10%;
-    --input: 0 0% 10%;
+    --border: 0 0% 14.9%; /* #262626 */
+    --input: 0 0% 14.9%; /* #262626 */
     --ring: 0 0% 100%;
 
-    --sidebar-background: 0 0% 5.1%; /* #0D0D0D */
+    --sidebar-background: 0 0% 11.4%; /* #1D1D1D */
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
     --sidebar-primary-foreground: 0 0% 4%;
-    --sidebar-accent: 0 0% 9%; /* nav ativo bg */
+    --sidebar-accent: 0 0% 18%; /* nav ativo bg */
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 9%;
+    --sidebar-border: 0 0% 14.9%; /* #262626 */
     --sidebar-ring: 0 0% 100%;
     --success: var(--color-emerald-500);
     --success-foreground: var(--color-emerald-600);
@@ -213,9 +213,6 @@
 .dark .glass-card {
   background: rgba(255, 255, 255, 0.025);
   border-color: rgba(255, 255, 255, 0.07);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 /* Amber glow on hover */
@@ -230,11 +227,9 @@
     0 8px 24px rgba(254, 198, 65, 0.07);
 }
 
-/* ── Sidebar: active item amber accent (dark mode) ──────────── */
-/* box-shadow inset evita qualquer mudança no box model / layout */
+/* ── Sidebar: active item (dark mode) ──────────── */
 .dark [data-sidebar="menu-button"][data-active="true"] {
-  box-shadow: inset 2px 0 0 #fec641;
-  background: rgba(254, 198, 65, 0.09);
+  background: #212121;
 }
 
 /* ── Sidebar group label refinement ────────────────────────── */

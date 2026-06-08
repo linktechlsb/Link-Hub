@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 
-import type { Liga, RankingLiga } from "@link-leagues/types";
+import type { Liga, RankingLiga, UserRole } from "@link-leagues/types";
 
 interface PendenteItem {
   id: string;
@@ -23,7 +23,7 @@ export interface HomeData {
   nomeUsuario: string;
   loadingUser: boolean;
   pendentes: Pendentes;
-  role: string | null;
+  role: UserRole | null;
   usuarioId: string | null;
 }
 

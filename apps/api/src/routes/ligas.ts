@@ -73,6 +73,12 @@ ligasRouter.get("/", authenticate, async (_req, res, next) => {
           SELECT COUNT(*)::int
           FROM projetos p
           WHERE p.liga_id = l.id
+            AND p.status = 'aprovado'
+        ) AS projetos_aprovados,
+        (
+          SELECT COUNT(*)::int
+          FROM projetos p
+          WHERE p.liga_id = l.id
             AND p.status = 'concluido'
         ) AS projetos_concluidos,
         (
@@ -99,6 +105,17 @@ ligasRouter.get("/minha", authenticate, async (req, res, next) => {
       SELECT
         l.*,
         lu.email AS lider_email,
+        (
+          SELECT COUNT(*)::int
+          FROM liga_membros lm2
+          WHERE lm2.liga_id = l.id
+        ) AS total_membros,
+        (
+          SELECT COUNT(*)::int
+          FROM projetos p
+          WHERE p.liga_id = l.id
+            AND p.status = 'aprovado'
+        ) AS projetos_aprovados,
         COALESCE(
           json_agg(
             json_build_object('id', u.id, 'nome', u.nome, 'avatar_url', u.avatar_url)

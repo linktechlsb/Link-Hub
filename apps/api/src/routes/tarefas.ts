@@ -21,6 +21,8 @@ tarefasRouter.get("/", authenticate, async (req: AuthenticatedRequest, res, next
           t.status,
           t.responsavel_id,
           u_resp.nome AS responsavel_nome,
+          u_resp.avatar_url AS responsavel_avatar,
+          u_resp.role AS responsavel_role,
           t.prazo,
           t.criado_em,
           t.milestone_id,
@@ -33,6 +35,39 @@ tarefasRouter.get("/", authenticate, async (req: AuthenticatedRequest, res, next
         JOIN projetos p ON p.id = m.projeto_id
         LEFT JOIN usuarios u_resp ON u_resp.id = t.responsavel_id
         WHERE 1=1
+          ${projeto_id ? sql`AND p.id = ${projeto_id}` : sql``}
+          ${status ? sql`AND t.status = ${status}` : sql``}
+        ORDER BY t.criado_em DESC
+      `;
+      res.json(rows);
+      return;
+    }
+
+    // Professor: tarefas das ligas que ele acompanha (ligas.professor_id)
+    if (user.role === "professor") {
+      const rows = await sql`
+        SELECT
+          t.id,
+          t.titulo,
+          t.descricao,
+          t.status,
+          t.responsavel_id,
+          u_resp.nome AS responsavel_nome,
+          u_resp.avatar_url AS responsavel_avatar,
+          u_resp.role AS responsavel_role,
+          t.prazo,
+          t.criado_em,
+          t.milestone_id,
+          m.titulo AS milestone_titulo,
+          p.id AS projeto_id,
+          p.nome AS projeto_titulo,
+          p.liga_id
+        FROM tarefas t
+        JOIN milestones m ON m.id = t.milestone_id
+        JOIN projetos p ON p.id = m.projeto_id
+        JOIN ligas l ON l.id = p.liga_id
+        LEFT JOIN usuarios u_resp ON u_resp.id = t.responsavel_id
+        WHERE l.professor_id = (SELECT id FROM usuarios WHERE email = ${user.email})
           ${projeto_id ? sql`AND p.id = ${projeto_id}` : sql``}
           ${status ? sql`AND t.status = ${status}` : sql``}
         ORDER BY t.criado_em DESC
@@ -65,6 +100,8 @@ tarefasRouter.get("/", authenticate, async (req: AuthenticatedRequest, res, next
         t.status,
         t.responsavel_id,
         u_resp.nome AS responsavel_nome,
+        u_resp.avatar_url AS responsavel_avatar,
+        u_resp.role AS responsavel_role,
         t.prazo,
         t.criado_em,
         t.milestone_id,

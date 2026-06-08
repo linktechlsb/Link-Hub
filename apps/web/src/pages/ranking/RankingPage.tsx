@@ -110,7 +110,7 @@ export function RankingPage() {
             </div>
             <div className="space-y-3">
               {/* 1º lugar */}
-              <Card className="shadow-sm border-l-4 border-l-brand-yellow">
+              <Card className="border-l-4 border-l-brand-yellow">
                 <CardContent className="py-4 px-5">
                   <div className="flex items-center gap-4">
                     <Skeleton className="h-8 w-8 shrink-0" />
@@ -130,7 +130,7 @@ export function RankingPage() {
               {/* 2º e 3º */}
               <div className="grid grid-cols-2 gap-3">
                 {[0, 1].map((i) => (
-                  <Card key={i} className="shadow-sm border-l-4 border-l-link-blue">
+                  <Card key={i} className="border-l-4 border-l-link-blue">
                     <CardContent className="py-4 px-5">
                       <div className="flex items-center gap-3">
                         <Skeleton className="h-6 w-6 shrink-0" />
@@ -232,7 +232,7 @@ export function RankingPage() {
               <div className="space-y-3">
                 {/* 1º lugar — full width */}
                 {topo[0] && (
-                  <Card className="shadow-sm border-l-4 border-l-brand-yellow">
+                  <Card className="border-l-4 border-l-brand-yellow">
                     <CardContent className="py-4 px-5">
                       <div className="flex items-center gap-4">
                         <span className="font-plex-sans font-bold text-[28px] text-brand-yellow leading-none min-w-[2rem]">
@@ -273,7 +273,7 @@ export function RankingPage() {
                       <Card
                         key={r.liga_id}
                         className={cn(
-                          "shadow-sm border-l-4",
+                          "border-l-4",
                           i === 0 ? "border-l-link-blue" : "border-l-navy/20",
                         )}
                       >
