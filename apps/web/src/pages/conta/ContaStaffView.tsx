@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { carregarUsuarioMe, salvarPerfilMe, uploadAvatarMe } from "@/lib/conta";
 import { TrocarSenhaSection } from "@/pages/conta/TrocarSenhaSection";
-import { SectionHeader } from "@/pages/home/v1/primitives";
+import { SectionHeader } from "@/pages/ligas/tabs/primitives";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -30,11 +30,7 @@ function gerarIniciais(nome: string) {
 // ─── Primitivos ───────────────────────────────────────────────────────────────
 
 function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <label className="block font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1.5">
-      {children}
-    </label>
-  );
+  return <label className="block text-xs text-foreground/40 mb-2">{children}</label>;
 }
 
 function Campo({
@@ -50,14 +46,14 @@ function Campo({
     <div>
       <Label>{label}</Label>
       {children}
-      {dica && <p className="font-plex-sans text-[11px] text-foreground/40 mt-1">{dica}</p>}
+      {dica && <p className="text-xs text-foreground/40 mt-1">{dica}</p>}
     </div>
   );
 }
 
 function Toast({ mensagem, onFechar }: { mensagem: string; onFechar: () => void }) {
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-navy text-white font-plex-sans text-[13px] px-4 py-3 shadow-lg rounded">
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-foreground text-background text-sm px-4 py-3 shadow-lg rounded">
       {mensagem}
       <button onClick={onFechar} className="text-white/60 hover:text-white transition-colors">
         <X className="h-4 w-4" />
@@ -122,7 +118,7 @@ function CardPerfil({
             <div className="relative w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-white text-3xl font-bold select-none">
               {iniciais || "?"}
             </div>
-            <p className="relative font-plex-mono text-[9px] uppercase tracking-[0.12em] text-white/40">
+            <p className="relative text-[9px] uppercase tracking-[0.12em] text-white/40">
               Adicione uma foto
             </p>
           </div>
@@ -171,7 +167,7 @@ function CardPerfil({
 
             {/* Bio */}
             <p
-              className="font-plex-sans text-[12px] text-white/75 leading-relaxed mb-4"
+              className="text-xs text-white/75 leading-relaxed mb-4"
               style={{
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
@@ -184,7 +180,7 @@ function CardPerfil({
 
             {/* Rodapé */}
             <div className="flex items-center">
-              <span className="font-plex-mono text-[8px] uppercase tracking-[0.1em] text-white/50 border border-white/20 px-2 py-0.5 rounded-full">
+              <span className="text-[8px] uppercase tracking-[0.1em] text-white/50 border border-white/20 px-2 py-0.5 rounded-full">
                 Staff
               </span>
             </div>
@@ -220,7 +216,7 @@ function CardPerfil({
                 setMenuAberto(false);
                 setDialogAberto(true);
               }}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left font-plex-sans text-[13px] text-foreground hover:bg-muted/50 transition-colors"
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-foreground hover:bg-muted/50 transition-colors"
             >
               <Camera className="h-3.5 w-3.5 text-foreground/50 shrink-0" />
               Editar foto
@@ -230,7 +226,7 @@ function CardPerfil({
                 setMenuAberto(false);
                 setPreviaAberta(true);
               }}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left font-plex-sans text-[13px] text-foreground hover:bg-muted/50 transition-colors"
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-foreground hover:bg-muted/50 transition-colors"
             >
               <Eye className="h-3.5 w-3.5 text-foreground/50 shrink-0" />
               Exibir
@@ -250,7 +246,7 @@ function CardPerfil({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display font-bold text-[18px] tracking-[-0.02em] text-navy">
+              <h3 className="font-display font-bold text-[18px] tracking-[-0.02em] text-foreground">
                 Alterar foto de perfil
               </h3>
               <button
@@ -266,21 +262,21 @@ function CardPerfil({
             >
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                 {uploadandoAvatar ? (
-                  <div className="h-5 w-5 border-2 border-navy border-t-transparent rounded-full animate-spin" />
+                  <div className="h-5 w-5 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <Camera className="h-5 w-5 text-foreground/40" />
                 )}
               </div>
               <div className="text-center">
-                <p className="font-plex-sans font-medium text-[13px] text-foreground">
+                <p className="font-medium text-sm text-foreground">
                   {uploadandoAvatar ? "Enviando..." : "Clique para escolher uma foto"}
                 </p>
-                <p className="font-plex-sans text-[11px] text-foreground/40 mt-0.5">JPEG ou PNG</p>
+                <p className="text-xs text-foreground/40 mt-0.5">JPEG ou PNG</p>
               </div>
             </div>
             <button
               onClick={() => setDialogAberto(false)}
-              className="w-full mt-3 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/40 hover:text-foreground transition-colors py-2"
+              className="w-full mt-3 text-xs tracking-[0.14em] uppercase text-foreground/40 hover:text-foreground transition-colors py-2"
             >
               Cancelar
             </button>
@@ -296,7 +292,7 @@ function CardPerfil({
         >
           <div className="flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between w-[260px]">
-              <p className="font-plex-mono text-[9px] uppercase tracking-[0.18em] text-white/50">
+              <p className="text-[9px] uppercase tracking-[0.18em] text-white/50">
                 Como outros te veem
               </p>
               <button
@@ -329,7 +325,7 @@ function CardPerfil({
                     <div className="relative w-24 h-24 rounded-full bg-white/20 flex items-center justify-center text-white text-3xl font-bold select-none">
                       {iniciais || "?"}
                     </div>
-                    <p className="relative font-plex-mono text-[9px] uppercase tracking-[0.12em] text-white/40">
+                    <p className="relative text-[9px] uppercase tracking-[0.12em] text-white/40">
                       Sem foto
                     </p>
                   </div>
@@ -372,7 +368,7 @@ function CardPerfil({
                       </span>
                     </div>
                     <p
-                      className="font-plex-sans text-[12px] text-white/75 leading-relaxed mb-4"
+                      className="text-xs text-white/75 leading-relaxed mb-4"
                       style={{
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
@@ -383,7 +379,7 @@ function CardPerfil({
                       {bio || "Sua bio aparece aqui..."}
                     </p>
                     <div className="flex items-center">
-                      <span className="font-plex-mono text-[8px] uppercase tracking-[0.1em] text-white/50 border border-white/20 px-2 py-0.5 rounded-full">
+                      <span className="text-[8px] uppercase tracking-[0.1em] text-white/50 border border-white/20 px-2 py-0.5 rounded-full">
                         Staff
                       </span>
                     </div>
@@ -437,7 +433,7 @@ function AbaPerfil({
               value={dados.nome}
               onChange={(e) => onChange("nome", e.target.value)}
               placeholder="Seu nome completo"
-              className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 placeholder:text-foreground/20 rounded"
+              className="w-full px-3 py-2.5 border border-border bg-muted/50 text-sm text-foreground focus:outline-none focus:border-foreground/30 placeholder:text-foreground/20 rounded"
             />
           </Campo>
           <Campo label="E-mail institucional" dica="Somente leitura">
@@ -445,7 +441,7 @@ function AbaPerfil({
               type="text"
               value={dados.email}
               readOnly
-              className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground/40 cursor-default focus:outline-none rounded"
+              className="w-full px-3 py-2.5 border border-border bg-muted/50 text-sm text-foreground/40 cursor-default focus:outline-none rounded"
             />
           </Campo>
         </div>
@@ -460,13 +456,13 @@ function AbaPerfil({
             maxLength={160}
             rows={3}
             placeholder="Conte um pouco sobre você..."
-            className="w-full px-3 py-2.5 border border-border bg-muted/50 font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 resize-none placeholder:text-foreground/20 rounded"
+            className="w-full px-3 py-2.5 border border-border bg-muted/50 text-sm text-foreground focus:outline-none focus:border-foreground/30 resize-none placeholder:text-foreground/20 rounded"
           />
         </Campo>
 
         <button
           onClick={onSalvar}
-          className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
         >
           Salvar alterações
         </button>
@@ -554,21 +550,17 @@ export function ContaStaffView() {
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-10">
-      <div className="mb-6">
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
-          Minha conta
-        </h1>
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mt-1">
-          Gerencie suas informações e preferências
-        </p>
+      <div className="mb-8">
+        <h1 className="font-display text-2xl font-bold text-foreground">Minha conta</h1>
+        <p className="mt-1 text-sm text-foreground/50">Gerencie suas informações e preferências</p>
       </div>
 
       <AnimatedTabs
         tabs={ABAS.map(({ key, label }) => ({ id: key, label }))}
         activeTab={abaAtiva}
         onChange={(key) => setAbaAtiva(key as Aba)}
-        wrapperClassName="border-foreground/[0.08] mb-8"
-        activeTabClassName="text-navy"
+        wrapperClassName="border-border mb-8"
+        activeTabClassName="text-foreground"
         inactiveTabClassName="text-foreground/40 hover:text-foreground/60"
       />
 

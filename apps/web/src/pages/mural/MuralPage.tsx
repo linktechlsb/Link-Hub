@@ -1,4 +1,14 @@
-import { ChevronDown, Globe, Heart, ImageIcon, Lock, MessageCircle, Send, X } from "lucide-react";
+import {
+  ChevronDown,
+  Globe,
+  Heart,
+  ImageIcon,
+  Lock,
+  MessageCircle,
+  Plus,
+  Send,
+  X,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
@@ -11,6 +21,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { DashboardCard } from "@/pages/home/components/DashboardCard";
 
 import type { Liga, Post, PostComentario } from "@link-leagues/types";
 
@@ -66,13 +77,13 @@ function VisibilidadePill({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className="flex items-center gap-1 border border-navy/25 dark:border-white/25 rounded-full px-2.5 py-0.5 font-plex-mono text-[9px] font-bold text-link-blue dark:text-white hover:border-navy/40 dark:hover:border-white/40 transition-colors">
-          <Icon className="h-2.5 w-2.5" />
+        <button className="flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-foreground/60 transition-colors hover:bg-muted hover:text-foreground">
+          <Icon className="h-3 w-3" />
           {atual.label}
-          <ChevronDown className="h-2.5 w-2.5 opacity-50" />
+          <ChevronDown className="h-3 w-3 opacity-50" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="p-1 w-40" align="start">
+      <PopoverContent className="w-40 p-1" align="start">
         {opcoes.map((op) => {
           const OpIcon = op.Icon;
           return (
@@ -83,10 +94,10 @@ function VisibilidadePill({
                 setOpen(false);
               }}
               className={cn(
-                "w-full flex items-center gap-2 px-3 py-2 rounded text-left font-plex-sans text-[12px] transition-colors",
+                "flex w-full items-center gap-2 rounded px-3 py-2 text-left text-xs transition-colors",
                 value === op.value
-                  ? "bg-navy/5 text-navy font-semibold"
-                  : "text-foreground/70 hover:bg-foreground/5",
+                  ? "bg-muted font-semibold text-foreground"
+                  : "text-foreground/70 hover:bg-muted",
               )}
             >
               <OpIcon className="h-3 w-3" />
@@ -114,12 +125,12 @@ function LigaPill({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className="flex items-center gap-1 border border-navy/25 dark:border-white/25 rounded-full px-2.5 py-0.5 font-plex-mono text-[9px] font-bold text-link-blue dark:text-white hover:border-navy/40 dark:hover:border-white/40 transition-colors">
+        <button className="flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-foreground/60 transition-colors hover:bg-muted hover:text-foreground">
           {selecionada?.nome ?? "Selecionar liga"}
-          <ChevronDown className="h-2.5 w-2.5 opacity-50" />
+          <ChevronDown className="h-3 w-3 opacity-50" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="p-1 w-52" align="start">
+      <PopoverContent className="w-52 p-1" align="start">
         {ligas.map((liga) => (
           <button
             key={liga.id}
@@ -128,10 +139,10 @@ function LigaPill({
               setOpen(false);
             }}
             className={cn(
-              "w-full text-left px-3 py-2 rounded font-plex-sans text-[12px] transition-colors",
+              "w-full rounded px-3 py-2 text-left text-xs transition-colors",
               ligaSelecionadaId === liga.id
-                ? "bg-navy/5 text-navy font-semibold"
-                : "text-foreground/70 hover:bg-foreground/5",
+                ? "bg-muted font-semibold text-foreground"
+                : "text-foreground/70 hover:bg-muted",
             )}
           >
             {liga.nome}
@@ -428,23 +439,20 @@ export function MuralPage() {
   }
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
+    <div className="mx-auto max-w-2xl px-8 py-10">
       {/* Header */}
-      <div className="mb-10 flex items-start justify-between gap-4">
+      <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground">
-            Mural
-          </h1>
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50 mt-1">
-            Postagens
-          </p>
+          <h1 className="font-display text-2xl font-bold text-foreground">Mural</h1>
+          <p className="mt-1 text-sm text-foreground/50">Postagens das ligas</p>
         </div>
         {podePublicar && (
           <button
             onClick={() => setModalAberto(true)}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors flex-shrink-0"
+            className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
           >
-            + Criar postagem
+            <Plus className="h-3.5 w-3.5" />
+            Criar postagem
           </button>
         )}
       </div>
@@ -457,7 +465,7 @@ export function MuralPage() {
         ]}
         activeTab={filtro}
         onChange={(id) => setFiltro(id as typeof filtro)}
-        wrapperClassName="border-foreground/[0.08] mb-6"
+        wrapperClassName="border-border mb-6"
         inactiveTabClassName="text-foreground/40 hover:text-foreground/60"
       />
 
@@ -465,32 +473,32 @@ export function MuralPage() {
       {carregando ? (
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="border border-foreground/[0.08] rounded-lg p-5">
+            <DashboardCard key={i} className="p-5">
               {/* Header: avatar + author info */}
-              <div className="flex items-start gap-3 mb-3">
-                <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+              <div className="mb-3 flex items-start gap-3">
+                <Skeleton className="h-9 w-9 shrink-0 rounded-full bg-foreground/5" />
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Skeleton className="h-4 w-28" />
-                    <Skeleton className="h-4 w-14 rounded-sm" />
+                  <div className="mb-1 flex items-center gap-2">
+                    <Skeleton className="h-4 w-28 bg-foreground/5" />
+                    <Skeleton className="h-4 w-14 rounded-sm bg-foreground/5" />
                   </div>
-                  <Skeleton className="h-3 w-36" />
+                  <Skeleton className="h-3 w-36 bg-foreground/5" />
                 </div>
               </div>
               {/* Content: 2-3 lines of text */}
-              <Skeleton className="h-3.5 w-full mb-1.5" />
-              <Skeleton className="h-3.5 w-full mb-1.5" />
-              <Skeleton className="h-3.5 w-2/3 mb-3" />
+              <Skeleton className="mb-1.5 h-3.5 w-full bg-foreground/5" />
+              <Skeleton className="mb-1.5 h-3.5 w-full bg-foreground/5" />
+              <Skeleton className="mb-3 h-3.5 w-2/3 bg-foreground/5" />
               {/* Footer: likes + comments */}
-              <div className="flex items-center gap-6 mt-2">
-                <Skeleton className="h-4 w-10" />
-                <Skeleton className="h-4 w-10" />
+              <div className="mt-2 flex items-center gap-6">
+                <Skeleton className="h-4 w-10 bg-foreground/5" />
+                <Skeleton className="h-4 w-10 bg-foreground/5" />
               </div>
-            </div>
+            </DashboardCard>
           ))}
         </div>
       ) : posts.length === 0 ? (
-        <p className="font-plex-sans text-[13px] text-foreground/50">
+        <p className="text-sm text-foreground/50">
           Nenhuma publicação ainda. Seja a primeira liga a postar!
         </p>
       ) : (
@@ -498,28 +506,28 @@ export function MuralPage() {
           {posts.map((post) => (
             <article
               key={post.id}
-              className="border border-foreground/[0.08] rounded-lg p-5 hover:border-foreground/[0.15] transition-colors"
+              className="rounded-xl border border-border bg-card p-5 transition-colors hover:border-foreground/20"
             >
-              <header className="flex items-start justify-between mb-3">
+              <header className="mb-3 flex items-start justify-between">
                 <div className="flex items-start gap-3">
                   <UserAvatar
                     nome={post.autor_nome ?? post.liga_nome}
                     src={post.autor_avatar_url}
                     className="h-9 w-9"
                   />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-display font-bold text-[13px] text-navy dark:text-foreground">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-display text-sm font-bold text-foreground">
                         {post.autor_nome}
                       </span>
                       {post.autor_role && (
-                        <span className="font-plex-mono text-[8px] uppercase tracking-[0.18em] border border-foreground/20 text-foreground/50 px-1.5 py-0.5 rounded-sm">
+                        <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground/50">
                           {ROLE_LABELS[post.autor_role] ?? post.autor_role}
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      <span className="font-plex-sans text-[11px] text-foreground/50">
+                    <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                      <span className="text-xs text-foreground/50">
                         {post.liga_nome} · {formatarDataRelativa(post.criado_em)}
                       </span>
                     </div>
@@ -528,14 +536,14 @@ export function MuralPage() {
                 {(role === "staff" || (role === "diretor" && post.liga_id === minhaLiga?.id)) && (
                   <button
                     onClick={() => void remover(post.id)}
-                    className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/30 hover:text-red-500 transition-colors flex-shrink-0 ml-2"
+                    className="ml-2 flex-shrink-0 text-xs text-foreground/30 transition-colors hover:text-red-500"
                   >
                     Remover
                   </button>
                 )}
               </header>
 
-              <p className="font-plex-sans text-[13px] text-foreground/80 leading-relaxed whitespace-pre-wrap mb-3">
+              <p className="mb-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">
                 {post.conteudo}
               </p>
 
@@ -543,15 +551,15 @@ export function MuralPage() {
                 <img
                   src={post.imagem_url}
                   alt=""
-                  className="w-full rounded-lg mb-3 max-h-96 object-cover"
+                  className="mb-3 max-h-96 w-full rounded-lg object-cover"
                 />
               )}
 
-              <footer className="flex items-center gap-6 mt-2">
+              <footer className="mt-2 flex items-center gap-6">
                 <button
                   onClick={() => void curtir(post.id)}
                   className={cn(
-                    "flex items-center gap-1.5 font-plex-mono text-[11px] transition-colors",
+                    "flex items-center gap-1.5 text-xs transition-colors",
                     post.curtido_por_mim ? "text-red-500" : "text-foreground/40 hover:text-red-500",
                   )}
                 >
@@ -560,7 +568,7 @@ export function MuralPage() {
                 </button>
                 <button
                   onClick={() => void toggleComentarios(post.id)}
-                  className="flex items-center gap-1.5 font-plex-mono text-[11px] text-foreground/40 hover:text-foreground transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-foreground/40 transition-colors hover:text-foreground"
                 >
                   <MessageCircle className="h-3.5 w-3.5" />
                   {post.total_comentarios ?? 0}
@@ -568,21 +576,17 @@ export function MuralPage() {
               </footer>
 
               {comentariosAbertos[post.id] && (
-                <div className="mt-4 border-t border-foreground/[0.08] pt-4 space-y-3">
+                <div className="mt-4 space-y-3 border-t border-border pt-4">
                   {(comentariosPorPost[post.id] ?? []).map((c) => (
                     <div key={c.id} className="flex gap-3">
                       <UserAvatar nome={c.autor_nome ?? "U"} className="h-7 w-7" />
-                      <div className="flex-1 bg-foreground/[0.02] border border-foreground/[0.06] rounded px-3 py-2">
-                        <p className="font-plex-mono text-[9px] uppercase tracking-[0.14em] text-foreground/50">
-                          {c.autor_nome}
-                        </p>
-                        <p className="font-plex-sans text-[12px] text-foreground/80 mt-1">
-                          {c.conteudo}
-                        </p>
+                      <div className="flex-1 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                        <p className="text-xs font-semibold text-foreground/70">{c.autor_nome}</p>
+                        <p className="mt-1 text-sm text-foreground/80">{c.conteudo}</p>
                       </div>
                     </div>
                   ))}
-                  <div className="flex gap-2 mt-3">
+                  <div className="mt-3 flex gap-2">
                     <input
                       value={novoComentario[post.id] ?? ""}
                       onChange={(e) =>
@@ -592,11 +596,11 @@ export function MuralPage() {
                         if (e.key === "Enter") void comentar(post.id);
                       }}
                       placeholder="Escreva um comentário…"
-                      className="flex-1 border border-foreground/[0.12] rounded px-3 py-2 font-plex-sans text-[12px] text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-foreground/30 bg-transparent"
+                      className="flex-1 rounded-lg border border-border bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/30 focus:border-foreground/40 focus:outline-none"
                     />
                     <button
                       onClick={() => void comentar(post.id)}
-                      className="border border-foreground/[0.12] rounded px-3 py-2 text-foreground/50 hover:text-foreground hover:border-foreground/30 transition-colors"
+                      className="rounded-lg border border-border px-3 py-2 text-foreground/50 transition-colors hover:border-foreground/40 hover:text-foreground"
                     >
                       <Send className="h-3.5 w-3.5" />
                     </button>
@@ -610,22 +614,20 @@ export function MuralPage() {
 
       {/* Modal de criar postagem */}
       <Dialog open={modalAberto} onOpenChange={fecharModal}>
-        <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
+        <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-lg">
           {/* Header do modal */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-foreground/[0.08]">
-            <h2 className="font-display font-bold text-[16px] tracking-[-0.02em] text-navy dark:text-foreground">
-              Criar postagem
-            </h2>
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <h2 className="font-display text-base font-bold text-foreground">Criar postagem</h2>
           </div>
 
           {/* Linha de autor */}
           <div className="flex items-start gap-3 px-5 pt-5">
             <UserAvatar nome={nomeUsuario || "U"} src={avatarUrl} className="h-10 w-10" />
             <div>
-              <p className="font-display font-bold text-[13px] text-navy dark:text-foreground">
+              <p className="font-display text-sm font-bold text-foreground">
                 {nomeUsuario || "Você"}
               </p>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <div className="mt-1 flex flex-wrap items-center gap-2">
                 {isStaff ? (
                   <LigaPill
                     ligas={todasLigas}
@@ -633,9 +635,7 @@ export function MuralPage() {
                     onChange={setLigaSelecionadaId}
                   />
                 ) : (
-                  <span className="font-plex-sans text-[11px] text-foreground/50">
-                    {minhaLiga?.nome ?? ""}
-                  </span>
+                  <span className="text-xs text-foreground/50">{minhaLiga?.nome ?? ""}</span>
                 )}
                 <VisibilidadePill value={visibilidade} onChange={setVisibilidade} />
               </div>
@@ -644,7 +644,7 @@ export function MuralPage() {
 
           {/* Textarea */}
           <textarea
-            className="w-full px-5 pt-4 pb-2 font-plex-sans text-[13px] text-foreground placeholder:text-foreground/25 resize-none border-none outline-none bg-transparent min-h-[180px]"
+            className="min-h-[180px] w-full resize-none border-none bg-transparent px-5 pb-2 pt-4 text-sm text-foreground outline-none placeholder:text-foreground/25"
             placeholder="Sobre o que você quer falar?"
             value={novoConteudo}
             onChange={(e) => setNovoConteudo(e.target.value)}
@@ -658,11 +658,11 @@ export function MuralPage() {
               <img
                 src={imagemPreview}
                 alt="Preview"
-                className="w-full rounded-lg max-h-48 object-cover"
+                className="max-h-48 w-full rounded-lg object-cover"
               />
               <button
                 onClick={removerImagem}
-                className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors"
+                className="absolute right-2 top-2 rounded-full bg-black/50 p-1 text-white transition-colors hover:bg-black/70"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -670,7 +670,7 @@ export function MuralPage() {
           )}
 
           {/* Toolbar + footer */}
-          <div className="px-5 py-4 border-t border-foreground/[0.08] flex items-center justify-between">
+          <div className="flex items-center justify-between border-t border-border px-5 py-4">
             <div className="flex items-center gap-2">
               <input
                 ref={fileInputRef}
@@ -682,7 +682,7 @@ export function MuralPage() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={enviandoImagem}
-                className="flex items-center gap-1.5 font-plex-mono text-[9px] uppercase tracking-[0.12em] text-foreground/40 hover:text-foreground/60 transition-colors disabled:opacity-40"
+                className="flex items-center gap-1.5 text-xs font-medium text-foreground/40 transition-colors hover:text-foreground/60 disabled:opacity-40"
               >
                 <ImageIcon className="h-4 w-4" />
                 Imagem
@@ -691,7 +691,7 @@ export function MuralPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={fecharModal}
-                className="font-plex-mono text-[10px] uppercase tracking-[0.1em] text-foreground/40 hover:text-foreground/60 px-3 py-2 transition-colors"
+                className="rounded-full border border-border px-4 py-2 text-xs font-medium text-foreground/60 transition-colors hover:bg-muted"
               >
                 Cancelar
               </button>
@@ -703,9 +703,9 @@ export function MuralPage() {
                   !novoConteudo.trim() ||
                   (isStaff && !ligaSelecionadaId)
                 }
-                className="bg-navy text-white font-plex-mono text-[10px] uppercase tracking-[0.1em] px-4 py-2 rounded-full hover:bg-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="rounded-full bg-foreground px-4 py-2 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {publicando ? "Publicando..." : "Publicar →"}
+                {publicando ? "Publicando..." : "Publicar"}
               </button>
             </div>
           </div>

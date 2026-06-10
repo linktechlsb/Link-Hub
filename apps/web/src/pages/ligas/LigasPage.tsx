@@ -85,7 +85,7 @@ export function LigasPage() {
         {role === "staff" && (
           <button
             onClick={abrirAdicionar}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-white dark:bg-white dark:text-navy dark:hover:bg-white/90"
           >
             <Plus className="h-3.5 w-3.5" />
             Adicionar liga

@@ -21,6 +21,7 @@ import { DashboardCard } from "@/pages/home/components/DashboardCard";
 import { StatStrip, TabSection } from "@/pages/ligas/tabs/primitives";
 
 import { CriarProjetoDialog } from "./CriarProjetoDialog";
+import { ProjetosFilterBar } from "./ProjetosFilterBar";
 import { TabelaProjetosSkeleton } from "./ProjetoSkeletons";
 import { STATUS_CONFIG } from "./statusConfig";
 
@@ -317,41 +318,17 @@ export function ProjetosStaffView({ abrirCriar }: { abrirCriar?: boolean }) {
         <TabSection
           titulo="Todos os projetos"
           acao={
-            <div className="flex gap-2">
-              <Select value={filtroLiga} onValueChange={(v) => setFiltroLiga(v === "all" ? "" : v)}>
-                <SelectTrigger className="h-9 w-auto min-w-[150px] text-sm">
-                  <SelectValue placeholder="Todas as ligas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="text-sm">
-                    Todas as ligas
-                  </SelectItem>
-                  {ligas.map((l) => (
-                    <SelectItem key={l.id} value={l.id} className="text-sm">
-                      {l.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={filtroStatus}
-                onValueChange={(v) => setFiltroStatus(v === "all" ? "" : v)}
-              >
-                <SelectTrigger className="h-9 w-auto min-w-[150px] text-sm">
-                  <SelectValue placeholder="Todos os status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="text-sm">
-                    Todos os status
-                  </SelectItem>
-                  {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-                    <SelectItem key={k} value={k} className="text-sm">
-                      {v.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <ProjetosFilterBar
+              ligas={ligas}
+              statusOptions={Object.entries(STATUS_CONFIG).map(([value, v]) => ({
+                value,
+                label: v.label,
+              }))}
+              filtroLiga={filtroLiga}
+              setFiltroLiga={setFiltroLiga}
+              filtroStatus={filtroStatus}
+              setFiltroStatus={setFiltroStatus}
+            />
           }
         >
           {carregando ? (

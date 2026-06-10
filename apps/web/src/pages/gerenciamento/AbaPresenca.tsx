@@ -12,7 +12,7 @@ import {
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { SectionHeader } from "@/pages/home/v1/primitives";
+import { SectionHeader } from "@/pages/ligas/tabs/primitives";
 
 import type { StatusPresenca } from "@link-leagues/types";
 
@@ -221,57 +221,56 @@ export function AbaPresenca({ ligaId }: Props) {
     }
   }
 
-  if (carregando)
-    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando presença…</p>;
+  if (carregando) return <p className="text-sm text-foreground/50">Carregando presença…</p>;
 
   return (
     <div className="space-y-6">
       <SectionHeader
         titulo="Controle de Presença"
-        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        tituloClassName="text-xs font-bold uppercase tracking-wider text-foreground/60 dark:text-white"
         acao={
           <div className="flex items-center gap-2">
             <button
               onClick={abrirEditar}
-              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-foreground/[0.06] transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
             >
               Editar presença
             </button>
             <button
               onClick={abrirAdicionar}
-              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
             >
               + Adicionar presença
             </button>
           </div>
         }
       />
-      <p className="font-plex-sans text-[12px] text-navy/40 -mt-4">
+      <p className="text-xs text-foreground/40 -mt-4">
         {membros.length} membros · {eventosVisiveis.length} evento(s) exibido(s)
       </p>
 
       {/* Matriz membros × eventos */}
       {eventosVisiveis.length === 0 ? (
-        <p className="font-plex-sans text-[13px] text-navy/40">
+        <p className="text-sm text-foreground/40">
           Nenhum evento cadastrado. Crie eventos na página de Agenda.
         </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-foreground/[0.08]">
-                <th className="text-left font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal px-4 py-3 sticky left-0 bg-background z-10">
+              <tr className="border-b border-border">
+                <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40 sticky left-0 bg-background z-10">
                   Membro
                 </th>
                 {eventosVisiveis.map((e) => (
                   <th
                     key={e.id}
-                    className="text-center font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal px-2 py-3 whitespace-nowrap"
+                    className="text-center px-2 py-2.5 text-xs font-normal text-foreground/40 whitespace-nowrap"
                     title={e.titulo}
                   >
                     <div className="flex flex-col">
                       <span className="truncate max-w-[120px]">{e.titulo}</span>
-                      <span className="font-plex-sans text-[10px] text-navy/40 font-normal mt-0.5">
+                      <span className="text-xs text-foreground/40 font-normal mt-0.5">
                         {formatarData(e.data)}
                       </span>
                     </div>
@@ -284,7 +283,7 @@ export function AbaPresenca({ ligaId }: Props) {
                 <tr>
                   <td
                     colSpan={eventosVisiveis.length + 1}
-                    className="px-4 py-4 font-plex-sans text-[13px] text-foreground/40 text-center"
+                    className="px-4 py-4 text-sm text-foreground/40 text-center"
                   >
                     Nenhum membro cadastrado.
                   </td>
@@ -293,9 +292,9 @@ export function AbaPresenca({ ligaId }: Props) {
                 membros.map((m) => (
                   <tr
                     key={m.usuario_id}
-                    className="border-b border-foreground/[0.06] last:border-0 hover:bg-foreground/[0.02] transition-colors"
+                    className="border-b border-border transition-colors last:border-0 hover:bg-foreground/[0.03]"
                   >
-                    <td className="px-4 py-2.5 font-plex-sans text-[13px] font-semibold text-foreground whitespace-nowrap sticky left-0 bg-background z-10">
+                    <td className="px-4 py-2.5 text-sm font-semibold text-foreground whitespace-nowrap sticky left-0 bg-background z-10">
                       {m.nome}
                     </td>
                     {eventosVisiveis.map((e) => {
@@ -306,14 +305,14 @@ export function AbaPresenca({ ligaId }: Props) {
                           {status ? (
                             <span
                               className={cn(
-                                "inline-block font-plex-mono text-[9px] uppercase tracking-[0.10em] px-2 py-0.5 rounded-full",
+                                "inline-block text-xs px-2 py-0.5 rounded-full",
                                 STATUS_CONFIG[status].className,
                               )}
                             >
                               {STATUS_CONFIG[status].label[0]}
                             </span>
                           ) : (
-                            <span className="font-plex-sans text-[12px] text-foreground/30">—</span>
+                            <span className="text-xs text-foreground/30">—</span>
                           )}
                         </td>
                       );
@@ -337,28 +336,26 @@ export function AbaPresenca({ ligaId }: Props) {
           <div className="flex-shrink-0">
             <div className="h-px bg-foreground/20" />
             <div className="px-8 pt-8 pb-6">
-              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
+              <p className="text-xs text-foreground/40">
                 {modoSheet === "adicionar" ? "Adicionar" : "Editar"}
               </p>
-              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
+              <h2 className="font-display font-bold text-2xl text-foreground mt-1">
                 {modoSheet === "adicionar" ? "Registrar presença" : "Editar presença"}
               </h2>
             </div>
-            <div className="h-px bg-foreground/[0.08]" />
+            <div className="h-px bg-border" />
           </div>
 
           <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
             <div>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                Evento
-              </label>
+              <label className="text-xs text-foreground/40 mb-3 block">Evento</label>
               <Select value={eventoSelecionadoId ?? ""} onValueChange={setEventoSelecionadoId}>
-                <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                <SelectTrigger className="w-full text-sm">
                   <SelectValue placeholder="Selecionar evento…" />
                 </SelectTrigger>
                 <SelectContent>
                   {(modoSheet === "adicionar" ? eventosDeHoje : eventosPassados).map((e) => (
-                    <SelectItem key={e.id} value={e.id} className="font-plex-sans text-[13px]">
+                    <SelectItem key={e.id} value={e.id} className="text-sm">
                       {e.titulo} · {formatarData(e.data)}
                     </SelectItem>
                   ))}
@@ -368,24 +365,17 @@ export function AbaPresenca({ ligaId }: Props) {
 
             {eventoSelecionadoId && membros.length > 0 && (
               <div>
-                <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3">
-                  Membros
-                </p>
-                <div className="border-t border-foreground/[0.08]">
+                <p className="text-xs text-foreground/40 mb-3">Membros</p>
+                <div className="border-t border-border">
                   {membros.map((m) => {
                     const atual = statusPorMembro[m.usuario_id] ?? {
                       status: "ausente" as StatusPresenca,
                       justificativa: "",
                     };
                     return (
-                      <div
-                        key={m.usuario_id}
-                        className="border-b border-foreground/[0.06] py-3 space-y-2"
-                      >
+                      <div key={m.usuario_id} className="border-b border-border py-3 space-y-2">
                         <div className="flex items-center gap-3">
-                          <p className="font-plex-sans font-medium text-[13px] text-foreground flex-1">
-                            {m.nome}
-                          </p>
+                          <p className="font-medium text-sm text-foreground flex-1">{m.nome}</p>
                           <select
                             value={atual.status}
                             onChange={(e) =>
@@ -397,7 +387,7 @@ export function AbaPresenca({ ligaId }: Props) {
                                 },
                               }))
                             }
-                            className="font-plex-sans text-[12px] text-foreground border border-border px-2 py-1.5 bg-muted/50 focus:outline-none focus:border-foreground/30 rounded"
+                            className="text-sm text-foreground border border-border px-2 py-1.5 bg-muted/50 focus:outline-none focus:border-foreground/30 rounded"
                           >
                             <option value="presente">Presente</option>
                             <option value="ausente">Ausente</option>
@@ -418,7 +408,7 @@ export function AbaPresenca({ ligaId }: Props) {
                               }))
                             }
                             placeholder="Motivo da justificativa"
-                            className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                            className="w-full text-sm text-foreground border border-border px-3 py-2 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
                           />
                         )}
                       </div>
@@ -430,16 +420,12 @@ export function AbaPresenca({ ligaId }: Props) {
           </div>
 
           <div className="flex-shrink-0">
-            <div className="h-px bg-foreground/[0.08]" />
+            <div className="h-px bg-border" />
             <div className="px-8 py-6 flex flex-col gap-3">
               <button
                 onClick={() => void salvar()}
                 disabled={salvando || !eventoSelecionadoId || membros.length === 0}
-                style={{
-                  backgroundColor:
-                    eventoSelecionadoId && membros.length > 0 ? "#10244D" : "#9FA7B8",
-                }}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white px-4 py-3 rounded-full hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full rounded-full bg-foreground px-4 py-3 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {salvando ? (
                   <>
@@ -452,7 +438,7 @@ export function AbaPresenca({ ligaId }: Props) {
               </button>
               <button
                 onClick={() => setModoSheet(null)}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
+                className="w-full rounded-full border border-border px-4 py-3 text-xs font-medium text-foreground/60 transition-colors hover:bg-muted"
               >
                 Cancelar
               </button>

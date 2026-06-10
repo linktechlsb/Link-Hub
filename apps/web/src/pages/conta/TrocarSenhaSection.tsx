@@ -5,11 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <label className="block font-plex-mono text-[9px] uppercase tracking-[0.18em] text-foreground/50 mb-1.5">
-      {children}
-    </label>
-  );
+  return <label className="block text-xs text-foreground/40 mb-2">{children}</label>;
 }
 
 function Campo({
@@ -25,7 +21,7 @@ function Campo({
     <div>
       <Label>{label}</Label>
       {children}
-      {dica && <p className="font-plex-sans text-[11px] text-foreground/40 mt-1">{dica}</p>}
+      {dica && <p className="text-xs text-foreground/40 mt-1">{dica}</p>}
     </div>
   );
 }
@@ -97,12 +93,12 @@ export function TrocarSenhaSection({ onToast }: { onToast: (msg: string) => void
             value={senhaAtual}
             onChange={(e) => setSenhaAtual(e.target.value)}
             placeholder="••••••••"
-            className="w-full px-3 py-2.5 pr-10 border border-border bg-muted/50 rounded font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 placeholder:text-foreground/20"
+            className="w-full px-3 py-2.5 pr-10 border border-border bg-muted/50 rounded text-sm text-foreground focus:outline-none focus:border-foreground/30 placeholder:text-foreground/20"
           />
           <button
             type="button"
             onClick={() => setMostrar(!mostrar)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-navy/30 hover:text-navy transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/30 hover:text-foreground transition-colors"
           >
             {mostrar ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
@@ -116,7 +112,7 @@ export function TrocarSenhaSection({ onToast }: { onToast: (msg: string) => void
             value={novaSenha}
             onChange={(e) => setNovaSenha(e.target.value)}
             placeholder="••••••••"
-            className="w-full px-3 py-2.5 border border-border bg-muted/50 rounded font-plex-sans text-[13px] text-foreground focus:outline-none focus:border-foreground/30 placeholder:text-foreground/20"
+            className="w-full px-3 py-2.5 border border-border bg-muted/50 rounded text-sm text-foreground focus:outline-none focus:border-foreground/30 placeholder:text-foreground/20"
           />
         </Campo>
         <Campo label="Confirmar nova senha">
@@ -126,24 +122,24 @@ export function TrocarSenhaSection({ onToast }: { onToast: (msg: string) => void
             onChange={(e) => setConfirmar(e.target.value)}
             placeholder="••••••••"
             className={cn(
-              "w-full px-3 py-2.5 border bg-muted/50 rounded font-plex-sans text-[13px] text-foreground focus:outline-none placeholder:text-foreground/20",
+              "w-full px-3 py-2.5 border bg-muted/50 rounded text-sm text-foreground focus:outline-none placeholder:text-foreground/20",
               confirmar && novaSenha !== confirmar
                 ? "border-red-400 focus:border-red-500"
                 : "border-border focus:border-foreground/30",
             )}
           />
           {confirmar && novaSenha !== confirmar && (
-            <p className="font-plex-sans text-[11px] text-red-500 mt-1">As senhas não coincidem</p>
+            <p className="text-xs text-red-500 mt-1">As senhas não coincidem</p>
           )}
         </Campo>
       </div>
 
-      {erro && <p className="font-plex-sans text-[13px] text-red-500">{erro}</p>}
+      {erro && <p className="text-sm text-red-500">{erro}</p>}
 
       <button
         onClick={handleAtualizarSenha}
         disabled={!senhasValidas || loading}
-        className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90 disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {loading ? "Atualizando..." : "Atualizar senha"}
       </button>

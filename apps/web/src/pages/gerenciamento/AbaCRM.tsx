@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/lib/supabase";
-import { SectionHeader } from "@/pages/home/v1/primitives";
+import { SectionHeader } from "@/pages/ligas/tabs/primitives";
 
 import type { CrmContato, CreateCrmContatoInput, UpdateCrmContatoInput } from "@link-leagues/types";
 
@@ -207,7 +207,7 @@ export function AbaCRM({ ligaId }: Props) {
   if (carregando) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-navy/40" />
+        <Loader2 className="h-6 w-6 animate-spin text-foreground/40" />
       </div>
     );
   }
@@ -216,11 +216,11 @@ export function AbaCRM({ ligaId }: Props) {
     <div className="space-y-6">
       <SectionHeader
         titulo="Contatos da Liga"
-        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        tituloClassName="text-xs font-bold uppercase tracking-wider text-foreground/60 dark:text-white"
         acao={
           <button
             onClick={abrirFormularioNovo}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
           >
             + Novo Contato
           </button>
@@ -228,13 +228,11 @@ export function AbaCRM({ ligaId }: Props) {
       />
 
       {contatos.length === 0 ? (
-        <div className="border border-dashed border-navy/20 py-16 text-center">
-          <p className="font-plex-sans text-[13px] text-navy/40">
-            Nenhum contato adicionado ainda.
-          </p>
+        <div className="border border-dashed border-border py-16 text-center">
+          <p className="text-sm text-foreground/40">Nenhum contato adicionado ainda.</p>
           <button
             onClick={abrirFormularioNovo}
-            className="mt-3 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors"
+            className="mt-3 text-xs text-foreground/50 hover:text-foreground transition-colors"
           >
             Criar primeiro contato
           </button>
@@ -242,14 +240,12 @@ export function AbaCRM({ ligaId }: Props) {
       ) : (
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-foreground/[0.08]">
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                Nome
-              </th>
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+            <tr className="border-b border-border">
+              <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40">Nome</th>
+              <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40">
                 Empresa / Cargo
               </th>
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+              <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40">
                 Contato
               </th>
               <th className="py-3 px-4 w-10" />
@@ -259,23 +255,21 @@ export function AbaCRM({ ligaId }: Props) {
             {contatos.map((contato) => (
               <tr
                 key={contato.id}
-                className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
+                className="border-b border-border transition-colors last:border-0 hover:bg-foreground/[0.03]"
               >
                 <td className="py-4 px-4">
-                  <span className="font-plex-sans font-semibold text-[13px] text-foreground">
-                    {contato.nome}
-                  </span>
+                  <span className="font-semibold text-sm text-foreground">{contato.nome}</span>
                 </td>
                 <td className="py-4 px-4">
                   <div className="space-y-0.5">
                     {contato.empresa && (
-                      <div className="flex items-center gap-1.5 font-plex-sans text-[12px] text-foreground/60">
+                      <div className="flex items-center gap-1.5 text-sm text-foreground/60">
                         <Building2 className="h-3 w-3 shrink-0" />
                         {contato.empresa}
                       </div>
                     )}
                     {contato.emprego && (
-                      <div className="flex items-center gap-1.5 font-plex-sans text-[12px] text-foreground/60">
+                      <div className="flex items-center gap-1.5 text-sm text-foreground/60">
                         <Briefcase className="h-3 w-3 shrink-0" />
                         {contato.emprego}
                       </div>
@@ -287,7 +281,7 @@ export function AbaCRM({ ligaId }: Props) {
                     {contato.email && (
                       <a
                         href={`mailto:${contato.email}`}
-                        className="flex items-center gap-1.5 font-plex-mono text-[11px] text-foreground/60 hover:text-navy transition-colors"
+                        className="flex items-center gap-1.5 text-xs text-foreground/60 hover:text-foreground transition-colors"
                       >
                         <Mail className="h-3 w-3 shrink-0" />
                         <span className="truncate max-w-[160px]">{contato.email}</span>
@@ -296,7 +290,7 @@ export function AbaCRM({ ligaId }: Props) {
                     {contato.telefone && (
                       <a
                         href={`tel:${contato.telefone}`}
-                        className="flex items-center gap-1.5 font-plex-mono text-[11px] text-foreground/60 hover:text-navy transition-colors"
+                        className="flex items-center gap-1.5 text-xs text-foreground/60 hover:text-foreground transition-colors"
                       >
                         <Phone className="h-3 w-3 shrink-0" />
                         {contato.telefone}
@@ -307,7 +301,7 @@ export function AbaCRM({ ligaId }: Props) {
                         href={contato.linkedin}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 font-plex-mono text-[11px] text-foreground/60 hover:text-navy transition-colors"
+                        className="flex items-center gap-1.5 text-xs text-foreground/60 hover:text-foreground transition-colors"
                       >
                         <Linkedin className="h-3 w-3 shrink-0" />
                         LinkedIn
@@ -344,14 +338,12 @@ export function AbaCRM({ ligaId }: Props) {
           <div className="flex-shrink-0">
             <div className="h-px bg-foreground/20" />
             <div className="px-8 pt-8 pb-6">
-              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
-                Contatos
-              </p>
-              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
+              <p className="text-xs text-foreground/40">Contatos</p>
+              <h2 className="font-display font-bold text-2xl text-foreground mt-1">
                 {modoSheet === "adicionar" ? "Novo Contato" : "Editar Contato"}
               </h2>
             </div>
-            <div className="h-px bg-foreground/[0.08]" />
+            <div className="h-px bg-border" />
           </div>
 
           <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
@@ -394,27 +386,25 @@ export function AbaCRM({ ligaId }: Props) {
               },
             ].map(({ label, placeholder, field, type }) => (
               <div key={field}>
-                <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                  {label}
-                </label>
+                <label className="text-xs text-foreground/40 mb-3 block">{label}</label>
                 <input
                   type={type}
                   placeholder={placeholder}
                   value={formData[field]}
                   onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
-                  className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                  className="w-full text-sm text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
                 />
               </div>
             ))}
           </div>
 
           <div className="flex-shrink-0">
-            <div className="h-px bg-foreground/[0.08]" />
+            <div className="h-px bg-border" />
             <div className="px-8 py-6 flex flex-col gap-3">
               <button
                 onClick={salvarContato}
                 disabled={salvando || !formData.nome.trim()}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full rounded-full bg-foreground px-4 py-3 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {salvando && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Salvar
@@ -422,7 +412,7 @@ export function AbaCRM({ ligaId }: Props) {
               <button
                 onClick={() => setModoSheet(null)}
                 disabled={salvando}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
+                className="w-full rounded-full border border-border px-4 py-3 text-xs font-medium text-foreground/60 transition-colors hover:bg-muted"
               >
                 Cancelar
               </button>
@@ -438,33 +428,31 @@ export function AbaCRM({ ligaId }: Props) {
       >
         <DialogContent className="sm:max-w-sm p-0 gap-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-4">
-            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-1">
-              Contatos
-            </p>
-            <DialogTitle className="font-display font-bold text-[18px] tracking-[-0.02em] text-foreground">
+            <p className="text-xs text-foreground/40 mb-1">Contatos</p>
+            <DialogTitle className="font-display font-bold text-base text-foreground">
               Remover contato
             </DialogTitle>
             {contatoDeletando && (
-              <DialogDescription className="font-plex-sans text-[13px] text-foreground/60 mt-1">
+              <DialogDescription className="text-sm text-foreground/60 mt-1">
                 Tem certeza que deseja remover{" "}
                 <span className="font-semibold text-foreground">{contatoDeletando.nome}</span>? Esta
                 ação não pode ser desfeita.
               </DialogDescription>
             )}
           </DialogHeader>
-          <div className="h-px bg-foreground/[0.08]" />
+          <div className="h-px bg-border" />
           <div className="px-6 py-4 flex items-center gap-2">
             <button
               onClick={() => setContatoDeletando(null)}
               disabled={deletando}
-              className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
+              className="flex-1 rounded-full border border-border px-4 py-3 text-xs font-medium text-foreground/60 transition-colors hover:bg-muted"
             >
               Cancelar
             </button>
             <button
               onClick={confirmarDeletar}
               disabled={deletando}
-              className="flex-1 font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-red-500 hover:bg-red-600 px-4 py-3 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 rounded-full bg-red-500 hover:bg-red-600 px-4 py-3 text-xs font-medium text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {deletando && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               Remover

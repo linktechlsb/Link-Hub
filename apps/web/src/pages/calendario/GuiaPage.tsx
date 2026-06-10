@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
 
-const BUCKET = "documentos";
+const BUCKET = "guia-eventos";
 const FILE_PATH = "guia-eventos.pdf";
 
 const { data } = supabase.storage.from(BUCKET).getPublicUrl(FILE_PATH);

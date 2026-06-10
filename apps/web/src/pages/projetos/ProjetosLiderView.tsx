@@ -41,6 +41,7 @@ import { DashboardCard } from "@/pages/home/components/DashboardCard";
 import { StatStrip } from "@/pages/ligas/tabs/primitives";
 
 import { CriarProjetoDialog } from "./CriarProjetoDialog";
+import { ProjetosFilterBar } from "./ProjetosFilterBar";
 import { TabelaProjetosSkeleton } from "./ProjetoSkeletons";
 import { STATUS_CONFIG } from "./statusConfig";
 
@@ -437,43 +438,16 @@ export function ProjetosLiderView({ abrirCriar }: { abrirCriar?: boolean }) {
 
         {aba === "todos" && (
           <div className="space-y-4">
-            <div className="flex gap-3">
-              <Select value={filtroLiga} onValueChange={(v) => setFiltroLiga(v === "all" ? "" : v)}>
-                <SelectTrigger className="w-auto min-w-[160px] text-sm">
-                  <SelectValue placeholder="Todas as ligas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="text-sm">
-                    Todas as ligas
-                  </SelectItem>
-                  {ligas.map((l) => (
-                    <SelectItem key={l.id} value={l.id} className="text-sm">
-                      {l.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={filtroStatus}
-                onValueChange={(v) => setFiltroStatus(v === "all" ? "" : v)}
-              >
-                <SelectTrigger className="w-auto min-w-[160px] text-sm">
-                  <SelectValue placeholder="Todos os status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="text-sm">
-                    Todos os status
-                  </SelectItem>
-                  {Object.entries(STATUS_CONFIG)
-                    .filter(([k]) => k !== "rascunho")
-                    .map(([k, v]) => (
-                      <SelectItem key={k} value={k} className="text-sm">
-                        {v.label}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <ProjetosFilterBar
+              ligas={ligas}
+              statusOptions={Object.entries(STATUS_CONFIG)
+                .filter(([k]) => k !== "rascunho")
+                .map(([value, v]) => ({ value, label: v.label }))}
+              filtroLiga={filtroLiga}
+              setFiltroLiga={setFiltroLiga}
+              filtroStatus={filtroStatus}
+              setFiltroStatus={setFiltroStatus}
+            />
 
             {carregandoTodos ? (
               <TabelaProjetosSkeleton />

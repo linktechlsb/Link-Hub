@@ -1,9 +1,9 @@
 import {
+  Camera,
   Check,
   X,
   Pencil,
   Trash2,
-  Plus,
   Link,
   FileText,
   Image,
@@ -15,6 +15,7 @@ import {
   Music,
   Star,
   Upload,
+  Users,
   Loader2,
   type LucideIcon,
 } from "lucide-react";
@@ -50,10 +51,11 @@ import {
 } from "@/components/ui/select";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
+import { KpiRow, SectionHeader } from "@/pages/ligas/tabs/primitives";
 
 import { AbaCRM } from "./AbaCRM";
 import { AbaPresenca } from "./AbaPresenca";
@@ -135,7 +137,7 @@ function IconeCor({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="group relative h-9 w-9 flex items-center justify-center rounded-full border-2 border-transparent hover:border-navy/20 transition-colors shrink-0 outline-none"
+          className="group relative h-9 w-9 flex items-center justify-center rounded-full border-2 border-transparent hover:border-border transition-colors shrink-0 outline-none"
           style={{ backgroundColor: cor }}
           title="Escolher ícone e cor"
         >
@@ -148,7 +150,7 @@ function IconeCor({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56 p-3">
-        <DropdownMenuLabel className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 px-0 pb-2">
+        <DropdownMenuLabel className="text-xs text-foreground/40 px-0 pb-2">
           Ícone
         </DropdownMenuLabel>
         <div className="grid grid-cols-5 gap-1.5">
@@ -162,7 +164,7 @@ function IconeCor({
                 className={cn(
                   "h-8 w-8 flex items-center justify-center rounded transition-colors",
                   icone === ic.id
-                    ? "bg-navy text-white"
+                    ? "bg-foreground text-background"
                     : "bg-foreground/[0.06] text-foreground/60 hover:bg-foreground/[0.10]",
                 )}
               >
@@ -172,9 +174,7 @@ function IconeCor({
           })}
         </div>
         <DropdownMenuSeparator className="my-3" />
-        <DropdownMenuLabel className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 px-0 pb-2">
-          Cor
-        </DropdownMenuLabel>
+        <DropdownMenuLabel className="text-xs text-foreground/40 px-0 pb-2">Cor</DropdownMenuLabel>
         <div className="flex flex-wrap gap-1.5">
           {CORES_PICKER.map((c) => (
             <button
@@ -183,7 +183,7 @@ function IconeCor({
               onClick={() => onChange(icone, c)}
               className={cn(
                 "h-6 w-6 rounded-full border-2 transition-all",
-                cor === c ? "border-navy scale-110" : "border-transparent hover:scale-105",
+                cor === c ? "border-foreground scale-110" : "border-transparent hover:scale-105",
               )}
               style={{ backgroundColor: c }}
             />
@@ -252,8 +252,8 @@ function apiParaMembro(m: MembroAPI): MembroAtivo {
 }
 
 function cargoBadgeClass(cargo: Cargo) {
-  if (cargo === "Diretor") return "bg-link-blue/10 text-link-blue";
-  if (cargo === "Admin") return "bg-brand-yellow/20 text-navy";
+  if (cargo === "Diretor") return "bg-foreground/10 text-foreground/60";
+  if (cargo === "Admin") return "bg-brand-yellow/20 text-foreground";
   return "bg-foreground/[0.07] text-foreground/50";
 }
 
@@ -263,7 +263,7 @@ async function getToken() {
 }
 
 const inputClass =
-  "w-full border border-navy/20 px-3 py-2.5 bg-white font-plex-sans text-[13px] text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60";
+  "w-full border border-border px-3 py-2.5 bg-muted/50 text-sm text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded";
 
 // ─── sub-componentes de aba ───────────────────────────────────────────────────
 
@@ -308,33 +308,29 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
     return (
       <table className="w-full border-collapse">
         <thead>
-          <tr className="border-b border-foreground/[0.08]">
-            <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-              Nome
-            </th>
-            <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-              Cargo
-            </th>
+          <tr className="border-b border-border">
+            <th className="text-left py-3 px-4 text-xs font-normal text-foreground/40">Nome</th>
+            <th className="text-left py-3 px-4 text-xs font-normal text-foreground/40">Cargo</th>
             <th className="py-3 px-4 w-10" />
           </tr>
         </thead>
         <tbody>
           {Array.from({ length: 5 }).map((_, i) => (
-            <tr key={i} className="border-b border-foreground/[0.06]">
+            <tr key={i} className="border-b border-border last:border-0">
               <td className="py-4 px-4">
                 <div className="flex items-center gap-3">
-                  <Skeleton className="h-8 w-8 shrink-0" />
+                  <Skeleton className="size-8 shrink-0 rounded-full bg-foreground/5" />
                   <div>
-                    <Skeleton className="h-4 w-32 mb-1" />
-                    <Skeleton className="h-3 w-44" />
+                    <Skeleton className="mb-1 h-4 w-32 bg-foreground/5" />
+                    <Skeleton className="h-3 w-44 bg-foreground/5" />
                   </div>
                 </div>
               </td>
               <td className="py-4 px-4">
-                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-5 w-16 rounded-full bg-foreground/5" />
               </td>
               <td className="py-4 px-4">
-                <Skeleton className="h-6 w-6 rounded" />
+                <Skeleton className="h-6 w-6 rounded bg-foreground/5" />
               </td>
             </tr>
           ))}
@@ -438,7 +434,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
     <div className="space-y-6">
       <SectionHeader
         titulo="Membros da liga"
-        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        tituloClassName="text-xs font-bold uppercase tracking-wider text-foreground"
         acao={
           <button
             onClick={() => {
@@ -447,7 +443,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
               setCargoConvite("Membro");
               setSheetAberto(true);
             }}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
           >
             + Novo membro
           </button>
@@ -455,17 +451,13 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
       />
 
       {membros.length === 0 ? (
-        <p className="font-plex-sans text-[13px] text-navy/40">Nenhum membro cadastrado.</p>
+        <p className="text-sm text-foreground/40">Nenhum membro cadastrado.</p>
       ) : (
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-foreground/[0.08]">
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                Nome
-              </th>
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                Cargo
-              </th>
+              <th className="text-left py-3 px-4 text-xs font-normal text-foreground/40">Nome</th>
+              <th className="text-left py-3 px-4 text-xs font-normal text-foreground/40">Cargo</th>
               <th className="py-3 px-4 w-10" />
             </tr>
           </thead>
@@ -477,45 +469,28 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
               >
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-3">
-                    <div
-                      className="h-8 w-8 shrink-0 flex items-center justify-center text-white font-plex-mono text-[11px] overflow-hidden"
-                      style={m.avatarUrl ? undefined : { backgroundColor: m.cor }}
-                    >
-                      {m.avatarUrl ? (
-                        <img
-                          src={m.avatarUrl}
-                          alt={m.nome}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        m.iniciais
-                      )}
-                    </div>
+                    <UserAvatar nome={m.nome} src={m.avatarUrl} className="size-8" />
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-plex-sans font-semibold text-[13px] text-foreground">
-                          {m.nome}
-                        </span>
+                        <span className="font-semibold text-sm text-foreground">{m.nome}</span>
                         {m.novo && (
-                          <span className="font-plex-mono text-[9px] uppercase tracking-[0.10em] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                          <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-green-700">
                             Novo
                           </span>
                         )}
                       </div>
-                      <span className="font-plex-mono text-[10px] text-foreground/40">
-                        {m.email}
-                      </span>
+                      <span className="text-xs text-foreground/40">{m.email}</span>
                     </div>
                   </div>
                 </td>
                 <td className="py-4 px-4">
                   {confirmandoRemoverId === m.id ? (
                     <div className="flex items-center gap-3">
-                      <span className="font-plex-sans text-[12px] text-red-600">Remover?</span>
+                      <span className="text-xs text-red-600">Remover?</span>
                       <button
                         onClick={() => void remover(m.id)}
                         disabled={removendoId === m.id}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-600 hover:text-red-800 transition-colors disabled:opacity-40"
+                        className="text-xs text-red-600 hover:text-red-800 transition-colors disabled:opacity-40"
                       >
                         {removendoId === m.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -525,7 +500,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
                       </button>
                       <button
                         onClick={() => setConfirmandoRemoverId(null)}
-                        className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
+                        className="text-xs text-foreground/40 hover:text-foreground transition-colors"
                       >
                         Não
                       </button>
@@ -533,7 +508,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
                   ) : (
                     <span
                       className={cn(
-                        "font-plex-mono text-[9px] uppercase tracking-[0.10em] px-2 py-0.5 rounded-full",
+                        "rounded-md px-1.5 py-0.5 text-[10px] font-medium",
                         cargoBadgeClass(m.cargo),
                       )}
                     >
@@ -566,10 +541,8 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
           <div className="flex-shrink-0">
             <div className="h-px bg-foreground/20" />
             <div className="px-8 pt-8 pb-6">
-              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
-                Membros
-              </p>
-              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
+              <p className="text-sm text-foreground/50">Membros</p>
+              <h2 className="font-display text-2xl font-bold text-foreground mt-1">
                 {sheetModo === "adicionar" ? "Adicionar Membro" : "Editar Cargo"}
               </h2>
             </div>
@@ -580,7 +553,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
             {sheetModo === "adicionar" ? (
               <>
                 <div>
-                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                  <label className="text-xs text-foreground/40 mb-3 block">
                     E-mail institucional
                   </label>
                   <input
@@ -591,25 +564,23 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !enviandoConvite) void convidar();
                     }}
-                    className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                    className="w-full text-sm text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
                   />
-                  <p className="font-plex-sans text-[11px] text-foreground/40 mt-1.5">
+                  <p className="text-xs text-foreground/40 mt-1.5">
                     O usuário precisa já estar cadastrado no sistema.
                   </p>
                 </div>
                 <div>
-                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                    Cargo
-                  </label>
+                  <label className="text-xs text-foreground/40 mb-3 block">Cargo</label>
                   <Select value={cargoConvite} onValueChange={(v) => setCargoConvite(v as Cargo)}>
-                    <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                    <SelectTrigger className="w-full text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Membro" className="font-plex-sans text-[13px]">
+                      <SelectItem value="Membro" className="text-sm">
                         Membro
                       </SelectItem>
-                      <SelectItem value="Diretor" className="font-plex-sans text-[13px]">
+                      <SelectItem value="Diretor" className="text-sm">
                         Diretor
                       </SelectItem>
                     </SelectContent>
@@ -618,18 +589,16 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
               </>
             ) : (
               <div>
-                <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                  Cargo
-                </label>
+                <label className="text-xs text-foreground/40 mb-3 block">Cargo</label>
                 <Select value={novoCargoEdit} onValueChange={(v) => setNovoCargoEdit(v as Cargo)}>
-                  <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                  <SelectTrigger className="w-full text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Membro" className="font-plex-sans text-[13px]">
+                    <SelectItem value="Membro" className="text-sm">
                       Membro
                     </SelectItem>
-                    <SelectItem value="Diretor" className="font-plex-sans text-[13px]">
+                    <SelectItem value="Diretor" className="text-sm">
                       Diretor
                     </SelectItem>
                   </SelectContent>
@@ -645,7 +614,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
                 <button
                   onClick={() => void convidar()}
                   disabled={enviandoConvite || !emailConvite.trim()}
-                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full rounded-full bg-foreground px-4 py-3 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {enviandoConvite && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Adicionar membro
@@ -654,7 +623,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
                 <button
                   onClick={() => editandoId && void salvarEdicao(editandoId)}
                   disabled={salvandoEdicaoId !== null}
-                  className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full rounded-full bg-foreground px-4 py-3 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {salvandoEdicaoId && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Salvar alterações
@@ -662,7 +631,7 @@ function AbaMembros({ ligaId }: { ligaId: string | null }) {
               )}
               <button
                 onClick={() => setSheetAberto(false)}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
+                className="w-full rounded-full border border-border px-4 py-3 text-xs font-medium text-foreground/60 transition-colors hover:bg-muted"
               >
                 Cancelar
               </button>
@@ -737,7 +706,7 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
   }
 
   const inputCls =
-    "w-full border border-border px-3 py-2.5 bg-muted/50 font-plex-sans text-[13px] text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded";
+    "w-full border border-border px-3 py-2.5 bg-muted/50 text-sm text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded";
 
   return (
     <div className="space-y-8">
@@ -745,16 +714,16 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
       <section className="space-y-4">
         <SectionHeader
           titulo="Dados Gerais"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-foreground"
           acao={
             alterado ? (
               <div className="flex items-center gap-3">
-                {salvo && <span className="font-plex-sans text-[12px] text-green-600">Salvo!</span>}
-                {erro && <span className="font-plex-sans text-[12px] text-red-600">{erro}</span>}
+                {salvo && <span className="text-xs text-green-600">Salvo!</span>}
+                {erro && <span className="text-xs text-red-600">{erro}</span>}
                 <button
                   onClick={() => void salvar()}
                   disabled={salvando}
-                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white transition-colors disabled:opacity-40"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90 disabled:opacity-40"
                 >
                   {salvando ? "Salvando…" : "Salvar alterações"}
                 </button>
@@ -773,9 +742,7 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
             },
           ].map(({ label, field, placeholder }) => (
             <div key={field}>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                {label}
-              </label>
+              <label className="text-xs text-foreground/40 mb-3 block">{label}</label>
               <input
                 value={form[field]}
                 onChange={(e) => setForm({ ...form, [field]: e.target.value })}
@@ -785,9 +752,7 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
             </div>
           ))}
           <div>
-            <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-              Descrição
-            </label>
+            <label className="text-xs text-foreground/40 mb-3 block">Descrição</label>
             <textarea
               value={form.descricao}
               onChange={(e) => setForm({ ...form, descricao: e.target.value })}
@@ -799,42 +764,43 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
       </section>
 
       {/* Foto / Banner */}
-      <section className="space-y-3">
-        <SectionHeader
-          titulo="Foto / Banner da Liga"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
-        />
-        {bannerPreview ? (
-          <div className="relative overflow-hidden border border-navy/15 h-36">
-            <img src={bannerPreview} alt="Banner da liga" className="w-full h-full object-cover" />
+      <section className="space-y-4">
+        <SectionHeader titulo="Foto da liga" />
+        <div className="relative h-48 w-full overflow-hidden rounded-2xl border border-border bg-muted">
+          {bannerPreview ? (
+            <img src={bannerPreview} alt="Banner da liga" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <Users className="size-10 text-foreground/15" />
+            </div>
+          )}
+
+          <label className="absolute right-3 top-3 inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-background/80 px-3 py-1.5 text-xs font-medium text-foreground/70 backdrop-blur transition-colors hover:text-foreground">
+            <Camera className="h-3.5 w-3.5" />
+            {bannerPreview ? "Trocar foto" : "Adicionar foto"}
+            <input type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
+          </label>
+
+          {bannerPreview && (
             <button
               onClick={() => {
                 setBannerPreview("");
                 setForm((prev) => ({ ...prev, bannerUrl: "" }));
               }}
-              className="absolute top-2 right-2 bg-background/80 hover:bg-background text-red-500 p-1 transition-colors"
+              className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1.5 text-xs font-medium text-red-500 backdrop-blur transition-colors hover:text-red-600"
             >
               <X className="h-3.5 w-3.5" />
+              Remover
             </button>
-          </div>
-        ) : (
-          <div className="border border-dashed border-navy/20 h-36 flex flex-col items-center justify-center gap-2 text-navy/40">
-            <Image className="h-6 w-6" />
-            <span className="font-plex-sans text-[12px]">Nenhuma imagem selecionada</span>
-          </div>
-        )}
-        <label className="inline-flex items-center gap-2 cursor-pointer font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors">
-          <Plus className="h-3.5 w-3.5" />
-          {bannerPreview ? "Trocar imagem" : "Selecionar imagem"}
-          <input type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
-        </label>
+          )}
+        </div>
       </section>
 
       {/* Contatos */}
       <section className="space-y-4">
         <SectionHeader
           titulo="Contatos da Liga"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-foreground"
         />
         <div className="space-y-4">
           {[
@@ -858,9 +824,7 @@ function AbaInformacoes({ ligaId, initialInfo }: { ligaId: string | null; initia
             },
           ].map(({ label, field, type, placeholder }) => (
             <div key={field}>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                {label}
-              </label>
+              <label className="text-xs text-foreground/40 mb-3 block">{label}</label>
               <input
                 type={type}
                 value={form[field]}
@@ -1084,11 +1048,9 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
     return (
       <table className="w-full border-collapse">
         <thead>
-          <tr className="border-b border-foreground/[0.08]">
-            <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-              Recurso
-            </th>
-            <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+          <tr className="border-b border-border">
+            <th className="text-left py-3 px-4 text-xs font-normal text-foreground/40">Recurso</th>
+            <th className="text-left py-3 px-4 text-xs font-normal text-foreground/40 hidden sm:table-cell">
               URL
             </th>
             <th className="py-3 px-4 w-10" />
@@ -1096,21 +1058,21 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
         </thead>
         <tbody>
           {Array.from({ length: 4 }).map((_, i) => (
-            <tr key={i} className="border-b border-foreground/[0.06]">
+            <tr key={i} className="border-b border-border last:border-0">
               <td className="py-4 px-4">
                 <div className="flex items-center gap-3">
-                  <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                  <Skeleton className="size-8 shrink-0 rounded-full bg-foreground/5" />
                   <div>
-                    <Skeleton className="h-4 w-32 mb-1" />
-                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="mb-1 h-4 w-32 bg-foreground/5" />
+                    <Skeleton className="h-3 w-16 bg-foreground/5" />
                   </div>
                 </div>
               </td>
               <td className="py-4 px-4 hidden sm:table-cell">
-                <Skeleton className="h-3 w-48" />
+                <Skeleton className="h-3 w-48 bg-foreground/5" />
               </td>
               <td className="py-4 px-4">
-                <Skeleton className="h-6 w-6 rounded" />
+                <Skeleton className="h-6 w-6 rounded bg-foreground/5" />
               </td>
             </tr>
           ))}
@@ -1122,7 +1084,7 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
     <div className="space-y-6">
       <SectionHeader
         titulo="Recursos"
-        tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+        tituloClassName="text-xs font-bold uppercase tracking-wider text-foreground"
         acao={
           <button
             onClick={() => {
@@ -1135,7 +1097,7 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
               setEditandoId(null);
               setSheetAberto(true);
             }}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
           >
             + Novo recurso
           </button>
@@ -1143,15 +1105,15 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
       />
 
       {recursos.length === 0 ? (
-        <p className="font-plex-sans text-[13px] text-navy/40">Nenhum recurso cadastrado ainda.</p>
+        <p className="text-sm text-foreground/40">Nenhum recurso cadastrado ainda.</p>
       ) : (
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-foreground/[0.08]">
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+              <th className="text-left py-3 px-4 text-xs font-normal text-foreground/40">
                 Recurso
               </th>
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+              <th className="text-left py-3 px-4 text-xs font-normal text-foreground/40 hidden sm:table-cell">
                 URL
               </th>
               <th className="py-3 px-4 w-10" />
@@ -1172,17 +1134,13 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                       <RecursoIcone id={r.icone} />
                     </div>
                     <div>
-                      <span className="font-plex-sans font-semibold text-[13px] text-foreground">
-                        {r.nome}
-                      </span>
-                      <span className="block font-plex-mono text-[10px] text-foreground/40">
-                        {r.tipo}
-                      </span>
+                      <span className="font-semibold text-sm text-foreground">{r.nome}</span>
+                      <span className="block text-[10px] text-foreground/40">{r.tipo}</span>
                     </div>
                   </div>
                 </td>
                 <td className="py-4 px-4 hidden sm:table-cell">
-                  <span className="font-plex-mono text-[11px] text-foreground/40 truncate max-w-[200px] block">
+                  <span className="text-xs text-foreground/40 truncate max-w-[200px] block">
                     {r.url}
                   </span>
                 </td>
@@ -1214,20 +1172,17 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-display font-bold text-[18px] text-navy">
+            <AlertDialogTitle className="font-display text-lg font-bold text-foreground">
               Remover recurso
             </AlertDialogTitle>
-            <AlertDialogDescription className="font-plex-sans text-[13px] text-foreground/60">
+            <AlertDialogDescription className="text-sm text-foreground/60">
               Tem certeza que deseja remover{" "}
               <span className="font-semibold text-foreground">{confirmandoDeletar?.nome}</span>?
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              disabled={deletando}
-              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase"
-            >
+            <AlertDialogCancel disabled={deletando} className="text-xs font-medium">
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
@@ -1236,7 +1191,7 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                 e.preventDefault();
                 if (confirmandoDeletar) void remover(confirmandoDeletar.id);
               }}
-              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 text-xs font-medium text-white hover:bg-red-700"
             >
               {deletando ? (
                 <span className="flex items-center gap-2">
@@ -1257,10 +1212,8 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
           <div className="flex-shrink-0">
             <div className="h-px bg-foreground/20" />
             <div className="px-8 pt-8 pb-6">
-              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
-                Recursos
-              </p>
-              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
+              <p className="text-sm text-foreground/50">Recursos</p>
+              <h2 className="mt-1 font-display text-2xl font-bold text-foreground">
                 {editandoId ? "Editar Recurso" : "Adicionar Recurso"}
               </h2>
             </div>
@@ -1269,9 +1222,7 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
 
           <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
             <div>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                Nome
-              </label>
+              <label className="text-xs text-foreground/40 mb-3 block">Nome</label>
               <div className="flex items-center gap-3">
                 <IconeCor
                   icone={editandoId ? (editForm.icone ?? "link") : novoIcone}
@@ -1292,21 +1243,19 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                       : setNovoNome(e.target.value)
                   }
                   placeholder="Nome do recurso"
-                  className="flex-1 font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                  className="flex-1 text-sm text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
                 />
               </div>
             </div>
             <div>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                Tipo
-              </label>
+              <label className="text-xs text-foreground/40 mb-3 block">Tipo</label>
               <Select
                 value={editandoId ? (editForm.tipo ?? "URL") : novoTipo}
                 onValueChange={(v) =>
                   editandoId ? setEditForm({ ...editForm, tipo: v }) : setNovoTipo(v)
                 }
               >
-                <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                <SelectTrigger className="w-full text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1320,7 +1269,7 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                     "Vídeo",
                     "Outro",
                   ].map((t) => (
-                    <SelectItem key={t} value={t} className="font-plex-sans text-[13px]">
+                    <SelectItem key={t} value={t} className="text-sm">
                       {t}
                     </SelectItem>
                   ))}
@@ -1350,7 +1299,7 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
 
               return (
                 <div>
-                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                  <label className="text-xs text-foreground/40 mb-3 block">
                     {ehMidia ? "Arquivo" : "URL"}
                   </label>
                   {ehMidia ? (
@@ -1367,19 +1316,17 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                       ) : currentUrl ? (
                         <>
                           <Check className="h-4 w-4 text-green-600" />
-                          <span className="font-plex-mono text-[10px] text-foreground/50 max-w-[220px] truncate">
+                          <span className="text-[10px] text-foreground/50 max-w-[220px] truncate">
                             {currentUrl.split("/").pop()}
                           </span>
-                          <span className="font-plex-mono text-[9px] uppercase tracking-[0.12em] text-foreground/30">
+                          <span className="text-[9px] uppercase tracking-[0.12em] text-foreground/30">
                             Trocar arquivo
                           </span>
                         </>
                       ) : (
                         <>
                           <Upload className="h-5 w-5 text-foreground/30" />
-                          <span className="font-plex-sans text-[12px] text-foreground/40">
-                            Clique para selecionar
-                          </span>
+                          <span className="text-xs text-foreground/40">Clique para selecionar</span>
                         </>
                       )}
                       <input
@@ -1398,16 +1345,14 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                       value={currentUrl}
                       onChange={(e) => setUrl(e.target.value)}
                       placeholder="https://..."
-                      className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                      className="w-full text-sm text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
                     />
                   )}
                 </div>
               );
             })()}
             <div>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                Visibilidade
-              </label>
+              <label className="text-xs text-foreground/40 mb-3 block">Visibilidade</label>
               <Select
                 value={(editandoId ? editForm.publico : novoPublico) ? "publico" : "privado"}
                 onValueChange={(v) => {
@@ -1416,20 +1361,20 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                   else setNovoPublico(pub);
                 }}
               >
-                <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                <SelectTrigger className="w-full text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="privado" className="font-plex-sans text-[13px]">
+                  <SelectItem value="privado" className="text-sm">
                     Privado · só membros da liga
                   </SelectItem>
-                  <SelectItem value="publico" className="font-plex-sans text-[13px]">
+                  <SelectItem value="publico" className="text-sm">
                     Público · visível para todos
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
+            {erro && <p className="text-xs text-red-600">{erro}</p>}
           </div>
 
           <div className="flex-shrink-0">
@@ -1448,13 +1393,13 @@ function AbaRecursos({ ligaId }: { ligaId: string | null }) {
                     ? !(editForm.nome ?? "").trim() || !(editForm.url ?? "").trim()
                     : !novoNome.trim() || !novoUrl.trim()
                 }
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full rounded-full bg-foreground px-4 py-3 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {editandoId ? "Salvar alterações" : "Adicionar recurso"}
               </button>
               <button
                 onClick={() => setSheetAberto(false)}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
+                className="w-full rounded-full border border-border px-4 py-3 text-xs font-medium text-foreground/60 transition-colors hover:bg-muted"
               >
                 Cancelar
               </button>
@@ -1610,54 +1555,54 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
   if (carregando)
     return (
       <div className="space-y-8">
-        {/* KPI skeletons — 3 cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="rounded-xl border border-border shadow-sm p-5">
-              <Skeleton className="h-8 w-20 mb-2" />
-              <Skeleton className="h-3 w-24 mt-2" />
-            </div>
-          ))}
+        {/* KPI skeleton — espelha o StatStrip (card único dividido) */}
+        <div className="rounded-xl border border-border bg-card">
+          <div className="grid grid-cols-3 divide-x divide-border">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex flex-col gap-4 p-5">
+                <Skeleton className="h-3 w-20 bg-foreground/5" />
+                <Skeleton className="h-8 w-24 bg-foreground/5" />
+              </div>
+            ))}
+          </div>
         </div>
         {/* Table skeleton */}
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-foreground/[0.08]">
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+            <tr className="border-b border-border">
+              <th className="text-left py-3 px-4 text-xs font-normal text-foreground/40">
                 Descrição
               </th>
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+              <th className="text-left py-3 px-4 text-xs font-normal text-foreground/40 hidden sm:table-cell">
                 Data
               </th>
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden md:table-cell">
+              <th className="text-left py-3 px-4 text-xs font-normal text-foreground/40 hidden md:table-cell">
                 Recorrência
               </th>
-              <th className="text-right py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                Valor
-              </th>
+              <th className="text-right py-3 px-4 text-xs font-normal text-foreground/40">Valor</th>
               <th className="py-3 px-4 w-10" />
             </tr>
           </thead>
           <tbody>
             {Array.from({ length: 4 }).map((_, i) => (
-              <tr key={i} className="border-b border-foreground/[0.06]">
+              <tr key={i} className="border-b border-border last:border-0">
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-2">
-                    <Skeleton className="h-5 w-5 rounded-full shrink-0" />
-                    <Skeleton className="h-4 w-36" />
+                    <Skeleton className="h-5 w-5 shrink-0 rounded-full bg-foreground/5" />
+                    <Skeleton className="h-4 w-36 bg-foreground/5" />
                   </div>
                 </td>
                 <td className="py-4 px-4 hidden sm:table-cell">
-                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-20 bg-foreground/5" />
                 </td>
                 <td className="py-4 px-4 hidden md:table-cell">
-                  <Skeleton className="h-5 w-20 rounded-full" />
+                  <Skeleton className="h-5 w-20 rounded-full bg-foreground/5" />
                 </td>
                 <td className="py-4 px-4 text-right">
-                  <Skeleton className="h-4 w-20 ml-auto" />
+                  <Skeleton className="ml-auto h-4 w-20 bg-foreground/5" />
                 </td>
                 <td className="py-4 px-4">
-                  <Skeleton className="h-6 w-6 rounded" />
+                  <Skeleton className="h-6 w-6 rounded bg-foreground/5" />
                 </td>
               </tr>
             ))}
@@ -1682,7 +1627,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
       <section className="space-y-4">
         <SectionHeader
           titulo="Lançamentos"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-foreground"
           acao={
             <button
               onClick={() => {
@@ -1694,7 +1639,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                 setNovaData(new Date().toISOString().slice(0, 10));
                 setSheetAberto(true);
               }}
-              className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
             >
               + Adicionar
             </button>
@@ -1702,21 +1647,21 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
         />
 
         {registros.length === 0 ? (
-          <p className="font-plex-sans text-[13px] text-navy/40">Nenhum lançamento ainda.</p>
+          <p className="text-sm text-foreground/40">Nenhum lançamento ainda.</p>
         ) : (
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-foreground/[0.08]">
-                <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                <th className="text-left py-3 px-4 text-xs font-normal text-foreground/40">
                   Descrição
                 </th>
-                <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+                <th className="text-left py-3 px-4 text-xs font-normal text-foreground/40 hidden sm:table-cell">
                   Data
                 </th>
-                <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden md:table-cell">
+                <th className="text-left py-3 px-4 text-xs font-normal text-foreground/40 hidden md:table-cell">
                   Recorrência
                 </th>
-                <th className="text-right py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                <th className="text-right py-3 px-4 text-xs font-normal text-foreground/40">
                   Valor
                 </th>
                 <th className="py-3 px-4 w-10" />
@@ -1732,7 +1677,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                     <div className="flex items-center gap-2">
                       <span
                         className={cn(
-                          "font-plex-mono text-[10px] uppercase px-1.5 py-0.5 rounded-full font-bold shrink-0",
+                          "text-[10px] uppercase px-1.5 py-0.5 rounded-full font-bold shrink-0",
                           r.tipo === "receita"
                             ? "bg-green-100 text-green-700"
                             : "bg-red-100 text-red-600",
@@ -1741,24 +1686,20 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                         {r.tipo === "receita" ? "+" : "−"}
                       </span>
                       <div>
-                        <span className="font-plex-sans font-semibold text-[13px] text-foreground">
-                          {r.descricao}
-                        </span>
+                        <span className="font-semibold text-sm text-foreground">{r.descricao}</span>
                         {r.observacao && (
-                          <span className="block font-plex-sans text-[11px] text-foreground/40">
-                            {r.observacao}
-                          </span>
+                          <span className="block text-xs text-foreground/40">{r.observacao}</span>
                         )}
                       </div>
                     </div>
                   </td>
-                  <td className="py-4 px-4 font-plex-mono text-[11px] text-foreground/50 hidden sm:table-cell">
+                  <td className="py-4 px-4 text-xs text-foreground/50 hidden sm:table-cell">
                     {new Date(r.data + "T00:00:00").toLocaleDateString("pt-BR")}
                   </td>
                   <td className="py-4 px-4 hidden md:table-cell">
                     <span
                       className={cn(
-                        "font-plex-mono text-[9px] uppercase tracking-[0.10em] px-2 py-0.5 rounded-full",
+                        "text-[9px] uppercase tracking-[0.10em] px-2 py-0.5 rounded-full",
                         r.recorrencia === "recorrente"
                           ? "bg-blue-100 text-blue-600"
                           : "bg-foreground/[0.06] text-foreground/50",
@@ -1770,7 +1711,7 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                   <td className="py-4 px-4 text-right">
                     <span
                       className={cn(
-                        "font-plex-mono text-[12px]",
+                        "text-xs",
                         r.tipo === "receita" ? "text-green-600" : "text-red-500",
                       )}
                     >
@@ -1803,10 +1744,8 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
           <div className="flex-shrink-0">
             <div className="h-px bg-foreground/20" />
             <div className="px-8 pt-8 pb-6">
-              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
-                Financeiro
-              </p>
-              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
+              <p className="text-sm text-foreground/50">Financeiro</p>
+              <h2 className="mt-1 font-display text-2xl font-bold text-foreground">
                 Adicionar Lançamento
               </h2>
             </div>
@@ -1820,10 +1759,10 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                 type="button"
                 onClick={() => setNovoTipo("receita")}
                 className={cn(
-                  "flex-1 py-2 font-plex-mono text-[10px] tracking-[0.14em] uppercase border-2 transition-colors rounded-full",
+                  "flex-1 rounded-full border py-2 text-xs font-medium transition-colors",
                   novoTipo === "receita"
-                    ? "border-green-500 bg-green-50 text-green-700"
-                    : "border-foreground/15 text-foreground/40 hover:border-green-300",
+                    ? "border-green-500 bg-green-50 text-green-700 dark:bg-green-500/10"
+                    : "border-border text-foreground/40 hover:border-green-300",
                 )}
               >
                 + Receita
@@ -1832,10 +1771,10 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                 type="button"
                 onClick={() => setNovoTipo("custo")}
                 className={cn(
-                  "flex-1 py-2 font-plex-mono text-[10px] tracking-[0.14em] uppercase border-2 transition-colors rounded-full",
+                  "flex-1 rounded-full border py-2 text-xs font-medium transition-colors",
                   novoTipo === "custo"
-                    ? "border-red-400 bg-red-50 text-red-600"
-                    : "border-foreground/15 text-foreground/40 hover:border-red-300",
+                    ? "border-red-400 bg-red-50 text-red-600 dark:bg-red-500/10"
+                    : "border-border text-foreground/40 hover:border-red-300",
                 )}
               >
                 − Custo
@@ -1843,21 +1782,19 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
             </div>
 
             <div>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                Recorrência
-              </label>
+              <label className="text-xs text-foreground/40 mb-3 block">Recorrência</label>
               <Select
                 value={novaRecorrencia}
                 onValueChange={(v) => setNovaRecorrencia(v as "unico" | "recorrente")}
               >
-                <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                <SelectTrigger className="w-full text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="unico" className="font-plex-sans text-[13px]">
+                  <SelectItem value="unico" className="text-sm">
                     Único
                   </SelectItem>
-                  <SelectItem value="recorrente" className="font-plex-sans text-[13px]">
+                  <SelectItem value="recorrente" className="text-sm">
                     Recorrente
                   </SelectItem>
                 </SelectContent>
@@ -1865,32 +1802,28 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
             </div>
 
             <div>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                Descrição
-              </label>
+              <label className="text-xs text-foreground/40 mb-3 block">Descrição</label>
               <input
                 value={novaDescricao}
                 onChange={(e) => setNovaDescricao(e.target.value)}
                 placeholder="Ex: Patrocínio empresa X"
-                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                className="w-full text-sm text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
               />
             </div>
 
             <div>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                Observação (opcional)
-              </label>
+              <label className="text-xs text-foreground/40 mb-3 block">Observação (opcional)</label>
               <input
                 value={novaObs}
                 onChange={(e) => setNovaObs(e.target.value)}
                 placeholder="Detalhes adicionais"
-                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                className="w-full text-sm text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
               />
             </div>
 
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-plex-sans text-[13px] text-foreground/40 pointer-events-none">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-foreground/40 pointer-events-none">
                   R$
                 </span>
                 <input
@@ -1899,18 +1832,18 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
                   value={novoValor}
                   onChange={(e) => setNovoValor(e.target.value.replace(/[^0-9.,]/g, ""))}
                   placeholder="0,00"
-                  className="w-full font-plex-sans text-[13px] text-foreground border border-border pl-9 pr-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                  className="w-full text-sm text-foreground border border-border pl-9 pr-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
                 />
               </div>
               <input
                 type="date"
                 value={novaData}
                 onChange={(e) => setNovaData(e.target.value)}
-                className="w-40 font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 focus:outline-none focus:border-foreground/30 rounded"
+                className="w-40 text-sm text-foreground border border-border px-3 py-2.5 bg-muted/50 focus:outline-none focus:border-foreground/30 rounded"
               />
             </div>
 
-            {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
+            {erro && <p className="text-xs text-red-600">{erro}</p>}
           </div>
 
           <div className="flex-shrink-0">
@@ -1919,14 +1852,14 @@ function AbaReceita({ ligaId }: { ligaId: string | null }) {
               <button
                 onClick={() => void adicionar()}
                 disabled={enviando || !novaDescricao.trim() || !novoValor.trim()}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full rounded-full bg-foreground px-4 py-3 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {enviando && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Adicionar lançamento
               </button>
               <button
                 onClick={() => setSheetAberto(false)}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
+                className="w-full rounded-full border border-border px-4 py-3 text-xs font-medium text-foreground/60 transition-colors hover:bg-muted"
               >
                 Cancelar
               </button>
@@ -1976,7 +1909,7 @@ function AbaDesempenho({ ligaId }: { ligaId: string | null }) {
     {
       label: "Membros ativos",
       valor: String(ligaInfo?.total_membros ?? 0),
-      cor: "text-navy",
+      cor: "text-foreground",
     },
   ];
 
@@ -2002,30 +1935,29 @@ function AbaDesempenho({ ligaId }: { ligaId: string | null }) {
       <section className="space-y-4">
         <SectionHeader
           titulo="Score Atual"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-foreground"
         />
-        <div className="border border-navy/15 p-5 rounded-lg">
-          <div className="flex items-end justify-between mb-3">
-            <div>
-              <span className="font-display font-bold text-4xl text-navy">{score}</span>
-              <span className="font-plex-sans text-lg text-navy/40 ml-1">pts</span>
+        <div className="rounded-xl border border-border bg-card p-5">
+          <div className="mb-3 flex items-end justify-between">
+            <div className="flex items-baseline gap-1">
+              <span className="font-display text-4xl font-bold leading-none text-foreground">
+                {score}
+              </span>
+              <span className="text-lg text-foreground/40">pts</span>
             </div>
             {posicao !== null && (
-              <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-brand-yellow text-navy px-2 py-0.5 rounded-full">
+              <span className="rounded-full bg-brand-yellow/20 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-brand-yellow">
                 {posicao}º lugar
               </span>
             )}
           </div>
-          <div className="w-full bg-navy/10 h-px overflow-hidden">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/10">
             <div
-              className="h-px transition-all duration-500"
-              style={{
-                width: `${porcentagem}%`,
-                background: "linear-gradient(90deg, #10284E, #546484)",
-              }}
+              className="h-full rounded-full bg-foreground transition-all duration-500"
+              style={{ width: `${porcentagem}%` }}
             />
           </div>
-          <div className="flex justify-between mt-2 font-plex-mono text-[10px] text-navy/40">
+          <div className="mt-2 flex justify-between text-[10px] text-foreground/40">
             <span>0 pts</span>
             <span>{porcentagem}% do máximo</span>
             <span>{scoreMax} pts</span>
@@ -2037,7 +1969,7 @@ function AbaDesempenho({ ligaId }: { ligaId: string | null }) {
       <section className="space-y-4">
         <SectionHeader
           titulo="Resumo"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-foreground"
         />
         <KpiRow
           items={resumo.map((r) => ({ label: r.label, valor: r.valor }))}
@@ -2049,20 +1981,18 @@ function AbaDesempenho({ ligaId }: { ligaId: string | null }) {
       <section className="space-y-4">
         <SectionHeader
           titulo="Indicadores"
-          tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
+          tituloClassName="text-xs font-bold uppercase tracking-wider text-foreground"
         />
         <div className="space-y-4">
           {composicao.map((c) => (
             <div key={c.label}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-plex-sans font-semibold text-[13px] text-foreground">
-                  {c.label}
-                </span>
-                <span className="font-plex-mono text-[12px] text-foreground">{c.valor}</span>
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-sm font-semibold text-foreground">{c.label}</span>
+                <span className="text-xs tabular-nums text-foreground">{c.valor}</span>
               </div>
-              <div className="w-full bg-navy/10 h-px overflow-hidden">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/10">
                 <div
-                  className={cn("h-px", c.cor)}
+                  className={cn("h-full rounded-full", c.cor)}
                   style={{ width: `${Math.round((c.valor / composicaoMax) * 100)}%` }}
                 />
               </div>
@@ -2161,15 +2091,11 @@ export function GerenciamentoPage() {
   if (role === "staff") return <GerenciamentoStaffPage />;
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-10">
+    <div className="mx-auto max-w-5xl px-8 py-10">
       {/* Cabeçalho */}
-      <div className="mb-10">
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
-          Gerenciamento
-        </h1>
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
-          {ligaNome || "Carregando…"}
-        </p>
+      <div className="mb-8">
+        <h1 className="font-display text-2xl font-bold text-foreground">Gerenciamento</h1>
+        <p className="mt-1 text-sm text-foreground/50">{ligaNome || "Carregando…"}</p>
       </div>
 
       {/* Abas */}

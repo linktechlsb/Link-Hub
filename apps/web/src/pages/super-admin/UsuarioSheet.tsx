@@ -116,22 +116,17 @@ export function UsuarioSheet({ open, onOpenChange, usuario, ligas, onSalvo }: Us
         <div className="flex-shrink-0">
           <div className="h-px bg-foreground/20" />
           <div className="px-8 pt-8 pb-6">
-            <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
-              {isNovo ? "Novo" : "Editar"}
-            </p>
-            <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
+            <p className="text-xs text-foreground/40">{isNovo ? "Novo" : "Editar"}</p>
+            <h2 className="font-display font-bold text-2xl text-foreground mt-1">
               {isNovo ? "Criar usuário" : usuario.nome}
             </h2>
           </div>
-          <div className="h-px bg-foreground/[0.08]" />
+          <div className="h-px bg-border" />
         </div>
 
         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
           <div>
-            <label
-              htmlFor="u-nome"
-              className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-            >
+            <label htmlFor="u-nome" className="text-xs font-medium text-foreground/60 mb-3 block">
               Nome completo
             </label>
             <input
@@ -139,15 +134,12 @@ export function UsuarioSheet({ open, onOpenChange, usuario, ligas, onSalvo }: Us
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Ex: João da Silva"
-              className="w-full border border-border bg-muted/50 rounded px-3 py-2.5 font-plex-sans text-[13px] text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30"
+              className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/30 focus:border-foreground/40 focus:outline-none"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="u-email"
-              className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-            >
+            <label htmlFor="u-email" className="text-xs font-medium text-foreground/60 mb-3 block">
               Email estudantil
             </label>
             <input
@@ -157,24 +149,21 @@ export function UsuarioSheet({ open, onOpenChange, usuario, ligas, onSalvo }: Us
               onChange={(e) => setEmail(e.target.value)}
               placeholder="joao.silva@facul.edu.br"
               disabled={!!usuario}
-              className="w-full border border-border bg-muted/50 rounded px-3 py-2.5 font-plex-sans text-[13px] text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/30 focus:border-foreground/40 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             />
             {isNovo && (
-              <p className="font-plex-sans text-[11px] text-foreground/40 mt-1.5">
+              <p className="text-xs text-foreground/40 mt-1.5">
                 O usuário receberá um acesso para criar sua senha.
               </p>
             )}
           </div>
 
           <div>
-            <label
-              htmlFor="u-role"
-              className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-            >
+            <label htmlFor="u-role" className="text-xs font-medium text-foreground/60 mb-3 block">
               Role
             </label>
             <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
-              <SelectTrigger id="u-role" className="w-full font-plex-sans text-[13px]">
+              <SelectTrigger id="u-role" className="w-full text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -188,20 +177,14 @@ export function UsuarioSheet({ open, onOpenChange, usuario, ligas, onSalvo }: Us
           </div>
 
           <div>
-            <label
-              htmlFor="u-liga"
-              className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-            >
-              Liga{" "}
-              <span className="normal-case font-plex-sans text-[11px] text-foreground/30">
-                (opcional)
-              </span>
+            <label htmlFor="u-liga" className="text-xs font-medium text-foreground/60 mb-3 block">
+              Liga <span className="text-xs text-foreground/30">(opcional)</span>
             </label>
             <Select
               value={ligaId || "__none__"}
               onValueChange={(v) => setLigaId(v === "__none__" ? "" : v)}
             >
-              <SelectTrigger id="u-liga" className="w-full font-plex-sans text-[13px]">
+              <SelectTrigger id="u-liga" className="w-full text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -215,23 +198,23 @@ export function UsuarioSheet({ open, onOpenChange, usuario, ligas, onSalvo }: Us
             </Select>
           </div>
 
-          {erro && <p className="font-plex-sans text-[12px] text-red-500">{erro}</p>}
+          {erro && <p className="text-sm text-red-500">{erro}</p>}
         </div>
 
         <div className="flex-shrink-0">
-          <div className="h-px bg-foreground/[0.08]" />
+          <div className="h-px bg-border" />
           <div className="px-8 py-6 flex flex-col gap-3">
             <button
               onClick={() => void handleSalvar()}
               disabled={salvando || !podeSalvar}
-              className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full rounded-full bg-foreground px-4 py-2 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {salvando ? "Salvando..." : isNovo ? "Criar usuário" : "Salvar alterações"}
             </button>
             <button
               onClick={() => onOpenChange(false)}
               disabled={salvando}
-              className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full rounded-full border border-border px-4 py-2 text-xs font-medium text-foreground/60 transition-colors hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Cancelar
             </button>

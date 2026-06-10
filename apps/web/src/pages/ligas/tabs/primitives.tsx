@@ -28,6 +28,41 @@ export function TabSection({ titulo, acao, children }: TabSectionProps) {
   );
 }
 
+interface SectionHeaderProps {
+  titulo: string;
+  acao?: ReactNode;
+  /** Props legadas de `home/v1` — aceitas para compatibilidade, mas ignoradas. */
+  numero?: string;
+  eyebrow?: string;
+  tituloClassName?: string;
+}
+
+/**
+ * Cabeçalho de seção no padrão novo (título discreto + ação). Substitui o
+ * `SectionHeader` de `home/v1` mantendo a mesma assinatura para os call sites.
+ */
+export function SectionHeader({ titulo, acao }: SectionHeaderProps) {
+  return (
+    <div className="mb-4 flex items-center justify-between gap-2">
+      <h2 className="text-xs text-foreground/40">{titulo}</h2>
+      {acao}
+    </div>
+  );
+}
+
+interface KpiRowItem {
+  label: string;
+  valor: string;
+  unidade?: string;
+}
+
+/** Faixa de KPIs no padrão novo. Substitui o `KpiRow` de `home/v1`. */
+export function KpiRow({ items }: { items: KpiRowItem[]; cols?: 2 | 3 | 4 }) {
+  return (
+    <StatStrip items={items.map((i) => ({ label: i.label, value: i.valor, unidade: i.unidade }))} />
+  );
+}
+
 export interface StatItem {
   label: string;
   value: string;

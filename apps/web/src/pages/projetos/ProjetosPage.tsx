@@ -8,6 +8,7 @@ import { useUser } from "@/hooks/use-user";
 import { DashboardCard } from "@/pages/home/components/DashboardCard";
 import { StatStrip, TabSection } from "@/pages/ligas/tabs/primitives";
 
+import { ProjetosFilterBar } from "./ProjetosFilterBar";
 import { ProjetosLiderView } from "./ProjetosLiderView";
 import { ProjetosProfessorView } from "./ProjetosProfessorView";
 import { ProjetosStaffView } from "./ProjetosStaffView";
@@ -99,9 +100,6 @@ export function ProjetosPage() {
     },
   ];
 
-  const filtroClasses =
-    "rounded-full border border-border bg-card px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring/30";
-
   return (
     <div className="mx-auto max-w-6xl px-8 py-10">
       <div className="mb-8">
@@ -115,34 +113,16 @@ export function ProjetosPage() {
         <TabSection
           titulo="Todos os projetos"
           acao={
-            <div className="flex gap-2">
-              <select
-                value={filtroLiga}
-                onChange={(e) => setFiltroLiga(e.target.value)}
-                className={filtroClasses}
-              >
-                <option value="">Todas as ligas</option>
-                {ligas.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.nome}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={filtroStatus}
-                onChange={(e) => setFiltroStatus(e.target.value)}
-                className={filtroClasses}
-              >
-                <option value="">Todos os status</option>
-                {Object.entries(STATUS_CONFIG)
-                  .filter(([k]) => k !== "rascunho")
-                  .map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v.label}
-                    </option>
-                  ))}
-              </select>
-            </div>
+            <ProjetosFilterBar
+              ligas={ligas}
+              statusOptions={Object.entries(STATUS_CONFIG)
+                .filter(([k]) => k !== "rascunho")
+                .map(([value, v]) => ({ value, label: v.label }))}
+              filtroLiga={filtroLiga}
+              setFiltroLiga={setFiltroLiga}
+              filtroStatus={filtroStatus}
+              setFiltroStatus={setFiltroStatus}
+            />
           }
         >
           {carregando ? (

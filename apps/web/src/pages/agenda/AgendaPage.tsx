@@ -796,7 +796,7 @@ export function AgendaPage() {
                     disabled={
                       salvando || !form.titulo.trim() || (sheetAberto === "criar" && !form.liga_id)
                     }
-                    className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-primary px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-navy-600 px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed dark:bg-[#777777] dark:text-neutral-900"
                   >
                     {salvando
                       ? "Salvando..."

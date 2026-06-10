@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -228,26 +228,24 @@ export function CriarEventoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[480px] p-0 gap-0 overflow-hidden">
-        <div className="h-px bg-foreground/20" />
-        <DialogHeader className="px-8 pt-8 pb-6">
+      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-foreground/[0.08]">
           <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
             Novo
           </p>
-          <DialogTitle className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
+          <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
             Criar Evento
-          </DialogTitle>
-        </DialogHeader>
-        <div className="h-px bg-foreground/[0.08]" />
+          </h2>
+        </div>
 
-        <div className="px-8 py-6 space-y-8 max-h-[60vh] overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
           {eventoRecenteCriado ? (
             <div className="flex flex-col items-center gap-6 py-8">
               <p className="font-plex-sans text-[14px] font-medium text-foreground text-center">
                 Evento criado com sucesso!
               </p>
               <div className="w-full">
-                <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block">
                   Convidar membros
                 </label>
                 <Select
@@ -348,7 +346,7 @@ export function CriarEventoDialog({
           ) : (
             <>
               <div>
-                <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block">
                   Liga
                 </label>
                 {role === "diretor" && ligasDisponiveis.length === 1 ? (
@@ -381,7 +379,7 @@ export function CriarEventoDialog({
               </div>
 
               <div>
-                <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block">
                   Categoria
                 </label>
                 <Select
@@ -422,7 +420,7 @@ export function CriarEventoDialog({
               <div>
                 <label
                   htmlFor="dlg-titulo"
-                  className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
+                  className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block"
                 >
                   Título
                 </label>
@@ -439,7 +437,7 @@ export function CriarEventoDialog({
               <div>
                 <label
                   htmlFor="dlg-data"
-                  className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
+                  className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block"
                 >
                   Data
                 </label>
@@ -458,7 +456,7 @@ export function CriarEventoDialog({
                     <div>
                       <label
                         htmlFor="dlg-inicio"
-                        className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
+                        className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block"
                       >
                         Horário início
                       </label>
@@ -473,7 +471,7 @@ export function CriarEventoDialog({
                     <div>
                       <label
                         htmlFor="dlg-fim"
-                        className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
+                        className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block"
                       >
                         Horário fim
                       </label>
@@ -487,7 +485,7 @@ export function CriarEventoDialog({
                     </div>
                   </div>
                   <div>
-                    <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                    <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block">
                       Sala
                     </label>
                     <Select
@@ -529,7 +527,7 @@ export function CriarEventoDialog({
               <div>
                 <label
                   htmlFor="dlg-descricao"
-                  className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
+                  className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block"
                 >
                   Descrição (opcional)
                 </label>
@@ -548,8 +546,7 @@ export function CriarEventoDialog({
           )}
         </div>
 
-        <div className="h-px bg-foreground/[0.08]" />
-        <div className="px-8 py-6 flex flex-col gap-3">
+        <div className="flex-shrink-0 border-t border-foreground/[0.08] px-6 py-4 flex flex-col gap-2">
           {eventoRecenteCriado ? (
             <button
               onClick={() => onOpenChange(false)}
@@ -562,7 +559,7 @@ export function CriarEventoDialog({
               <button
                 onClick={() => void handleSalvar()}
                 disabled={salvando || !form.titulo.trim() || !form.liga_id}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed dark:bg-white dark:text-[#10244D]"
               >
                 {salvando ? "Salvando..." : "Criar evento"}
               </button>
