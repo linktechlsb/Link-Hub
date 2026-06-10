@@ -304,7 +304,7 @@ export function ProjetosStaffView({ abrirCriar }: { abrirCriar?: boolean }) {
             setForm(FORM_VAZIO);
             setSheetNovo(true);
           }}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+          className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
         >
           <Plus className="h-3.5 w-3.5" />
           Novo projeto

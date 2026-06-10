@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { type DayButton } from "react-day-picker";
 
@@ -32,12 +32,16 @@ async function getToken(): Promise<string | null> {
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 // ── Context p/ o DayButton acessar os eventos do dia ────────────────────────
-const CalendarContext = createContext<{ eventosPorDia: Record<string, EventoComLiga[]> }>({
+const CalendarContext = createContext<{
+  eventosPorDia: Record<string, EventoComLiga[]>;
+  onEditarEvento?: (evento: Evento) => void;
+  podeEditarEvento?: (evento: Evento) => boolean;
+}>({
   eventosPorDia: {},
 });
 
 function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof DayButton>) {
-  const { eventosPorDia } = useContext(CalendarContext);
+  const { eventosPorDia, onEditarEvento, podeEditarEvento } = useContext(CalendarContext);
   const [open, setOpen] = useState(false);
 
   if (modifiers.outside) {
@@ -113,10 +117,11 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
             const horaIni = formatHora(evento.hora_inicio) || formatHora(evento.data);
             const horaFim = formatHora(evento.hora_fim);
             const horario = horaIni ? (horaFim ? `${horaIni} – ${horaFim}` : horaIni) : null;
+            const editavel = (onEditarEvento && podeEditarEvento?.(evento)) ?? false;
             return (
               <div
                 key={evento.id}
-                className="flex items-start gap-2 border-b border-border px-3 py-2 last:border-0"
+                className="group/ev flex items-start gap-2 border-b border-border px-3 py-2 last:border-0"
               >
                 <span
                   className="mt-1 h-2 w-2 shrink-0 rounded-full"
@@ -129,6 +134,19 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
                     {horario && <span className="ml-1.5 text-foreground/40">· {horario}</span>}
                   </p>
                 </div>
+                {editavel && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      onEditarEvento!(evento);
+                    }}
+                    className="mt-0.5 shrink-0 rounded p-1 text-foreground/30 opacity-0 transition-opacity hover:bg-foreground/[0.06] hover:text-foreground focus:opacity-100 group-hover/ev:opacity-100"
+                    aria-label={`Editar ${evento.titulo}`}
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                )}
               </div>
             );
           })}
@@ -138,7 +156,15 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
   );
 }
 
-export function HomeCalendarPanel() {
+interface HomeCalendarPanelProps {
+  onEditarEvento?: (evento: Evento) => void;
+  podeEditarEvento?: (evento: Evento) => boolean;
+}
+
+export function HomeCalendarPanel({
+  onEditarEvento,
+  podeEditarEvento,
+}: HomeCalendarPanelProps = {}) {
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [eventos, setEventos] = useState<EventoComLiga[]>([]);
@@ -200,7 +226,7 @@ export function HomeCalendarPanel() {
       </div>
 
       {/* Calendário */}
-      <CalendarContext.Provider value={{ eventosPorDia }}>
+      <CalendarContext.Provider value={{ eventosPorDia, onEditarEvento, podeEditarEvento }}>
         <Calendar
           mode="single"
           month={viewDate}

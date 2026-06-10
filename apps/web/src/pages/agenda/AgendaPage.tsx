@@ -1,6 +1,5 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { type DayButton } from "react-day-picker";
+import { CalendarDays, Clock, MapPin, Plus, SlidersHorizontal, Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import {
@@ -13,7 +12,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Calendar } from "@/components/ui/calendar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -25,11 +30,14 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { SectionHeader } from "@/pages/home/v1/primitives";
+import { DashboardCard } from "@/pages/home/components/DashboardCard";
+import { formatHora } from "@/pages/home/components/eventCategorias";
+import { HomeCalendarPanel } from "@/pages/home/components/HomeCalendarPanel";
+import { StatStrip } from "@/pages/ligas/tabs/primitives";
 
 import { CriarEventoDialog } from "./CriarEventoDialog";
 
-import type { Liga, Evento, UserRole, Sala, CategoriaEvento } from "@link-leagues/types";
+import type { CategoriaEvento, Evento, Liga, Sala, UserRole } from "@link-leagues/types";
 
 async function getToken(): Promise<string> {
   const { data } = await supabase.auth.getSession();
@@ -40,59 +48,8 @@ interface EventoComLiga extends Evento {
   liga?: Liga;
 }
 
-const LEAGUE_PALETTE: { bg: string; text: string; dot: string }[] = [
-  { bg: "bg-navy", text: "text-white", dot: "#10284E" },
-  { bg: "bg-link-blue", text: "text-white", dot: "#546484" },
-  { bg: "bg-blue-600", text: "text-white", dot: "#2563EB" },
-  { bg: "bg-violet-600", text: "text-white", dot: "#7C3AED" },
-  { bg: "bg-teal-600", text: "text-white", dot: "#0D9488" },
-  { bg: "bg-rose-600", text: "text-white", dot: "#E11D48" },
-  { bg: "bg-amber-500", text: "text-white", dot: "#F59E0B" },
-  { bg: "bg-emerald-600", text: "text-white", dot: "#059669" },
-];
-
-const MESES = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-];
-
-function getDaysInMonth(year: number, month: number) {
-  return new Date(year, month + 1, 0).getDate();
-}
 function toDateStr(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-}
-function dateToStr(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-function formatDateLabel(dateStr: string) {
-  const parts = dateStr.split("-").map(Number);
-  const y = parts[0] ?? new Date().getFullYear();
-  const m = parts[1] ?? 1;
-  const d = parts[2] ?? 1;
-  return new Date(y, m - 1, d).toLocaleDateString("pt-BR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-}
-function formatTime(dateStr: string) {
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "";
-  const h = d.getUTCHours();
-  const min = d.getUTCMinutes();
-  if (h === 0 && min === 0) return "";
-  return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
 }
 
 interface EventoForm {
@@ -169,105 +126,21 @@ function GoogleCalendarIcon() {
   );
 }
 
-// ── Calendar context ───────────────────────────────────────────────────────────
-const AgendaCalendarContext = createContext<{
-  eventosPorDia: Record<string, EventoComLiga[]>;
-  ligaColorMap: Record<string, (typeof LEAGUE_PALETTE)[0]>;
-}>({ eventosPorDia: {}, ligaColorMap: {} });
-
-function AgendaDayButton({
-  day,
-  modifiers,
-  className: _ignored,
-  ...props
-}: React.ComponentProps<typeof DayButton>) {
-  const { eventosPorDia, ligaColorMap } = useContext(AgendaCalendarContext);
-  const isOutside = modifiers.outside ?? false;
-
-  if (isOutside) {
-    return <button {...props} disabled className="w-full min-h-[88px]" aria-hidden />;
-  }
-
-  const dateStr = dateToStr(day.date);
-  const isToday = modifiers.today ?? false;
-  const isSelected = modifiers.selected ?? false;
-  const dayEvents = eventosPorDia[dateStr] ?? [];
-
-  return (
-    <button
-      {...props}
-      className={cn(
-        "w-full min-h-[88px] p-2 text-left transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-navy/30",
-        isSelected ? "bg-navy/[0.04]" : "hover:bg-navy/[0.02]",
-      )}
-    >
-      <span
-        className={cn(
-          "inline-flex items-center justify-center w-7 h-7 text-sm mb-1 select-none font-plex-mono",
-          isToday && "rounded-full bg-navy text-white font-bold",
-          !isToday && isSelected && "text-navy font-bold",
-          !isToday && !isSelected && "text-navy/70 font-medium",
-        )}
-      >
-        {day.date.getDate()}
-      </span>
-      <div className="space-y-0.5">
-        {dayEvents.slice(0, 2).map((evento) => {
-          const color = ligaColorMap[evento.liga_id];
-          return (
-            <div
-              key={evento.id}
-              title={evento.titulo}
-              className={cn(
-                "relative text-[11px] px-1.5 py-0.5 truncate font-medium leading-snug",
-                color?.bg ?? "bg-navy",
-                color?.text ?? "text-white",
-              )}
-            >
-              {evento.titulo}
-              {evento.requer_aprovacao &&
-                (evento.status_aprovacao === "pendente" ||
-                  evento.status_aprovacao === "rejeitado") && (
-                  <span
-                    className={cn(
-                      "absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full border border-white/40",
-                      evento.status_aprovacao === "pendente" ? "bg-brand-yellow" : "bg-rose-400",
-                    )}
-                  />
-                )}
-            </div>
-          );
-        })}
-        {dayEvents.length > 2 && (
-          <p className="text-[10px] text-navy/40 px-1 font-plex-mono">
-            +{dayEvents.length - 2} mais
-          </p>
-        )}
-      </div>
-    </button>
-  );
-}
-
-// ── Select helpers ─────────────────────────────────────────────────────────────
-const triggerCls = "font-plex-sans text-[13px] w-auto";
 const sheetTriggerCls = "w-full font-plex-sans text-[13px]";
 
-// ── Page ───────────────────────────────────────────────────────────────────────
 export function AgendaPage() {
   const today = new Date();
   const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [eventos, setEventos] = useState<EventoComLiga[]>([]);
   const [ligas, setLigas] = useState<Liga[]>([]);
   const [salas, setSalas] = useState<Sala[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedEvento, setSelectedEvento] = useState<EventoComLiga | null>(null);
-  const [filterLiga, setFilterLiga] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<UserRole | null>(null);
   const [usuarioId, setUsuarioId] = useState<string | null>(null);
+  const [filterLiga, setFilterLiga] = useState<string>("");
+  const [calendarKey, setCalendarKey] = useState(0);
 
   const [dialogCriarAberto, setDialogCriarAberto] = useState(false);
   const [sheetAberto, setSheetAberto] = useState<"criar" | "editar" | null>(null);
@@ -282,17 +155,6 @@ export function AgendaPage() {
   const [membrosLiga, setMembrosLiga] = useState<MembroLiga[]>([]);
   const [modoConvidados, setModoConvidados] = useState<"todos" | "selecionar">("todos");
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
-
-  const year = viewDate.getFullYear();
-  const month = viewDate.getMonth();
-
-  const ligaColorMap = useMemo(() => {
-    const map: Record<string, (typeof LEAGUE_PALETTE)[0]> = {};
-    ligas.forEach((liga, i) => {
-      map[liga.id] = LEAGUE_PALETTE[i % LEAGUE_PALETTE.length]!;
-    });
-    return map;
-  }, [ligas]);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -317,8 +179,9 @@ export function AgendaPage() {
       try {
         const token = await getToken();
         const headers = { Authorization: `Bearer ${token}` };
-        const inicio = toDateStr(year, month, 1);
-        const fim = toDateStr(year, month, getDaysInMonth(year, month));
+        const inicio = todayStr;
+        const fimDate = new Date(today.getFullYear(), today.getMonth() + 6, 0);
+        const fim = toDateStr(fimDate.getFullYear(), fimDate.getMonth(), fimDate.getDate());
         const ligaParam = filterLiga ? `&liga_id=${filterLiga}` : "";
         const [ligasRes, eventosRes] = await Promise.all([
           fetch("/api/ligas", { headers }),
@@ -331,7 +194,7 @@ export function AgendaPage() {
       }
     }
     void carregar();
-  }, [year, month, filterLiga]);
+  }, [filterLiga]);
 
   const podeGerenciar = role === "staff" || role === "diretor";
 
@@ -393,20 +256,22 @@ export function AgendaPage() {
     [role, ligas, usuarioId],
   );
 
-  function podeGerenciarEvento(evento: EventoComLiga): boolean {
+  function podeGerenciarEvento(evento: Evento): boolean {
     if (role === "staff") return true;
     if (role === "diretor") return ligasDisponiveis.some((l) => l.id === evento.liga_id);
     return false;
   }
 
   async function recarregarEventos(token: string) {
-    const inicio = toDateStr(year, month, 1);
-    const fim = toDateStr(year, month, getDaysInMonth(year, month));
+    const inicio = todayStr;
+    const fimDate = new Date(today.getFullYear(), today.getMonth() + 6, 0);
+    const fim = toDateStr(fimDate.getFullYear(), fimDate.getMonth(), fimDate.getDate());
     const ligaParam = filterLiga ? `&liga_id=${filterLiga}` : "";
     const res = await fetch(`/api/eventos?inicio=${inicio}&fim=${fim}${ligaParam}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) setEventos(await res.json());
+    setCalendarKey((k) => k + 1);
   }
 
   function abrirCriar() {
@@ -417,7 +282,7 @@ export function AgendaPage() {
     setSheetAberto("criar");
   }
 
-  function abrirEdicao(evento: EventoComLiga) {
+  function abrirEdicao(evento: Evento) {
     setEventoEditando(evento);
     setForm({
       liga_id: evento.liga_id,
@@ -488,7 +353,6 @@ export function AgendaPage() {
           const err = await res.json().catch(() => ({}));
           throw new Error((err as { error?: string }).error ?? "Erro ao editar evento");
         }
-        setSelectedEvento(null);
         setSheetAberto(null);
         await recarregarEventos(token);
       }
@@ -513,56 +377,13 @@ export function AgendaPage() {
         throw new Error((err as { error?: string }).error ?? "Erro ao excluir evento");
       }
       setEventos((prev) => prev.filter((e) => e.id !== confirmarDeletar.id));
-      if (selectedEvento?.id === confirmarDeletar.id) setSelectedEvento(null);
       setConfirmarDeletar(null);
+      setCalendarKey((k) => k + 1);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Erro ao excluir evento");
     } finally {
       setDeletando(false);
     }
-  }
-
-  const eventosPorDia = useMemo(() => {
-    const map: Record<string, EventoComLiga[]> = {};
-    for (const evento of eventos) {
-      const key = evento.data.split("T")[0]!;
-      if (!map[key]) map[key] = [];
-      map[key]!.push(evento);
-    }
-    return map;
-  }, [eventos]);
-
-  const selectedDayEventos = selectedDate ? (eventosPorDia[selectedDate] ?? []) : [];
-
-  const upcomingEventos = useMemo(
-    () =>
-      eventos
-        .filter((e) => (e.data.split("T")[0] ?? "") >= todayStr)
-        .sort((a, b) => a.data.localeCompare(b.data))
-        .slice(0, 6),
-    [eventos, todayStr],
-  );
-
-  const selectedDateObj = useMemo(() => {
-    if (!selectedDate) return undefined;
-    const parts = selectedDate.split("-").map(Number);
-    return new Date(parts[0]!, parts[1]! - 1, parts[2]!);
-  }, [selectedDate]);
-
-  function prevMonth() {
-    setViewDate(new Date(year, month - 1, 1));
-    setSelectedDate(null);
-    setSelectedEvento(null);
-  }
-  function nextMonth() {
-    setViewDate(new Date(year, month + 1, 1));
-    setSelectedDate(null);
-    setSelectedEvento(null);
-  }
-  function goToToday() {
-    setViewDate(new Date(today.getFullYear(), today.getMonth(), 1));
-    setSelectedDate(todayStr);
-    setSelectedEvento(null);
   }
 
   const precisaSala = ["encontro", "aula", "evento", "hub"].includes(form.categoria);
@@ -574,14 +395,32 @@ export function AgendaPage() {
       ? `A sala ${salaSelecionada.nome} está disponível apenas a partir das ${salaSelecionada.disponivel_a_partir.slice(0, 5)}.`
       : null;
 
-  // Sentinel values para Select (evita value="" vazio no Radix)
-  const filterLigaVal = filterLiga || "__all";
   const formSalaVal = form.sala_id || "__none";
   const formLigaVal = form.liga_id || "__none";
 
+  const thisMonthStr = toDateStr(today.getFullYear(), today.getMonth(), 1);
+  const nextMonthStr = toDateStr(today.getFullYear(), today.getMonth() + 1, 1);
+  const eventosEsteMes = eventos.filter((e) => {
+    const d = e.data.split("T")[0] ?? "";
+    return d >= thisMonthStr && d < nextMonthStr;
+  });
+
+  const kpis = [
+    { icon: CalendarDays, label: "Próximos eventos", value: String(eventos.length) },
+    { icon: Clock, label: "Este mês", value: String(eventosEsteMes.length) },
+    { icon: Users, label: "Ligas", value: String(ligas.length) },
+    {
+      icon: MapPin,
+      label: "Eventos/Hub este mês",
+      value: String(
+        eventosEsteMes.filter((e) => e.categoria === "evento" || e.categoria === "hub").length,
+      ),
+    },
+  ];
+
   return (
-    <div className="max-w-5xl mx-auto px-8 py-10">
-      {/* Dialog Criar Evento — acionado pelo atalho da home */}
+    <div className="mx-auto max-w-6xl px-8 py-10">
+      {/* CriarEventoDialog — acionado pelo atalho da home */}
       <CriarEventoDialog
         open={dialogCriarAberto}
         onOpenChange={setDialogCriarAberto}
@@ -957,7 +796,7 @@ export function AgendaPage() {
                     disabled={
                       salvando || !form.titulo.trim() || (sheetAberto === "criar" && !form.liga_id)
                     }
-                    className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-primary px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {salvando
                       ? "Salvando..."
@@ -981,7 +820,7 @@ export function AgendaPage() {
         </SheetContent>
       </Sheet>
 
-      {/* Confirm Exclusão */}
+      {/* AlertDialog Confirmar Exclusão */}
       <AlertDialog
         open={!!confirmarDeletar}
         onOpenChange={(open) => {
@@ -1023,275 +862,140 @@ export function AgendaPage() {
       </AlertDialog>
 
       {/* Cabeçalho */}
-      <div className="mb-10 flex items-start justify-between gap-4">
+      <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground">
-            Calendário
-          </h1>
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50 mt-1">
-            Calendário · Link School of Business
-          </p>
+          <h1 className="font-display text-2xl font-bold text-foreground">Calendário</h1>
+          <p className="mt-1 text-sm text-foreground/50">Eventos e encontros das ligas</p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
-          <button
-            onClick={goToToday}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
-          >
-            Hoje
-          </button>
           {ligas.length > 0 && (
-            <Select
-              value={filterLigaVal}
-              onValueChange={(v) => {
-                setFilterLiga(v === "__all" ? "" : v);
-                setSelectedDate(null);
-              }}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground/60 transition-colors hover:bg-muted hover:text-foreground data-[state=open]:bg-muted data-[state=open]:text-foreground">
+                  <SlidersHorizontal className="h-3.5 w-3.5" />
+                  {filterLiga ? ligas.find((l) => l.id === filterLiga)?.nome : "Todas as ligas"}
+                  {filterLiga && <span className="h-1.5 w-1.5 rounded-full bg-foreground" />}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuRadioGroup
+                  value={filterLiga || "__all"}
+                  onValueChange={(v) => setFilterLiga(v === "__all" ? "" : v)}
+                >
+                  <DropdownMenuRadioItem value="__all">Todas as ligas</DropdownMenuRadioItem>
+                  {ligas.map((l) => (
+                    <DropdownMenuRadioItem key={l.id} value={l.id}>
+                      {l.nome}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {podeGerenciar && (
+            <button
+              onClick={abrirCriar}
+              className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
             >
-              <SelectTrigger className={cn(triggerCls, "min-w-[160px]")}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all" className="font-plex-sans text-[13px]">
-                  Todas as ligas
-                </SelectItem>
-                {ligas.map((liga) => (
-                  <SelectItem key={liga.id} value={liga.id} className="font-plex-sans text-[13px]">
-                    {liga.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Plus className="h-3.5 w-3.5" />
+              Novo evento
+            </button>
           )}
         </div>
       </div>
 
-      {/* Grid principal */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Calendário */}
-        <div className="xl:col-span-2 space-y-4">
-          <div>
-            {/* Navegação do mês */}
-            <div className="h-px bg-foreground/90" />
-            <div className="flex items-center justify-between py-4">
-              <button
-                onClick={prevMonth}
-                className="p-2 text-foreground hover:bg-foreground/[0.04] rounded-full transition-colors"
-                aria-label="Mês anterior"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <h2 className="font-display font-bold text-[18px] tracking-[-0.02em] text-foreground select-none">
-                {MESES[month]} {year}
-              </h2>
-              <button
-                onClick={nextMonth}
-                className="p-2 text-foreground hover:bg-foreground/[0.04] rounded-full transition-colors"
-                aria-label="Próximo mês"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+      <div className="space-y-8">
+        <StatStrip items={kpis} />
+
+        <div className="grid grid-cols-2 gap-4">
+          {/* Calendário da Home */}
+          <HomeCalendarPanel
+            key={calendarKey}
+            onEditarEvento={abrirEdicao}
+            podeEditarEvento={podeGerenciarEvento}
+          />
+
+          {/* Próximos eventos */}
+          <DashboardCard className="flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <h3 className="text-xs text-foreground/40">Próximos Eventos</h3>
+              {!loading && (
+                <span className="text-[10px] text-foreground/30">
+                  {eventos.length} evento{eventos.length !== 1 ? "s" : ""}
+                </span>
+              )}
             </div>
-            <div className="h-px bg-foreground/15" />
-
-            {/* Calendar shadcn */}
-            <AgendaCalendarContext.Provider value={{ eventosPorDia, ligaColorMap }}>
-              <Calendar
-                mode="single"
-                selected={selectedDateObj}
-                onSelect={(date) => {
-                  if (date) {
-                    const s = dateToStr(date);
-                    setSelectedDate(s === selectedDate ? null : s);
-                  } else {
-                    setSelectedDate(null);
-                  }
-                  setSelectedEvento(null);
-                }}
-                month={viewDate}
-                onMonthChange={(date) => {
-                  setViewDate(new Date(date.getFullYear(), date.getMonth(), 1));
-                  setSelectedDate(null);
-                  setSelectedEvento(null);
-                }}
-                showOutsideDays
-                className="w-full p-0 bg-transparent"
-                classNames={{
-                  root: "w-full",
-                  months: "w-full",
-                  month: "w-full flex flex-col gap-0",
-                  month_caption: "hidden",
-                  nav: "hidden",
-                  weekdays: "grid grid-cols-7 border-b border-navy/10 bg-navy/[0.02]",
-                  weekday:
-                    "py-2.5 text-center font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/50",
-                  week: "grid grid-cols-7",
-                  day: "group/day border-b border-r border-navy/10 [&:nth-child(7n)]:border-r-0",
-                  today: "",
-                  selected: "",
-                  outside: "",
-                  disabled: "",
-                  hidden: "invisible",
-                }}
-                components={{ DayButton: AgendaDayButton }}
-                formatters={{
-                  formatWeekdayName: (weekday) => {
-                    const names = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-                    return names[weekday.getDay()] ?? "";
-                  },
-                }}
-              />
-            </AgendaCalendarContext.Provider>
-          </div>
-
-          {/* Legenda */}
-          {ligas.length > 0 && (
-            <div className="flex flex-wrap gap-x-5 gap-y-2 pt-1">
-              {ligas.map((liga) => {
-                const color = ligaColorMap[liga.id];
-                return (
-                  <button
-                    key={liga.id}
-                    onClick={() => setFilterLiga(filterLiga === liga.id ? "" : liga.id)}
-                    className={cn(
-                      "flex items-center gap-2 font-plex-mono text-[10px] uppercase tracking-[0.12em] transition-opacity",
-                      filterLiga && filterLiga !== liga.id ? "opacity-30" : "opacity-100",
-                    )}
-                  >
-                    <span
-                      className="w-2 h-2 flex-shrink-0"
-                      style={{ backgroundColor: color?.dot ?? "#10284E" }}
-                    />
-                    <span className="text-navy/60 hover:text-navy transition-colors">
-                      {liga.nome}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Coluna lateral */}
-        <div className="space-y-8">
-          {/* Eventos do dia selecionado */}
-          {selectedDate && (
-            <div>
-              <div className="h-px bg-foreground/90" />
-              <div className="flex items-start justify-between pt-4 pb-3">
-                <div>
-                  <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50 capitalize">
-                    {formatDateLabel(selectedDate)}
-                  </p>
-                  <p className="font-plex-mono text-[10px] text-foreground/40 mt-0.5">
-                    {selectedDayEventos.length === 0
-                      ? "Nenhum evento"
-                      : `${selectedDayEventos.length} evento${selectedDayEventos.length !== 1 ? "s" : ""}`}
-                  </p>
+            <div className="overflow-y-auto flex-1">
+              {loading ? (
+                <div className="p-5 space-y-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-14 w-full rounded-lg" />
+                  ))}
                 </div>
-                <button
-                  onClick={() => {
-                    setSelectedDate(null);
-                    setSelectedEvento(null);
-                  }}
-                  className="font-plex-mono text-[10px] text-foreground/40 hover:text-foreground transition-colors mt-0.5"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="h-px bg-foreground/15" />
-
-              {selectedDayEventos.length === 0 ? (
-                <p className="font-plex-sans text-[13px] text-foreground/40 pt-4">
-                  Nenhum evento neste dia.
-                </p>
+              ) : eventos.length === 0 ? (
+                <p className="p-5 text-sm text-foreground/50">Nenhum evento próximo.</p>
               ) : (
                 <div>
-                  {selectedDayEventos.map((evento) => {
-                    const color = ligaColorMap[evento.liga_id];
-                    const isOpen = selectedEvento?.id === evento.id;
+                  {eventos.map((evento) => {
+                    const rawDate = evento.data.includes("T")
+                      ? evento.data
+                      : `${evento.data}T00:00:00`;
+                    const d = new Date(rawDate);
+                    const diaNum = d.getUTCDate();
+                    const mesAbrev = d
+                      .toLocaleDateString("pt-BR", { month: "short" })
+                      .replace(".", "")
+                      .toUpperCase();
                     const podeGerir = podeGerenciarEvento(evento);
+                    const hora = formatHora(evento.hora_inicio);
+
                     return (
-                      <div key={evento.id} className="border-b border-foreground/10 last:border-0">
-                        <button
-                          onClick={() => setSelectedEvento(isOpen ? null : evento)}
-                          className={cn(
-                            "w-full py-3 text-left transition-colors",
-                            isOpen ? "bg-foreground/[0.03]" : "hover:bg-foreground/[0.02]",
-                          )}
-                        >
-                          <div className="flex items-start gap-3">
-                            <span
-                              className="mt-1.5 w-2 h-2 flex-shrink-0"
-                              style={{ backgroundColor: color?.dot ?? "#10284E" }}
-                            />
-                            <div className="min-w-0">
-                              <p className="font-plex-sans text-[13px] font-medium text-foreground truncate">
-                                {evento.titulo}
-                              </p>
-                              <p className="font-plex-mono text-[10px] text-foreground/50 mt-0.5">
-                                {evento.liga?.nome ?? "Liga"}
-                                {formatTime(evento.data) && (
-                                  <span className="ml-2">{formatTime(evento.data)}</span>
+                      <div
+                        key={evento.id}
+                        className="group flex items-center gap-3 border-b border-border px-5 py-3 last:border-0 hover:bg-foreground/[0.02] transition-colors"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 flex flex-col items-center justify-center rounded bg-foreground/[0.06] text-foreground">
+                          <span className="text-sm font-bold leading-none font-display">
+                            {diaNum}
+                          </span>
+                          <span className="text-[9px] leading-none mt-0.5 opacity-50 tracking-wide">
+                            {mesAbrev}
+                          </span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {evento.titulo}
+                          </p>
+                          <p className="text-xs text-foreground/50 mt-0.5 truncate">
+                            {evento.liga?.nome ?? "Liga"}
+                            {hora && ` · ${hora}`}
+                          </p>
+                          {evento.requer_aprovacao &&
+                            (evento.status_aprovacao === "pendente" ||
+                              evento.status_aprovacao === "rejeitado") && (
+                              <span
+                                className={cn(
+                                  "inline-block text-[9px] font-plex-mono uppercase tracking-[0.12em] mt-0.5",
+                                  evento.status_aprovacao === "pendente"
+                                    ? "text-amber-600"
+                                    : "text-red-600",
                                 )}
-                              </p>
-                              {evento.requer_aprovacao &&
-                                (evento.status_aprovacao === "pendente" ||
-                                  evento.status_aprovacao === "rejeitado") && (
-                                  <span
-                                    className={cn(
-                                      "inline-block font-plex-mono text-[9px] uppercase tracking-[0.12em] mt-1",
-                                      evento.status_aprovacao === "pendente"
-                                        ? "text-amber-600"
-                                        : "text-red-600",
-                                    )}
-                                  >
-                                    {evento.status_aprovacao}
-                                  </span>
-                                )}
-                              {isOpen && evento.descricao && (
-                                <p className="font-plex-sans text-[12px] text-foreground/60 mt-2 leading-relaxed border-t border-foreground/10 pt-2">
-                                  {evento.descricao}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-
-                        {isOpen && podeGerir && (
-                          <div className="pl-5 pb-1">
-                            <button
-                              title="Adicionar ao Google Calendar"
-                              onClick={() =>
-                                window.open(
-                                  buildGoogleCalendarUrl(
-                                    evento.titulo,
-                                    evento.data.split("T")[0] ?? evento.data,
-                                    evento.hora_inicio ?? "",
-                                    evento.hora_fim ?? "",
-                                    evento.liga?.nome ?? "",
-                                    evento.categoria,
-                                  ),
-                                  "_blank",
-                                )
-                              }
-                              className="h-8 w-8 flex items-center justify-center rounded-md border border-foreground/15 hover:border-foreground/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                            >
-                              <GoogleCalendarIcon />
-                            </button>
-                          </div>
-                        )}
-
+                              >
+                                {evento.status_aprovacao}
+                              </span>
+                            )}
+                        </div>
                         {podeGerir && (
-                          <div className="flex items-center gap-4 pb-3 pl-5">
+                          <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => abrirEdicao(evento)}
-                              className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-foreground/50 hover:text-foreground transition-colors"
+                              className="text-xs text-foreground/50 hover:text-foreground transition-colors"
                             >
                               Editar
                             </button>
                             <button
                               onClick={() => setConfirmarDeletar(evento)}
-                              className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-500 hover:text-red-700 transition-colors"
+                              className="text-xs text-red-500 hover:text-red-700 transition-colors"
                             >
                               Excluir
                             </button>
@@ -1303,94 +1007,7 @@ export function AgendaPage() {
                 </div>
               )}
             </div>
-          )}
-
-          {/* Próximos eventos */}
-          <div>
-            <SectionHeader
-              numero="01"
-              eyebrow="Calendário"
-              titulo="Próximos Eventos"
-              tituloClassName="text-xs font-bold text-link-blue dark:text-white uppercase tracking-wider"
-            />
-            {loading ? (
-              <div>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-4 py-3 border-b border-foreground/10 last:border-0"
-                  >
-                    {/* Date badge — w-10 h-10 */}
-                    <Skeleton className="h-10 w-10 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      {/* Title — text-[13px] font-medium */}
-                      <Skeleton className="h-4 w-44 mb-1.5" />
-                      {/* Subtitle — text-[10px] liga + time */}
-                      <Skeleton className="h-3 w-28" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : upcomingEventos.length === 0 ? (
-              <p className="font-plex-sans text-[13px] text-foreground/50">
-                Nenhum evento próximo neste mês.
-              </p>
-            ) : (
-              <div>
-                {upcomingEventos.map((evento) => {
-                  const color = ligaColorMap[evento.liga_id];
-                  const rawDate = evento.data.includes("T")
-                    ? evento.data
-                    : `${evento.data}T00:00:00`;
-                  const d = new Date(rawDate);
-                  const diaNum = d.getUTCDate();
-                  const mesAbrev = d
-                    .toLocaleDateString("pt-BR", { month: "short" })
-                    .replace(".", "")
-                    .toUpperCase();
-                  return (
-                    <button
-                      key={evento.id}
-                      onClick={() => {
-                        const dateKey = evento.data.split("T")[0]!;
-                        setSelectedDate(dateKey);
-                        setSelectedEvento(evento);
-                        const eventMonth = d.getUTCMonth();
-                        const eventYear = d.getUTCFullYear();
-                        if (eventMonth !== month || eventYear !== year) {
-                          setViewDate(new Date(eventYear, eventMonth, 1));
-                        }
-                      }}
-                      className="w-full flex items-center gap-4 py-3 border-b border-foreground/10 last:border-0 hover:bg-foreground/[0.02] transition-colors text-left"
-                    >
-                      <div
-                        className={cn(
-                          "flex-shrink-0 w-10 h-10 flex flex-col items-center justify-center",
-                          color?.bg ?? "bg-navy",
-                        )}
-                      >
-                        <span className="text-white text-sm font-bold leading-none font-plex-mono">
-                          {diaNum}
-                        </span>
-                        <span className="text-white/70 text-[9px] leading-none mt-0.5 font-plex-mono tracking-wide">
-                          {mesAbrev}
-                        </span>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-plex-sans text-[13px] font-medium text-foreground truncate">
-                          {evento.titulo}
-                        </p>
-                        <p className="font-plex-mono text-[10px] text-foreground/50 mt-0.5 truncate">
-                          {evento.liga?.nome ?? "Liga"}
-                          {formatTime(evento.data) && ` · ${formatTime(evento.data)}`}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          </DashboardCard>
         </div>
       </div>
     </div>

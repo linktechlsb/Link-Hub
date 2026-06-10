@@ -99,6 +99,8 @@ export function LigaDetailPage() {
   const podeEditarImagem =
     role === "staff" || (role === "diretor" && minhaLigaId === ligaExibida?.id);
   const podeEditarCrm = role === "staff" || (role === "diretor" && minhaLigaId === ligaExibida?.id);
+  const podeEditarRecursos =
+    role === "staff" || (role === "diretor" && minhaLigaId === ligaExibida?.id);
 
   if (carregando) {
     return (
@@ -234,7 +236,7 @@ export function LigaDetailPage() {
             <ProjetosTab ligaId={ligaExibida.id} />
           )}
           {abaAtualVisivel === "recursos" && temAcessoCompleto && (
-            <RecursosTab ligaId={ligaExibida.id} />
+            <RecursosTab ligaId={ligaExibida.id} podeEditar={podeEditarRecursos} />
           )}
           {abaAtualVisivel === "crm" && temAcessoCompleto && (
             <CrmTab ligaId={ligaExibida.id} podeEditar={podeEditarCrm} />

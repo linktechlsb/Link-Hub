@@ -147,7 +147,7 @@ export function CrmTab({ ligaId, podeEditar }: Props) {
       {podeEditar && (
         <button
           onClick={abrirCriar}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+          className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
         >
           + Novo contato
         </button>
