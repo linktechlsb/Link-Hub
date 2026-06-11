@@ -233,7 +233,7 @@ tarefasRouter.post(
 tarefasRouter.patch("/:id", authenticate, async (req: AuthenticatedRequest, res, next) => {
   try {
     const user = req.user!;
-    const { id } = req.params;
+    const id = req.params["id"] as string;
     const {
       status,
       titulo,
@@ -349,7 +349,7 @@ tarefasRouter.delete(
   async (req: AuthenticatedRequest, res, next) => {
     try {
       const user = req.user!;
-      const { id } = req.params;
+      const id = req.params["id"] as string;
 
       const [existente] = await sql`
         SELECT t.id, p.liga_id
