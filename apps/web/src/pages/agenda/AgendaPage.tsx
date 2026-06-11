@@ -44,9 +44,7 @@ async function getToken(): Promise<string> {
   return data.session?.access_token ?? "";
 }
 
-interface EventoComLiga extends Evento {
-  liga?: Liga;
-}
+type EventoComLiga = Evento;
 
 function toDateStr(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
