@@ -61,7 +61,7 @@
     --accent-foreground: 0 0% 4%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: var(--color-red-800);
 
     --border: 0 0% 89.4%; /* #E4E4E4 */
     --input: 0 0% 90%;
@@ -77,45 +77,61 @@
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 219 45% 28%;
     --sidebar-ring: 0 0% 100%;
+    --success: var(--color-emerald-500);
+    --success-foreground: var(--color-emerald-900);
+    --info: var(--color-violet-500);
+    --info-foreground: var(--color-violet-900);
+    --warning: var(--color-yellow-500);
+    --warning-foreground: var(--color-yellow-900);
+    --invert: var(--color-zinc-900);
+    --invert-foreground: var(--color-zinc-50);
   }
 
   .dark {
-    --background: 0 0% 1.2%; /* #030303 */
+    --background: 0 0% 11%; /* #1C1C1C */
     --foreground: 0 0% 100%;
 
-    --card: 0 0% 5.1%; /* #0D0D0D */
+    --card: 0 0% 13%; /* #212121 */
     --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 5.1%; /* #0D0D0D */
+    --popover: 0 0% 13%; /* #212121 */
     --popover-foreground: 0 0% 100%;
 
     --primary: 0 0% 100%;
     --primary-foreground: 0 0% 4%;
 
-    --secondary: 0 0% 10%;
+    --secondary: 0 0% 18%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 10%;
+    --muted: 0 0% 18%;
     --muted-foreground: 0 0% 65%;
 
-    --accent: 0 0% 10%;
+    --accent: 0 0% 18%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62% 50%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: var(--color-red-600);
 
-    --border: 0 0% 10%;
-    --input: 0 0% 10%;
+    --border: 0 0% 14.9%; /* #262626 */
+    --input: 0 0% 14.9%; /* #262626 */
     --ring: 0 0% 100%;
 
-    --sidebar-background: 0 0% 5.1%; /* #0D0D0D */
+    --sidebar-background: 0 0% 11.4%; /* #1D1D1D */
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
     --sidebar-primary-foreground: 0 0% 4%;
-    --sidebar-accent: 0 0% 9%; /* nav ativo bg */
+    --sidebar-accent: 0 0% 18%; /* nav ativo bg */
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 9%;
+    --sidebar-border: 0 0% 14.9%; /* #262626 */
     --sidebar-ring: 0 0% 100%;
+    --success: var(--color-emerald-500);
+    --success-foreground: var(--color-emerald-600);
+    --info: var(--color-violet-500);
+    --info-foreground: var(--color-violet-600);
+    --warning: var(--color-yellow-500);
+    --warning-foreground: var(--color-yellow-600);
+    --invert: var(--color-zinc-700);
+    --invert-foreground: var(--color-zinc-50);
   }
 
   .force-light {
@@ -165,6 +181,77 @@
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* ── Premium dark mode enhancements ─────────────────────────── */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Subtle radial amber glow at the top of the page in dark mode */
+.dark body {
+  background-image: radial-gradient(
+    ellipse 80% 45% at 50% -5%,
+    rgba(254, 198, 65, 0.04) 0%,
+    transparent 65%
+  );
+}
+
+/* Glass card surface (dark mode) */
+.dark .glass-card {
+  background: rgba(255, 255, 255, 0.025);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+/* Amber glow on hover */
+.amber-glow {
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+.amber-glow:hover {
+  box-shadow:
+    0 0 0 1px rgba(254, 198, 65, 0.18),
+    0 8px 24px rgba(254, 198, 65, 0.07);
+}
+
+/* ── Sidebar: active item (dark mode) ──────────── */
+.dark [data-sidebar="menu-button"][data-active="true"] {
+  background: #212121;
+}
+
+/* ── Sidebar group label refinement ────────────────────────── */
+/* Apenas cor e tipografia — sem alterar padding/height (mantém igual ao light mode) */
+.dark [data-sidebar="group-label"] {
+  color: rgba(255, 255, 255, 0.22);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.6rem;
+  font-weight: 600;
+}
+
+/* ── Ranking "Minha" badge ─────────────────────────────────── */
+.minha-badge {
+  background: linear-gradient(135deg, #fec641, #f0a500);
+  color: #10284e;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  font-weight: 700;
+  line-height: 1.2;
+  flex-shrink: 0;
 }
 
 /* Dark mode: navy hardcoded colors become white/foreground */

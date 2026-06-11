@@ -1,5 +1,5 @@
 import {
-  MoreHorizontal,
+  Trash2,
   X,
   Plus,
   Pencil,
@@ -24,11 +24,11 @@ import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { RowActionsMenu } from "@/components/ui/row-actions-menu";
 import {
   Select,
   SelectContent,
@@ -40,7 +40,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { SectionHeader, KpiRow } from "@/pages/home/v1/primitives";
+import { SectionHeader, KpiRow } from "@/pages/ligas/tabs/primitives";
 
 import type { RankingLiga } from "@link-leagues/types";
 
@@ -65,6 +65,7 @@ interface Recurso {
   url: string;
   icone: string;
   cor: string;
+  publico: boolean;
 }
 
 interface MetricasLiga {
@@ -90,6 +91,7 @@ type RecursoAPI = {
   url: string;
   icone: string;
   cor: string;
+  publico?: boolean;
 };
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -133,11 +135,12 @@ function apiParaRecurso(r: RecursoAPI): Recurso {
     url: r.url,
     icone: r.icone ?? "link",
     cor: r.cor ?? "#546484",
+    publico: r.publico ?? false,
   };
 }
 
 const inputClass =
-  "w-full border border-border bg-muted/50 rounded px-3 py-2.5 font-plex-sans text-[13px] text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 transition-colors";
+  "w-full border border-border bg-muted/50 rounded px-3 py-2.5 text-sm text-foreground placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 transition-colors";
 
 // ─── picker de ícone/cor ──────────────────────────────────────────────────────
 
@@ -188,7 +191,7 @@ function IconeCor({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="group relative h-9 w-9 flex items-center justify-center rounded-full border-2 border-transparent hover:border-navy/20 transition-colors shrink-0 outline-none"
+          className="group relative h-9 w-9 flex items-center justify-center rounded-full border-2 border-transparent hover:border-border transition-colors shrink-0 outline-none"
           style={{ backgroundColor: cor }}
           title="Escolher ícone e cor"
         >
@@ -201,7 +204,7 @@ function IconeCor({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56 p-3">
-        <DropdownMenuLabel className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 px-0 pb-2">
+        <DropdownMenuLabel className="text-xs text-foreground/40 px-0 pb-2">
           Ícone
         </DropdownMenuLabel>
         <div className="grid grid-cols-5 gap-1.5">
@@ -215,7 +218,7 @@ function IconeCor({
                 className={cn(
                   "h-8 w-8 flex items-center justify-center rounded transition-colors",
                   icone === ic.id
-                    ? "bg-navy text-white"
+                    ? "bg-foreground text-background"
                     : "bg-foreground/[0.06] text-foreground/60 hover:bg-foreground/[0.10]",
                 )}
               >
@@ -225,9 +228,7 @@ function IconeCor({
           })}
         </div>
         <DropdownMenuSeparator className="my-3" />
-        <DropdownMenuLabel className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 px-0 pb-2">
-          Cor
-        </DropdownMenuLabel>
+        <DropdownMenuLabel className="text-xs text-foreground/40 px-0 pb-2">Cor</DropdownMenuLabel>
         <div className="flex flex-wrap gap-1.5">
           {CORES_PICKER.map((c) => (
             <button
@@ -236,7 +237,7 @@ function IconeCor({
               onClick={() => onChange(icone, c)}
               className={cn(
                 "h-6 w-6 rounded-full border-2 transition-all",
-                cor === c ? "border-navy scale-110" : "border-transparent hover:scale-105",
+                cor === c ? "border-foreground scale-110" : "border-transparent hover:scale-105",
               )}
               style={{ backgroundColor: c }}
             />
@@ -352,12 +353,12 @@ function AbaInformacoes({
           acao={
             alterado ? (
               <div className="flex items-center gap-3">
-                {salvo && <span className="font-plex-sans text-[12px] text-green-600">Salvo!</span>}
-                {erro && <span className="font-plex-sans text-[12px] text-red-600">{erro}</span>}
+                {salvo && <span className="text-sm text-green-600">Salvo!</span>}
+                {erro && <span className="text-sm text-red-600">{erro}</span>}
                 <button
                   onClick={() => void salvar()}
                   disabled={salvando}
-                  className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white transition-colors disabled:opacity-40"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90 disabled:opacity-40"
                 >
                   {salvando ? "Salvando…" : "Salvar alterações"}
                 </button>
@@ -376,9 +377,7 @@ function AbaInformacoes({
             },
           ].map(({ label, field, placeholder }) => (
             <div key={field}>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2 block">
-                {label}
-              </label>
+              <label className="text-xs text-foreground/40 mb-2 block">{label}</label>
               <input
                 value={form[field]}
                 onChange={(e) => setForm({ ...form, [field]: e.target.value })}
@@ -388,9 +387,7 @@ function AbaInformacoes({
             </div>
           ))}
           <div>
-            <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2 block">
-              Descrição
-            </label>
+            <label className="text-xs text-foreground/40 mb-2 block">Descrição</label>
             <textarea
               value={form.descricao}
               onChange={(e) => setForm({ ...form, descricao: e.target.value })}
@@ -408,7 +405,7 @@ function AbaInformacoes({
           tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         />
         {bannerPreview ? (
-          <div className="relative overflow-hidden border border-navy/15 h-36">
+          <div className="relative overflow-hidden border border-border h-36">
             <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
             <button
               onClick={() => {
@@ -422,12 +419,12 @@ function AbaInformacoes({
             </button>
           </div>
         ) : (
-          <div className="border border-dashed border-navy/20 h-36 flex flex-col items-center justify-center gap-2 text-navy/40">
+          <div className="border border-dashed border-border h-36 flex flex-col items-center justify-center gap-2 text-foreground/40">
             <Image className="h-6 w-6" />
-            <span className="font-plex-sans text-[12px]">Nenhuma imagem selecionada</span>
+            <span className="text-sm">Nenhuma imagem selecionada</span>
           </div>
         )}
-        <label className="inline-flex items-center gap-2 cursor-pointer font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/60 hover:text-navy transition-colors">
+        <label className="inline-flex items-center gap-2 cursor-pointer text-xs text-foreground/40 hover:text-foreground transition-colors">
           <Plus className="h-3.5 w-3.5" />
           {bannerPreview ? "Trocar imagem" : "Selecionar imagem"}
           <input type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
@@ -457,9 +454,7 @@ function AbaInformacoes({
             },
           ].map(({ label, field, type, placeholder }) => (
             <div key={field}>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/60 mb-2 block">
-                {label}
-              </label>
+              <label className="text-xs text-foreground/40 mb-2 block">{label}</label>
               <input
                 type={type}
                 value={form[field]}
@@ -492,24 +487,24 @@ function AbaInformacoes({
           titulo="Zona de Perigo"
           tituloClassName="text-xs font-bold uppercase tracking-wider text-red-500"
         />
-        <p className="font-plex-sans text-[13px] text-foreground/50">
+        <p className="text-sm text-foreground/50">
           Arquivar a liga a tornará inativa e não aparecerá mais para os membros. Pode ser revertido
           pelo Super Admin.
         </p>
         {confirmandoArquivar ? (
           <div className="flex items-center gap-4">
-            <span className="font-plex-sans text-[12px] text-red-600">
+            <span className="text-sm text-red-600">
               Confirmar arquivamento de &quot;{form.nome}&quot;?
             </span>
             <button
               onClick={() => void arquivar()}
-              className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-red-600 hover:text-red-800 transition-colors"
+              className="text-xs text-red-600 hover:text-red-800 transition-colors"
             >
               Sim, arquivar
             </button>
             <button
               onClick={() => setConfirmandoArquivar(false)}
-              className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/40 hover:text-navy transition-colors"
+              className="text-xs text-foreground/40 hover:text-foreground transition-colors"
             >
               Cancelar
             </button>
@@ -517,7 +512,7 @@ function AbaInformacoes({
         ) : (
           <button
             onClick={() => setConfirmandoArquivar(true)}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-red-500 hover:text-red-700 border border-red-200 px-3 py-1.5 rounded-full transition-colors"
+            className="text-xs text-red-500 hover:text-red-700 border border-red-200 px-3 py-1.5 rounded-full transition-colors"
           >
             Arquivar liga
           </button>
@@ -535,6 +530,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
   const [novoUrl, setNovoUrl] = useState("");
   const [novoIcone, setNovoIcone] = useState("link");
   const [novoCor, setNovoCor] = useState("#546484");
+  const [novoPublico, setNovoPublico] = useState(false);
   const [novoEnviando, setNovoEnviando] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Recurso>>({});
@@ -626,6 +622,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
         url: novoUrl.trim(),
         icone: novoIcone,
         cor: novoCor,
+        publico: novoPublico,
       }),
     });
     if (res.ok) {
@@ -636,6 +633,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
       setNovoTipo("URL");
       setNovoIcone("link");
       setNovoCor("#546484");
+      setNovoPublico(false);
       setNovoEnviando(false);
     } else {
       const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -654,7 +652,14 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
 
   function iniciarEdicao(r: Recurso) {
     setEditandoId(r.id);
-    setEditForm({ nome: r.nome, tipo: r.tipo, url: r.url, icone: r.icone, cor: r.cor });
+    setEditForm({
+      nome: r.nome,
+      tipo: r.tipo,
+      url: r.url,
+      icone: r.icone,
+      cor: r.cor,
+      publico: r.publico,
+    });
     setSheetAberto(true);
   }
 
@@ -669,6 +674,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
         url: editForm.url,
         icone: editForm.icone,
         cor: editForm.cor,
+        publico: editForm.publico,
       }),
     });
     if (res.ok) {
@@ -678,8 +684,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
     setEditandoId(null);
   }
 
-  if (carregando)
-    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando recursos…</p>;
+  if (carregando) return <p className="text-sm text-foreground/50">Carregando recursos…</p>;
 
   return (
     <div className="space-y-6">
@@ -694,10 +699,11 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
               setNovoUrl("");
               setNovoIcone("link");
               setNovoCor("#546484");
+              setNovoPublico(false);
               setEditandoId(null);
               setSheetAberto(true);
             }}
-            className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
           >
             + Adicionar
           </button>
@@ -705,25 +711,25 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
       />
 
       {recursos.length === 0 ? (
-        <p className="font-plex-sans text-[13px] text-navy/40">Nenhum recurso cadastrado.</p>
+        <p className="text-sm text-foreground/40">Nenhum recurso cadastrado.</p>
       ) : (
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-foreground/[0.08]">
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+            <tr className="border-b border-border">
+              <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40">
                 Recurso
               </th>
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+              <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40 hidden sm:table-cell">
                 URL
               </th>
-              <th className="py-3 px-4 w-10" />
+              <th className="py-2.5 px-4 w-10" />
             </tr>
           </thead>
           <tbody>
             {recursos.map((r) => (
               <tr
                 key={r.id}
-                className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
+                className="border-b border-border transition-colors last:border-0 hover:bg-foreground/[0.03]"
               >
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-3">
@@ -734,42 +740,28 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                       <RecursoIcone id={r.icone} />
                     </div>
                     <div>
-                      <span className="font-plex-sans font-semibold text-[13px] text-foreground">
-                        {r.nome}
-                      </span>
-                      <span className="block font-plex-mono text-[10px] text-foreground/40">
-                        {r.tipo}
-                      </span>
+                      <span className="font-semibold text-sm text-foreground">{r.nome}</span>
+                      <span className="block text-xs text-foreground/40">{r.tipo}</span>
                     </div>
                   </div>
                 </td>
                 <td className="py-4 px-4 hidden sm:table-cell">
-                  <span className="font-plex-mono text-[11px] text-foreground/40 truncate max-w-[200px] block">
+                  <span className="text-xs text-foreground/40 truncate max-w-[200px] block">
                     {r.url}
                   </span>
                 </td>
                 <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="p-1 rounded hover:bg-foreground/[0.08] text-foreground/40 hover:text-foreground/70 transition-colors">
-                        <MoreHorizontal size={14} />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="min-w-[140px]">
-                      <DropdownMenuItem
-                        className="text-[12px] cursor-pointer"
-                        onClick={() => iniciarEdicao(r)}
-                      >
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-[12px] cursor-pointer text-red-500 focus:text-red-600"
-                        onClick={() => void remover(r.id)}
-                      >
-                        Remover
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <RowActionsMenu
+                    actions={[
+                      { label: "Editar", icon: Pencil, onSelect: () => iniciarEdicao(r) },
+                      {
+                        label: "Remover",
+                        icon: Trash2,
+                        variant: "destructive",
+                        onSelect: () => void remover(r.id),
+                      },
+                    ]}
+                  />
                 </td>
               </tr>
             ))}
@@ -782,20 +774,16 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
           <div className="flex-shrink-0">
             <div className="h-px bg-foreground/20" />
             <div className="px-8 pt-8 pb-6">
-              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
-                Recursos
-              </p>
-              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
+              <p className="text-sm text-foreground/50">Recursos</p>
+              <h2 className="font-display font-bold text-2xl text-foreground mt-1">
                 {editandoId ? "Editar Recurso" : "Adicionar Recurso"}
               </h2>
             </div>
-            <div className="h-px bg-foreground/[0.08]" />
+            <div className="h-px bg-border" />
           </div>
           <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
             <div>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                Nome
-              </label>
+              <label className="text-xs text-foreground/40 mb-3 block">Nome</label>
               <div className="flex items-center gap-3">
                 <IconeCor
                   icone={editandoId ? (editForm.icone ?? "link") : novoIcone}
@@ -816,21 +804,19 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                       : setNovoNome(e.target.value)
                   }
                   placeholder="Nome do recurso"
-                  className="flex-1 font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                  className="flex-1 text-sm text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
                 />
               </div>
             </div>
             <div>
-              <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
-                Tipo
-              </label>
+              <label className="text-xs text-foreground/40 mb-3 block">Tipo</label>
               <Select
                 value={editandoId ? (editForm.tipo ?? "URL") : novoTipo}
                 onValueChange={(v) =>
                   editandoId ? setEditForm({ ...editForm, tipo: v }) : setNovoTipo(v)
                 }
               >
-                <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                <SelectTrigger className="w-full text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -844,7 +830,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                     "Vídeo",
                     "Outro",
                   ].map((t) => (
-                    <SelectItem key={t} value={t} className="font-plex-sans text-[13px]">
+                    <SelectItem key={t} value={t} className="text-sm">
                       {t}
                     </SelectItem>
                   ))}
@@ -874,7 +860,7 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
 
               return (
                 <div>
-                  <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block">
+                  <label className="text-xs text-foreground/40 mb-3 block">
                     {ehMidia ? "Arquivo" : "URL"}
                   </label>
                   {ehMidia ? (
@@ -891,19 +877,15 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                       ) : currentUrl ? (
                         <>
                           <Check className="h-4 w-4 text-green-600" />
-                          <span className="font-plex-mono text-[10px] text-foreground/50 max-w-[220px] truncate">
+                          <span className="text-xs text-foreground/50 max-w-[220px] truncate">
                             {currentUrl.split("/").pop()}
                           </span>
-                          <span className="font-plex-mono text-[9px] uppercase tracking-[0.12em] text-foreground/30">
-                            Trocar arquivo
-                          </span>
+                          <span className="text-xs text-foreground/30">Trocar arquivo</span>
                         </>
                       ) : (
                         <>
                           <Upload className="h-5 w-5 text-foreground/30" />
-                          <span className="font-plex-sans text-[12px] text-foreground/40">
-                            Clique para selecionar
-                          </span>
+                          <span className="text-sm text-foreground/40">Clique para selecionar</span>
                         </>
                       )}
                       <input
@@ -922,16 +904,39 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                       value={currentUrl}
                       onChange={(e) => setUrl(e.target.value)}
                       placeholder="https://..."
-                      className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+                      className="w-full text-sm text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
                     />
                   )}
                 </div>
               );
             })()}
-            {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}
+            <div>
+              <label className="text-xs text-foreground/40 mb-3 block">Visibilidade</label>
+              <Select
+                value={(editandoId ? editForm.publico : novoPublico) ? "publico" : "privado"}
+                onValueChange={(v) => {
+                  const pub = v === "publico";
+                  if (editandoId) setEditForm({ ...editForm, publico: pub });
+                  else setNovoPublico(pub);
+                }}
+              >
+                <SelectTrigger className="w-full text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="privado" className="text-sm">
+                    Privado · só membros da liga
+                  </SelectItem>
+                  <SelectItem value="publico" className="text-sm">
+                    Público · visível para todos
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {erro && <p className="text-sm text-red-600">{erro}</p>}
           </div>
           <div className="flex-shrink-0">
-            <div className="h-px bg-foreground/[0.08]" />
+            <div className="h-px bg-border" />
             <div className="px-8 py-6 flex flex-col gap-3">
               <button
                 onClick={() => {
@@ -946,13 +951,13 @@ function AbaRecursos({ ligaId }: { ligaId: string }) {
                     ? !(editForm.nome ?? "").trim() || !(editForm.url ?? "").trim()
                     : !novoNome.trim() || !novoUrl.trim()
                 }
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full rounded-full bg-foreground px-4 py-2 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {editandoId ? "Salvar alterações" : "Adicionar recurso"}
               </button>
               <button
                 onClick={() => setSheetAberto(false)}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors"
+                className="w-full rounded-full border border-border px-4 py-2 text-xs font-medium text-foreground/60 transition-colors hover:bg-muted"
               >
                 Cancelar
               </button>
@@ -1005,19 +1010,19 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
           titulo="Score Atual"
           tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
         />
-        <div className="border border-navy/15 p-5 rounded-lg">
+        <div className="border border-border p-5 rounded-lg">
           <div className="flex items-end justify-between mb-3">
             <div>
-              <span className="font-display font-bold text-4xl text-navy">{score}</span>
-              <span className="font-plex-sans text-lg text-navy/40 ml-1">pts</span>
+              <span className="font-display font-bold text-4xl text-foreground">{score}</span>
+              <span className="text-lg text-foreground/40 ml-1">pts</span>
             </div>
             {posicao > 0 && (
-              <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] bg-brand-yellow text-navy px-2 py-0.5 rounded-full">
+              <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground/50">
                 {posicao}º lugar
               </span>
             )}
           </div>
-          <div className="w-full bg-navy/10 h-px overflow-hidden">
+          <div className="w-full bg-foreground/5 h-px overflow-hidden">
             <div
               className="h-px transition-all duration-500"
               style={{
@@ -1026,7 +1031,7 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
               }}
             />
           </div>
-          <div className="flex justify-between mt-2 font-plex-mono text-[10px] text-navy/40">
+          <div className="flex justify-between mt-2 text-xs text-foreground/40">
             <span>0 pts</span>
             <span>{porcentagem}% do máximo</span>
             <span>{scoreMax} pts</span>
@@ -1061,12 +1066,10 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
           {composicao.map((c) => (
             <div key={c.label}>
               <div className="flex items-center justify-between mb-2">
-                <span className="font-plex-sans font-semibold text-[13px] text-foreground">
-                  {c.label}
-                </span>
-                <span className="font-plex-mono text-[12px] text-foreground">{c.valor}</span>
+                <span className="font-semibold text-sm text-foreground">{c.label}</span>
+                <span className="text-sm text-foreground">{c.valor}</span>
               </div>
-              <div className="w-full bg-navy/10 h-px overflow-hidden">
+              <div className="w-full bg-foreground/5 h-px overflow-hidden">
                 <div
                   className={cn("h-px", c.cor)}
                   style={{ width: `${Math.round((c.valor / composicaoMax) * 100)}%` }}
@@ -1085,14 +1088,12 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
         />
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-foreground/[0.08]">
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal w-10">
+            <tr className="border-b border-border">
+              <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40 w-10">
                 #
               </th>
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                Liga
-              </th>
-              <th className="text-right py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+              <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40">Liga</th>
+              <th className="px-4 py-2.5 text-right text-xs font-normal text-foreground/40">
                 Score
               </th>
             </tr>
@@ -1105,33 +1106,29 @@ function AbaDesempenho({ liga, todasLigas }: { liga: Liga; todasLigas: Liga[] })
                   key={l.id}
                   className={cn(
                     "transition-colors",
-                    !isLast ? "border-b border-foreground/[0.06]" : "",
+                    !isLast ? "border-b border-border" : "",
                     l.id === liga.id ? "bg-foreground/[0.02]" : "hover:bg-foreground/[0.03]",
                   )}
                 >
-                  <td className="py-4 px-4 font-plex-mono text-[12px] text-foreground/40">
-                    {i + 1}º
-                  </td>
+                  <td className="py-4 px-4 text-sm text-foreground/40">{i + 1}º</td>
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-2">
                       <span
                         className={cn(
-                          "font-plex-sans text-[13px] font-semibold",
+                          "text-sm font-semibold",
                           l.id === liga.id ? "text-foreground" : "text-foreground/70",
                         )}
                       >
                         {l.nome}
                       </span>
                       {l.id === liga.id && (
-                        <span className="font-plex-mono text-[8px] uppercase tracking-[0.2em] text-foreground/50 border border-foreground/20 px-1.5 py-0.5 rounded-sm">
+                        <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground/50">
                           Minha
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-right font-plex-mono text-[13px] text-foreground/60">
-                    {l.pontos}
-                  </td>
+                  <td className="py-4 px-4 text-right text-sm text-foreground/60">{l.pontos}</td>
                 </tr>
               );
             })}
@@ -1188,10 +1185,8 @@ export function GerenciamentoStaffPage() {
   if (carregando) {
     return (
       <div className="max-w-5xl mx-auto px-8 py-10">
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy mb-2">
-          Gerenciamento
-        </h1>
-        <p className="font-plex-sans text-[13px] text-navy/50">Carregando ligas…</p>
+        <h1 className="font-display font-bold text-2xl text-foreground mb-2">Gerenciamento</h1>
+        <p className="text-sm text-foreground/50">Carregando ligas…</p>
       </div>
     );
   }
@@ -1199,10 +1194,8 @@ export function GerenciamentoStaffPage() {
   if (!liga) {
     return (
       <div className="max-w-5xl mx-auto px-8 py-10">
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy mb-2">
-          Gerenciamento
-        </h1>
-        <p className="font-plex-sans text-[13px] text-navy/50">Nenhuma liga encontrada.</p>
+        <h1 className="font-display font-bold text-2xl text-foreground mb-2">Gerenciamento</h1>
+        <p className="text-sm text-foreground/50">Nenhuma liga encontrada.</p>
       </div>
     );
   }
@@ -1210,24 +1203,22 @@ export function GerenciamentoStaffPage() {
   return (
     <div className="max-w-5xl mx-auto px-8 py-10">
       {/* Cabeçalho */}
-      <div className="mb-10">
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
-          Gerenciamento
-        </h1>
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
-          Visão Staff · Todas as ligas
-        </p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display font-bold text-2xl text-foreground">Gerenciamento</h1>
+          <p className="text-sm text-foreground/50 mt-1">Visão Staff · Todas as ligas</p>
+        </div>
       </div>
 
       {/* Seletor de liga */}
       <div className="mb-8">
         <Select value={ligaSelecionadaId ?? ""} onValueChange={selecionarLiga}>
-          <SelectTrigger className="w-full sm:w-[280px] font-plex-sans text-[13px] border-border bg-muted/50 rounded focus:outline-none">
+          <SelectTrigger className="w-full sm:w-[280px] text-sm border-border bg-muted/50 rounded focus:outline-none">
             <SelectValue placeholder="Selecionar liga" />
           </SelectTrigger>
           <SelectContent>
             {ligas.map((l) => (
-              <SelectItem key={l.id} value={l.id} className="font-plex-sans text-[13px]">
+              <SelectItem key={l.id} value={l.id} className="text-sm">
                 {l.nome}
               </SelectItem>
             ))}

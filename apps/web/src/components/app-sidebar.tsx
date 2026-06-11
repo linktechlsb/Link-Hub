@@ -3,7 +3,7 @@ import {
   ClipboardList,
   FolderKanban,
   Home,
-  MessageCirclePlus,
+  ListTodo,
   MessageSquare,
   Settings,
   ShieldCheck,
@@ -13,7 +13,6 @@ import {
 import * as React from "react";
 import { useEffect, useState } from "react";
 
-import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { NavMain, type NavMainItem } from "@/components/nav-main";
 import { NavUser, type NavUserData } from "@/components/nav-user";
 import {
@@ -26,7 +25,6 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 
@@ -34,6 +32,7 @@ const mainNav: NavMainItem[] = [
   { title: "Home", url: "/home", icon: Home },
   { title: "Ligas", url: "/ligas", icon: Users },
   { title: "Projetos", url: "/projetos", icon: FolderKanban },
+  { title: "Tarefas", url: "/tarefas", icon: ListTodo },
   {
     title: "Eventos",
     url: "/calendario",
@@ -61,8 +60,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     avatarUrl: null,
     role: null,
   });
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       const session = data.session;
@@ -110,10 +107,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <img src="/link_logo.png" alt="Link" className="size-8 object-contain" />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
-                  <span className="font-display font-bold text-base tracking-tight whitespace-nowrap">
+                  <span className="font-display font-bold text-base tracking-[-0.02em] whitespace-nowrap">
                     Link Leagues
                   </span>
-                  <span className="truncate text-xs text-muted-foreground">
+                  <span className="truncate text-xs text-sidebar-foreground/40">
                     Link School of Business
                   </span>
                 </div>
@@ -139,25 +136,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {manageNav.length > 0 && <NavMain items={manageNav} label="Gestão" />}
       </SidebarContent>
       <SidebarFooter>
-        <TooltipProvider delayDuration={0}>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <SidebarMenuButton onClick={() => setFeedbackOpen(true)}>
-                    <MessageCirclePlus />
-                    <span>Feedback</span>
-                  </SidebarMenuButton>
-                </TooltipTrigger>
-                <TooltipContent side="right">Enviar Feedback</TooltipContent>
-              </Tooltip>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </TooltipProvider>
         <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
-      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </Sidebar>
   );
 }

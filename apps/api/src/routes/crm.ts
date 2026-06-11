@@ -19,21 +19,25 @@ crmRouter.get("/", authenticate, async (req, res, next) => {
       return;
     }
 
-    if (
-      user.role !== "staff" &&
-      user.role !== "professor" &&
-      !(await usuarioPertenceALiga(user.email, liga_id))
-    ) {
-      res.status(403).json({ error: "Acesso restrito aos membros desta liga." });
-      return;
-    }
+    // Membros, staff e professores veem tudo; pessoas de fora só veem públicos.
+    const acessoCompleto =
+      user.role === "staff" ||
+      user.role === "professor" ||
+      (await usuarioPertenceALiga(user.email, liga_id));
 
-    const contatos = await sql`
-      SELECT id, liga_id, nome, emprego, empresa, telefone, email, linkedin, criado_por, criado_em
-      FROM crm_contatos
-      WHERE liga_id = ${liga_id}
-      ORDER BY nome ASC
-    `;
+    const contatos = acessoCompleto
+      ? await sql`
+          SELECT id, liga_id, nome, emprego, empresa, telefone, email, linkedin, publico, criado_por, criado_em
+          FROM crm_contatos
+          WHERE liga_id = ${liga_id}
+          ORDER BY nome ASC
+        `
+      : await sql`
+          SELECT id, liga_id, nome, emprego, empresa, telefone, email, linkedin, publico, criado_por, criado_em
+          FROM crm_contatos
+          WHERE liga_id = ${liga_id} AND publico = true
+          ORDER BY nome ASC
+        `;
 
     res.json(contatos);
   } catch (err) {
@@ -45,7 +49,7 @@ crmRouter.get("/", authenticate, async (req, res, next) => {
 crmRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
     const user = (req as AuthenticatedRequest).user!;
-    const { liga_id, nome, emprego, empresa, telefone, email, linkedin } =
+    const { liga_id, nome, emprego, empresa, telefone, email, linkedin, publico } =
       req.body as CreateCrmContatoInput;
 
     if (!liga_id || !nome) {
@@ -61,7 +65,7 @@ crmRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, r
     const [criador] = await sql`SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1`;
 
     const [contato] = await sql`
-      INSERT INTO crm_contatos (liga_id, nome, emprego, empresa, telefone, email, linkedin, criado_por)
+      INSERT INTO crm_contatos (liga_id, nome, emprego, empresa, telefone, email, linkedin, publico, criado_por)
       VALUES (
         ${liga_id},
         ${nome},
@@ -70,9 +74,10 @@ crmRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, r
         ${telefone ?? null},
         ${email ?? null},
         ${linkedin ?? null},
+        ${publico ?? false},
         ${criador?.id ?? null}
       )
-      RETURNING id, liga_id, nome, emprego, empresa, telefone, email, linkedin, criado_por, criado_em
+      RETURNING id, liga_id, nome, emprego, empresa, telefone, email, linkedin, publico, criado_por, criado_em
     `;
 
     res.status(201).json(contato);
@@ -86,7 +91,8 @@ crmRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (re
   try {
     const id = req.params["id"] as string;
     const user = (req as AuthenticatedRequest).user!;
-    const { nome, emprego, empresa, telefone, email, linkedin } = req.body as UpdateCrmContatoInput;
+    const { nome, emprego, empresa, telefone, email, linkedin, publico } =
+      req.body as UpdateCrmContatoInput;
 
     if (user.role === "diretor") {
       const [alvo] = await sql`SELECT liga_id FROM crm_contatos WHERE id = ${id} LIMIT 1`;
@@ -108,9 +114,10 @@ crmRouter.patch("/:id", authenticate, requireRole("staff", "diretor"), async (re
           empresa  = COALESCE(${empresa ?? null},  empresa),
           telefone = COALESCE(${telefone ?? null}, telefone),
           email    = COALESCE(${email ?? null},    email),
-          linkedin = COALESCE(${linkedin ?? null}, linkedin)
+          linkedin = COALESCE(${linkedin ?? null}, linkedin),
+          publico  = COALESCE(${publico ?? null},  publico)
         WHERE id = ${id}
-        RETURNING id, liga_id, nome, emprego, empresa, telefone, email, linkedin, criado_por, criado_em
+        RETURNING id, liga_id, nome, emprego, empresa, telefone, email, linkedin, publico, criado_por, criado_em
       `;
 
     if (!contato) {

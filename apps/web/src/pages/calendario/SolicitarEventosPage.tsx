@@ -131,19 +131,16 @@ export function SolicitarEventosPage() {
 
   if (sucesso) {
     return (
-      <div className="max-w-2xl mx-auto px-8 py-10">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50">
-          Eventos · Link School of Business
-        </p>
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] mt-1 mb-4">
-          Solicitação enviada!
-        </h1>
-        <p className="font-plex-sans text-[13px] text-foreground/60 mb-6">
-          Sua solicitação foi recebida e será analisada pela equipe.
-        </p>
+      <div className="mx-auto max-w-2xl px-8 py-10">
+        <div className="mb-8">
+          <h1 className="font-display text-2xl font-bold text-foreground">Solicitação enviada!</h1>
+          <p className="mt-1 text-sm text-foreground/50">
+            Sua solicitação foi recebida e será analisada pela equipe.
+          </p>
+        </div>
         <button
           onClick={() => navigate("/calendario")}
-          className="font-plex-mono text-[11px] tracking-[0.14em] uppercase border border-foreground/40 px-4 py-2 rounded-full"
+          className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
         >
           Ver Calendário
         </button>
@@ -152,193 +149,193 @@ export function SolicitarEventosPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-8 py-10">
-      <div className="mb-10">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50">
-          Eventos · Link School of Business
+    <div className="mx-auto max-w-2xl px-8 py-10">
+      <div className="mb-8">
+        <h1 className="font-display text-2xl font-bold text-foreground">Solicitar Evento</h1>
+        <p className="mt-1 text-sm text-foreground/50">
+          Solicite a organização de um evento pela equipe
         </p>
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] mt-1">
-          Solicitar evento
-        </h1>
       </div>
 
-      <div className="space-y-6">
-        {/* Nome completo */}
-        <div>
-          <p className={labelCls}>Nome completo *</p>
-          <input
-            className={`${fieldCls} mt-1`}
-            value={form.nome_solicitante}
-            onChange={(e) => setForm({ ...form, nome_solicitante: e.target.value })}
-            placeholder="Seu nome"
-          />
-        </div>
-
-        {/* Comunidade responsável */}
-        <div>
-          <p className={labelCls}>Comunidade responsável</p>
-          <div className="mt-1">
-            <Select value={form.liga_id} onValueChange={(v) => setForm({ ...form, liga_id: v })}>
-              <SelectTrigger className={fieldCls}>
-                <SelectValue placeholder="Selecione a comunidade" />
-              </SelectTrigger>
-              <SelectContent>
-                {ligasDisponiveis.map((l) => (
-                  <SelectItem key={l.id} value={l.id}>
-                    {l.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Tipo de evento */}
-        <div>
-          <p className={labelCls}>Tipo de evento *</p>
-          <div className="mt-1">
-            <Select
-              value={form.tipo_evento}
-              onValueChange={(v) => setForm({ ...form, tipo_evento: v })}
-            >
-              <SelectTrigger className={fieldCls}>
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="hub">Hub</SelectItem>
-                <SelectItem value="painel">Painel</SelectItem>
-                <SelectItem value="workshop_aberto">Workshop aberto</SelectItem>
-                <SelectItem value="evento_externo">Evento externo</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Campo condicional: participantes/salas */}
-        {mostrarParticipantes && (
+      <div className="rounded-xl border border-border bg-card p-6">
+        <div className="space-y-6">
+          {/* Nome completo */}
           <div>
-            <p className={labelCls}>Quantidade de participantes e salas desejadas</p>
+            <p className={labelCls}>Nome completo *</p>
+            <input
+              className={`${fieldCls} mt-1`}
+              value={form.nome_solicitante}
+              onChange={(e) => setForm({ ...form, nome_solicitante: e.target.value })}
+              placeholder="Seu nome"
+            />
+          </div>
+
+          {/* Comunidade responsável */}
+          <div>
+            <p className={labelCls}>Comunidade responsável</p>
+            <div className="mt-1">
+              <Select value={form.liga_id} onValueChange={(v) => setForm({ ...form, liga_id: v })}>
+                <SelectTrigger className={fieldCls}>
+                  <SelectValue placeholder="Selecione a comunidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ligasDisponiveis.map((l) => (
+                    <SelectItem key={l.id} value={l.id}>
+                      {l.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Tipo de evento */}
+          <div>
+            <p className={labelCls}>Tipo de evento *</p>
+            <div className="mt-1">
+              <Select
+                value={form.tipo_evento}
+                onValueChange={(v) => setForm({ ...form, tipo_evento: v })}
+              >
+                <SelectTrigger className={fieldCls}>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hub">Hub</SelectItem>
+                  <SelectItem value="painel">Painel</SelectItem>
+                  <SelectItem value="workshop_aberto">Workshop aberto</SelectItem>
+                  <SelectItem value="evento_externo">Evento externo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Campo condicional: participantes/salas */}
+          {mostrarParticipantes && (
+            <div>
+              <p className={labelCls}>Quantidade de participantes e salas desejadas</p>
+              <textarea
+                className={`${fieldCls} mt-1 min-h-[80px] resize-none`}
+                value={form.participantes_info}
+                onChange={(e) => setForm({ ...form, participantes_info: e.target.value })}
+                placeholder="Ex: 30 participantes, preferência pela sala 6_03"
+              />
+            </div>
+          )}
+
+          {/* Tema */}
+          <div>
+            <p className={labelCls}>Tema do encontro *</p>
+            <input
+              className={`${fieldCls} mt-1`}
+              value={form.tema}
+              onChange={(e) => setForm({ ...form, tema: e.target.value })}
+              placeholder="Tema principal do evento"
+            />
+          </div>
+
+          {/* Descrição do tema */}
+          <div>
+            <p className={labelCls}>Descrição do tema</p>
             <textarea
               className={`${fieldCls} mt-1 min-h-[80px] resize-none`}
-              value={form.participantes_info}
-              onChange={(e) => setForm({ ...form, participantes_info: e.target.value })}
-              placeholder="Ex: 30 participantes, preferência pela sala 6_03"
+              value={form.descricao_tema}
+              onChange={(e) => setForm({ ...form, descricao_tema: e.target.value })}
+              placeholder="Descreva o tema com mais detalhes"
             />
           </div>
-        )}
 
-        {/* Tema */}
-        <div>
-          <p className={labelCls}>Tema do encontro *</p>
-          <input
-            className={`${fieldCls} mt-1`}
-            value={form.tema}
-            onChange={(e) => setForm({ ...form, tema: e.target.value })}
-            placeholder="Tema principal do evento"
-          />
-        </div>
-
-        {/* Descrição do tema */}
-        <div>
-          <p className={labelCls}>Descrição do tema</p>
-          <textarea
-            className={`${fieldCls} mt-1 min-h-[80px] resize-none`}
-            value={form.descricao_tema}
-            onChange={(e) => setForm({ ...form, descricao_tema: e.target.value })}
-            placeholder="Descreva o tema com mais detalhes"
-          />
-        </div>
-
-        {/* Nome do palestrante */}
-        <div>
-          <p className={labelCls}>Nome do palestrante</p>
-          <input
-            className={`${fieldCls} mt-1`}
-            value={form.nome_palestrante}
-            onChange={(e) => setForm({ ...form, nome_palestrante: e.target.value })}
-            placeholder="Nome completo do palestrante"
-          />
-        </div>
-
-        {/* LinkedIn */}
-        <div>
-          <p className={labelCls}>LinkedIn do palestrante</p>
-          <input
-            className={`${fieldCls} mt-1`}
-            value={form.linkedin_palestrante}
-            onChange={(e) => setForm({ ...form, linkedin_palestrante: e.target.value })}
-            placeholder="https://linkedin.com/in/..."
-          />
-        </div>
-
-        {/* Data e horário */}
-        <div className="grid grid-cols-[2fr_1fr_1fr] gap-4">
+          {/* Nome do palestrante */}
           <div>
-            <p className={labelCls}>Data do encontro</p>
+            <p className={labelCls}>Nome do palestrante</p>
             <input
-              type="date"
               className={`${fieldCls} mt-1`}
-              value={form.data}
-              onChange={(e) => setForm({ ...form, data: e.target.value })}
+              value={form.nome_palestrante}
+              onChange={(e) => setForm({ ...form, nome_palestrante: e.target.value })}
+              placeholder="Nome completo do palestrante"
             />
           </div>
+
+          {/* LinkedIn */}
           <div>
-            <p className={labelCls}>Hora de início</p>
+            <p className={labelCls}>LinkedIn do palestrante</p>
             <input
-              type="time"
               className={`${fieldCls} mt-1`}
-              value={form.hora_inicio}
-              onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })}
+              value={form.linkedin_palestrante}
+              onChange={(e) => setForm({ ...form, linkedin_palestrante: e.target.value })}
+              placeholder="https://linkedin.com/in/..."
             />
           </div>
+
+          {/* Data e horário */}
+          <div className="grid grid-cols-[2fr_1fr_1fr] gap-4">
+            <div>
+              <p className={labelCls}>Data do encontro</p>
+              <input
+                type="date"
+                className={`${fieldCls} mt-1`}
+                value={form.data}
+                onChange={(e) => setForm({ ...form, data: e.target.value })}
+              />
+            </div>
+            <div>
+              <p className={labelCls}>Hora de início</p>
+              <input
+                type="time"
+                className={`${fieldCls} mt-1`}
+                value={form.hora_inicio}
+                onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })}
+              />
+            </div>
+            <div>
+              <p className={labelCls}>Hora de fim</p>
+              <input
+                type="time"
+                className={`${fieldCls} mt-1`}
+                value={form.hora_fim}
+                onChange={(e) => setForm({ ...form, hora_fim: e.target.value })}
+              />
+            </div>
+          </div>
+
+          {/* Veículo */}
           <div>
-            <p className={labelCls}>Hora de fim</p>
+            <p className={labelCls}>Placa, modelo e cor do veículo (opcional)</p>
             <input
-              type="time"
               className={`${fieldCls} mt-1`}
-              value={form.hora_fim}
-              onChange={(e) => setForm({ ...form, hora_fim: e.target.value })}
+              value={form.veiculo_info}
+              onChange={(e) => setForm({ ...form, veiculo_info: e.target.value })}
+              placeholder="Ex: ABC-1234, Civic preto"
             />
           </div>
+
+          {/* Observações */}
+          <div>
+            <p className={labelCls}>Outras observações (opcional)</p>
+            <textarea
+              className={`${fieldCls} mt-1 min-h-[80px] resize-none`}
+              value={form.observacoes}
+              onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
+              placeholder="Informações adicionais"
+            />
+          </div>
+
+          {erro && <p className="font-plex-mono text-[11px] text-red-500">{erro}</p>}
+
+          <button
+            onClick={handleSalvar}
+            disabled={salvando}
+            className="w-full py-3 bg-primary text-primary-foreground rounded-full text-xs font-medium uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-40"
+          >
+            {salvando ? "Enviando..." : "Enviar solicitação"}
+          </button>
+          <button
+            onClick={() => navigate("/calendario")}
+            className="w-full py-3 rounded-full border border-border text-xs font-medium uppercase tracking-widest text-foreground/60 hover:bg-muted transition-colors"
+          >
+            Cancelar
+          </button>
         </div>
-
-        {/* Veículo */}
-        <div>
-          <p className={labelCls}>Placa, modelo e cor do veículo (opcional)</p>
-          <input
-            className={`${fieldCls} mt-1`}
-            value={form.veiculo_info}
-            onChange={(e) => setForm({ ...form, veiculo_info: e.target.value })}
-            placeholder="Ex: ABC-1234, Civic preto"
-          />
-        </div>
-
-        {/* Observações */}
-        <div>
-          <p className={labelCls}>Outras observações (opcional)</p>
-          <textarea
-            className={`${fieldCls} mt-1 min-h-[80px] resize-none`}
-            value={form.observacoes}
-            onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
-            placeholder="Informações adicionais"
-          />
-        </div>
-
-        {erro && <p className="font-plex-mono text-[11px] text-red-500">{erro}</p>}
-
-        <button
-          onClick={handleSalvar}
-          disabled={salvando}
-          className="w-full py-3 bg-[#10244D] text-white rounded-full font-plex-mono text-[11px] tracking-[0.14em] uppercase disabled:opacity-50"
-        >
-          {salvando ? "Enviando..." : "Enviar solicitação"}
-        </button>
-        <button
-          onClick={() => navigate("/calendario")}
-          className="w-full py-3 border border-foreground/20 rounded-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/60"
-        >
-          Cancelar
-        </button>
       </div>
     </div>
   );

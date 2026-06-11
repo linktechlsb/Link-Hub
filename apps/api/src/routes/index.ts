@@ -1,11 +1,14 @@
 import { Router, type Router as IRouter } from "express";
 
+import { categoriasProjetoRouter } from "./categorias-projeto.js";
 import { crmRouter } from "./crm.js";
 import { eventosRouter } from "./eventos.js";
 import { feedbacksRouter } from "./feedbacks.js";
 import { formulariosRouter } from "./formularios.js";
 import { ligasRouter } from "./ligas.js";
+import { milestonesRouter } from "./milestones.js";
 import { muralRouter } from "./mural.js";
+import { pendenciasRouter } from "./pendencias.js";
 import { pendentesRouter } from "./pendentes.js";
 import { presencaRouter } from "./presenca.js";
 import { projetosRouter } from "./projetos.js";
@@ -14,6 +17,7 @@ import { receitasRouter } from "./receitas.js";
 import { recursosRouter } from "./recursos.js";
 import { salasRouter } from "./salas.js";
 import { solicitacoesRouter } from "./solicitacoes.js";
+import { tarefasRouter } from "./tarefas.js";
 import { usuariosRouter } from "./usuarios.js";
 
 export const router: IRouter = Router();
@@ -24,6 +28,9 @@ router.get("/health", (_req, res) => {
 
 router.use("/ligas", ligasRouter);
 router.use("/projetos", projetosRouter);
+router.use("/categorias-projeto", categoriasProjetoRouter);
+router.use("/milestones", milestonesRouter);
+router.use("/tarefas", tarefasRouter);
 router.use("/presenca", presencaRouter);
 router.use("/salas", salasRouter);
 router.use("/usuarios", usuariosRouter);
@@ -31,6 +38,7 @@ router.use("/eventos", eventosRouter);
 router.use("/recursos", recursosRouter);
 router.use("/receitas", receitasRouter);
 router.use("/pendentes", pendentesRouter);
+router.use("/pendencias", pendenciasRouter);
 router.use("/mural", muralRouter);
 router.use("/ranking", rankingRouter);
 router.use("/crm", crmRouter);

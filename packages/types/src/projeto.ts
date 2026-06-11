@@ -1,6 +1,20 @@
 import type { Liga } from "./liga.js";
 import type { Usuario } from "./user.js";
 
+export interface CategoriasProjeto {
+  id: string;
+  nome: string;
+  descricao?: string;
+  liga_id?: string;
+  ativo: boolean;
+  criado_em: string;
+}
+
+export interface CreateCategoriasProjetoInput {
+  nome: string;
+  descricao?: string;
+}
+
 export type StatusProjeto =
   | "rascunho"
   | "em_aprovacao"
@@ -36,6 +50,8 @@ export interface Projeto {
   professor_id?: string;
   empresa_parceira?: string;
   tipo_projeto?: TipoProjeto;
+  categoria_id?: string;
+  categoria?: CategoriasProjeto;
   criado_em: string;
   atualizado_em: string;
 }
@@ -50,6 +66,7 @@ export interface CreateProjetoInput {
   professor_id?: string;
   empresa_parceira?: string;
   tipo_projeto?: TipoProjeto;
+  categoria_id?: string;
 }
 
 export interface UpdateProjetoInput {
@@ -62,4 +79,5 @@ export interface UpdateProjetoInput {
   professor_id?: string;
   empresa_parceira?: string;
   tipo_projeto?: TipoProjeto;
+  categoria_id?: string;
 }

@@ -7,6 +7,8 @@ export interface CrmContato {
   telefone?: string;
   email?: string;
   linkedin?: string;
+  /** Visível para pessoas de fora da liga quando true. */
+  publico: boolean;
   criado_por?: string;
   criado_em: string;
 }
@@ -19,6 +21,7 @@ export interface CreateCrmContatoInput {
   telefone?: string;
   email?: string;
   linkedin?: string;
+  publico?: boolean;
 }
 
 export interface UpdateCrmContatoInput {
@@ -28,4 +31,5 @@ export interface UpdateCrmContatoInput {
   telefone?: string;
   email?: string;
   linkedin?: string;
+  publico?: boolean;
 }

@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/lib/supabase";
-import { SectionHeader } from "@/pages/home/v1/primitives";
+
+import { TabSection } from "./primitives";
 
 import type { StatusPresenca } from "@link-leagues/types";
 
@@ -80,35 +81,32 @@ export function PresencaTab({ ligaId }: Props) {
   }, [registros]);
 
   if (carregando) {
-    return <p className="font-plex-sans text-[13px] text-navy/50">Carregando presenças...</p>;
+    return <p className="text-sm text-foreground/50">Carregando presenças...</p>;
   }
 
   return (
-    <div>
-      <SectionHeader numero="03" eyebrow="Registros" titulo="Presença dos Membros" />
+    <TabSection titulo="Presença dos membros">
       {resumo.length === 0 ? (
-        <p className="font-plex-sans text-[13px] text-navy/50">
-          Nenhum registro de presença encontrado.
-        </p>
+        <p className="text-sm text-foreground/50">Nenhum registro de presença encontrado.</p>
       ) : (
-        <ul className="divide-y divide-navy/10 border-t border-b border-navy/10">
+        <ul className="divide-y divide-border border-y border-border">
           {resumo.map((m) => (
             <li key={m.usuarioId} className="grid grid-cols-[1fr_auto] items-center gap-6 py-4">
               <div className="min-w-0">
-                <p className="font-plex-sans text-[14px] text-navy truncate">{m.nome}</p>
-                <p className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-navy/50 mt-1">
+                <p className="truncate text-sm text-foreground">{m.nome}</p>
+                <p className="mt-1 text-[10px] uppercase tracking-wide text-foreground/50">
                   {m.presentes + m.justificados} de {m.total} presenças
                   {m.justificados > 0 ? ` · ${m.justificados} justificada(s)` : ""}
                 </p>
-                <Progress value={m.percentual} className="h-1.5 mt-2 bg-navy/10" />
+                <Progress value={m.percentual} className="mt-2 h-1.5" />
               </div>
-              <span className="font-plex-mono text-[13px] tabular-nums text-navy w-12 text-right">
+              <span className="w-12 text-right text-sm tabular-nums text-foreground">
                 {m.percentual}%
               </span>
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </TabSection>
   );
 }

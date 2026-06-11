@@ -1,12 +1,13 @@
-import { HelpCircle } from "lucide-react";
+import { CheckCircle2, HelpCircle, ListChecks, TrendingUp, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { SectionHeader } from "@/pages/home/v1/primitives";
+import { DashboardCard } from "@/pages/home/components/DashboardCard";
+import { StatStrip } from "@/pages/ligas/tabs/primitives";
 
 import type { ConfiguracaoPontuacao, RankingLiga } from "@link-leagues/types";
 
@@ -39,12 +40,15 @@ function formatarPontos(valor: number): string {
   return valor.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
-function corBadge(pos: number | undefined): string {
-  if (pos === 1) return "bg-brand-yellow text-navy";
-  if (pos === 2) return "bg-navy/20 text-navy";
-  if (pos === 3) return "bg-navy/10 text-navy";
-  return "bg-navy/[0.05] text-navy/50";
+/** Cor do número da posição — pódio em destaque (espelha o RankingPanel da Home). */
+function corPosicao(pos: number | undefined): string {
+  if (pos === 1) return "text-amber-500 dark:text-brand-yellow";
+  if (pos === 2) return "text-foreground/70";
+  if (pos === 3) return "text-foreground/50";
+  return "text-foreground/30";
 }
+
+const TH_CLASS = "px-4 py-2.5 text-left text-xs font-normal text-foreground/40";
 
 export function RankingPage() {
   const [ranking, setRanking] = useState<RankingLiga[]>([]);
@@ -96,305 +100,205 @@ export function RankingPage() {
 
   if (carregando) {
     return (
-      <div className="max-w-5xl mx-auto px-8 py-10">
-        <div className="mb-10">
-          <Skeleton className="h-7 w-28 mb-2" />
-          <Skeleton className="h-3 w-40 mt-1" />
+      <div className="mx-auto max-w-5xl px-8 py-10">
+        <div className="mb-8">
+          <Skeleton className="h-8 w-32 bg-foreground/5" />
+          <Skeleton className="mt-2 h-4 w-40 bg-foreground/5" />
         </div>
-
-        <div className="space-y-12">
-          {/* Pódio skeleton */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <Skeleton className="h-3 w-24" />
-            </div>
-            <div className="space-y-3">
-              {/* 1º lugar */}
-              <Card className="shadow-sm border-l-4 border-l-brand-yellow">
-                <CardContent className="py-4 px-5">
-                  <div className="flex items-center gap-4">
-                    <Skeleton className="h-8 w-8 shrink-0" />
-                    <Skeleton className="h-10 w-10 shrink-0" />
-                    <div className="flex-1">
-                      <Skeleton className="h-4 w-36 mb-1.5" />
-                      <Skeleton className="h-3 w-52" />
-                    </div>
-                    <div className="text-right shrink-0">
-                      <Skeleton className="h-8 w-16 mb-1" />
-                      <Skeleton className="h-2.5 w-12 ml-auto" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* 2º e 3º */}
-              <div className="grid grid-cols-2 gap-3">
-                {[0, 1].map((i) => (
-                  <Card key={i} className="shadow-sm border-l-4 border-l-link-blue">
-                    <CardContent className="py-4 px-5">
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="h-6 w-6 shrink-0" />
-                        <Skeleton className="h-8 w-8 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <Skeleton className="h-4 w-28 mb-1.5" />
-                          <Skeleton className="h-3 w-20" />
-                        </div>
-                        <div className="text-right shrink-0">
-                          <Skeleton className="h-6 w-12 mb-1" />
-                          <Skeleton className="h-2.5 w-8 ml-auto" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+        <div className="space-y-8">
+          <Skeleton className="h-24 w-full rounded-xl bg-foreground/5" />
+          <div className="space-y-3">
+            <Skeleton className="h-20 w-full rounded-xl bg-foreground/5" />
+            <div className="grid grid-cols-2 gap-3">
+              <Skeleton className="h-16 rounded-xl bg-foreground/5" />
+              <Skeleton className="h-16 rounded-xl bg-foreground/5" />
             </div>
           </div>
-
-          {/* Ranking completo skeleton */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <Skeleton className="h-3 w-36" />
-            </div>
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-foreground/[0.08]">
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal w-14">
-                    #
-                  </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Liga
-                  </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Projetos
-                  </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Presença
-                  </th>
-                  <th className="text-right py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Pontuação
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="border-b border-foreground/[0.06]">
-                    <td className="py-4 px-4">
-                      <Skeleton className="h-7 w-7" />
-                    </td>
-                    <td className="py-4 px-4">
-                      <Skeleton className="h-4 w-36" />
-                    </td>
-                    <td className="py-4 px-4">
-                      <Skeleton className="h-4 w-8" />
-                    </td>
-                    <td className="py-4 px-4">
-                      <Skeleton className="h-4 w-10" />
-                    </td>
-                    <td className="py-4 px-4 text-right">
-                      <Skeleton className="h-5 w-16 ml-auto" />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Skeleton className="h-64 w-full rounded-xl bg-foreground/5" />
         </div>
       </div>
     );
   }
 
   const topo = ranking.slice(0, 3);
+  const totalProjetos = ranking.reduce(
+    (acc, r) => acc + r.projetos_concluidos + r.projetos_em_andamento,
+    0,
+  );
+  const projetosConcluidos = ranking.reduce((acc, r) => acc + r.projetos_concluidos, 0);
+
+  const kpis = [
+    { icon: Trophy, label: "Ligas", value: String(ranking.length) },
+    { icon: ListChecks, label: "Projetos", value: String(totalProjetos) },
+    { icon: CheckCircle2, label: "Concluídos", value: String(projetosConcluidos) },
+    {
+      icon: TrendingUp,
+      label: "Líder",
+      value: topo[0] ? formatarPontos(topo[0].pontuacao) : "—",
+    },
+  ];
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="max-w-5xl mx-auto px-8 py-10">
+      <div className="mx-auto max-w-5xl px-8 py-10">
         {/* Cabeçalho */}
-        <div className="mb-10">
-          <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
-            Ranking
-          </h1>
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
-            Ranking de ligas
-          </p>
+        <div className="mb-8">
+          <h1 className="font-display text-2xl font-bold text-foreground">Ranking</h1>
+          <p className="mt-1 text-sm text-foreground/50">Classificação geral das ligas</p>
         </div>
 
-        <div className="space-y-12">
+        <div className="space-y-8">
+          <StatStrip items={kpis} />
+
           {/* Pódio */}
           {topo.length > 0 && (
-            <div>
-              <SectionHeader
-                numero="01"
-                eyebrow="Destaque"
-                titulo="Pódio"
-                tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
-              />
+            <section className="flex flex-col gap-4">
+              <h2 className="text-xs text-foreground/40">Pódio</h2>
               <div className="space-y-3">
-                {/* 1º lugar — full width */}
+                {/* 1º lugar — largura total */}
                 {topo[0] && (
-                  <Card className="shadow-sm border-l-4 border-l-brand-yellow">
-                    <CardContent className="py-4 px-5">
-                      <div className="flex items-center gap-4">
-                        <span className="font-plex-sans font-bold text-[28px] text-brand-yellow leading-none min-w-[2rem]">
-                          1
-                        </span>
-                        <div className="h-10 w-10 bg-navy flex items-center justify-center flex-shrink-0">
-                          <span className="font-plex-mono text-[11px] text-white">
-                            {iniciais(topo[0].nome)}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-plex-sans font-semibold text-[14px] text-navy">
-                            {topo[0].nome}
-                          </p>
-                          <p className="font-plex-mono text-[10px] text-navy/50 mt-0.5">
-                            {topo[0].projetos_concluidos + topo[0].projetos_em_andamento} proj ·{" "}
-                            {topo[0].presenca_percentual}% pres ·{" "}
-                            {formatarMoeda(topo[0].receita_total)}
-                          </p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="font-plex-sans font-bold text-[28px] text-navy leading-none">
-                            {formatarPontos(topo[0].pontuacao)}
-                          </p>
-                          <p className="font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/50 mt-1">
-                            pontos
-                          </p>
-                        </div>
+                  <DashboardCard className="p-5">
+                    <div className="flex items-center gap-4">
+                      <span
+                        className={cn(
+                          "w-8 text-center font-display text-3xl font-bold leading-none tabular-nums",
+                          corPosicao(1),
+                        )}
+                      >
+                        1
+                      </span>
+                      <Avatar className="size-11 rounded-lg">
+                        <AvatarImage src={topo[0].imagem_url ?? undefined} alt={topo[0].nome} />
+                        <AvatarFallback className="rounded-lg bg-foreground/[0.06] text-xs font-medium text-foreground/70">
+                          {iniciais(topo[0].nome)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-display text-base font-bold text-foreground">
+                          {topo[0].nome}
+                        </p>
+                        <p className="mt-0.5 text-xs text-foreground/50">
+                          {topo[0].projetos_concluidos + topo[0].projetos_em_andamento} proj ·{" "}
+                          {topo[0].presenca_percentual}% pres ·{" "}
+                          {formatarMoeda(topo[0].receita_total)}
+                        </p>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="shrink-0 text-right">
+                        <p className="font-display text-3xl font-bold leading-none tabular-nums text-foreground">
+                          {formatarPontos(topo[0].pontuacao)}
+                        </p>
+                        <p className="mt-1 text-xs text-foreground/40">pontos</p>
+                      </div>
+                    </div>
+                  </DashboardCard>
                 )}
 
                 {/* 2º e 3º — lado a lado */}
                 {topo.length > 1 && (
                   <div className="grid grid-cols-2 gap-3">
-                    {topo.slice(1).map((r, i) => (
-                      <Card
-                        key={r.liga_id}
-                        className={cn(
-                          "shadow-sm border-l-4",
-                          i === 0 ? "border-l-link-blue" : "border-l-navy/20",
-                        )}
-                      >
-                        <CardContent className="py-4 px-5">
-                          <div className="flex items-center gap-3">
-                            <span
-                              className={cn(
-                                "font-plex-sans font-bold text-[20px] leading-none min-w-[1.5rem]",
-                                i === 0
-                                  ? "text-link-blue dark:text-white"
-                                  : "text-navy/30 dark:text-white",
-                              )}
-                            >
-                              {r.posicao}
-                            </span>
-                            <div className="h-8 w-8 bg-navy flex items-center justify-center flex-shrink-0">
-                              <span className="font-plex-mono text-[10px] text-white">
-                                {iniciais(r.nome)}
-                              </span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-plex-sans font-semibold text-[13px] text-navy truncate">
-                                {r.nome}
-                              </p>
-                              <p className="font-plex-mono text-[9px] text-navy/50 mt-0.5">
-                                {r.projetos_concluidos + r.projetos_em_andamento} proj ·{" "}
-                                {r.presenca_percentual}% pres
-                              </p>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              <p className="font-plex-sans font-bold text-[18px] text-navy leading-none">
-                                {formatarPontos(r.pontuacao)}
-                              </p>
-                              <p className="font-plex-mono text-[9px] uppercase tracking-[0.18em] text-navy/50 mt-1">
-                                pts
-                              </p>
-                            </div>
+                    {topo.slice(1).map((r) => (
+                      <DashboardCard key={r.liga_id} className="p-5">
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={cn(
+                              "w-6 text-center font-display text-2xl font-bold leading-none tabular-nums",
+                              corPosicao(r.posicao),
+                            )}
+                          >
+                            {r.posicao}
+                          </span>
+                          <Avatar className="size-9 rounded-lg">
+                            <AvatarImage src={r.imagem_url ?? undefined} alt={r.nome} />
+                            <AvatarFallback className="rounded-lg bg-foreground/[0.06] text-[10px] font-medium text-foreground/70">
+                              {iniciais(r.nome)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-display text-sm font-bold text-foreground">
+                              {r.nome}
+                            </p>
+                            <p className="mt-0.5 text-xs text-foreground/50">
+                              {r.projetos_concluidos + r.projetos_em_andamento} proj ·{" "}
+                              {r.presenca_percentual}% pres
+                            </p>
                           </div>
-                        </CardContent>
-                      </Card>
+                          <div className="shrink-0 text-right">
+                            <p className="font-display text-xl font-bold leading-none tabular-nums text-foreground">
+                              {formatarPontos(r.pontuacao)}
+                            </p>
+                            <p className="mt-1 text-xs text-foreground/40">pts</p>
+                          </div>
+                        </div>
+                      </DashboardCard>
                     ))}
                   </div>
                 )}
               </div>
-            </div>
+            </section>
           )}
 
           {/* Ranking completo */}
-          <div>
-            <SectionHeader
-              numero="02"
-              eyebrow="Classificação"
-              titulo="Ranking Completo"
-              tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
-            />
+          <section className="flex flex-col gap-4">
+            <h2 className="text-xs text-foreground/40">Ranking completo</h2>
             {ranking.length === 0 ? (
-              <p className="font-plex-sans text-[13px] text-foreground/50">
-                Ainda não há ligas no ranking.
-              </p>
+              <p className="text-sm text-foreground/50">Ainda não há ligas no ranking.</p>
             ) : (
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b border-foreground/[0.08]">
-                    <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal w-14">
-                      #
-                    </th>
-                    <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                      Liga
-                    </th>
-                    <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                      Projetos
-                    </th>
-                    <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                      Presença
-                    </th>
-                    <th className="text-right py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                      Pontuação
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ranking.map((r, idx) => {
-                    const isLast = idx === ranking.length - 1;
-                    return (
+              <DashboardCard className="overflow-hidden">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className={cn(TH_CLASS, "w-14")}>#</th>
+                      <th className={TH_CLASS}>Liga</th>
+                      <th className={TH_CLASS}>Projetos</th>
+                      <th className={TH_CLASS}>Presença</th>
+                      <th className={cn(TH_CLASS, "text-right")}>Pontuação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ranking.map((r) => (
                       <tr
                         key={r.liga_id}
-                        className={!isLast ? "border-b border-foreground/[0.06]" : ""}
+                        className="border-b border-border transition-colors last:border-0 hover:bg-foreground/[0.03]"
                       >
-                        <td className="py-4 px-4">
-                          <div
+                        <td className="px-4 py-3">
+                          <span
                             className={cn(
-                              "flex items-center justify-center h-7 w-7 font-plex-mono text-[10px] font-bold",
-                              corBadge(r.posicao),
+                              "font-display text-sm font-bold tabular-nums",
+                              corPosicao(r.posicao),
                             )}
                           >
                             {r.posicao != null ? String(r.posicao).padStart(2, "0") : "—"}
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="font-plex-sans text-[13px] text-foreground font-semibold">
-                            {r.nome}
                           </span>
                         </td>
-                        <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-2.5">
+                            <Avatar className="size-7 rounded-md">
+                              <AvatarImage src={r.imagem_url ?? undefined} alt={r.nome} />
+                              <AvatarFallback className="rounded-md bg-foreground/[0.06] text-[10px] font-medium text-foreground/70">
+                                {iniciais(r.nome)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-medium text-foreground">{r.nome}</span>
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm tabular-nums text-foreground/60">
                           {r.projetos_concluidos + r.projetos_em_andamento}
                         </td>
-                        <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                        <td className="px-4 py-3 text-sm tabular-nums text-foreground/60">
                           {r.presenca_percentual}%
                         </td>
-                        <td className="py-4 px-4 text-right">
-                          <span className="font-plex-sans font-bold text-[16px] text-navy">
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-display text-base font-bold tabular-nums text-foreground">
                             {formatarPontos(r.pontuacao)}
                           </span>
                         </td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              </DashboardCard>
             )}
-          </div>
+          </section>
         </div>
       </div>
 
@@ -402,23 +306,21 @@ export function RankingPage() {
       <Tooltip>
         <TooltipTrigger asChild>
           <button
-            className="fixed bottom-6 right-6 h-9 w-9 rounded-full bg-white dark:bg-card border border-border flex items-center justify-center shadow-md hover:opacity-80 transition-opacity"
+            className="fixed bottom-6 right-6 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-md transition-opacity hover:opacity-80"
             aria-label="Como funciona a pontuação"
           >
-            <HelpCircle className="h-4 w-4 text-foreground" />
+            <HelpCircle className="h-4 w-4" />
           </button>
         </TooltipTrigger>
         <TooltipContent
           side="top"
           align="end"
-          className="max-w-[280px] p-0 overflow-hidden border border-border shadow-lg"
+          className="max-w-[280px] overflow-hidden border border-border p-0 shadow-lg"
         >
-          <div className="bg-navy px-4 py-2.5">
-            <p className="font-plex-mono text-[10px] uppercase tracking-[0.16em] text-brand-yellow">
-              Como funciona a pontuação
-            </p>
+          <div className="border-b border-border bg-muted px-4 py-2.5">
+            <p className="text-xs font-semibold text-foreground">Como funciona a pontuação</p>
           </div>
-          <div className="bg-popover px-4 py-3 space-y-2.5">
+          <div className="space-y-2.5 bg-popover px-4 py-3">
             {configs
               .filter((c) => c.chave in CRITERIOS)
               .sort(
@@ -429,25 +331,23 @@ export function RankingPage() {
                 const meta = CRITERIOS[c.chave]!;
                 return (
                   <div key={c.chave} className="flex items-center justify-between gap-6">
-                    <div className="flex gap-2 items-start">
-                      <div className="h-1.5 w-1.5 rounded-full bg-brand-yellow flex-shrink-0 mt-[5px]" />
+                    <div className="flex items-start gap-2">
+                      <div className="mt-[5px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-yellow" />
                       <div>
-                        <p className="font-plex-sans font-semibold text-[11px] text-popover-foreground leading-tight">
+                        <p className="text-xs font-semibold leading-tight text-popover-foreground">
                           {meta.label}
                         </p>
-                        <p className="font-plex-mono text-[9px] text-muted-foreground mt-0.5">
-                          {meta.unidade}
-                        </p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">{meta.unidade}</p>
                       </div>
                     </div>
-                    <span className="font-plex-mono text-[11px] font-bold text-popover-foreground/70 flex-shrink-0">
+                    <span className="flex-shrink-0 text-xs font-bold tabular-nums text-popover-foreground/70">
                       +{Number(c.valor)} pts
                     </span>
                   </div>
                 );
               })}
             {configs.length === 0 && (
-              <p className="font-plex-mono text-[10px] text-muted-foreground">Carregando pesos…</p>
+              <p className="text-xs text-muted-foreground">Carregando pesos…</p>
             )}
           </div>
         </TooltipContent>

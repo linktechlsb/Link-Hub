@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { supabase } from "@/lib/supabase";
-import { SectionHeader } from "@/pages/home/v1/primitives";
+
+import { TabSection } from "./primitives";
 
 const ROLE_LABEL: Record<string, string> = {
   staff: "Staff",
@@ -47,74 +49,60 @@ export function MembrosTab({ ligaId }: Props) {
   }, [ligaId]);
 
   if (carregando) {
-    return (
-      <p className="font-plex-sans text-[13px] text-navy/50 dark:text-white/40">
-        Carregando membros...
-      </p>
-    );
+    return <p className="text-sm text-foreground/50">Carregando membros...</p>;
   }
 
-  const contadorAcao = (
-    <span className="font-plex-mono text-[11px] tracking-[0.14em] text-navy/60 dark:text-white/40">
+  const contador = (
+    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground/60">
       {membros.length}
     </span>
   );
 
   return (
-    <div>
-      <SectionHeader numero="02" eyebrow="Composição" titulo="Membros" acao={contadorAcao} />
+    <TabSection titulo="Membros" acao={contador}>
       {membros.length === 0 ? (
-        <p className="font-plex-sans text-[13px] text-navy/50 dark:text-white/40">
-          Nenhum membro cadastrado.
-        </p>
+        <p className="text-sm text-foreground/50">Nenhum membro cadastrado.</p>
       ) : (
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-foreground/[0.08]">
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+            <tr className="border-b border-border">
+              <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wide text-foreground/40">
                 Nome
               </th>
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+              <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wide text-foreground/40">
                 Papel
               </th>
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+              <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wide text-foreground/40">
                 Ingresso
               </th>
             </tr>
           </thead>
           <tbody>
-            {membros.map((m, idx) => {
-              const isLast = idx === membros.length - 1;
-              return (
-                <tr
-                  key={m.id}
-                  className={`hover:bg-foreground/[0.03] transition-colors ${!isLast ? "border-b border-foreground/[0.06]" : ""}`}
-                >
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-navy flex-shrink-0 flex items-center justify-center text-white font-plex-mono text-[9px] font-bold">
-                        {m.nome.charAt(0).toUpperCase()}
-                      </div>
-                      <span className="font-plex-sans text-[13px] text-foreground font-semibold">
-                        {m.nome}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
-                    {ROLE_LABEL[m.role] ?? m.role}
-                  </td>
-                  <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
-                    {new Date(m.ingressou_em).toLocaleDateString("pt-BR", {
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </td>
-                </tr>
-              );
-            })}
+            {membros.map((m) => (
+              <tr
+                key={m.id}
+                className="border-b border-border transition-colors last:border-0 hover:bg-foreground/[0.03]"
+              >
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2.5">
+                    <UserAvatar nome={m.nome} src={m.avatar_url} className="size-7" />
+                    <span className="text-sm font-medium text-foreground">{m.nome}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-sm text-foreground/60">
+                  {ROLE_LABEL[m.role] ?? m.role}
+                </td>
+                <td className="px-4 py-3 text-sm text-foreground/60">
+                  {new Date(m.ingressou_em).toLocaleDateString("pt-BR", {
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       )}
-    </div>
+    </TabSection>
   );
 }

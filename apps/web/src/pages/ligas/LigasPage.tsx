@@ -1,4 +1,4 @@
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Plus, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -11,16 +11,21 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
-import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
 
 import { LigaSheet } from "./LigaSheet";
 
 import type { Liga, UserRole } from "@link-leagues/types";
 
+/** Encurta para "Primeiro Último" quando há nomes do meio. */
 function primeiroUltimoNome(nome: string): string {
   const partes = nome.trim().split(/\s+/);
   if (partes.length <= 2) return nome;
   return `${partes[0]} ${partes[partes.length - 1]}`;
+}
+
+/** Diretores principais da liga, no máximo 2. */
+function nomesDiretores(liga: Liga): string[] {
+  return (liga.diretores ?? []).map((d) => primeiroUltimoNome(d.nome)).slice(0, 2);
 }
 
 export function LigasPage() {
@@ -51,13 +56,8 @@ export function LigasPage() {
     });
   }, []);
 
-  function abrirEditar(liga?: Liga) {
-    const alvo =
-      liga ??
-      ligas.find(
-        (l) => l.lider_email === userEmail || (userId && l.diretores?.some((d) => d.id === userId)),
-      );
-    setLigaParaEditar(alvo);
+  function abrirEditar(liga: Liga) {
+    setLigaParaEditar(liga);
     setSheetOpen(true);
   }
 
@@ -66,209 +66,127 @@ export function LigasPage() {
     setSheetOpen(true);
   }
 
-  const totalProjetosAtivos = ligas.reduce((acc, l) => acc + (l.projetos_ativos ?? 0), 0);
-  const totalMembros = ligas.reduce((acc, l) => acc + (l.total_membros ?? 0), 0);
   const minhaLiga = ligas.find(
     (l) => l.lider_email === userEmail || (userId && l.diretores?.some((d) => d.id === userId)),
   );
 
-  const acaoBotao =
-    role === "staff" ? (
-      <button
-        onClick={abrirAdicionar}
-        className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-foreground hover:text-background transition-colors"
-      >
-        + Adicionar
-      </button>
-    ) : null;
+  function podeEditar(liga: Liga): boolean {
+    return role === "staff" || (role === "diretor" && minhaLiga?.id === liga.id);
+  }
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-10">
-      <div className="mb-10">
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">Ligas</h1>
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
-          Página geral das ligas
-        </p>
-      </div>
-
-      <div className="space-y-12">
-        <section>
-          <SectionHeader
-            numero="01"
-            eyebrow="Resumo"
-            titulo="Panorama das Ligas"
-            tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
-          />
-          <KpiRow
-            centered
-            items={[
-              { label: "Ligas ativas", valor: String(ligas.length) },
-              { label: "Projetos totais", valor: String(totalProjetosAtivos) },
-              { label: "Membros totais", valor: String(totalMembros) },
-            ]}
-          />
-        </section>
-
+    <div className="mx-auto max-w-6xl px-8 py-10">
+      {/* Header */}
+      <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <SectionHeader
-            numero="02"
-            eyebrow="Diretório"
-            titulo="Todas as Ligas"
-            acao={acaoBotao}
-            tituloClassName="text-xs font-bold uppercase tracking-wider text-link-blue dark:text-white"
-          />
-
-          {carregando ? (
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-foreground/[0.08]">
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Nome
-                  </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Diretores
-                  </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Membros
-                  </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Projetos
-                  </th>
-                  <th className="py-3 px-4 w-10" />
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="border-b border-foreground/[0.06]">
-                    <td className="py-4 px-4">
-                      <Skeleton className="h-4 w-40 mb-1.5" />
-                      <Skeleton className="h-3 w-56" />
-                    </td>
-                    <td className="py-4 px-4">
-                      <Skeleton className="h-5 w-28 rounded-full" />
-                    </td>
-                    <td className="py-4 px-4">
-                      <Skeleton className="h-4 w-6" />
-                    </td>
-                    <td className="py-4 px-4">
-                      <Skeleton className="h-4 w-6" />
-                    </td>
-                    <td className="py-4 px-4 w-10">
-                      <Skeleton className="h-6 w-6 rounded" />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : ligas.length === 0 ? (
-            <p className="font-plex-sans text-[13px] text-foreground/50">
-              Nenhuma liga cadastrada.
-            </p>
-          ) : (
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-foreground/[0.08]">
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Nome
-                  </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Diretores
-                  </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Membros
-                  </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Projetos
-                  </th>
-                  <th className="py-3 px-4 w-10" />
-                </tr>
-              </thead>
-              <tbody>
-                {ligas.map((liga, idx) => {
-                  const ehMinha = minhaLiga?.id === liga.id;
-                  const diretores =
-                    liga.diretores && liga.diretores.length > 0
-                      ? liga.diretores.map((d) => primeiroUltimoNome(d.nome))
-                      : [];
-                  const isLast = idx === ligas.length - 1;
-                  return (
-                    <tr
-                      key={liga.id}
-                      onClick={() => navigate(`/ligas/${liga.id}`)}
-                      className={`cursor-pointer hover:bg-foreground/[0.03] transition-colors ${!isLast ? "border-b border-foreground/[0.06]" : ""}`}
-                    >
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-2">
-                          <span className="font-plex-sans text-[13px] text-foreground font-semibold">
-                            {liga.nome}
-                          </span>
-                          {ehMinha && (
-                            <span className="font-plex-mono text-[8px] uppercase tracking-[0.2em] text-foreground/50 border border-foreground/20 px-1.5 py-0.5 rounded-sm">
-                              Minha
-                            </span>
-                          )}
-                        </div>
-                        {liga.descricao && (
-                          <p className="font-plex-sans text-[11px] text-foreground/40 mt-0.5 leading-snug">
-                            {liga.descricao}
-                          </p>
-                        )}
-                      </td>
-                      <td className="py-4 px-4">
-                        {diretores.length > 0 ? (
-                          <div className="flex flex-wrap gap-1.5">
-                            {diretores.map((nome) => (
-                              <span
-                                key={nome}
-                                className="inline-flex items-center gap-1 font-plex-mono text-[10px] text-foreground/70 bg-foreground/[0.07] border border-foreground/[0.08] px-2 py-0.5 rounded-full"
-                              >
-                                {nome}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="font-plex-mono text-[12px] text-foreground/25">—</span>
-                        )}
-                      </td>
-                      <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
-                        {liga.total_membros ?? 0}
-                      </td>
-                      <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
-                        {liga.projetos_ativos ?? 0}
-                      </td>
-                      <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="p-1 rounded hover:bg-foreground/[0.08] text-foreground/40 hover:text-foreground/70 transition-colors">
-                              <MoreHorizontal size={14} />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="min-w-[140px]">
-                            <DropdownMenuItem
-                              className="text-[12px] cursor-pointer"
-                              onClick={() => navigate(`/ligas/${liga.id}`)}
-                            >
-                              Ver detalhes
-                            </DropdownMenuItem>
-                            {(role === "staff" || (role === "diretor" && ehMinha)) && (
-                              <DropdownMenuItem
-                                className="text-[12px] cursor-pointer"
-                                onClick={() => abrirEditar(liga)}
-                              >
-                                Editar
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
+          <h1 className="font-display text-2xl font-bold text-foreground">Ligas</h1>
+          <p className="mt-1 text-sm text-foreground/50">Todas as ligas acadêmicas da Link</p>
         </div>
+        {role === "staff" && (
+          <button
+            onClick={abrirAdicionar}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-white dark:bg-white dark:text-navy dark:hover:bg-white/90"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Adicionar liga
+          </button>
+        )}
       </div>
+
+      {/* Galeria */}
+      {carregando ? (
+        <div className="grid grid-cols-2 gap-x-6 gap-y-8">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex flex-col">
+              <Skeleton className="aspect-[16/10] w-full rounded-2xl bg-foreground/5" />
+              <Skeleton className="mt-3 h-5 w-40 bg-foreground/5" />
+              <Skeleton className="mt-2 h-3 w-52 bg-foreground/5" />
+            </div>
+          ))}
+        </div>
+      ) : ligas.length === 0 ? (
+        <p className="text-sm text-foreground/50">Nenhuma liga cadastrada.</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-x-6 gap-y-8">
+          {ligas.map((liga) => {
+            const ehMinha = minhaLiga?.id === liga.id;
+            const diretores = nomesDiretores(liga);
+            const subtitle = diretores.join(", ");
+            return (
+              <div key={liga.id} className="group flex flex-col">
+                {/* Foto / capa */}
+                <button
+                  onClick={() => navigate(`/ligas/${liga.id}`)}
+                  className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl border border-border bg-muted transition-colors hover:border-foreground/20"
+                >
+                  {liga.imagem_url ? (
+                    <img
+                      src={liga.imagem_url}
+                      alt={liga.nome}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <Users className="size-8 text-foreground/15" />
+                    </div>
+                  )}
+
+                  {podeEditar(liga) && (
+                    <span
+                      className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100"
+                      onClick={(e) => e.stopPropagation()}
+                      role="presentation"
+                    >
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            className="flex size-7 items-center justify-center rounded-full bg-background/80 text-foreground/60 backdrop-blur transition-colors hover:text-foreground"
+                            aria-label="Opções da liga"
+                          >
+                            <MoreHorizontal size={15} />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="min-w-[140px]">
+                          <DropdownMenuItem
+                            className="cursor-pointer text-[12px]"
+                            onClick={() => navigate(`/ligas/${liga.id}`)}
+                          >
+                            Ver detalhes
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="cursor-pointer text-[12px]"
+                            onClick={() => abrirEditar(liga)}
+                          >
+                            Editar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </span>
+                  )}
+                </button>
+
+                {/* Nome + meta */}
+                <button
+                  onClick={() => navigate(`/ligas/${liga.id}`)}
+                  className="mt-3 flex flex-col items-start text-left"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="font-display text-base font-bold text-foreground">
+                      {liga.nome}
+                    </span>
+                    {ehMinha && (
+                      <span className="rounded-full bg-brand-yellow/20 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:text-brand-yellow">
+                        Minha
+                      </span>
+                    )}
+                  </span>
+                  <span className="mt-0.5 text-sm text-foreground/50">{subtitle || "—"}</span>
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <LigaSheet
         open={sheetOpen}

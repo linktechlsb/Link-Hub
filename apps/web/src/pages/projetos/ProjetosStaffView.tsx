@@ -1,18 +1,29 @@
+import { CheckCircle2, Clock, FolderKanban, Plus, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { FormSheet } from "@/components/ui/form-sheet";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { supabase } from "@/lib/supabase";
-import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
+import { DashboardCard } from "@/pages/home/components/DashboardCard";
+import { StatStrip, TabSection } from "@/pages/ligas/tabs/primitives";
 
 import { CriarProjetoDialog } from "./CriarProjetoDialog";
+import { ProjetosFilterBar } from "./ProjetosFilterBar";
+import { TabelaProjetosSkeleton } from "./ProjetoSkeletons";
+import { STATUS_CONFIG } from "./statusConfig";
 
 type ProjetoAPI = {
   id: string;
@@ -40,20 +51,24 @@ type NovoForm = {
   professor_id: string;
   empresa_parceira: string;
   tipo_projeto: string;
+  categoria_id: string;
 };
 
 type ProfessorAPI = { id: string; nome: string; email: string } | null;
 type MembroAPI = { id: string; usuario_id: string; nome: string; cargo?: string; role?: string };
+type CategoriaAPI = { id: string; nome: string; liga_id?: string | null };
 
-const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  rascunho: { label: "Rascunho", className: "text-navy/50" },
-  em_aprovacao: { label: "Em aprovação", className: "text-amber-600" },
-  aprovado: { label: "Aprovado", className: "text-blue-600" },
-  rejeitado: { label: "Rejeitado", className: "text-red-600" },
-  em_andamento: { label: "Em andamento", className: "text-blue-600" },
-  concluido: { label: "Concluído", className: "text-green-700" },
-  cancelado: { label: "Cancelado", className: "text-navy/40" },
-};
+const TH_CLASS =
+  "px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wide text-foreground/40";
+const ROW_CLASS =
+  "border-b border-border transition-colors last:border-0 hover:bg-foreground/[0.03]";
+const ACAO_CLASS = "text-xs text-foreground/50 transition-colors hover:text-foreground";
+const LABEL_CLASS = "font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40";
+const INPUT_CLASS =
+  "border-border bg-muted/50 text-[13px] text-foreground placeholder:text-foreground/20";
+const SELECT_TRIGGER_CLASS = "w-full text-[13px]";
+const TEXTAREA_CLASS =
+  "w-full resize-none rounded border border-border bg-muted/50 px-3 py-2.5 text-[13px] text-foreground placeholder:text-foreground/20 focus:border-foreground/30 focus:outline-none";
 
 async function getToken() {
   const { data } = await supabase.auth.getSession();
@@ -70,11 +85,16 @@ const FORM_VAZIO: NovoForm = {
   professor_id: "",
   empresa_parceira: "",
   tipo_projeto: "",
+  categoria_id: "",
 };
 
 export function ProjetosStaffView({ abrirCriar }: { abrirCriar?: boolean }) {
-  const { data: projetosData, refetch: refetchProjetos } =
-    useCachedFetch<ProjetoAPI[]>("/api/projetos");
+  const navigate = useNavigate();
+  const {
+    data: projetosData,
+    carregando,
+    refetch: refetchProjetos,
+  } = useCachedFetch<ProjetoAPI[]>("/api/projetos");
   const { data: ligasData } = useCachedFetch<LigaAPI[]>("/api/ligas");
   const projetos = projetosData ?? [];
   const ligas = ligasData ?? [];
@@ -86,10 +106,10 @@ export function ProjetosStaffView({ abrirCriar }: { abrirCriar?: boolean }) {
   const [motivo, setMotivo] = useState("");
   const [form, setForm] = useState<NovoForm>(FORM_VAZIO);
   const [salvando, setSalvando] = useState(false);
-  const [professorDaLiga, setProfessorDaLiga] = useState<ProfessorAPI>(null);
   const [membrosLiga, setMembrosLiga] = useState<MembroAPI[]>([]);
   const [modoEditar, setModoEditar] = useState(false);
   const [formEditar, setFormEditar] = useState<Partial<NovoForm>>({});
+  const [categorias, setCategorias] = useState<CategoriaAPI[]>([]);
 
   const filtrados = projetos.filter((p) => {
     if (filtroLiga && p.liga?.id !== filtroLiga) return false;
@@ -98,20 +118,23 @@ export function ProjetosStaffView({ abrirCriar }: { abrirCriar?: boolean }) {
   });
 
   const kpis = [
-    { label: "Total projetos", valor: String(projetos.length) },
+    { icon: FolderKanban, label: "Total projetos", value: String(projetos.length) },
     {
+      icon: Clock,
       label: "Em aprovação",
-      valor: String(projetos.filter((p) => p.status === "em_aprovacao").length),
+      value: String(projetos.filter((p) => p.status === "em_aprovacao").length),
     },
     {
+      icon: CheckCircle2,
       label: "Aprovados",
-      valor: String(
+      value: String(
         projetos.filter((p) => ["aprovado", "em_andamento", "concluido"].includes(p.status)).length,
       ),
     },
     {
+      icon: XCircle,
       label: "Recusados",
-      valor: String(projetos.filter((p) => p.status === "rejeitado").length),
+      value: String(projetos.filter((p) => p.status === "rejeitado").length),
     },
   ];
 
@@ -198,21 +221,20 @@ export function ProjetosStaffView({ abrirCriar }: { abrirCriar?: boolean }) {
 
   useEffect(() => {
     if (!form.liga_id) {
-      setProfessorDaLiga(null);
       setMembrosLiga([]);
-      setForm((f) => ({ ...f, responsavel_id: "" }));
+      setForm((f) => ({ ...f, responsavel_id: "", professor_id: "" }));
       return;
     }
     getToken().then((token) => {
+      // O projeto sempre é salvo com o professor da própria liga.
       fetch(`/api/ligas/${form.liga_id}/professor`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((r) => r.json())
         .then((data: ProfessorAPI) => {
-          setProfessorDaLiga(data);
           setForm((f) => ({ ...f, professor_id: data?.id ?? "" }));
         })
-        .catch(() => setProfessorDaLiga(null));
+        .catch(() => setForm((f) => ({ ...f, professor_id: "" })));
 
       fetch(`/api/ligas/${form.liga_id}/membros`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -222,6 +244,21 @@ export function ProjetosStaffView({ abrirCriar }: { abrirCriar?: boolean }) {
         .catch(() => setMembrosLiga([]));
     });
     setForm((f) => ({ ...f, responsavel_id: "" }));
+  }, [form.liga_id]);
+
+  useEffect(() => {
+    if (!form.liga_id) {
+      setCategorias([]);
+      return;
+    }
+    getToken().then((token) =>
+      fetch(`/api/categorias-projeto?liga_id=${form.liga_id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => r.json())
+        .then((data: CategoriaAPI[]) => setCategorias(Array.isArray(data) ? data : []))
+        .catch(() => setCategorias([])),
+    );
   }, [form.liga_id]);
 
   async function handleCriar() {
@@ -242,6 +279,7 @@ export function ProjetosStaffView({ abrirCriar }: { abrirCriar?: boolean }) {
           professor_id: form.professor_id || undefined,
           empresa_parceira: form.empresa_parceira.trim() || undefined,
           tipo_projeto: form.tipo_projeto || undefined,
+          categoria_id: form.categoria_id || undefined,
         }),
       });
       setSheetNovo(false);
@@ -255,155 +293,115 @@ export function ProjetosStaffView({ abrirCriar }: { abrirCriar?: boolean }) {
   const responsavelNome = (p: ProjetoAPI) => p.responsavel_nome ?? p.responsavel?.nome ?? "—";
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-10">
+    <div className="mx-auto max-w-6xl px-8 py-10">
       {/* Cabeçalho */}
-      <div className="mb-10">
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
-          Projetos
-        </h1>
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
-          Gestão
-        </p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Projetos</h1>
+          <p className="mt-1 text-sm text-foreground/50">Gestão de todos os projetos das ligas</p>
+        </div>
+        <button
+          onClick={() => {
+            setForm(FORM_VAZIO);
+            setSheetNovo(true);
+          }}
+          className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Novo projeto
+        </button>
       </div>
 
-      <div className="space-y-12">
-        <KpiRow items={kpis} />
+      <div className="space-y-8">
+        {!carregando && <StatStrip items={kpis} />}
 
-        <div>
-          <SectionHeader
-            numero="01"
-            eyebrow="Diretório"
-            titulo="Todos os Projetos"
-            acao={
-              <button
-                onClick={() => {
-                  setForm(FORM_VAZIO);
-                  setSheetNovo(true);
-                }}
-                className="font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/40 px-3 py-1.5 rounded-full hover:bg-[#10244D] hover:text-white dark:hover:bg-foreground dark:hover:text-background transition-colors"
-              >
-                + Novo Projeto
-              </button>
-            }
-          />
-
-          {/* Filtros */}
-          <div className="flex gap-3 mb-6">
-            <Select value={filtroLiga} onValueChange={(v) => setFiltroLiga(v === "all" ? "" : v)}>
-              <SelectTrigger className="font-plex-sans text-[13px] w-auto min-w-[160px]">
-                <SelectValue placeholder="Todas as ligas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="font-plex-sans text-[13px]">
-                  Todas as ligas
-                </SelectItem>
-                {ligas.map((l) => (
-                  <SelectItem key={l.id} value={l.id} className="font-plex-sans text-[13px]">
-                    {l.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={filtroStatus}
-              onValueChange={(v) => setFiltroStatus(v === "all" ? "" : v)}
-            >
-              <SelectTrigger className="font-plex-sans text-[13px] w-auto min-w-[160px]">
-                <SelectValue placeholder="Todos os status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="font-plex-sans text-[13px]">
-                  Todos os status
-                </SelectItem>
-                {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-                  <SelectItem key={k} value={k} className="font-plex-sans text-[13px]">
-                    {v.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {filtrados.length === 0 ? (
-            <p className="font-plex-sans text-[13px] text-foreground/50">
-              Nenhum projeto encontrado.
-            </p>
+        <TabSection
+          titulo="Todos os projetos"
+          acao={
+            <ProjetosFilterBar
+              ligas={ligas}
+              statusOptions={Object.entries(STATUS_CONFIG).map(([value, v]) => ({
+                value,
+                label: v.label,
+              }))}
+              filtroLiga={filtroLiga}
+              setFiltroLiga={setFiltroLiga}
+              filtroStatus={filtroStatus}
+              setFiltroStatus={setFiltroStatus}
+            />
+          }
+        >
+          {carregando ? (
+            <TabelaProjetosSkeleton />
+          ) : filtrados.length === 0 ? (
+            <p className="text-sm text-foreground/50">Nenhum projeto encontrado.</p>
           ) : (
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-foreground/[0.08]">
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Projeto
-                  </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Liga
-                  </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Responsável
-                  </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Prazo
-                  </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                    Status
-                  </th>
-                  <th className="py-3 px-4" />
-                </tr>
-              </thead>
-              <tbody>
-                {filtrados.map((p, idx) => {
-                  const s = STATUS_CONFIG[p.status] ?? {
-                    label: p.status,
-                    className: "text-foreground/50",
-                  };
-                  const isLast = idx === filtrados.length - 1;
-                  return (
-                    <tr
-                      key={p.id}
-                      className={`hover:bg-foreground/[0.03] transition-colors ${!isLast ? "border-b border-foreground/[0.06]" : ""}`}
-                    >
-                      <td className="py-4 px-4">
-                        <span className="font-plex-sans text-[13px] text-foreground font-semibold">
-                          {p.titulo}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
-                        {p.liga?.nome ?? "—"}
-                      </td>
-                      <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
-                        {responsavelNome(p)}
-                      </td>
-                      <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
-                        {p.prazo
-                          ? new Date(p.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString(
-                              "pt-BR",
-                              { day: "2-digit", month: "short" },
-                            )
-                          : "—"}
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className={`font-plex-mono text-[12px] font-medium ${s.className}`}>
-                          {s.label}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4">
-                        <button
-                          onClick={() => {
-                            setMotivo("");
-                            setSheetRevisar(p);
-                          }}
-                          className="font-plex-mono text-[10px] tracking-[0.14em] uppercase text-foreground/50 hover:text-foreground transition-colors"
-                        >
-                          Revisar →
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <DashboardCard className="overflow-hidden">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-border">
+                    {["Projeto", "Liga", "Responsável", "Prazo", "Status", ""].map((h, i) => (
+                      <th key={h || i} className={TH_CLASS}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtrados.map((p) => {
+                    const s = STATUS_CONFIG[p.status] ?? {
+                      label: p.status,
+                      className: "text-foreground/50",
+                    };
+                    return (
+                      <tr key={p.id} className={ROW_CLASS}>
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-medium text-foreground">{p.titulo}</span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-foreground/60">
+                          {p.liga?.nome ?? "—"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-foreground/60">
+                          {responsavelNome(p)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-foreground/60">
+                          {p.prazo
+                            ? new Date(p.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString(
+                                "pt-BR",
+                                { day: "2-digit", month: "short" },
+                              )
+                            : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs font-medium ${s.className}`}>{s.label}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => navigate(`/projetos/${p.id}`)}
+                              className={ACAO_CLASS}
+                            >
+                              Milestones
+                            </button>
+                            <button
+                              onClick={() => {
+                                setMotivo("");
+                                setSheetRevisar(p);
+                              }}
+                              className={ACAO_CLASS}
+                            >
+                              Revisar →
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </DashboardCard>
           )}
-        </div>
+        </TabSection>
       </div>
 
       <CriarProjetoDialog
@@ -425,7 +423,7 @@ export function ProjetosStaffView({ abrirCriar }: { abrirCriar?: boolean }) {
       >
         <SheetContent
           side="right"
-          className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-white dark:bg-[#030303]"
+          className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0 bg-background"
         >
           <div className="flex-shrink-0">
             <div className="h-px bg-navy/90 dark:bg-white/20" />
@@ -669,271 +667,236 @@ export function ProjetosStaffView({ abrirCriar }: { abrirCriar?: boolean }) {
       </Sheet>
 
       {/* Sheet — novo projeto */}
-      <Sheet
+      <FormSheet
         open={sheetNovo}
         onOpenChange={(o) => {
           if (!o) setSheetNovo(false);
         }}
+        eyebrow="Novo"
+        title="Adicionar projeto"
+        footer={
+          <>
+            <button
+              onClick={handleCriar}
+              disabled={salvando || !form.titulo.trim() || !form.liga_id || !form.responsavel_id}
+              className="w-full rounded-full bg-[#10244D] px-4 py-3 font-plex-mono text-[11px] uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {salvando ? "Salvando..." : "Criar projeto"}
+            </button>
+            <button
+              onClick={() => setSheetNovo(false)}
+              disabled={salvando}
+              className="w-full rounded-full border border-foreground/20 px-4 py-3 font-plex-mono text-[11px] uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-foreground/[0.06] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Cancelar
+            </button>
+          </>
+        }
       >
-        <SheetContent side="right" className="w-[400px] sm:w-[480px] flex flex-col gap-0 p-0">
-          <div className="flex-shrink-0">
-            <div className="h-px bg-foreground/20" />
-            <div className="px-8 pt-8 pb-6">
-              <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
-                Novo
-              </p>
-              <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
-                Adicionar projeto
-              </h2>
-            </div>
-            <div className="h-px bg-foreground/[0.08]" />
-          </div>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="novo-titulo" className={LABEL_CLASS}>
+              Título
+            </FieldLabel>
+            <Input
+              id="novo-titulo"
+              value={form.titulo}
+              onChange={(e) => setForm((f) => ({ ...f, titulo: e.target.value }))}
+              placeholder="Ex: Projeto de Marketing"
+              className={INPUT_CLASS}
+            />
+          </Field>
 
-          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
-            <div>
-              <label
-                htmlFor="novo-titulo"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-              >
-                Título
-              </label>
-              <input
-                id="novo-titulo"
-                value={form.titulo}
-                onChange={(e) => setForm((f) => ({ ...f, titulo: e.target.value }))}
-                placeholder="Ex: Projeto de Marketing"
-                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="novo-liga"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-              >
-                Liga
-              </label>
-              <Select
-                value={form.liga_id || "__none__"}
-                onValueChange={(v) =>
-                  setForm((f) => ({ ...f, liga_id: v === "__none__" ? "" : v }))
-                }
-              >
-                <SelectTrigger id="novo-liga" className="w-full font-plex-sans text-[13px]">
-                  <SelectValue placeholder="Selecionar liga..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Selecionar liga...</SelectItem>
-                  {ligas.map((l) => (
-                    <SelectItem key={l.id} value={l.id} className="font-plex-sans text-[13px]">
-                      {l.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="novo-responsavel"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-              >
-                Responsável
-              </label>
-              <Select
-                value={form.responsavel_id || "__none__"}
-                onValueChange={(v) =>
-                  setForm((f) => ({ ...f, responsavel_id: v === "__none__" ? "" : v }))
-                }
-                disabled={!form.liga_id}
-              >
-                <SelectTrigger id="novo-responsavel" className="w-full font-plex-sans text-[13px]">
-                  <SelectValue
-                    placeholder={
-                      !form.liga_id ? "Selecione uma liga primeiro" : "Selecionar responsável..."
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__" className="font-plex-sans text-[13px]">
-                    {!form.liga_id ? "Selecione uma liga primeiro" : "Selecionar responsável..."}
+          <Field>
+            <FieldLabel htmlFor="novo-liga" className={LABEL_CLASS}>
+              Liga
+            </FieldLabel>
+            <Select
+              value={form.liga_id || "__none__"}
+              onValueChange={(v) => setForm((f) => ({ ...f, liga_id: v === "__none__" ? "" : v }))}
+            >
+              <SelectTrigger id="novo-liga" className={SELECT_TRIGGER_CLASS}>
+                <SelectValue placeholder="Selecionar liga..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Selecionar liga...</SelectItem>
+                {ligas.map((l) => (
+                  <SelectItem key={l.id} value={l.id} className="text-[13px]">
+                    {l.nome}
                   </SelectItem>
-                  {membrosLiga.map((m) => (
-                    <SelectItem
-                      key={m.usuario_id}
-                      value={m.usuario_id}
-                      className="font-plex-sans text-[13px]"
-                    >
-                      {m.nome}
-                      {m.role ? ` — ${m.role}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
 
-            <div>
-              <label
-                htmlFor="novo-tipo"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-              >
-                Tipo de Projeto
-              </label>
-              <Select
-                value={form.tipo_projeto || "__none__"}
-                onValueChange={(v) =>
-                  setForm((f) => ({ ...f, tipo_projeto: v === "__none__" ? "" : v }))
-                }
-              >
-                <SelectTrigger id="novo-tipo" className="w-full font-plex-sans text-[13px]">
-                  <SelectValue placeholder="Selecionar tipo..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__" className="font-plex-sans text-[13px]">
-                    Selecionar tipo...
+          <Field>
+            <FieldLabel htmlFor="novo-responsavel" className={LABEL_CLASS}>
+              Responsável
+            </FieldLabel>
+            <Select
+              value={form.responsavel_id || "__none__"}
+              onValueChange={(v) =>
+                setForm((f) => ({ ...f, responsavel_id: v === "__none__" ? "" : v }))
+              }
+              disabled={!form.liga_id}
+            >
+              <SelectTrigger id="novo-responsavel" className={SELECT_TRIGGER_CLASS}>
+                <SelectValue
+                  placeholder={
+                    !form.liga_id ? "Selecione uma liga primeiro" : "Selecionar responsável..."
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__" className="text-[13px]">
+                  {!form.liga_id ? "Selecione uma liga primeiro" : "Selecionar responsável..."}
+                </SelectItem>
+                {membrosLiga.map((m) => (
+                  <SelectItem key={m.usuario_id} value={m.usuario_id} className="text-[13px]">
+                    {m.nome}
+                    {m.role ? ` — ${m.role}` : ""}
                   </SelectItem>
-                  <SelectItem value="iniciacao_cientifica" className="font-plex-sans text-[13px]">
-                    Iniciação Científica
-                  </SelectItem>
-                  <SelectItem value="projeto_interno" className="font-plex-sans text-[13px]">
-                    Projeto Interno
-                  </SelectItem>
-                  <SelectItem value="projeto_externo" className="font-plex-sans text-[13px]">
-                    Projeto Externo (com parceiros)
-                  </SelectItem>
-                  <SelectItem value="projeto_estruturante" className="font-plex-sans text-[13px]">
-                    Projeto Estruturante (Interdisciplinar e/ou Inovação)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
 
-            <div>
-              <label
-                htmlFor="novo-professor"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-              >
-                Professor Mentor Alocado
-              </label>
-              <Select
-                value={form.professor_id || "__none__"}
-                onValueChange={(v) =>
-                  setForm((f) => ({ ...f, professor_id: v === "__none__" ? "" : v }))
-                }
-                disabled={!form.liga_id || !professorDaLiga}
-              >
-                <SelectTrigger id="novo-professor" className="w-full font-plex-sans text-[13px]">
-                  <SelectValue
-                    placeholder={
-                      !form.liga_id
-                        ? "Selecione uma liga primeiro"
-                        : professorDaLiga
-                          ? "Nenhum"
-                          : "Nenhum professor na liga"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__" className="font-plex-sans text-[13px]">
-                    {!form.liga_id ? "Selecione uma liga primeiro" : "Nenhum"}
-                  </SelectItem>
-                  {professorDaLiga && (
-                    <SelectItem value={professorDaLiga.id} className="font-plex-sans text-[13px]">
-                      {professorDaLiga.nome}
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+          <Field>
+            <FieldLabel htmlFor="novo-tipo" className={LABEL_CLASS}>
+              Tipo de Projeto
+            </FieldLabel>
+            <Select
+              value={form.tipo_projeto || "__none__"}
+              onValueChange={(v) =>
+                setForm((f) => ({ ...f, tipo_projeto: v === "__none__" ? "" : v }))
+              }
+            >
+              <SelectTrigger id="novo-tipo" className={SELECT_TRIGGER_CLASS}>
+                <SelectValue placeholder="Selecionar tipo..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__" className="text-[13px]">
+                  Selecionar tipo...
+                </SelectItem>
+                <SelectItem value="iniciacao_cientifica" className="text-[13px]">
+                  Iniciação Científica
+                </SelectItem>
+                <SelectItem value="projeto_interno" className="text-[13px]">
+                  Projeto Interno
+                </SelectItem>
+                <SelectItem value="projeto_externo" className="text-[13px]">
+                  Projeto Externo (com parceiros)
+                </SelectItem>
+                <SelectItem value="projeto_estruturante" className="text-[13px]">
+                  Projeto Estruturante (Interdisciplinar e/ou Inovação)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
 
-            <div>
-              <label
-                htmlFor="novo-descricao"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-              >
-                Descrição
-              </label>
-              <textarea
-                id="novo-descricao"
-                value={form.descricao}
-                onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))}
-                placeholder="Descreva o projeto..."
-                rows={3}
-                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 resize-none rounded"
-              />
-            </div>
+          <Field>
+            <FieldLabel className={LABEL_CLASS}>Categoria</FieldLabel>
+            <Select
+              value={form.categoria_id || "__none__"}
+              onValueChange={(v) =>
+                setForm((f) => ({ ...f, categoria_id: v === "__none__" ? "" : v }))
+              }
+              disabled={!form.liga_id}
+            >
+              <SelectTrigger className={SELECT_TRIGGER_CLASS}>
+                <SelectValue placeholder="Selecionar categoria..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__" className="text-[13px]">
+                  Selecionar categoria...
+                </SelectItem>
+                {categorias.filter((c) => !c.liga_id).length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel className="font-plex-mono text-[9px] uppercase tracking-[0.16em] text-foreground/30">
+                      Categorias Base
+                    </SelectLabel>
+                    {categorias
+                      .filter((c) => !c.liga_id)
+                      .map((c) => (
+                        <SelectItem key={c.id} value={c.id} className="text-[13px]">
+                          {c.nome}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                )}
+                {categorias.filter((c) => c.liga_id).length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel className="font-plex-mono text-[9px] uppercase tracking-[0.16em] text-foreground/30">
+                      Categorias da Liga
+                    </SelectLabel>
+                    {categorias
+                      .filter((c) => c.liga_id)
+                      .map((c) => (
+                        <SelectItem key={c.id} value={c.id} className="text-[13px]">
+                          {c.nome}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                )}
+              </SelectContent>
+            </Select>
+          </Field>
 
-            <div>
-              <label
-                htmlFor="novo-impacto"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-              >
-                Impacto Projetado/Realizado
-              </label>
-              <textarea
-                id="novo-impacto"
-                value={form.impacto}
-                onChange={(e) => setForm((f) => ({ ...f, impacto: e.target.value }))}
-                placeholder="Descreva o impacto esperado ou realizado..."
-                rows={3}
-                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 resize-none rounded"
-              />
-            </div>
+          <Field>
+            <FieldLabel htmlFor="novo-descricao" className={LABEL_CLASS}>
+              Descrição
+            </FieldLabel>
+            <textarea
+              id="novo-descricao"
+              value={form.descricao}
+              onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))}
+              placeholder="Descreva o projeto..."
+              rows={3}
+              className={TEXTAREA_CLASS}
+            />
+          </Field>
 
-            <div>
-              <label
-                htmlFor="novo-empresa"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-              >
-                Empresa Parceira Envolvida
-              </label>
-              <input
-                id="novo-empresa"
-                value={form.empresa_parceira}
-                onChange={(e) => setForm((f) => ({ ...f, empresa_parceira: e.target.value }))}
-                placeholder="Ex: Empresa XYZ"
-                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
-              />
-            </div>
+          <Field>
+            <FieldLabel htmlFor="novo-impacto" className={LABEL_CLASS}>
+              Impacto Projetado/Realizado
+            </FieldLabel>
+            <textarea
+              id="novo-impacto"
+              value={form.impacto}
+              onChange={(e) => setForm((f) => ({ ...f, impacto: e.target.value }))}
+              placeholder="Descreva o impacto esperado ou realizado..."
+              rows={3}
+              className={TEXTAREA_CLASS}
+            />
+          </Field>
 
-            <div>
-              <label
-                htmlFor="novo-prazo"
-                className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-3 block"
-              >
-                Prazo
-              </label>
-              <input
-                id="novo-prazo"
-                type="date"
-                value={form.prazo}
-                onChange={(e) => setForm((f) => ({ ...f, prazo: e.target.value }))}
-                className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 focus:outline-none focus:border-foreground/30 rounded"
-              />
-            </div>
-          </div>
+          <Field>
+            <FieldLabel htmlFor="novo-empresa" className={LABEL_CLASS}>
+              Empresa Parceira Envolvida
+            </FieldLabel>
+            <Input
+              id="novo-empresa"
+              value={form.empresa_parceira}
+              onChange={(e) => setForm((f) => ({ ...f, empresa_parceira: e.target.value }))}
+              placeholder="Ex: Empresa XYZ"
+              className={INPUT_CLASS}
+            />
+          </Field>
 
-          <div className="flex-shrink-0">
-            <div className="h-px bg-foreground/[0.08]" />
-            <div className="px-8 py-6 flex flex-col gap-3">
-              <button
-                onClick={handleCriar}
-                disabled={salvando || !form.titulo.trim() || !form.liga_id || !form.responsavel_id}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {salvando ? "Salvando..." : "Criar projeto"}
-              </button>
-              <button
-                onClick={() => setSheetNovo(false)}
-                disabled={salvando}
-                className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+          <Field>
+            <FieldLabel htmlFor="novo-prazo" className={LABEL_CLASS}>
+              Prazo
+            </FieldLabel>
+            <Input
+              id="novo-prazo"
+              type="date"
+              value={form.prazo}
+              onChange={(e) => setForm((f) => ({ ...f, prazo: e.target.value }))}
+              className={INPUT_CLASS}
+            />
+          </Field>
+        </FieldGroup>
+      </FormSheet>
     </div>
   );
 }

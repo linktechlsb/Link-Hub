@@ -85,6 +85,7 @@ projetosRouter.post(
         professor_id,
         empresa_parceira,
         tipo_projeto,
+        categoria_id,
       } = req.body as {
         liga_id: string;
         titulo: string;
@@ -95,6 +96,7 @@ projetosRouter.post(
         professor_id?: string;
         empresa_parceira?: string;
         tipo_projeto?: string;
+        categoria_id?: string;
       };
 
       if (!liga_id || !titulo || !responsavel_id) {
@@ -113,7 +115,9 @@ projetosRouter.post(
         return;
       }
 
-      const aprovaAutomaticamente = user.role === "staff" || user.role === "professor";
+      const ehProjetoInterno = tipo_projeto === "projeto_interno";
+      const aprovaAutomaticamente =
+        ehProjetoInterno || user.role === "staff" || user.role === "professor";
       const body: Record<string, unknown> = {
         liga_id,
         nome: titulo,
@@ -131,6 +135,7 @@ projetosRouter.post(
       if (professor_id !== undefined) body["professor_id"] = professor_id;
       if (empresa_parceira !== undefined) body["empresa_parceira"] = empresa_parceira;
       if (tipo_projeto !== undefined) body["tipo_projeto"] = tipo_projeto;
+      if (categoria_id !== undefined) body["categoria_id"] = categoria_id;
 
       const [projeto] = await sql`
       INSERT INTO projetos ${sql(body)} RETURNING *, nome AS titulo
@@ -330,6 +335,7 @@ projetosRouter.patch(
         professor_id,
         empresa_parceira,
         tipo_projeto,
+        categoria_id,
       } = req.body as {
         titulo?: string;
         descricao?: string;
@@ -339,6 +345,7 @@ projetosRouter.patch(
         professor_id?: string;
         empresa_parceira?: string;
         tipo_projeto?: string;
+        categoria_id?: string;
       };
 
       const [existente] =
@@ -365,6 +372,7 @@ projetosRouter.patch(
       if (professor_id !== undefined) updates["professor_id"] = professor_id;
       if (empresa_parceira !== undefined) updates["empresa_parceira"] = empresa_parceira;
       if (tipo_projeto !== undefined) updates["tipo_projeto"] = tipo_projeto;
+      if (categoria_id !== undefined) updates["categoria_id"] = categoria_id;
 
       if (Object.keys(updates).length === 0) {
         res.status(400).json({ error: "Nenhum campo para atualizar." });

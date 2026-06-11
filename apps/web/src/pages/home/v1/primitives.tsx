@@ -89,7 +89,7 @@ export function KpiRow({ items, cols }: KpiRowProps) {
               : "text-amber-400 bg-amber-500/10 border-amber-500/20";
 
         return (
-          <Card key={m.label} className="shadow-sm">
+          <Card key={m.label} className="">
             <CardContent className="pt-5 pb-4">
               {m.icon && (
                 <div className="h-8 w-8 rounded-lg bg-background border border-[#191919] flex items-center justify-center mb-3">
@@ -132,7 +132,7 @@ interface RankingListProps {
 export function RankingList({ items }: RankingListProps) {
   const max = Math.max(...items.map((i) => i.score), 1);
   return (
-    <Card className="shadow-sm overflow-hidden">
+    <Card className="overflow-hidden">
       <ul>
         {items.map((item, i) => {
           const pct = Math.round((item.score / max) * 100);
@@ -187,7 +187,7 @@ interface AlertListProps {
 
 export function AlertList({ items, onClick }: AlertListProps) {
   return (
-    <Card className="shadow-sm overflow-hidden">
+    <Card className="overflow-hidden">
       <ul>
         {items.map((a) => (
           <li key={a.id}>
@@ -227,7 +227,7 @@ interface EditorialTableProps {
 
 export function EditorialTable({ columns, rows }: EditorialTableProps) {
   return (
-    <Card className="shadow-sm overflow-hidden">
+    <Card className="overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>

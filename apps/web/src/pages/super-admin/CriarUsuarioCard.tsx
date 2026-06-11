@@ -74,31 +74,25 @@ export function CriarUsuarioCard({ ligas, onSalvo, onFechar }: CriarUsuarioCardP
   }
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden flex flex-col">
-      <div className="px-6 pt-6 pb-4 border-b border-foreground/[0.08]">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40">
-          Novo
-        </p>
-        <h2 className="font-display font-bold text-[22px] tracking-[-0.02em] text-foreground mt-1">
-          Adicionar usuário
-        </h2>
+    <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
+      <div className="px-6 pt-6 pb-4 border-b border-border">
+        <p className="text-xs text-foreground/40">Novo</p>
+        <h2 className="font-display font-bold text-2xl text-foreground mt-1">Adicionar usuário</h2>
       </div>
 
       <div className="px-6 py-5 space-y-6">
         <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block">
-            Nome completo
-          </label>
+          <label className="text-xs font-medium text-foreground/60 mb-2 block">Nome completo</label>
           <input
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             placeholder="Ex: João da Silva"
-            className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+            className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/30 focus:border-foreground/40 focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block">
+          <label className="text-xs font-medium text-foreground/60 mb-2 block">
             Email estudantil
           </label>
           <input
@@ -106,24 +100,22 @@ export function CriarUsuarioCard({ ligas, onSalvo, onFechar }: CriarUsuarioCardP
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="joao.silva@facul.edu.br"
-            className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+            className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/30 focus:border-foreground/40 focus:outline-none"
           />
-          <p className="font-plex-sans text-[11px] text-foreground/40 mt-1.5">
+          <p className="text-xs text-foreground/40 mt-1.5">
             O usuário receberá um acesso para criar sua senha.
           </p>
         </div>
 
         <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block">
-            Role
-          </label>
+          <label className="text-xs font-medium text-foreground/60 mb-2 block">Role</label>
           <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
-            <SelectTrigger className="w-full font-plex-sans text-[13px]">
+            <SelectTrigger className="w-full text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {ROLES.map((r) => (
-                <SelectItem key={r.value} value={r.value} className="font-plex-sans text-[13px]">
+                <SelectItem key={r.value} value={r.value} className="text-sm">
                   {r.label}
                 </SelectItem>
               ))}
@@ -132,25 +124,22 @@ export function CriarUsuarioCard({ ligas, onSalvo, onFechar }: CriarUsuarioCardP
         </div>
 
         <div>
-          <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block">
-            Liga{" "}
-            <span className="normal-case font-plex-sans text-[11px] text-foreground/30">
-              (opcional)
-            </span>
+          <label className="text-xs font-medium text-foreground/60 mb-2 block">
+            Liga <span className="text-xs text-foreground/30">(opcional)</span>
           </label>
           <Select
             value={ligaId || "__none__"}
             onValueChange={(v) => setLigaId(v === "__none__" ? "" : v)}
           >
-            <SelectTrigger className="w-full font-plex-sans text-[13px]">
+            <SelectTrigger className="w-full text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__none__" className="font-plex-sans text-[13px]">
+              <SelectItem value="__none__" className="text-sm">
                 — Sem liga —
               </SelectItem>
               {ligas.map((l) => (
-                <SelectItem key={l.id} value={l.id} className="font-plex-sans text-[13px]">
+                <SelectItem key={l.id} value={l.id} className="text-sm">
                   {l.nome}
                 </SelectItem>
               ))}
@@ -158,21 +147,21 @@ export function CriarUsuarioCard({ ligas, onSalvo, onFechar }: CriarUsuarioCardP
           </Select>
         </div>
 
-        {erro && <p className="font-plex-sans text-[12px] text-red-500">{erro}</p>}
+        {erro && <p className="text-sm text-red-500">{erro}</p>}
       </div>
 
-      <div className="border-t border-foreground/[0.08] px-6 py-4 flex flex-col gap-2">
+      <div className="border-t border-border px-6 py-4 flex flex-col gap-2">
         <button
           onClick={() => void handleSalvar()}
           disabled={salvando || !podeSalvar}
-          className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full rounded-full bg-foreground px-4 py-2 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {salvando ? "Salvando..." : "Criar usuário"}
         </button>
         <button
           onClick={onFechar}
           disabled={salvando}
-          className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground border border-foreground/20 px-4 py-3 rounded-full hover:bg-foreground/[0.06] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full rounded-full border border-border px-4 py-2 text-xs font-medium text-foreground/60 transition-colors hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Cancelar
         </button>

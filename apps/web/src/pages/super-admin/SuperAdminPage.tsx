@@ -1,13 +1,4 @@
-import {
-  Archive,
-  Check,
-  MoreHorizontal,
-  Pencil,
-  Search,
-  SlidersHorizontal,
-  Trash2,
-  Users,
-} from "lucide-react";
+import { Archive, Check, Pencil, Search, SlidersHorizontal, Trash2, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -24,10 +15,11 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { RowActionsMenu } from "@/components/ui/row-actions-menu";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { SectionHeader } from "@/pages/home/v1/primitives";
 import { LigaSheet } from "@/pages/ligas/LigaSheet";
+import { SectionHeader, StatStrip } from "@/pages/ligas/tabs/primitives";
 
 import { CriarUsuarioCard } from "./CriarUsuarioCard";
 import { LigaMembrosSheet } from "./LigaMembrosSheet";
@@ -60,8 +52,11 @@ async function getToken(): Promise<string> {
 }
 
 const ROLE_BADGE: Record<UserRole, { label: string; className: string }> = {
-  staff: { label: "Staff", className: "bg-brand-yellow/20 text-navy border-brand-yellow/30" },
-  diretor: { label: "Diretor", className: "bg-navy/10 text-navy border-navy/15" },
+  staff: {
+    label: "Staff",
+    className: "bg-brand-yellow/20 text-amber-700 dark:text-brand-yellow border-brand-yellow/30",
+  },
+  diretor: { label: "Diretor", className: "bg-foreground/10 text-foreground border-border" },
   membro: {
     label: "Membro",
     className: "bg-foreground/[0.07] text-foreground/60 border-foreground/10",
@@ -85,12 +80,7 @@ const ROLES: { value: UserRole | "todos"; label: string }[] = [
 function RoleBadge({ role }: { role: UserRole }) {
   const { label, className } = ROLE_BADGE[role];
   return (
-    <span
-      className={cn(
-        "font-plex-mono text-[10px] font-semibold uppercase tracking-[0.08em] border px-2 py-0.5 rounded-full",
-        className,
-      )}
-    >
+    <span className={cn("text-xs font-semibold border px-2 py-0.5 rounded-full", className)}>
       {label}
     </span>
   );
@@ -282,32 +272,18 @@ export function SuperAdminPage() {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-10">
+    <div className="mx-auto max-w-5xl px-8 py-10">
       {/* Cabeçalho */}
-      <div className="mb-8">
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
-          Super Admin
-        </h1>
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mt-1">
-          Gestão da Link Leagues
-        </p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Super Admin</h1>
+          <p className="mt-1 text-sm text-foreground/50">Gestão da Link Leagues</p>
+        </div>
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        {kpis.map((kpi) => (
-          <div
-            key={kpi.label}
-            className="border border-foreground/[0.08] rounded-lg px-5 py-4 bg-foreground/[0.01]"
-          >
-            <p className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 mb-1.5">
-              {kpi.label}
-            </p>
-            <p className="font-display font-bold text-[26px] tracking-[-0.02em] text-navy leading-none">
-              {kpi.valor}
-            </p>
-          </div>
-        ))}
+      <div className="mb-8">
+        <StatStrip items={kpis.map((kpi) => ({ label: kpi.label, value: kpi.valor }))} />
       </div>
 
       {/* Abas */}
@@ -315,8 +291,8 @@ export function SuperAdminPage() {
         tabs={ABAS.map(({ id, label }) => ({ id, label }))}
         activeTab={abaAtiva}
         onChange={(id) => setAbaAtiva(id as Aba)}
-        wrapperClassName="border-foreground/[0.08] mb-8"
-        activeTabClassName="text-navy"
+        wrapperClassName="border-border mb-8"
+        activeTabClassName="text-foreground"
         inactiveTabClassName="text-foreground/40 hover:text-foreground/60"
       />
 
@@ -333,7 +309,7 @@ export function SuperAdminPage() {
                   setLigaParaEditar(undefined);
                   setSheetLigaOpen(true);
                 }}
-                className="font-plex-sans text-[11px] font-semibold text-foreground/45 border border-foreground/[0.15] px-3 py-1.5 rounded-full bg-transparent hover:border-foreground/30 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
               >
                 + Nova Liga
               </button>
@@ -341,42 +317,38 @@ export function SuperAdminPage() {
           />
 
           {carregando ? (
-            <p className="font-plex-sans text-[13px] text-foreground/50">Carregando...</p>
+            <p className="text-sm text-foreground/50">Carregando...</p>
           ) : ligas.length === 0 ? (
-            <p className="font-plex-sans text-[13px] text-foreground/50">
-              Nenhuma liga cadastrada.
-            </p>
+            <p className="text-sm text-foreground/50">Nenhuma liga cadastrada.</p>
           ) : (
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-foreground/[0.08]">
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                <tr className="border-b border-border">
+                  <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40">
                     Nome
                   </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+                  <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40 hidden sm:table-cell">
                     Diretores
                   </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden md:table-cell">
+                  <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40 hidden md:table-cell">
                     Projetos
                   </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden md:table-cell">
+                  <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40 hidden md:table-cell">
                     Status
                   </th>
-                  <th className="py-3 px-4 w-10" />
+                  <th className="py-2.5 px-4 w-10" />
                 </tr>
               </thead>
               <tbody>
                 {ligas.map((l) => (
                   <tr
                     key={l.id}
-                    className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
+                    className="border-b border-border transition-colors last:border-0 hover:bg-foreground/[0.03]"
                   >
                     <td className="py-4 px-4">
-                      <span className="font-plex-sans font-semibold text-[13px] text-foreground">
-                        {l.nome}
-                      </span>
+                      <span className="font-semibold text-sm text-foreground">{l.nome}</span>
                       {l.descricao && (
-                        <p className="font-plex-sans text-[11px] text-foreground/40 mt-0.5 leading-snug">
+                        <p className="text-xs text-foreground/40 mt-0.5 leading-snug">
                           {l.descricao}
                         </p>
                       )}
@@ -387,80 +359,70 @@ export function SuperAdminPage() {
                           {l.diretores.map((d) => (
                             <span
                               key={d.id}
-                              className="font-plex-mono text-[10px] text-foreground/70 bg-foreground/[0.07] border border-foreground/[0.08] px-2 py-0.5 rounded-full"
+                              className="text-xs text-foreground/70 bg-foreground/[0.07] border border-border px-2 py-0.5 rounded-full"
                             >
                               {primeiroUltimoNome(d.nome)}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <span className="font-plex-mono text-[12px] text-foreground/25">—</span>
+                        <span className="text-sm text-foreground/25">—</span>
                       )}
                     </td>
-                    <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60 hidden md:table-cell">
+                    <td className="py-4 px-4 text-sm text-foreground/60 hidden md:table-cell">
                       {l.projetos_ativos ?? 0}
                     </td>
                     <td className="py-4 px-4 hidden md:table-cell">
                       {confirmarArquivoId === l.id ? (
                         <div className="flex items-center gap-3">
-                          <span className="font-plex-sans text-[12px] text-red-600">Arquivar?</span>
+                          <span className="text-sm text-red-600">Arquivar?</span>
                           <button
                             onClick={() => void arquivarLiga(l.id)}
-                            className="font-plex-sans text-[12px] font-semibold text-red-600 hover:text-red-800 transition-colors"
+                            className="text-sm font-semibold text-red-600 hover:text-red-800 transition-colors"
                           >
                             Sim
                           </button>
                           <button
                             onClick={() => setConfirmarArquivoId(null)}
-                            className="font-plex-sans text-[12px] text-foreground/40 hover:text-foreground transition-colors"
+                            className="text-sm text-foreground/40 hover:text-foreground transition-colors"
                           >
                             Não
                           </button>
                         </div>
                       ) : (
-                        <span className="font-plex-mono text-[10px] font-semibold uppercase tracking-[0.08em] border border-foreground/[0.15] text-foreground/50 px-2 py-0.5 rounded-full">
+                        <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground/50">
                           Ativa
                         </span>
                       )}
                     </td>
                     <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
                       {confirmarArquivoId === l.id ? null : (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="p-1 rounded hover:bg-foreground/[0.08] text-foreground/40 hover:text-foreground/70 transition-colors">
-                              <MoreHorizontal size={14} />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="min-w-[150px]">
-                            <DropdownMenuItem
-                              className="text-[12px] cursor-pointer"
-                              onClick={() => {
+                        <RowActionsMenu
+                          actions={[
+                            {
+                              label: "Editar",
+                              icon: Pencil,
+                              onSelect: () => {
                                 setLigaParaEditar(l);
                                 setSheetLigaOpen(true);
-                              }}
-                            >
-                              <Pencil className="h-3.5 w-3.5 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-[12px] cursor-pointer"
-                              onClick={() => {
+                              },
+                            },
+                            {
+                              label: "Membros",
+                              icon: Users,
+                              onSelect: () => {
                                 setLigaMembros(l);
                                 setSheetMembrosOpen(true);
-                              }}
-                            >
-                              <Users className="h-3.5 w-3.5 mr-2" />
-                              Membros
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-[12px] cursor-pointer text-red-500 focus:text-red-600"
-                              onClick={() => setConfirmarArquivoId(l.id)}
-                            >
-                              <Archive className="h-3.5 w-3.5 mr-2" />
-                              Arquivar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              },
+                            },
+                            {
+                              label: "Arquivar",
+                              icon: Archive,
+                              variant: "destructive",
+                              onSelect: () => setConfirmarArquivoId(l.id),
+                            },
+                          ]}
+                        />
                       )}
                     </td>
                   </tr>
@@ -477,26 +439,24 @@ export function SuperAdminPage() {
           <SectionHeader numero="02" eyebrow="Pendências" titulo="Aprovações Pendentes" />
 
           {pendentes.projetos.length === 0 && pendentes.eventos.length === 0 ? (
-            <p className="font-plex-sans text-[13px] text-foreground/50">
-              Nenhuma aprovação pendente. Tudo em dia!
-            </p>
+            <p className="text-sm text-foreground/50">Nenhuma aprovação pendente. Tudo em dia!</p>
           ) : (
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-foreground/[0.08]">
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                <tr className="border-b border-border">
+                  <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40">
                     Tipo
                   </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                  <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40">
                     Nome
                   </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+                  <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40 hidden sm:table-cell">
                     Liga
                   </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden md:table-cell">
+                  <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40 hidden md:table-cell">
                     Enviado em
                   </th>
-                  <th className="text-right py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                  <th className="px-4 py-2.5 text-right text-xs font-normal text-foreground/40">
                     Ações
                   </th>
                 </tr>
@@ -505,22 +465,20 @@ export function SuperAdminPage() {
                 {pendentes.projetos.map((p) => (
                   <tr
                     key={p.id}
-                    className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
+                    className="border-b border-border transition-colors last:border-0 hover:bg-foreground/[0.03]"
                   >
                     <td className="py-4 px-4">
-                      <span className="font-plex-mono text-[10px] font-semibold uppercase tracking-[0.08em] border border-foreground/[0.15] text-foreground/50 px-2 py-0.5 rounded-full">
+                      <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground/50">
                         Projeto
                       </span>
                     </td>
                     <td className="py-4 px-4">
-                      <span className="font-plex-sans font-semibold text-[13px] text-foreground">
-                        {p.titulo}
-                      </span>
+                      <span className="font-semibold text-sm text-foreground">{p.titulo}</span>
                     </td>
-                    <td className="py-4 px-4 font-plex-sans text-[13px] text-foreground/60 hidden sm:table-cell">
+                    <td className="py-4 px-4 text-sm text-foreground/60 hidden sm:table-cell">
                       {p.liga?.nome ?? "—"}
                     </td>
-                    <td className="py-4 px-4 font-plex-mono text-[11px] text-foreground/50 hidden md:table-cell">
+                    <td className="py-4 px-4 text-xs text-foreground/50 hidden md:table-cell">
                       {new Date(p.criado_em).toLocaleDateString("pt-BR")}
                     </td>
                     <td className="py-4 px-4">
@@ -528,14 +486,14 @@ export function SuperAdminPage() {
                         <button
                           disabled={aprovando === p.id}
                           onClick={() => void aprovarProjeto(p.id)}
-                          className="font-plex-sans text-[11px] font-semibold text-white bg-navy px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40"
+                          className="rounded-full bg-foreground px-4 py-2 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           Aprovar
                         </button>
                         <button
                           disabled={aprovando === p.id}
                           onClick={() => void rejeitarProjeto(p.id)}
-                          className="font-plex-sans text-[11px] font-semibold text-red-600 border border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50 transition-colors disabled:opacity-40"
+                          className="text-xs font-semibold text-red-600 border border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50 transition-colors disabled:opacity-40"
                         >
                           Rejeitar
                         </button>
@@ -546,22 +504,20 @@ export function SuperAdminPage() {
                 {pendentes.eventos.map((e) => (
                   <tr
                     key={e.id}
-                    className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
+                    className="border-b border-border transition-colors last:border-0 hover:bg-foreground/[0.03]"
                   >
                     <td className="py-4 px-4">
-                      <span className="font-plex-mono text-[10px] font-semibold uppercase tracking-[0.08em] border border-foreground/[0.15] text-foreground/50 px-2 py-0.5 rounded-full">
+                      <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground/50">
                         {e.categoria}
                       </span>
                     </td>
                     <td className="py-4 px-4">
-                      <span className="font-plex-sans font-semibold text-[13px] text-foreground">
-                        {e.titulo}
-                      </span>
+                      <span className="font-semibold text-sm text-foreground">{e.titulo}</span>
                     </td>
-                    <td className="py-4 px-4 font-plex-sans text-[13px] text-foreground/60 hidden sm:table-cell">
+                    <td className="py-4 px-4 text-sm text-foreground/60 hidden sm:table-cell">
                       {e.liga?.nome ?? "—"}
                     </td>
-                    <td className="py-4 px-4 font-plex-mono text-[11px] text-foreground/50 hidden md:table-cell">
+                    <td className="py-4 px-4 text-xs text-foreground/50 hidden md:table-cell">
                       {new Date(e.criado_em).toLocaleDateString("pt-BR")}
                     </td>
                     <td className="py-4 px-4">
@@ -569,14 +525,14 @@ export function SuperAdminPage() {
                         <button
                           disabled={aprovando === e.id}
                           onClick={() => void aprovarEvento(e.id)}
-                          className="font-plex-sans text-[11px] font-semibold text-white bg-navy px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40"
+                          className="rounded-full bg-foreground px-4 py-2 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           Aprovar
                         </button>
                         <button
                           disabled={aprovando === e.id}
                           onClick={() => void rejeitarEvento(e.id)}
-                          className="font-plex-sans text-[11px] font-semibold text-red-600 border border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50 transition-colors disabled:opacity-40"
+                          className="text-xs font-semibold text-red-600 border border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50 transition-colors disabled:opacity-40"
                         >
                           Rejeitar
                         </button>
@@ -600,7 +556,7 @@ export function SuperAdminPage() {
             acao={
               <button
                 onClick={() => setCardCriarAberto(true)}
-                className="font-plex-sans text-[11px] font-semibold text-foreground/45 border border-foreground/[0.15] px-3 py-1.5 rounded-full bg-transparent hover:border-foreground/30 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted dark:border-transparent dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
               >
                 + Novo Usuário
               </button>
@@ -616,30 +572,30 @@ export function SuperAdminPage() {
                 placeholder="Buscar por nome ou email..."
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                className="w-full pl-9 pr-4 border border-border bg-muted/50 py-2.5 font-plex-sans text-[13px] text-foreground placeholder:text-foreground/25 focus:outline-none focus:border-foreground/30 rounded"
+                className="w-full pl-9 pr-4 rounded-full border border-border bg-transparent py-1.5 text-xs text-foreground placeholder:text-foreground/30 focus:border-foreground/40 focus:outline-none"
               />
             </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="relative p-2 border border-border bg-muted/50 rounded text-foreground/50 hover:text-foreground/80 hover:border-foreground/30 transition-colors">
+                <button className="relative p-2 border border-border bg-transparent rounded-full text-foreground/50 hover:text-foreground/80 hover:border-foreground/30 transition-colors">
                   <SlidersHorizontal size={15} />
                   {(filtroRole !== "todos" || filtroLiga !== "todas") && (
-                    <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-navy" />
+                    <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-foreground" />
                   )}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-[180px]">
-                <DropdownMenuLabel className="font-plex-mono text-[10px] uppercase tracking-[0.12em] text-foreground/40 font-normal">
+                <DropdownMenuLabel className="text-xs text-foreground/40 font-normal">
                   Filtrar por
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
 
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="font-plex-sans text-[13px] cursor-pointer">
+                  <DropdownMenuSubTrigger className="text-sm cursor-pointer">
                     Cargo
                     {filtroRole !== "todos" && (
-                      <span className="ml-auto font-plex-mono text-[10px] text-foreground/50 capitalize">
+                      <span className="ml-auto text-xs text-foreground/50 capitalize">
                         {filtroRole}
                       </span>
                     )}
@@ -648,7 +604,7 @@ export function SuperAdminPage() {
                     {ROLES.map(({ value, label }) => (
                       <DropdownMenuItem
                         key={value}
-                        className="font-plex-sans text-[13px] cursor-pointer"
+                        className="text-sm cursor-pointer"
                         onClick={() => setFiltroRole(value)}
                       >
                         <Check
@@ -664,17 +620,17 @@ export function SuperAdminPage() {
                 </DropdownMenuSub>
 
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="font-plex-sans text-[13px] cursor-pointer">
+                  <DropdownMenuSubTrigger className="text-sm cursor-pointer">
                     Liga
                     {filtroLiga !== "todas" && (
-                      <span className="ml-auto font-plex-mono text-[10px] text-foreground/50 truncate max-w-[80px]">
+                      <span className="ml-auto text-xs text-foreground/50 truncate max-w-[80px]">
                         {ligas.find((l) => l.id === filtroLiga)?.nome ?? ""}
                       </span>
                     )}
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
                     <DropdownMenuItem
-                      className="font-plex-sans text-[13px] cursor-pointer"
+                      className="text-sm cursor-pointer"
                       onClick={() => setFiltroLiga("todas")}
                     >
                       <Check
@@ -688,7 +644,7 @@ export function SuperAdminPage() {
                     {ligas.map((l) => (
                       <DropdownMenuItem
                         key={l.id}
-                        className="font-plex-sans text-[13px] cursor-pointer"
+                        className="text-sm cursor-pointer"
                         onClick={() => setFiltroLiga(l.id)}
                       >
                         <Check
@@ -707,7 +663,7 @@ export function SuperAdminPage() {
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      className="font-plex-sans text-[13px] cursor-pointer text-foreground/50"
+                      className="text-sm cursor-pointer text-foreground/50"
                       onClick={() => {
                         setFiltroRole("todos");
                         setFiltroLiga("todas");
@@ -722,60 +678,56 @@ export function SuperAdminPage() {
           </div>
 
           {carregando ? (
-            <p className="font-plex-sans text-[13px] text-foreground/50">Carregando...</p>
+            <p className="text-sm text-foreground/50">Carregando...</p>
           ) : usuariosFiltrados.length === 0 ? (
-            <p className="font-plex-sans text-[13px] text-foreground/50">
-              Nenhum usuário encontrado.
-            </p>
+            <p className="text-sm text-foreground/50">Nenhum usuário encontrado.</p>
           ) : (
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-foreground/[0.08]">
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                <tr className="border-b border-border">
+                  <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40">
                     Nome
                   </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden sm:table-cell">
+                  <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40 hidden sm:table-cell">
                     Email
                   </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
+                  <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40">
                     Role
                   </th>
-                  <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal hidden md:table-cell">
+                  <th className="px-4 py-2.5 text-left text-xs font-normal text-foreground/40 hidden md:table-cell">
                     Liga
                   </th>
-                  <th className="py-3 px-4 w-10" />
+                  <th className="py-2.5 px-4 w-10" />
                 </tr>
               </thead>
               <tbody>
                 {usuariosFiltrados.map((u) => (
                   <tr
                     key={u.id}
-                    className="border-b border-foreground/[0.06] hover:bg-foreground/[0.02] transition-colors"
+                    className="border-b border-border transition-colors last:border-0 hover:bg-foreground/[0.03]"
                   >
                     <td className="py-4 px-4">
-                      <span className="font-plex-sans font-semibold text-[13px] text-foreground">
-                        {u.nome}
-                      </span>
-                      <span className="block font-plex-mono text-[10px] text-foreground/40 mt-0.5 sm:hidden">
+                      <span className="font-semibold text-sm text-foreground">{u.nome}</span>
+                      <span className="block text-xs text-foreground/40 mt-0.5 sm:hidden">
                         {u.email}
                       </span>
                     </td>
-                    <td className="py-4 px-4 font-plex-sans text-[13px] text-foreground/60 hidden sm:table-cell">
+                    <td className="py-4 px-4 text-sm text-foreground/60 hidden sm:table-cell">
                       {u.email}
                     </td>
                     <td className="py-4 px-4">
                       {confirmarRemocaoId === u.id ? (
                         <div className="flex items-center gap-3">
-                          <span className="font-plex-sans text-[12px] text-red-600">Remover?</span>
+                          <span className="text-sm text-red-600">Remover?</span>
                           <button
                             onClick={() => void removerUsuario(u.id)}
-                            className="font-plex-sans text-[12px] font-semibold text-red-600 hover:text-red-800 transition-colors"
+                            className="text-sm font-semibold text-red-600 hover:text-red-800 transition-colors"
                           >
                             Sim
                           </button>
                           <button
                             onClick={() => setConfirmarRemocaoId(null)}
-                            className="font-plex-sans text-[12px] text-foreground/40 hover:text-foreground transition-colors"
+                            className="text-sm text-foreground/40 hover:text-foreground transition-colors"
                           >
                             Não
                           </button>
@@ -784,37 +736,29 @@ export function SuperAdminPage() {
                         <RoleBadge role={u.role} />
                       )}
                     </td>
-                    <td className="py-4 px-4 font-plex-sans text-[13px] text-foreground/60 hidden md:table-cell">
+                    <td className="py-4 px-4 text-sm text-foreground/60 hidden md:table-cell">
                       {u.liga_nome ?? "—"}
                     </td>
                     <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
                       {confirmarRemocaoId === u.id ? null : (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="p-1 rounded hover:bg-foreground/[0.08] text-foreground/40 hover:text-foreground/70 transition-colors">
-                              <MoreHorizontal size={14} />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="min-w-[140px]">
-                            <DropdownMenuItem
-                              className="text-[12px] cursor-pointer"
-                              onClick={() => {
+                        <RowActionsMenu
+                          actions={[
+                            {
+                              label: "Editar",
+                              icon: Pencil,
+                              onSelect: () => {
                                 setUsuarioParaEditar(u);
                                 setSheetUsuarioOpen(true);
-                              }}
-                            >
-                              <Pencil className="h-3.5 w-3.5 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-[12px] cursor-pointer text-red-500 focus:text-red-600"
-                              onClick={() => setConfirmarRemocaoId(u.id)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 mr-2" />
-                              Remover
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              },
+                            },
+                            {
+                              label: "Remover",
+                              icon: Trash2,
+                              variant: "destructive",
+                              onSelect: () => setConfirmarRemocaoId(u.id),
+                            },
+                          ]}
+                        />
                       )}
                     </td>
                   </tr>

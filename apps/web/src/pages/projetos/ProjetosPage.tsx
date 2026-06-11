@@ -1,23 +1,18 @@
+import { Activity, CheckCircle2, FolderKanban, ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { useUser } from "@/hooks/use-user";
-import { EditorialTable, KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
+import { DashboardCard } from "@/pages/home/components/DashboardCard";
+import { StatStrip, TabSection } from "@/pages/ligas/tabs/primitives";
 
+import { ProjetosFilterBar } from "./ProjetosFilterBar";
 import { ProjetosLiderView } from "./ProjetosLiderView";
 import { ProjetosProfessorView } from "./ProjetosProfessorView";
 import { ProjetosStaffView } from "./ProjetosStaffView";
+import { STATUS_CONFIG } from "./statusConfig";
 
 type ProjetoAPI = {
   id: string;
@@ -37,18 +32,9 @@ type ProjetoAPI = {
 
 type LigaAPI = { id: string; nome: string };
 
-const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  rascunho: { label: "Rascunho", className: "text-navy/50" },
-  em_aprovacao: { label: "Em aprovação", className: "text-amber-600" },
-  aprovado: { label: "Aprovado", className: "text-blue-600" },
-  rejeitado: { label: "Rejeitado", className: "text-red-600" },
-  em_andamento: { label: "Em andamento", className: "text-blue-600" },
-  concluido: { label: "Concluído", className: "text-green-700" },
-  cancelado: { label: "Cancelado", className: "text-navy/40" },
-};
-
 export function ProjetosPage() {
   const { role } = useUser();
+  const navigate = useNavigate();
   const location = useLocation();
   const abrirCriar = !!(location.state as { abrirCriar?: boolean } | null)?.abrirCriar;
 
@@ -63,8 +49,8 @@ export function ProjetosPage() {
 
   if (role === null) {
     return (
-      <div className="max-w-5xl mx-auto px-8 py-10">
-        <p className="font-plex-sans text-[13px] text-navy/50">Carregando...</p>
+      <div className="mx-auto max-w-6xl px-8 py-10">
+        <p className="text-sm text-foreground/50">Carregando...</p>
       </div>
     );
   }
@@ -75,16 +61,12 @@ export function ProjetosPage() {
 
   if (role !== "membro" && role !== "estudante") {
     return (
-      <div className="max-w-5xl mx-auto px-8 py-10">
-        <div className="mb-10">
-          <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
-            Projetos
-          </h1>
-          <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
-            Módulo
-          </p>
+      <div className="mx-auto max-w-6xl px-8 py-10">
+        <div className="mb-8">
+          <h1 className="font-display text-2xl font-bold text-foreground">Projetos</h1>
+          <p className="mt-1 text-sm text-foreground/50">Módulo</p>
         </div>
-        <p className="font-plex-sans text-[13px] text-navy/50">Módulo em desenvolvimento.</p>
+        <p className="text-sm text-foreground/50">Módulo em desenvolvimento.</p>
       </div>
     );
   }
@@ -100,132 +82,121 @@ export function ProjetosPage() {
   });
 
   const kpis = [
-    { label: "Total projetos", valor: String(lista.length) },
+    { icon: FolderKanban, label: "Total projetos", value: String(lista.length) },
     {
+      icon: Activity,
       label: "Em andamento",
-      valor: String(lista.filter((p) => p.status === "em_andamento").length),
+      value: String(lista.filter((p) => p.status === "em_andamento").length),
     },
-    { label: "Aprovados", valor: String(lista.filter((p) => p.status === "aprovado").length) },
-    { label: "Concluídos", valor: String(lista.filter((p) => p.status === "concluido").length) },
+    {
+      icon: ThumbsUp,
+      label: "Aprovados",
+      value: String(lista.filter((p) => p.status === "aprovado").length),
+    },
+    {
+      icon: CheckCircle2,
+      label: "Concluídos",
+      value: String(lista.filter((p) => p.status === "concluido").length),
+    },
   ];
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-10">
-      <div className="mb-10">
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] text-navy">
-          Projetos
-        </h1>
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-navy/50 mt-1">
-          Diretório
-        </p>
+    <div className="mx-auto max-w-6xl px-8 py-10">
+      <div className="mb-8">
+        <h1 className="font-display text-2xl font-bold text-foreground">Projetos</h1>
+        <p className="mt-1 text-sm text-foreground/50">Diretório de todos os projetos das ligas</p>
       </div>
 
-      <div className="space-y-12">
-        {!carregando && <KpiRow items={kpis} />}
+      <div className="space-y-8">
+        {!carregando && <StatStrip items={kpis} />}
 
-        <div>
-          <SectionHeader numero="01" eyebrow="Diretório" titulo="Todos os Projetos" />
-
-          <div className="flex gap-3 mb-6">
-            <select
-              value={filtroLiga}
-              onChange={(e) => setFiltroLiga(e.target.value)}
-              className="font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2 bg-white focus:outline-none focus:border-navy/60"
-            >
-              <option value="">Todas as ligas</option>
-              {ligas.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.nome}
-                </option>
-              ))}
-            </select>
-            <select
-              value={filtroStatus}
-              onChange={(e) => setFiltroStatus(e.target.value)}
-              className="font-plex-sans text-[13px] text-navy border border-navy/20 px-3 py-2 bg-white focus:outline-none focus:border-navy/60"
-            >
-              <option value="">Todos os status</option>
-              {Object.entries(STATUS_CONFIG)
+        <TabSection
+          titulo="Todos os projetos"
+          acao={
+            <ProjetosFilterBar
+              ligas={ligas}
+              statusOptions={Object.entries(STATUS_CONFIG)
                 .filter(([k]) => k !== "rascunho")
-                .map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v.label}
-                  </option>
-                ))}
-            </select>
-          </div>
-
-          {carregando ? (
-            <Card className="shadow-sm overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {["Projeto", "Liga", "Responsável", "Prazo", "Status", "%"].map((col) => (
-                      <TableHead
-                        key={col}
-                        className="text-xs uppercase tracking-wide text-muted-foreground font-semibold"
-                      >
-                        {col}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell>
-                        <Skeleton className="h-4 w-40" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-24" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-24" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-16" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-20" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-8" />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          ) : filtrados.length === 0 ? (
-            <p className="font-plex-sans text-[13px] text-navy/50">Nenhum projeto encontrado.</p>
-          ) : (
-            <EditorialTable
-              columns={["Projeto", "Liga", "Responsável", "Prazo", "Status", "%"]}
-              rows={filtrados.map((p) => {
-                const s = STATUS_CONFIG[p.status] ?? { label: p.status, className: "text-navy/50" };
-                return [
-                  <span key="t" className="font-medium">
-                    {p.titulo}
-                  </span>,
-                  p.liga?.nome ?? "—",
-                  p.responsavel_nome ?? "—",
-                  p.prazo
-                    ? new Date(p.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "short",
-                      })
-                    : "—",
-                  <span key="s" className={`font-medium ${s.className}`}>
-                    {s.label}
-                  </span>,
-                  <span key="pct" className="font-plex-mono text-navy/70">
-                    {p.percentual_concluido}%
-                  </span>,
-                ];
-              })}
+                .map(([value, v]) => ({ value, label: v.label }))}
+              filtroLiga={filtroLiga}
+              setFiltroLiga={setFiltroLiga}
+              filtroStatus={filtroStatus}
+              setFiltroStatus={setFiltroStatus}
             />
+          }
+        >
+          {carregando ? (
+            <DashboardCard className="overflow-hidden p-4">
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-full bg-foreground/5" />
+                ))}
+              </div>
+            </DashboardCard>
+          ) : filtrados.length === 0 ? (
+            <p className="text-sm text-foreground/50">Nenhum projeto encontrado.</p>
+          ) : (
+            <DashboardCard className="overflow-hidden">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-border">
+                    {["Projeto", "Liga", "Responsável", "Prazo", "Status", "%"].map((h) => (
+                      <th
+                        key={h}
+                        className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wide text-foreground/40"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtrados.map((p) => {
+                    const s = STATUS_CONFIG[p.status] ?? {
+                      label: p.status,
+                      className: "text-foreground/50",
+                    };
+                    return (
+                      <tr
+                        key={p.id}
+                        className="border-b border-border transition-colors last:border-0 hover:bg-foreground/[0.03]"
+                      >
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => navigate(`/projetos/${p.id}`)}
+                            className="text-left text-sm font-medium text-foreground transition-colors hover:text-foreground/60"
+                          >
+                            {p.titulo}
+                          </button>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-foreground/60">
+                          {p.liga?.nome ?? "—"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-foreground/60">
+                          {p.responsavel_nome ?? "—"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-foreground/60">
+                          {p.prazo
+                            ? new Date(p.prazo.slice(0, 10) + "T12:00:00").toLocaleDateString(
+                                "pt-BR",
+                                { day: "2-digit", month: "short" },
+                              )
+                            : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs font-medium ${s.className}`}>{s.label}</span>
+                        </td>
+                        <td className="px-4 py-3 text-sm tabular-nums text-foreground/60">
+                          {p.percentual_concluido}%
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </DashboardCard>
           )}
-        </div>
+        </TabSection>
       </div>
     </div>
   );

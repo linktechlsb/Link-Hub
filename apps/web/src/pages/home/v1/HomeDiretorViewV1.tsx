@@ -158,7 +158,7 @@ export function HomeDiretorViewV1({ minhaLiga, ligas, ranking }: HomeDiretorView
       {mostrarSala && (
         <section>
           <SectionHeader titulo="Próxima Reserva" />
-          <Card className="shadow-sm">
+          <Card className="">
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center gap-4">
                 <div className="h-12 w-12 rounded-lg border border-[#191919] flex items-center justify-center shrink-0">

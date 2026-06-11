@@ -17,21 +17,25 @@ recursosRouter.get("/", authenticate, async (req, res, next) => {
       return;
     }
 
-    if (
-      user.role !== "staff" &&
-      user.role !== "professor" &&
-      !(await usuarioPertenceALiga(user.email, liga_id))
-    ) {
-      res.status(403).json({ error: "Acesso restrito aos membros desta liga." });
-      return;
-    }
+    // Membros, staff e professores veem tudo; pessoas de fora só veem públicos.
+    const acessoCompleto =
+      user.role === "staff" ||
+      user.role === "professor" ||
+      (await usuarioPertenceALiga(user.email, liga_id));
 
-    const recursos = await sql`
-      SELECT id, liga_id, titulo, tipo, url, icone, cor, criado_por, criado_em
-      FROM recursos
-      WHERE liga_id = ${liga_id}
-      ORDER BY criado_em DESC
-    `;
+    const recursos = acessoCompleto
+      ? await sql`
+          SELECT id, liga_id, titulo, tipo, url, icone, cor, publico, criado_por, criado_em
+          FROM recursos
+          WHERE liga_id = ${liga_id}
+          ORDER BY criado_em DESC
+        `
+      : await sql`
+          SELECT id, liga_id, titulo, tipo, url, icone, cor, publico, criado_por, criado_em
+          FROM recursos
+          WHERE liga_id = ${liga_id} AND publico = true
+          ORDER BY criado_em DESC
+        `;
 
     res.json(recursos);
   } catch (err) {
@@ -43,13 +47,14 @@ recursosRouter.get("/", authenticate, async (req, res, next) => {
 recursosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
     const user = (req as AuthenticatedRequest).user!;
-    const { liga_id, titulo, tipo, url, icone, cor } = req.body as {
+    const { liga_id, titulo, tipo, url, icone, cor, publico } = req.body as {
       liga_id: string;
       titulo: string;
       tipo: string;
       url: string;
       icone?: string;
       cor?: string;
+      publico?: boolean;
     };
 
     if (!liga_id || !titulo || !url) {
@@ -65,7 +70,7 @@ recursosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (r
     const [criador] = await sql`SELECT id FROM usuarios WHERE email = ${user.email} LIMIT 1`;
 
     const [recurso] = await sql`
-      INSERT INTO recursos (liga_id, titulo, tipo, url, icone, cor, criado_por)
+      INSERT INTO recursos (liga_id, titulo, tipo, url, icone, cor, publico, criado_por)
       VALUES (
         ${liga_id},
         ${titulo},
@@ -73,9 +78,10 @@ recursosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (r
         ${url},
         ${icone ?? "link"},
         ${cor ?? "#546484"},
+        ${publico ?? false},
         ${criador?.id ?? null}
       )
-      RETURNING id, liga_id, titulo, tipo, url, icone, cor, criado_por, criado_em
+      RETURNING id, liga_id, titulo, tipo, url, icone, cor, publico, criado_por, criado_em
     `;
 
     res.status(201).json(recurso);
@@ -93,12 +99,13 @@ recursosRouter.patch(
     try {
       const id = req.params["id"] as string;
       const user = (req as AuthenticatedRequest).user!;
-      const { titulo, tipo, url, icone, cor } = req.body as {
+      const { titulo, tipo, url, icone, cor, publico } = req.body as {
         titulo?: string;
         tipo?: string;
         url?: string;
         icone?: string;
         cor?: string;
+        publico?: boolean;
       };
 
       if (user.role === "diretor") {
@@ -116,13 +123,14 @@ recursosRouter.patch(
       const [recurso] = await sql`
       UPDATE recursos
       SET
-        titulo = COALESCE(${titulo ?? null}, titulo),
-        tipo   = COALESCE(${tipo ?? null},   tipo),
-        url    = COALESCE(${url ?? null},    url),
-        icone  = COALESCE(${icone ?? null},  icone),
-        cor    = COALESCE(${cor ?? null},    cor)
+        titulo  = COALESCE(${titulo ?? null}, titulo),
+        tipo    = COALESCE(${tipo ?? null},   tipo),
+        url     = COALESCE(${url ?? null},    url),
+        icone   = COALESCE(${icone ?? null},  icone),
+        cor     = COALESCE(${cor ?? null},    cor),
+        publico = COALESCE(${publico ?? null}, publico)
       WHERE id = ${id}
-      RETURNING id, liga_id, titulo, tipo, url, icone, cor, criado_por, criado_em
+      RETURNING id, liga_id, titulo, tipo, url, icone, cor, publico, criado_por, criado_em
     `;
 
       if (!recurso) {

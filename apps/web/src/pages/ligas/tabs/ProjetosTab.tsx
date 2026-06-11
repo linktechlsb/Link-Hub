@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
-import { SectionHeader } from "@/pages/home/v1/primitives";
+
+import { TabSection } from "./primitives";
 
 import type { Projeto, StatusProjeto } from "@link-leagues/types";
 
@@ -15,13 +16,13 @@ async function getToken(): Promise<string> {
 }
 
 const STATUS_CONFIG: Record<StatusProjeto, { label: string; className: string }> = {
-  rascunho: { label: "Rascunho", className: "text-navy/50" },
-  em_aprovacao: { label: "Em aprovação", className: "text-amber-600" },
-  aprovado: { label: "Aprovado", className: "text-blue-600" },
-  rejeitado: { label: "Rejeitado", className: "text-red-600" },
-  em_andamento: { label: "Em andamento", className: "text-blue-600" },
-  concluido: { label: "Concluído", className: "text-green-700" },
-  cancelado: { label: "Cancelado", className: "text-navy/40" },
+  rascunho: { label: "Rascunho", className: "text-foreground/50" },
+  em_aprovacao: { label: "Em aprovação", className: "text-amber-600 dark:text-amber-300" },
+  aprovado: { label: "Aprovado", className: "text-sky-600 dark:text-sky-300" },
+  rejeitado: { label: "Rejeitado", className: "text-red-600 dark:text-red-300" },
+  em_andamento: { label: "Em andamento", className: "text-sky-600 dark:text-sky-300" },
+  concluido: { label: "Concluído", className: "text-emerald-600 dark:text-emerald-300" },
+  cancelado: { label: "Cancelado", className: "text-foreground/40" },
 };
 
 interface Props {
@@ -45,59 +46,42 @@ export function ProjetosTab({ ligaId }: Props) {
   }, [ligaId]);
 
   if (carregando) {
-    return (
-      <p className="font-plex-sans text-[13px] text-navy/50 dark:text-white/40">
-        Carregando projetos...
-      </p>
-    );
+    return <p className="text-sm text-foreground/50">Carregando projetos...</p>;
   }
 
   return (
-    <div>
-      <SectionHeader numero="04" eyebrow="Iniciativas" titulo="Projetos da Liga" />
+    <TabSection titulo="Projetos da liga">
       {projetos.length === 0 ? (
-        <p className="font-plex-sans text-[13px] text-navy/50 dark:text-white/40">
-          Nenhum projeto cadastrado.
-        </p>
+        <p className="text-sm text-foreground/50">Nenhum projeto cadastrado.</p>
       ) : (
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-foreground/[0.08]">
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                Projeto
-              </th>
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                Responsável
-              </th>
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                Prazo
-              </th>
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                Status
-              </th>
-              <th className="text-left py-3 px-4 font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40 font-normal">
-                %
-              </th>
+            <tr className="border-b border-border">
+              {["Projeto", "Responsável", "Prazo", "Status", "%"].map((h) => (
+                <th
+                  key={h}
+                  className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wide text-foreground/40"
+                >
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {projetos.map((p, idx) => {
+            {projetos.map((p) => {
               const s = STATUS_CONFIG[p.status];
-              const isLast = idx === projetos.length - 1;
               return (
                 <tr
                   key={p.id}
-                  className={`hover:bg-foreground/[0.03] transition-colors ${!isLast ? "border-b border-foreground/[0.06]" : ""}`}
+                  className="border-b border-border transition-colors last:border-0 hover:bg-foreground/[0.03]"
                 >
-                  <td className="py-4 px-4">
-                    <span className="font-plex-sans text-[13px] text-foreground font-semibold">
-                      {p.titulo}
-                    </span>
+                  <td className="px-4 py-3">
+                    <span className="text-sm font-medium text-foreground">{p.titulo}</span>
                   </td>
-                  <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                  <td className="px-4 py-3 text-sm text-foreground/60">
                     {p.responsavel_nome ?? "—"}
                   </td>
-                  <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
+                  <td className="px-4 py-3 text-sm text-foreground/60">
                     {p.prazo
                       ? new Date(p.prazo).toLocaleDateString("pt-BR", {
                           day: "2-digit",
@@ -105,13 +89,11 @@ export function ProjetosTab({ ligaId }: Props) {
                         })
                       : "—"}
                   </td>
-                  <td className="py-4 px-4">
-                    <span className={`font-plex-mono text-[12px] font-medium ${s.className}`}>
-                      {s.label}
-                    </span>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs font-medium ${s.className}`}>{s.label}</span>
                   </td>
-                  <td className="py-4 px-4 font-plex-mono text-[13px] text-foreground/60">
-                    {p.percentual_concluido}
+                  <td className="px-4 py-3 text-sm tabular-nums text-foreground/60">
+                    {p.percentual_concluido}%
                   </td>
                 </tr>
               );
@@ -119,6 +101,6 @@ export function ProjetosTab({ ligaId }: Props) {
           </tbody>
         </table>
       )}
-    </div>
+    </TabSection>
   );
 }

@@ -17,6 +17,7 @@
     "dist",
     "src/**/__tests__/**",
     "src/**/*.test.ts",
-    "src/**/*.test.tsx"
+    "src/**/*.test.tsx",
+    "src/components/examples/**"
   ]
 }

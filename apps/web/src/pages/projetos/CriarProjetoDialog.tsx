@@ -5,7 +5,9 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -14,6 +16,7 @@ import { supabase } from "@/lib/supabase";
 type LigaAPI = { id: string; nome: string };
 type ProfessorAPI = { id: string; nome: string; email: string } | null;
 type MembroAPI = { id: string; usuario_id: string; nome: string; cargo?: string; role?: string };
+type CategoriaAPI = { id: string; nome: string; liga_id?: string | null };
 
 type Form = {
   titulo: string;
@@ -25,6 +28,7 @@ type Form = {
   professor_id: string;
   empresa_parceira: string;
   tipo_projeto: string;
+  categoria_id: string;
 };
 
 const FORM_VAZIO: Form = {
@@ -37,6 +41,7 @@ const FORM_VAZIO: Form = {
   professor_id: "",
   empresa_parceira: "",
   tipo_projeto: "",
+  categoria_id: "",
 };
 
 async function getToken() {
@@ -64,6 +69,7 @@ export function CriarProjetoDialog({
   const [salvando, setSalvando] = useState(false);
   const [professorDaLiga, setProfessorDaLiga] = useState<ProfessorAPI>(null);
   const [membrosLiga, setMembrosLiga] = useState<MembroAPI[]>([]);
+  const [categorias, setCategorias] = useState<CategoriaAPI[]>([]);
 
   const ligaEfetiva = ligaId ?? form.liga_id;
 
@@ -74,6 +80,20 @@ export function CriarProjetoDialog({
       setMembrosLiga([]);
     }
   }, [open, ligaId]);
+
+  useEffect(() => {
+    if (!open) return;
+    const effectiveLigaId = ligaId ?? form.liga_id;
+    getToken().then((token) => {
+      const url = effectiveLigaId
+        ? `/api/categorias-projeto?liga_id=${effectiveLigaId}`
+        : "/api/categorias-projeto";
+      fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.json())
+        .then((data: CategoriaAPI[]) => setCategorias(Array.isArray(data) ? data : []))
+        .catch(() => setCategorias([]));
+    });
+  }, [open, ligaId, form.liga_id]);
 
   useEffect(() => {
     if (!ligaEfetiva) {
@@ -123,6 +143,7 @@ export function CriarProjetoDialog({
             form.professor_id && form.professor_id !== "__none__" ? form.professor_id : undefined,
           empresa_parceira: form.empresa_parceira.trim() || undefined,
           tipo_projeto: form.tipo_projeto || undefined,
+          categoria_id: form.categoria_id || undefined,
           ...(submeter ? { status: "em_aprovacao" } : {}),
         }),
       });
@@ -272,6 +293,55 @@ export function CriarProjetoDialog({
 
           <div>
             <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block">
+              Categoria
+            </label>
+            <Select
+              value={form.categoria_id || "__none__"}
+              onValueChange={(v) =>
+                setForm((f) => ({ ...f, categoria_id: v === "__none__" ? "" : v }))
+              }
+            >
+              <SelectTrigger className="w-full font-plex-sans text-[13px]">
+                <SelectValue placeholder="Selecionar categoria..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__" className="font-plex-sans text-[13px]">
+                  Selecionar categoria...
+                </SelectItem>
+                {categorias.filter((c) => !c.liga_id).length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel className="font-plex-mono text-[9px] uppercase tracking-[0.16em] text-foreground/30">
+                      Categorias Base
+                    </SelectLabel>
+                    {categorias
+                      .filter((c) => !c.liga_id)
+                      .map((c) => (
+                        <SelectItem key={c.id} value={c.id} className="font-plex-sans text-[13px]">
+                          {c.nome}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                )}
+                {categorias.filter((c) => c.liga_id).length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel className="font-plex-mono text-[9px] uppercase tracking-[0.16em] text-foreground/30">
+                      Categorias da Liga
+                    </SelectLabel>
+                    {categorias
+                      .filter((c) => c.liga_id)
+                      .map((c) => (
+                        <SelectItem key={c.id} value={c.id} className="font-plex-sans text-[13px]">
+                          {c.nome}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block">
               Professor Mentor Alocado
             </label>
             <Select
@@ -361,7 +431,7 @@ export function CriarProjetoDialog({
             <button
               onClick={() => void handleCriar(true)}
               disabled={salvando || !canSubmit}
-              className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-white bg-[#10244D] px-4 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed dark:bg-white dark:text-[#10244D]"
             >
               {salvando ? "Salvando..." : "Salvar e submeter para aprovação"}
             </button>

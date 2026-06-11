@@ -1,3 +1,4 @@
+import { Agentation } from "agentation";
 import { RouterProvider } from "react-router-dom";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -9,6 +10,7 @@ export function App() {
     <ThemeProvider>
       <RouterProvider router={router} />
       <Toaster position="top-right" richColors />
+      {import.meta.env.DEV && <Agentation />}
     </ThemeProvider>
   );
 }

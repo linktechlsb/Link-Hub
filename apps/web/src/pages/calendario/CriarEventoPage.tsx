@@ -109,16 +109,14 @@ export function CriarEventoPage() {
 
   if (sucesso) {
     return (
-      <div className="max-w-5xl mx-auto px-8 py-10">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50">
-          Calendário · Link School of Business
-        </p>
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] mt-1 mb-6">
-          Evento criado!
-        </h1>
+      <div className="mx-auto max-w-2xl px-8 py-10">
+        <div className="mb-8">
+          <h1 className="font-display text-2xl font-bold text-foreground">Evento criado!</h1>
+          <p className="mt-1 text-sm text-foreground/50">O evento foi adicionado ao calendário.</p>
+        </div>
         <button
           onClick={() => navigate("/calendario")}
-          className="font-plex-mono text-[11px] tracking-[0.14em] uppercase border border-foreground/40 px-4 py-2 rounded-full"
+          className="inline-flex items-center gap-1.5 rounded-full border border-foreground/20 px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
         >
           Ver Calendário
         </button>
@@ -127,117 +125,117 @@ export function CriarEventoPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-8 py-10">
-      <div className="mb-10">
-        <p className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50">
-          Calendário · Link School of Business
-        </p>
-        <h1 className="font-display font-bold text-[22px] tracking-[-0.02em] mt-1">Criar Evento</h1>
+    <div className="mx-auto max-w-2xl px-8 py-10">
+      <div className="mb-8">
+        <h1 className="font-display text-2xl font-bold text-foreground">Criar Evento</h1>
+        <p className="mt-1 text-sm text-foreground/50">Agende um novo evento para a sua liga</p>
       </div>
 
-      <div className="space-y-6">
-        <div>
-          <p className={labelCls}>Liga *</p>
-          <div className="mt-1">
-            <Select value={form.liga_id} onValueChange={(v) => setForm({ ...form, liga_id: v })}>
-              <SelectTrigger className={fieldCls}>
-                <SelectValue placeholder="Selecione a liga" />
-              </SelectTrigger>
-              <SelectContent>
-                {ligasDisponiveis.map((l) => (
-                  <SelectItem key={l.id} value={l.id}>
-                    {l.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div>
-          <p className={labelCls}>Título *</p>
-          <input
-            className={`${fieldCls} mt-1`}
-            value={form.titulo}
-            onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-            placeholder="Nome do evento"
-          />
-        </div>
-
-        <div>
-          <p className={labelCls}>Data</p>
-          <input
-            type="date"
-            className={`${fieldCls} mt-1`}
-            value={form.data}
-            onChange={(e) => setForm({ ...form, data: e.target.value })}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
+      <div className="rounded-xl border border-border bg-card p-6">
+        <div className="space-y-6">
           <div>
-            <p className={labelCls}>Início</p>
+            <p className={labelCls}>Liga *</p>
+            <div className="mt-1">
+              <Select value={form.liga_id} onValueChange={(v) => setForm({ ...form, liga_id: v })}>
+                <SelectTrigger className={fieldCls}>
+                  <SelectValue placeholder="Selecione a liga" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ligasDisponiveis.map((l) => (
+                    <SelectItem key={l.id} value={l.id}>
+                      {l.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <p className={labelCls}>Título *</p>
             <input
-              type="time"
               className={`${fieldCls} mt-1`}
-              value={form.hora_inicio}
-              onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })}
+              value={form.titulo}
+              onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+              placeholder="Nome do evento"
             />
           </div>
+
           <div>
-            <p className={labelCls}>Fim</p>
+            <p className={labelCls}>Data</p>
             <input
-              type="time"
+              type="date"
               className={`${fieldCls} mt-1`}
-              value={form.hora_fim}
-              onChange={(e) => setForm({ ...form, hora_fim: e.target.value })}
+              value={form.data}
+              onChange={(e) => setForm({ ...form, data: e.target.value })}
             />
           </div>
-        </div>
 
-        <div>
-          <p className={labelCls}>Sala</p>
-          <div className="mt-1">
-            <Select value={form.sala_id} onValueChange={(v) => setForm({ ...form, sala_id: v })}>
-              <SelectTrigger className={fieldCls}>
-                <SelectValue placeholder="Selecione a sala (opcional)" />
-              </SelectTrigger>
-              <SelectContent>
-                {salas.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className={labelCls}>Início</p>
+              <input
+                type="time"
+                className={`${fieldCls} mt-1`}
+                value={form.hora_inicio}
+                onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })}
+              />
+            </div>
+            <div>
+              <p className={labelCls}>Fim</p>
+              <input
+                type="time"
+                className={`${fieldCls} mt-1`}
+                value={form.hora_fim}
+                onChange={(e) => setForm({ ...form, hora_fim: e.target.value })}
+              />
+            </div>
           </div>
+
+          <div>
+            <p className={labelCls}>Sala</p>
+            <div className="mt-1">
+              <Select value={form.sala_id} onValueChange={(v) => setForm({ ...form, sala_id: v })}>
+                <SelectTrigger className={fieldCls}>
+                  <SelectValue placeholder="Selecione a sala (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {salas.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <p className={labelCls}>Descrição</p>
+            <textarea
+              className={`${fieldCls} mt-1 min-h-[80px] resize-none`}
+              value={form.descricao}
+              onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+              placeholder="Detalhes do evento (opcional)"
+            />
+          </div>
+
+          {erro && <p className="font-plex-mono text-[11px] text-red-500">{erro}</p>}
+
+          <button
+            onClick={handleSalvar}
+            disabled={salvando}
+            className="w-full py-3 bg-primary text-primary-foreground rounded-full text-xs font-medium uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-40"
+          >
+            {salvando ? "Criando..." : "Criar Evento"}
+          </button>
+          <button
+            onClick={() => navigate("/calendario")}
+            className="w-full py-3 rounded-full border border-border text-xs font-medium uppercase tracking-widest text-foreground/60 hover:bg-muted transition-colors"
+          >
+            Cancelar
+          </button>
         </div>
-
-        <div>
-          <p className={labelCls}>Descrição</p>
-          <textarea
-            className={`${fieldCls} mt-1 min-h-[80px] resize-none`}
-            value={form.descricao}
-            onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-            placeholder="Detalhes do evento (opcional)"
-          />
-        </div>
-
-        {erro && <p className="font-plex-mono text-[11px] text-red-500">{erro}</p>}
-
-        <button
-          onClick={handleSalvar}
-          disabled={salvando}
-          className="w-full py-3 bg-[#10244D] text-white rounded-full font-plex-mono text-[11px] tracking-[0.14em] uppercase disabled:opacity-50"
-        >
-          {salvando ? "Criando..." : "Criar Evento"}
-        </button>
-        <button
-          onClick={() => navigate("/calendario")}
-          className="w-full py-3 border border-foreground/20 rounded-full font-plex-mono text-[11px] tracking-[0.14em] uppercase text-foreground/60"
-        >
-          Cancelar
-        </button>
       </div>
     </div>
   );
