@@ -167,7 +167,7 @@ export function CriarTarefaSheet({ open, onOpenChange, onSalvo, ligaId, tarefa }
         titulo: titulo.trim(),
         descricao: descricao.trim() || undefined,
         responsaveis,
-        prazo: prazo || undefined,
+        prazo: prazo.trim() ? prazo : null,
         icone,
       };
       const res = await fetch(editando ? `/api/tarefas/${tarefa!.id}` : "/api/tarefas", {

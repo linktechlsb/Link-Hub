@@ -21,6 +21,13 @@ solicitacoesRouter.post("/", authenticate, async (req, res, next) => {
       data_fim,
       veiculo_info,
       observacoes,
+      local,
+      mudanca_layout,
+      coffee_break,
+      cenografia,
+      apoio_infraestrutura,
+      criacao_mkt,
+      audio_visual,
     } = req.body as {
       nome_solicitante: string;
       liga_id?: string;
@@ -34,6 +41,13 @@ solicitacoesRouter.post("/", authenticate, async (req, res, next) => {
       data_fim?: string;
       veiculo_info?: string;
       observacoes?: string;
+      local?: string;
+      mudanca_layout?: string;
+      coffee_break?: string;
+      cenografia?: string;
+      apoio_infraestrutura?: string;
+      criacao_mkt?: string;
+      audio_visual?: string;
     };
 
     if (!nome_solicitante || !tipo_evento || !tema) {
@@ -54,7 +68,9 @@ solicitacoesRouter.post("/", authenticate, async (req, res, next) => {
       INSERT INTO solicitacoes_eventos (
         nome_solicitante, liga_id, tipo_evento, participantes_info,
         tema, descricao_tema, nome_palestrante, linkedin_palestrante,
-        data_inicio, data_fim, veiculo_info, observacoes, criado_por_email
+        data_inicio, data_fim, veiculo_info, observacoes,
+        local, mudanca_layout, coffee_break, cenografia,
+        apoio_infraestrutura, criacao_mkt, audio_visual, criado_por_email
       )
       VALUES (
         ${nome_solicitante},
@@ -69,6 +85,13 @@ solicitacoesRouter.post("/", authenticate, async (req, res, next) => {
         ${data_fim ?? null},
         ${veiculo_info ?? null},
         ${observacoes ?? null},
+        ${local ?? null},
+        ${mudanca_layout ?? null},
+        ${coffee_break ?? null},
+        ${cenografia ?? null},
+        ${apoio_infraestrutura ?? null},
+        ${criacao_mkt ?? null},
+        ${audio_visual ?? null},
         ${user.email}
       )
       RETURNING *
