@@ -200,7 +200,7 @@ export function HomeCalendarPanel({
   }, [eventos]);
 
   return (
-    <DashboardCard className="flex flex-col gap-4 p-5">
+    <DashboardCard className="flex h-[26rem] flex-col gap-4 p-5">
       {/* Header: título + navegação do mês */}
       <div className="flex items-center justify-between">
         <h3 className="text-xs text-foreground/40">Calendário</h3>
@@ -232,6 +232,7 @@ export function HomeCalendarPanel({
           month={viewDate}
           onMonthChange={(d) => setViewDate(new Date(d.getFullYear(), d.getMonth(), 1))}
           showOutsideDays
+          fixedWeeks
           className="w-full bg-transparent p-0"
           classNames={{
             root: "w-full",

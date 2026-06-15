@@ -4,7 +4,10 @@ import { useNavigate } from "react-router-dom";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -27,6 +30,13 @@ interface SolicitarForm {
   hora_fim: string;
   veiculo_info: string;
   observacoes: string;
+  local: string;
+  mudanca_layout: string;
+  coffee_break: string;
+  cenografia: string;
+  apoio_infraestrutura: string;
+  criacao_mkt: string;
+  audio_visual: string;
 }
 
 function formVazio(): SolicitarForm {
@@ -44,8 +54,64 @@ function formVazio(): SolicitarForm {
     hora_fim: "",
     veiculo_info: "",
     observacoes: "",
+    local: "",
+    mudanca_layout: "",
+    coffee_break: "",
+    cenografia: "",
+    apoio_infraestrutura: "",
+    criacao_mkt: "",
+    audio_visual: "",
   };
 }
+
+const GRUPOS_LOCAL: { grupo: string; salas: string[] }[] = [
+  {
+    grupo: "Primeiro andar",
+    salas: ["1.01 – 50 pessoas", "1.02 – 50 pessoas", "1.03 – 50 pessoas", "1.04 – 50 pessoas"],
+  },
+  {
+    grupo: "Terceiro andar",
+    salas: [
+      "3.01 – 64 pessoas",
+      "3.02 – 56 pessoas",
+      "3.03 – 58 pessoas",
+      "3.04 – 50 pessoas",
+      "3.05 – 63 pessoas",
+    ],
+  },
+  {
+    grupo: "Quarto andar",
+    salas: [
+      "4.01 – 55 pessoas",
+      "4.02 – 50 pessoas",
+      "4.03 – 58 pessoas",
+      "4.04 – 50 pessoas",
+      "4.05 – 55 pessoas",
+    ],
+  },
+  {
+    grupo: "Quinto andar",
+    salas: [
+      "5.01 – 55 pessoas",
+      "5.02 – 48 pessoas",
+      "5.03 – 58 pessoas",
+      "5.04 – 50 pessoas",
+      "5.05 – 56 pessoas",
+    ],
+  },
+  {
+    grupo: "Sexto andar",
+    salas: ["6.01 – 60 pessoas"],
+  },
+  {
+    grupo: "Rooftop",
+    salas: ["Courage Space – 50 pessoas"],
+  },
+  {
+    grupo: "Externo",
+    salas: ["Externo"],
+  },
+];
 
 async function getToken(): Promise<string> {
   const { data } = await supabase.auth.getSession();
@@ -118,6 +184,13 @@ export function SolicitarEventosPage() {
           data_fim: form.data && form.hora_fim ? `${form.data}T${form.hora_fim}` : undefined,
           veiculo_info: form.veiculo_info || undefined,
           observacoes: form.observacoes || undefined,
+          local: form.local || undefined,
+          mudanca_layout: form.mudanca_layout || undefined,
+          coffee_break: form.coffee_break || undefined,
+          cenografia: form.cenografia || undefined,
+          apoio_infraestrutura: form.apoio_infraestrutura || undefined,
+          criacao_mkt: form.criacao_mkt || undefined,
+          audio_visual: form.audio_visual || undefined,
         }),
       });
       if (!res.ok) throw new Error("Erro ao enviar solicitação.");
@@ -205,6 +278,31 @@ export function SolicitarEventosPage() {
                   <SelectItem value="painel">Painel</SelectItem>
                   <SelectItem value="workshop_aberto">Workshop aberto</SelectItem>
                   <SelectItem value="evento_externo">Evento externo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Local */}
+          <div>
+            <p className={labelCls}>Local</p>
+            <div className="mt-1">
+              <Select value={form.local} onValueChange={(v) => setForm({ ...form, local: v })}>
+                <SelectTrigger className={fieldCls}>
+                  <SelectValue placeholder="Selecione o local" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  {GRUPOS_LOCAL.map((g, i) => (
+                    <SelectGroup key={g.grupo}>
+                      {i > 0 && <SelectSeparator />}
+                      <SelectLabel>{g.grupo}</SelectLabel>
+                      {g.salas.map((sala) => (
+                        <SelectItem key={sala} value={sala}>
+                          {sala}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -306,6 +404,72 @@ export function SolicitarEventosPage() {
               value={form.veiculo_info}
               onChange={(e) => setForm({ ...form, veiculo_info: e.target.value })}
               placeholder="Ex: ABC-1234, Civic preto"
+            />
+          </div>
+
+          {/* Mudança de layout */}
+          <div>
+            <p className={labelCls}>Será necessário mudança de layout?</p>
+            <input
+              className={`${fieldCls} mt-1`}
+              value={form.mudanca_layout}
+              onChange={(e) => setForm({ ...form, mudanca_layout: e.target.value })}
+              placeholder="Descreva a necessidade"
+            />
+          </div>
+
+          {/* Coffee break */}
+          <div>
+            <p className={labelCls}>Será necessário coffee break?</p>
+            <input
+              className={`${fieldCls} mt-1`}
+              value={form.coffee_break}
+              onChange={(e) => setForm({ ...form, coffee_break: e.target.value })}
+              placeholder="Descreva a necessidade"
+            />
+          </div>
+
+          {/* Cenografia */}
+          <div>
+            <p className={labelCls}>Será necessário cenografia?</p>
+            <input
+              className={`${fieldCls} mt-1`}
+              value={form.cenografia}
+              onChange={(e) => setForm({ ...form, cenografia: e.target.value })}
+              placeholder="Descreva a necessidade"
+            />
+          </div>
+
+          {/* Apoio de infraestrutura */}
+          <div>
+            <p className={labelCls}>Será necessário apoio de infraestrutura?</p>
+            <input
+              className={`${fieldCls} mt-1`}
+              value={form.apoio_infraestrutura}
+              onChange={(e) => setForm({ ...form, apoio_infraestrutura: e.target.value })}
+              placeholder="Descreva a necessidade"
+            />
+          </div>
+
+          {/* Criação do MKT */}
+          <div>
+            <p className={labelCls}>Será necessário criação do MKT?</p>
+            <input
+              className={`${fieldCls} mt-1`}
+              value={form.criacao_mkt}
+              onChange={(e) => setForm({ ...form, criacao_mkt: e.target.value })}
+              placeholder="Descreva a necessidade"
+            />
+          </div>
+
+          {/* Áudio visual */}
+          <div>
+            <p className={labelCls}>Será necessário áudio visual?</p>
+            <input
+              className={`${fieldCls} mt-1`}
+              value={form.audio_visual}
+              onChange={(e) => setForm({ ...form, audio_visual: e.target.value })}
+              placeholder="Descreva a necessidade"
             />
           </div>
 

@@ -216,6 +216,20 @@ export function HomeTasksPanel({ data }: { data: HomeData }) {
 
     cols.push(
       {
+        accessorKey: "titulo",
+        id: "titulo",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Título" column={column} className="text-xs" />
+        ),
+        cell: ({ row }) => (
+          <span className="text-xs font-medium text-foreground">{row.original.titulo}</span>
+        ),
+        size: 180,
+        enableSorting: true,
+        enableHiding: false,
+        meta: { skeleton: <Skeleton className="h-4 w-40" /> },
+      },
+      {
         accessorKey: "responsavel_nome",
         id: "responsavel_nome",
         header: ({ column }) => (
@@ -311,9 +325,9 @@ export function HomeTasksPanel({ data }: { data: HomeData }) {
   });
 
   return (
-    <DashboardCard className="flex flex-col gap-3 p-5">
+    <DashboardCard className="flex h-[26rem] flex-col gap-3 p-5">
       {/* Header: título + botão de filtro (canto superior direito) */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex shrink-0 items-center justify-between gap-2">
         <h3 className="text-xs text-foreground/40">{ehPessoal ? "Minhas tarefas" : "Tarefas"}</h3>
         <div className="flex items-center gap-2">
           {filtrosAtivos(filters).length > 0 && (
@@ -346,15 +360,15 @@ export function HomeTasksPanel({ data }: { data: HomeData }) {
         emptyMessage={ehPessoal ? "Nenhuma tarefa pendente." : "Nenhuma tarefa."}
         tableLayout={{ dense: true }}
       >
-        <DataGridContainer className="border-border">
-          <div className="max-h-[340px] overflow-auto">
+        <DataGridContainer className="min-h-0 flex-1 border-border">
+          <div className="h-full overflow-auto">
             <DataGridTable />
           </div>
         </DataGridContainer>
       </DataGrid>
 
       {/* Rodapé: "Ver todas" no canto inferior direito */}
-      <div className="mt-auto flex justify-end pt-1">
+      <div className="flex shrink-0 justify-end pt-1">
         <Link
           to="/tarefas"
           className="flex items-center gap-1 text-[11px] text-foreground/40 transition-colors hover:text-foreground"
