@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   Calendar,
   ClipboardList,
   FolderKanban,
@@ -54,12 +55,32 @@ const mainNav: NavMainItem[] = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { role } = useUser();
+  const [podeVerDados, setPodeVerDados] = useState(false);
   const [user, setUser] = useState<NavUserData>({
     name: "",
     email: "",
     avatarUrl: null,
     role: null,
   });
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      const token = data.session?.access_token;
+      if (!token) return;
+      try {
+        const res = await fetch("/api/analytics/acesso", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const { permitido } = (await res.json()) as { permitido: boolean };
+          setPodeVerDados(permitido);
+        }
+      } catch {
+        // silencioso
+      }
+    });
+  }, []);
+
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       const session = data.session;
@@ -94,6 +115,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       disabled: true,
     });
     manageNav.push({ title: "Gerenciamento", url: "/gerenciamento", icon: Settings });
+  }
+  if (podeVerDados) {
+    manageNav.push({ title: "Dados", url: "/dados", icon: BarChart3 });
   }
 
   return (

@@ -20,6 +20,9 @@ const EnvSchema = z.object({
     .default("false")
     .transform((v) => v === "true"),
   APP_URL: z.string().url().default("http://localhost:3000"),
+
+  // Nome da liga cujos membros têm acesso à página de Dados (analytics).
+  ANALYTICS_LIGA_NOME: z.string().min(1).default("Link Tech"),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

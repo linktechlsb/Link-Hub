@@ -1,8 +1,14 @@
-import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { type DayButton } from "react-day-picker";
 
 import { Calendar } from "@/components/ui/calendar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -35,13 +41,15 @@ const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const CalendarContext = createContext<{
   eventosPorDia: Record<string, EventoComLiga[]>;
   onEditarEvento?: (evento: Evento) => void;
+  onDeletarEvento?: (evento: Evento) => void;
   podeEditarEvento?: (evento: Evento) => boolean;
 }>({
   eventosPorDia: {},
 });
 
 function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof DayButton>) {
-  const { eventosPorDia, onEditarEvento, podeEditarEvento } = useContext(CalendarContext);
+  const { eventosPorDia, onEditarEvento, onDeletarEvento, podeEditarEvento } =
+    useContext(CalendarContext);
   const [open, setOpen] = useState(false);
 
   if (modifiers.outside) {
@@ -117,7 +125,9 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
             const horaIni = formatHora(evento.hora_inicio) || formatHora(evento.data);
             const horaFim = formatHora(evento.hora_fim);
             const horario = horaIni ? (horaFim ? `${horaIni} – ${horaFim}` : horaIni) : null;
-            const editavel = (onEditarEvento && podeEditarEvento?.(evento)) ?? false;
+            const editavel = (podeEditarEvento?.(evento) ?? false) && !!onEditarEvento;
+            const deletavel = (podeEditarEvento?.(evento) ?? false) && !!onDeletarEvento;
+            const temAcoes = editavel || deletavel;
             return (
               <div
                 key={evento.id}
@@ -134,18 +144,43 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
                     {horario && <span className="ml-1.5 text-foreground/40">· {horario}</span>}
                   </p>
                 </div>
-                {editavel && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOpen(false);
-                      onEditarEvento!(evento);
-                    }}
-                    className="mt-0.5 shrink-0 rounded p-1 text-foreground/30 opacity-0 transition-opacity hover:bg-foreground/[0.06] hover:text-foreground focus:opacity-100 group-hover/ev:opacity-100"
-                    aria-label={`Editar ${evento.titulo}`}
-                  >
-                    <Pencil className="h-3 w-3" />
-                  </button>
+                {temAcoes && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="mt-0.5 shrink-0 rounded p-1 text-foreground/30 opacity-0 transition-opacity hover:bg-foreground/[0.06] hover:text-foreground focus:opacity-100 group-hover/ev:opacity-100 data-[state=open]:opacity-100"
+                        aria-label={`Ações para ${evento.titulo}`}
+                      >
+                        <MoreVertical className="h-3 w-3" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-36">
+                      {editavel && (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setOpen(false);
+                            onEditarEvento!(evento);
+                          }}
+                        >
+                          <Pencil className="mr-2 h-3.5 w-3.5" />
+                          Editar
+                        </DropdownMenuItem>
+                      )}
+                      {deletavel && (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setOpen(false);
+                            onDeletarEvento!(evento);
+                          }}
+                          className="text-red-500 focus:text-red-500"
+                        >
+                          <Trash2 className="mr-2 h-3.5 w-3.5" />
+                          Deletar
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
             );
@@ -158,11 +193,13 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
 
 interface HomeCalendarPanelProps {
   onEditarEvento?: (evento: Evento) => void;
+  onDeletarEvento?: (evento: Evento) => void;
   podeEditarEvento?: (evento: Evento) => boolean;
 }
 
 export function HomeCalendarPanel({
   onEditarEvento,
+  onDeletarEvento,
   podeEditarEvento,
 }: HomeCalendarPanelProps = {}) {
   const today = new Date();
@@ -226,7 +263,9 @@ export function HomeCalendarPanel({
       </div>
 
       {/* Calendário */}
-      <CalendarContext.Provider value={{ eventosPorDia, onEditarEvento, podeEditarEvento }}>
+      <CalendarContext.Provider
+        value={{ eventosPorDia, onEditarEvento, onDeletarEvento, podeEditarEvento }}
+      >
         <Calendar
           mode="single"
           month={viewDate}

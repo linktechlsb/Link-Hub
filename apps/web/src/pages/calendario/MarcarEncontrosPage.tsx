@@ -15,7 +15,7 @@ import { supabase } from "@/lib/supabase";
 import type { Liga, Sala } from "@link-leagues/types";
 
 interface MarcarForm {
-  nome_solicitante: string;
+  titulo: string;
   liga_id: string;
   categoria: string;
   data: string;
@@ -43,7 +43,7 @@ interface Membro {
 
 function formVazio(): MarcarForm {
   return {
-    nome_solicitante: "",
+    titulo: "",
     liga_id: "",
     categoria: "",
     data: "",
@@ -104,15 +104,10 @@ export function MarcarEncontrosPage() {
     async function carregar() {
       const token = await getToken();
       const headers = { Authorization: `Bearer ${token}` };
-      const [resMe, resLigas, resSalas] = await Promise.all([
-        fetch("/api/usuarios/me", { headers }),
+      const [resLigas, resSalas] = await Promise.all([
         fetch("/api/ligas", { headers }),
         fetch("/api/salas", { headers }),
       ]);
-      if (resMe.ok) {
-        const me = (await resMe.json()) as { nome?: string };
-        setForm((prev) => ({ ...prev, nome_solicitante: me.nome ?? "" }));
-      }
       if (resLigas.ok) setLigas((await resLigas.json()) as Liga[]);
       if (resSalas.ok) setSalas((await resSalas.json()) as Sala[]);
     }
@@ -146,8 +141,14 @@ export function MarcarEncontrosPage() {
   }
 
   async function handleSalvar() {
-    if (!form.liga_id || !form.categoria || !form.data || !form.hora_inicio) {
-      setErro("Preencha comunidade, categoria, data e hora de início.");
+    if (
+      !form.titulo.trim() ||
+      !form.liga_id ||
+      !form.categoria ||
+      !form.data ||
+      !form.hora_inicio
+    ) {
+      setErro("Preencha título, comunidade, categoria, data e hora de início.");
       return;
     }
     setSalvando(true);
@@ -155,8 +156,7 @@ export function MarcarEncontrosPage() {
     try {
       const token = await getToken();
 
-      const ligaNome = ligas.find((l) => l.id === form.liga_id)?.nome ?? "";
-      const titulo = `${form.categoria.charAt(0).toUpperCase() + form.categoria.slice(1)} — ${ligaNome}`;
+      const titulo = form.titulo.trim();
 
       const salaId = form.sala ? getSalaId(form.sala) : undefined;
       const salaNaDescricao = form.sala && !salaId ? `Sala: ${form.sala}` : "";
@@ -349,14 +349,14 @@ export function MarcarEncontrosPage() {
 
       <div className="rounded-xl border border-border bg-card p-6">
         <div className="space-y-6">
-          {/* Nome completo */}
+          {/* Título do evento */}
           <div>
-            <p className={labelCls}>Nome completo</p>
+            <p className={labelCls}>Título do evento *</p>
             <input
               className={`${fieldCls} mt-1`}
-              value={form.nome_solicitante}
-              onChange={(e) => setForm({ ...form, nome_solicitante: e.target.value })}
-              placeholder="Seu nome"
+              value={form.titulo}
+              onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+              placeholder="Ex: Encontro semanal da liga"
             />
           </div>
 

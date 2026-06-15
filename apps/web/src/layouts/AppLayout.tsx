@@ -7,6 +7,8 @@ import { CommandMenu } from "@/components/command-menu";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { useClickTracking } from "@/hooks/use-click-tracking";
+import { usePageTracking } from "@/hooks/use-page-tracking";
 import { useTheme } from "@/hooks/use-theme";
 import { supabase } from "@/lib/supabase";
 
@@ -14,6 +16,8 @@ export function AppLayout() {
   const navigate = useNavigate();
   const { theme, toggle } = useTheme();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  usePageTracking();
+  useClickTracking();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {

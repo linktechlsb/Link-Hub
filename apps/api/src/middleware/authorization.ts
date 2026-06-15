@@ -2,6 +2,7 @@ import { type Response, type NextFunction } from "express";
 
 import { type AuthenticatedRequest } from "./auth.js";
 import { sql } from "../config/db.js";
+import { env } from "../config/env.js";
 
 export async function usuarioEhProfessorDaLiga(userId: string, ligaId: string): Promise<boolean> {
   const [match] = await sql`
@@ -48,6 +49,42 @@ export async function usuarioPertenceALiga(email: string, ligaId: string): Promi
     LIMIT 1
   `;
   return Boolean(match);
+}
+
+/**
+ * Verifica se o usuário pode acessar a página de Dados (analytics):
+ * staff sempre pode; demais precisam ser membros da liga configurada em
+ * ANALYTICS_LIGA_NOME (default "Link Tech").
+ */
+export async function podeAcessarAnalytics(email: string, role: string): Promise<boolean> {
+  if (role === "staff") return true;
+
+  const [liga] = await sql`
+    SELECT id FROM ligas
+    WHERE nome = ${env.ANALYTICS_LIGA_NOME}
+      AND ativo = true
+    LIMIT 1
+  `;
+  if (!liga) return false;
+
+  return usuarioPertenceALiga(email, liga["id"] as string);
+}
+
+export function requireLigaTech() {
+  return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: "Não autenticado." });
+      return;
+    }
+
+    const permitido = await podeAcessarAnalytics(user.email, user.role);
+    if (!permitido) {
+      res.status(403).json({ error: "Acesso restrito aos membros da Link Tech." });
+      return;
+    }
+    next();
+  };
 }
 
 export function requireLigaOwnership(paramName = "id") {

@@ -1,5 +1,6 @@
 import { Router, type Router as IRouter } from "express";
 
+import { analyticsRouter } from "./analytics.js";
 import { categoriasProjetoRouter } from "./categorias-projeto.js";
 import { crmRouter } from "./crm.js";
 import { eventosRouter } from "./eventos.js";
@@ -26,6 +27,7 @@ router.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+router.use("/analytics", analyticsRouter);
 router.use("/ligas", ligasRouter);
 router.use("/projetos", projetosRouter);
 router.use("/categorias-projeto", categoriasProjetoRouter);

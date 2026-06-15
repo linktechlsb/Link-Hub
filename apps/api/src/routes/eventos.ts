@@ -110,6 +110,17 @@ eventosRouter.patch(
         return;
       }
 
+      // Diretor só pode alterar eventos de categoria Aula, Cowork ou Encontro.
+      if (
+        user.role === "diretor" &&
+        !["aula", "cowork", "encontro"].includes(eventoAtual.categoria as string)
+      ) {
+        res.status(403).json({
+          error: "Diretores só podem alterar eventos de Aula, Cowork ou Encontro.",
+        });
+        return;
+      }
+
       const { titulo, descricao, data, categoria, sala_id, hora_inicio, hora_fim } = req.body as {
         titulo?: string;
         descricao?: string;
@@ -194,6 +205,17 @@ eventosRouter.delete(
         res
           .status(403)
           .json({ error: "Você só pode criar/editar/excluir eventos da sua própria liga." });
+        return;
+      }
+
+      // Diretor só pode excluir eventos de categoria Aula, Cowork ou Encontro.
+      if (
+        user.role === "diretor" &&
+        !["aula", "cowork", "encontro"].includes(eventoAtual.categoria as string)
+      ) {
+        res.status(403).json({
+          error: "Diretores só podem alterar eventos de Aula, Cowork ou Encontro.",
+        });
         return;
       }
 
