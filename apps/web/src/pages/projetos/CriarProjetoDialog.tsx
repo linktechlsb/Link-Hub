@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { MultiSelectLigas } from "@/components/ui/multi-select-ligas";
 import {
   Select,
   SelectContent,
@@ -70,6 +71,8 @@ export function CriarProjetoDialog({
   const [professorDaLiga, setProfessorDaLiga] = useState<ProfessorAPI>(null);
   const [membrosLiga, setMembrosLiga] = useState<MembroAPI[]>([]);
   const [categorias, setCategorias] = useState<CategoriaAPI[]>([]);
+  const [todasLigas, setTodasLigas] = useState<LigaAPI[]>([]);
+  const [ligasParticipantes, setLigasParticipantes] = useState<string[]>([]);
 
   const ligaEfetiva = ligaId ?? form.liga_id;
 
@@ -78,8 +81,23 @@ export function CriarProjetoDialog({
       setForm(ligaId ? { ...FORM_VAZIO, liga_id: ligaId } : FORM_VAZIO);
       setProfessorDaLiga(null);
       setMembrosLiga([]);
+      setLigasParticipantes([]);
     }
   }, [open, ligaId]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (ligas && ligas.length > 0) {
+      setTodasLigas(ligas);
+      return;
+    }
+    getToken().then((token) => {
+      fetch("/api/ligas", { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.json())
+        .then((data: LigaAPI[]) => setTodasLigas(Array.isArray(data) ? data : []))
+        .catch(() => setTodasLigas([]));
+    });
+  }, [open, ligas]);
 
   useEffect(() => {
     if (!open) return;
@@ -144,6 +162,7 @@ export function CriarProjetoDialog({
           empresa_parceira: form.empresa_parceira.trim() || undefined,
           tipo_projeto: form.tipo_projeto || undefined,
           categoria_id: form.categoria_id || undefined,
+          ligas_participantes_ids: ligasParticipantes.length > 0 ? ligasParticipantes : undefined,
           ...(submeter ? { status: "em_aprovacao" } : {}),
         }),
       });
@@ -338,6 +357,19 @@ export function CriarProjetoDialog({
                 )}
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block">
+              Participação em conjunto
+            </label>
+            <MultiSelectLigas
+              ligas={todasLigas}
+              selecionadas={ligasParticipantes}
+              onChange={setLigasParticipantes}
+              excluirId={ligaEfetiva}
+              placeholder="Outras ligas em conjunto..."
+            />
           </div>
 
           <div>

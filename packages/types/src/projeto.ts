@@ -52,6 +52,7 @@ export interface Projeto {
   tipo_projeto?: TipoProjeto;
   categoria_id?: string;
   categoria?: CategoriasProjeto;
+  ligas_participantes?: Pick<Liga, "id" | "nome">[];
   criado_em: string;
   atualizado_em: string;
 }
@@ -67,6 +68,7 @@ export interface CreateProjetoInput {
   empresa_parceira?: string;
   tipo_projeto?: TipoProjeto;
   categoria_id?: string;
+  ligas_participantes_ids?: string[];
 }
 
 export interface UpdateProjetoInput {
@@ -80,4 +82,5 @@ export interface UpdateProjetoInput {
   empresa_parceira?: string;
   tipo_projeto?: TipoProjeto;
   categoria_id?: string;
+  ligas_participantes_ids?: string[];
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { MultiSelectLigas } from "@/components/ui/multi-select-ligas";
 import {
   Select,
   SelectContent,
@@ -127,6 +128,7 @@ export function SolicitarEventosPage() {
   const { role, usuarioId } = useUser();
   const [form, setForm] = useState<SolicitarForm>(formVazio);
   const [ligas, setLigas] = useState<Liga[]>([]);
+  const [ligasParticipantes, setLigasParticipantes] = useState<string[]>([]);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState(false);
@@ -191,6 +193,12 @@ export function SolicitarEventosPage() {
           apoio_infraestrutura: form.apoio_infraestrutura || undefined,
           criacao_mkt: form.criacao_mkt || undefined,
           audio_visual: form.audio_visual || undefined,
+          ligas_participantes:
+            ligasParticipantes.length > 0
+              ? ligas
+                  .filter((l) => ligasParticipantes.includes(l.id))
+                  .map((l) => ({ id: l.id, nome: l.nome }))
+              : undefined,
         }),
       });
       if (!res.ok) throw new Error("Erro ao enviar solicitação.");
@@ -259,6 +267,20 @@ export function SolicitarEventosPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* Participação em conjunto */}
+          <div>
+            <p className={labelCls}>Participação em conjunto</p>
+            <div className="mt-1">
+              <MultiSelectLigas
+                ligas={ligas}
+                selecionadas={ligasParticipantes}
+                onChange={setLigasParticipantes}
+                excluirId={form.liga_id}
+                placeholder="Outras ligas em conjunto..."
+              />
             </div>
           </div>
 

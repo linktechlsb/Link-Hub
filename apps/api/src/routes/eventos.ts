@@ -9,17 +9,27 @@ export const eventosRouter: IRouter = Router();
 // POST /eventos — somente diretores e staff
 eventosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (req, res, next) => {
   try {
-    const { liga_id, titulo, descricao, data, categoria, sala_id, hora_inicio, hora_fim } =
-      req.body as {
-        liga_id: string;
-        titulo: string;
-        descricao?: string;
-        data: string;
-        categoria?: string;
-        sala_id?: string;
-        hora_inicio?: string;
-        hora_fim?: string;
-      };
+    const {
+      liga_id,
+      titulo,
+      descricao,
+      data,
+      categoria,
+      sala_id,
+      hora_inicio,
+      hora_fim,
+      ligas_participantes_ids,
+    } = req.body as {
+      liga_id: string;
+      titulo: string;
+      descricao?: string;
+      data: string;
+      categoria?: string;
+      sala_id?: string;
+      hora_inicio?: string;
+      hora_fim?: string;
+      ligas_participantes_ids?: string[];
+    };
 
     if (!liga_id || !titulo || !data) {
       res.status(400).json({ error: "liga_id, titulo e data são obrigatórios." });
@@ -39,22 +49,37 @@ eventosRouter.post("/", authenticate, requireRole("staff", "diretor"), async (re
     const requer_aprovacao = cat === "evento" || cat === "hub";
     const status_aprovacao = requer_aprovacao ? "pendente" : null;
 
-    const [evento] = await sql`
-      INSERT INTO eventos (liga_id, titulo, descricao, data, categoria, sala_id, hora_inicio, hora_fim, requer_aprovacao, status_aprovacao)
-      VALUES (
-        ${liga_id},
-        ${titulo},
-        ${descricao ?? null},
-        ${data},
-        ${cat},
-        ${sala_id ?? null},
-        ${hora_inicio ?? null},
-        ${hora_fim ?? null},
-        ${requer_aprovacao},
-        ${status_aprovacao}
-      )
-      RETURNING *
-    `;
+    const idsParticipantes = Array.from(
+      new Set((ligas_participantes_ids ?? []).filter((id) => id && id !== liga_id)),
+    );
+
+    const evento = await sql.begin(async (tx) => {
+      const t = tx as unknown as typeof sql;
+      const [novo] = await t`
+        INSERT INTO eventos (liga_id, titulo, descricao, data, categoria, sala_id, hora_inicio, hora_fim, requer_aprovacao, status_aprovacao)
+        VALUES (
+          ${liga_id},
+          ${titulo},
+          ${descricao ?? null},
+          ${data},
+          ${cat},
+          ${sala_id ?? null},
+          ${hora_inicio ?? null},
+          ${hora_fim ?? null},
+          ${requer_aprovacao},
+          ${status_aprovacao}
+        )
+        RETURNING *
+      `;
+      for (const ligaParticipanteId of idsParticipantes) {
+        await t`
+          INSERT INTO evento_ligas (evento_id, liga_id)
+          VALUES (${novo!["id"] as string}, ${ligaParticipanteId})
+          ON CONFLICT DO NOTHING
+        `;
+      }
+      return novo;
+    });
 
     res.status(201).json(evento);
   } catch (err) {
@@ -121,7 +146,16 @@ eventosRouter.patch(
         return;
       }
 
-      const { titulo, descricao, data, categoria, sala_id, hora_inicio, hora_fim } = req.body as {
+      const {
+        titulo,
+        descricao,
+        data,
+        categoria,
+        sala_id,
+        hora_inicio,
+        hora_fim,
+        ligas_participantes_ids,
+      } = req.body as {
         titulo?: string;
         descricao?: string;
         data?: string;
@@ -129,6 +163,7 @@ eventosRouter.patch(
         sala_id?: string;
         hora_inicio?: string;
         hora_fim?: string;
+        ligas_participantes_ids?: string[];
       };
 
       // Diretor não pode mudar categoria — bypassa fluxo de aprovação
@@ -174,6 +209,21 @@ eventosRouter.patch(
       WHERE id = ${id}
       RETURNING *
     `;
+
+      if (ligas_participantes_ids !== undefined) {
+        const ligaPrincipal = eventoAtual.liga_id as string;
+        const idsParticipantes = Array.from(
+          new Set(ligas_participantes_ids.filter((lid) => lid && lid !== ligaPrincipal)),
+        );
+        await sql`DELETE FROM evento_ligas WHERE evento_id = ${id}`;
+        for (const ligaParticipanteId of idsParticipantes) {
+          await sql`
+            INSERT INTO evento_ligas (evento_id, liga_id)
+            VALUES (${id}, ${ligaParticipanteId})
+            ON CONFLICT DO NOTHING
+          `;
+        }
+      }
 
       res.json(eventoAtualizado);
     } catch (err) {
@@ -237,7 +287,12 @@ eventosRouter.get("/", authenticate, async (req, res, next) => {
 
     const eventos = restringirPorLiga
       ? await sql`
-          SELECT e.*, row_to_json(l.*) AS liga
+          SELECT e.*, row_to_json(l.*) AS liga,
+            COALESCE((
+              SELECT json_agg(json_build_object('id', l2.id, 'nome', l2.nome) ORDER BY l2.nome)
+              FROM evento_ligas el JOIN ligas l2 ON l2.id = el.liga_id
+              WHERE el.evento_id = e.id
+            ), '[]'::json) AS ligas_participantes
           FROM eventos e
           LEFT JOIN ligas l ON l.id = e.liga_id
           WHERE e.liga_id IN (
@@ -253,7 +308,12 @@ eventosRouter.get("/", authenticate, async (req, res, next) => {
           ORDER BY e.data ASC
         `
       : await sql`
-          SELECT e.*, row_to_json(l.*) AS liga
+          SELECT e.*, row_to_json(l.*) AS liga,
+            COALESCE((
+              SELECT json_agg(json_build_object('id', l2.id, 'nome', l2.nome) ORDER BY l2.nome)
+              FROM evento_ligas el JOIN ligas l2 ON l2.id = el.liga_id
+              WHERE el.evento_id = e.id
+            ), '[]'::json) AS ligas_participantes
           FROM eventos e
           LEFT JOIN ligas l ON l.id = e.liga_id
           WHERE TRUE

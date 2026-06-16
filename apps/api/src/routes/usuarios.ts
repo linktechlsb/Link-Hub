@@ -101,8 +101,7 @@ usuariosRouter.patch("/me", authenticate, async (req, res, next) => {
         linkedin  = COALESCE(${linkedin ?? null}, linkedin),
         semestre  = COALESCE(${semestre ?? null}, semestre)
       WHERE email = ${(req as AuthenticatedRequest).user!.email}
-      RETURNING id, nome, email, role, avatar_url, biografia, instagram, linkedin, semestre
-    `;
+      RETURNING id, nome, email, role, avatar_url, biografia, instagram, linkedin, semestre    `;
 
     if (!usuario) {
       res.status(404).json({ error: "Usuário não encontrado." });
@@ -166,8 +165,7 @@ usuariosRouter.post("/me/avatar", authenticate, uploadSingle("imagem"), async (r
     const [usuario] = await sql`
         UPDATE usuarios SET avatar_url = ${avatar_url}
         WHERE id = ${usuarioAtual.id}
-        RETURNING id, nome, email, role, avatar_url, biografia, instagram, linkedin, semestre
-      `;
+        RETURNING id, nome, email, role, avatar_url, biografia, instagram, linkedin, semestre      `;
 
     res.json(usuario);
   } catch (err) {

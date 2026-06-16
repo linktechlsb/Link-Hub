@@ -26,7 +26,12 @@ projetosRouter.get("/", authenticate, async (req, res, next) => {
       const projetos = await sql`
           SELECT p.*, p.nome AS titulo,
             json_build_object('id', l.id, 'nome', l.nome) AS liga,
-            u.nome AS responsavel_nome
+            u.nome AS responsavel_nome,
+            COALESCE((
+              SELECT json_agg(json_build_object('id', l2.id, 'nome', l2.nome) ORDER BY l2.nome)
+              FROM projeto_ligas pl JOIN ligas l2 ON l2.id = pl.liga_id
+              WHERE pl.projeto_id = p.id
+            ), '[]'::json) AS ligas_participantes
           FROM projetos p
           LEFT JOIN ligas l ON l.id = p.liga_id
           LEFT JOIN usuarios u ON u.id = p.responsavel_id
@@ -52,7 +57,12 @@ projetosRouter.get("/", authenticate, async (req, res, next) => {
     const projetos = await sql`
         SELECT p.*, p.nome AS titulo,
           json_build_object('id', l.id, 'nome', l.nome) AS liga,
-          u.nome AS responsavel_nome
+          u.nome AS responsavel_nome,
+          COALESCE((
+            SELECT json_agg(json_build_object('id', l2.id, 'nome', l2.nome) ORDER BY l2.nome)
+            FROM projeto_ligas pl JOIN ligas l2 ON l2.id = pl.liga_id
+            WHERE pl.projeto_id = p.id
+          ), '[]'::json) AS ligas_participantes
         FROM projetos p
         LEFT JOIN ligas l ON l.id = p.liga_id
         LEFT JOIN usuarios u ON u.id = p.responsavel_id
@@ -86,6 +96,7 @@ projetosRouter.post(
         empresa_parceira,
         tipo_projeto,
         categoria_id,
+        ligas_participantes_ids,
       } = req.body as {
         liga_id: string;
         titulo: string;
@@ -97,6 +108,7 @@ projetosRouter.post(
         empresa_parceira?: string;
         tipo_projeto?: string;
         categoria_id?: string;
+        ligas_participantes_ids?: string[];
       };
 
       if (!liga_id || !titulo || !responsavel_id) {
@@ -137,9 +149,24 @@ projetosRouter.post(
       if (tipo_projeto !== undefined) body["tipo_projeto"] = tipo_projeto;
       if (categoria_id !== undefined) body["categoria_id"] = categoria_id;
 
-      const [projeto] = await sql`
-      INSERT INTO projetos ${sql(body)} RETURNING *, nome AS titulo
-    `;
+      const idsParticipantes = Array.from(
+        new Set((ligas_participantes_ids ?? []).filter((id) => id && id !== liga_id)),
+      );
+
+      const projeto = await sql.begin(async (tx) => {
+        const t = tx as unknown as typeof sql;
+        const [novo] = await t`
+          INSERT INTO projetos ${t(body)} RETURNING *, nome AS titulo
+        `;
+        for (const ligaParticipanteId of idsParticipantes) {
+          await t`
+            INSERT INTO projeto_ligas (projeto_id, liga_id)
+            VALUES (${novo!["id"] as string}, ${ligaParticipanteId})
+            ON CONFLICT DO NOTHING
+          `;
+        }
+        return novo;
+      });
 
       res.status(201).json(projeto);
     } catch (err) {
@@ -336,6 +363,7 @@ projetosRouter.patch(
         empresa_parceira,
         tipo_projeto,
         categoria_id,
+        ligas_participantes_ids,
       } = req.body as {
         titulo?: string;
         descricao?: string;
@@ -346,6 +374,7 @@ projetosRouter.patch(
         empresa_parceira?: string;
         tipo_projeto?: string;
         categoria_id?: string;
+        ligas_participantes_ids?: string[];
       };
 
       const [existente] =
@@ -374,14 +403,35 @@ projetosRouter.patch(
       if (tipo_projeto !== undefined) updates["tipo_projeto"] = tipo_projeto;
       if (categoria_id !== undefined) updates["categoria_id"] = categoria_id;
 
-      if (Object.keys(updates).length === 0) {
+      if (Object.keys(updates).length === 0 && ligas_participantes_ids === undefined) {
         res.status(400).json({ error: "Nenhum campo para atualizar." });
         return;
       }
 
-      const [projeto] = await sql`
-      UPDATE projetos SET ${sql(updates)} WHERE id = ${id} RETURNING *, nome AS titulo
-    `;
+      const ligaPrincipal = existente["liga_id"] as string;
+
+      const projeto = await sql.begin(async (tx) => {
+        const t = tx as unknown as typeof sql;
+        const [atualizado] =
+          Object.keys(updates).length > 0
+            ? await t`UPDATE projetos SET ${t(updates)} WHERE id = ${id} RETURNING *, nome AS titulo`
+            : await t`SELECT *, nome AS titulo FROM projetos WHERE id = ${id}`;
+
+        if (ligas_participantes_ids !== undefined) {
+          const idsParticipantes = Array.from(
+            new Set(ligas_participantes_ids.filter((lid) => lid && lid !== ligaPrincipal)),
+          );
+          await t`DELETE FROM projeto_ligas WHERE projeto_id = ${id}`;
+          for (const ligaParticipanteId of idsParticipantes) {
+            await t`
+              INSERT INTO projeto_ligas (projeto_id, liga_id)
+              VALUES (${id}, ${ligaParticipanteId})
+              ON CONFLICT DO NOTHING
+            `;
+          }
+        }
+        return atualizado;
+      });
 
       res.json(projeto);
     } catch (err) {

@@ -17,6 +17,7 @@ export interface Evento {
   hora_fim?: string;
   requer_aprovacao: boolean;
   status_aprovacao?: "pendente" | "aprovado" | "rejeitado" | null;
+  ligas_participantes?: { id: string; nome: string }[];
   criado_em: string;
 }
 

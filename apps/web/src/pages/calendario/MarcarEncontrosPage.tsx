@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { MultiSelectLigas } from "@/components/ui/multi-select-ligas";
 import {
   Select,
   SelectContent,
@@ -91,6 +92,7 @@ export function MarcarEncontrosPage() {
   const [form, setForm] = useState<MarcarForm>(formVazio);
   const [ligas, setLigas] = useState<Liga[]>([]);
   const [salas, setSalas] = useState<Sala[]>([]);
+  const [ligasParticipantes, setLigasParticipantes] = useState<string[]>([]);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState(false);
@@ -174,6 +176,7 @@ export function MarcarEncontrosPage() {
           sala_id: salaId,
           hora_inicio: form.hora_inicio,
           hora_fim: form.hora_fim || undefined,
+          ligas_participantes_ids: ligasParticipantes.length > 0 ? ligasParticipantes : undefined,
         }),
       });
       if (!res.ok) {
@@ -446,6 +449,20 @@ export function MarcarEncontrosPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* Participação em conjunto */}
+          <div>
+            <p className={labelCls}>Participação em conjunto</p>
+            <div className="mt-1">
+              <MultiSelectLigas
+                ligas={ligas}
+                selecionadas={ligasParticipantes}
+                onChange={setLigasParticipantes}
+                excluirId={form.liga_id}
+                placeholder="Outras ligas em conjunto..."
+              />
             </div>
           </div>
 

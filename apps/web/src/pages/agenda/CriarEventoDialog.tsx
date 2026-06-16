@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { MultiSelectLigas } from "@/components/ui/multi-select-ligas";
 import {
   Select,
   SelectContent,
@@ -8,9 +9,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/lib/supabase";
 
 import type { CategoriaEvento, Liga, Sala, UserRole } from "@link-leagues/types";
+
+interface Palestrante {
+  nome: string;
+  linkedin: string;
+  email: string;
+  telefone: string;
+}
+
+function palestranteVazio(): Palestrante {
+  return { nome: "", linkedin: "", email: "", telefone: "" };
+}
 
 interface EventoForm {
   liga_id: string;
@@ -123,6 +136,9 @@ export function CriarEventoDialog({
   const [membrosLiga, setMembrosLiga] = useState<MembroLiga[]>([]);
   const [modoConvidados, setModoConvidados] = useState<"todos" | "selecionar">("todos");
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const [ligasParticipantes, setLigasParticipantes] = useState<string[]>([]);
+  const [incluirPalestrantes, setIncluirPalestrantes] = useState(false);
+  const [palestrantes, setPalestrantes] = useState<Palestrante[]>([palestranteVazio()]);
 
   const ligasDisponiveis = useMemo(
     () =>
@@ -142,6 +158,9 @@ export function CriarEventoDialog({
     setMembrosLiga([]);
     setModoConvidados("todos");
     setSelecionados(new Set());
+    setLigasParticipantes([]);
+    setIncluirPalestrantes(false);
+    setPalestrantes([palestranteVazio()]);
   }, [open, role, ligasDisponiveis]);
 
   useEffect(() => {
@@ -202,12 +221,41 @@ export function CriarEventoDialog({
           sala_id: precisaSala && form.sala_id ? form.sala_id : undefined,
           hora_inicio: precisaSala && form.hora_inicio ? form.hora_inicio : undefined,
           hora_fim: precisaSala && form.hora_fim ? form.hora_fim : undefined,
+          ligas_participantes_ids: ligasParticipantes.length > 0 ? ligasParticipantes : undefined,
         }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error((err as { error?: string }).error ?? "Erro ao criar evento");
       }
+
+      // Cadastra palestrantes/convidados como contatos do CRM da liga.
+      // Falhas aqui não invalidam o evento já criado — apenas avisam.
+      if (incluirPalestrantes) {
+        const aCadastrar = palestrantes.filter((p) => p.nome.trim());
+        const resultados = await Promise.allSettled(
+          aCadastrar.map((p) =>
+            fetch("/api/crm", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              body: JSON.stringify({
+                liga_id: form.liga_id,
+                nome: p.nome.trim(),
+                emprego: "Palestrante",
+                linkedin: p.linkedin.trim() || undefined,
+                email: p.email.trim() || undefined,
+                telefone: p.telefone.trim() || undefined,
+              }),
+            }).then((r) => {
+              if (!r.ok) throw new Error("falha");
+            }),
+          ),
+        );
+        if (resultados.some((r) => r.status === "rejected")) {
+          setErro("Evento criado, mas houve falha ao salvar um ou mais palestrantes no CRM.");
+        }
+      }
+
       const ligaNome = ligas.find((l) => l.id === form.liga_id)?.nome ?? "";
       setEventoRecenteCriado({
         titulo: form.titulo,
@@ -539,6 +587,116 @@ export function CriarEventoDialog({
                   rows={3}
                   className="w-full font-plex-sans text-[13px] text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 resize-none rounded"
                 />
+              </div>
+
+              <div>
+                <label className="font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40 mb-2 block">
+                  Participação em conjunto
+                </label>
+                <MultiSelectLigas
+                  ligas={ligas}
+                  selecionadas={ligasParticipantes}
+                  onChange={setLigasParticipantes}
+                  excluirId={form.liga_id}
+                  placeholder="Outras ligas em conjunto..."
+                />
+              </div>
+
+              <div className="border-t border-foreground/[0.08] pt-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-plex-sans text-[13px] font-medium text-foreground">
+                      Palestrante / convidado
+                    </p>
+                    <p className="font-plex-sans text-[11px] text-foreground/50 mt-0.5">
+                      Cadastra os convidados nos contatos da liga.
+                    </p>
+                  </div>
+                  <Switch checked={incluirPalestrantes} onCheckedChange={setIncluirPalestrantes} />
+                </div>
+
+                {incluirPalestrantes && (
+                  <div className="mt-4 space-y-4">
+                    {palestrantes.map((p, idx) => (
+                      <div
+                        key={idx}
+                        className="border border-border rounded p-3 space-y-2.5 bg-muted/30"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/40">
+                            Palestrante {idx + 1}
+                          </span>
+                          {palestrantes.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setPalestrantes((ps) => ps.filter((_, i) => i !== idx))
+                              }
+                              className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-red-500/70 hover:text-red-500"
+                            >
+                              Remover
+                            </button>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          value={p.nome}
+                          onChange={(e) =>
+                            setPalestrantes((ps) =>
+                              ps.map((x, i) => (i === idx ? { ...x, nome: e.target.value } : x)),
+                            )
+                          }
+                          placeholder="Nome *"
+                          className={fieldCls}
+                        />
+                        <input
+                          type="text"
+                          value={p.linkedin}
+                          onChange={(e) =>
+                            setPalestrantes((ps) =>
+                              ps.map((x, i) =>
+                                i === idx ? { ...x, linkedin: e.target.value } : x,
+                              ),
+                            )
+                          }
+                          placeholder="LinkedIn"
+                          className={fieldCls}
+                        />
+                        <input
+                          type="email"
+                          value={p.email}
+                          onChange={(e) =>
+                            setPalestrantes((ps) =>
+                              ps.map((x, i) => (i === idx ? { ...x, email: e.target.value } : x)),
+                            )
+                          }
+                          placeholder="E-mail"
+                          className={fieldCls}
+                        />
+                        <input
+                          type="tel"
+                          value={p.telefone}
+                          onChange={(e) =>
+                            setPalestrantes((ps) =>
+                              ps.map((x, i) =>
+                                i === idx ? { ...x, telefone: e.target.value } : x,
+                              ),
+                            )
+                          }
+                          placeholder="Telefone"
+                          className={fieldCls}
+                        />
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setPalestrantes((ps) => [...ps, palestranteVazio()])}
+                      className="font-plex-mono text-[10px] uppercase tracking-[0.14em] text-foreground/60 hover:text-foreground"
+                    >
+                      + Adicionar outro
+                    </button>
+                  </div>
+                )}
               </div>
 
               {erro && <p className="font-plex-sans text-[12px] text-red-600">{erro}</p>}

@@ -28,6 +28,7 @@ solicitacoesRouter.post("/", authenticate, async (req, res, next) => {
       apoio_infraestrutura,
       criacao_mkt,
       audio_visual,
+      ligas_participantes,
     } = req.body as {
       nome_solicitante: string;
       liga_id?: string;
@@ -48,6 +49,7 @@ solicitacoesRouter.post("/", authenticate, async (req, res, next) => {
       apoio_infraestrutura?: string;
       criacao_mkt?: string;
       audio_visual?: string;
+      ligas_participantes?: { id: string; nome: string }[];
     };
 
     if (!nome_solicitante || !tipo_evento || !tema) {
@@ -70,7 +72,7 @@ solicitacoesRouter.post("/", authenticate, async (req, res, next) => {
         tema, descricao_tema, nome_palestrante, linkedin_palestrante,
         data_inicio, data_fim, veiculo_info, observacoes,
         local, mudanca_layout, coffee_break, cenografia,
-        apoio_infraestrutura, criacao_mkt, audio_visual, criado_por_email
+        apoio_infraestrutura, criacao_mkt, audio_visual, ligas_participantes, criado_por_email
       )
       VALUES (
         ${nome_solicitante},
@@ -92,6 +94,7 @@ solicitacoesRouter.post("/", authenticate, async (req, res, next) => {
         ${apoio_infraestrutura ?? null},
         ${criacao_mkt ?? null},
         ${audio_visual ?? null},
+        ${ligas_participantes && ligas_participantes.length > 0 ? sql.json(ligas_participantes) : null},
         ${user.email}
       )
       RETURNING *
