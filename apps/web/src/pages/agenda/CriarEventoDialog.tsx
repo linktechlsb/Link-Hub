@@ -44,6 +44,7 @@ interface EventoCriadoData {
   ligaNome: string;
   categoria: string;
   liga_id: string;
+  ligas_participantes_ids?: string[];
 }
 
 interface MembroLiga {
@@ -165,30 +166,42 @@ export function CriarEventoDialog({
 
   useEffect(() => {
     if (!eventoRecenteCriado) return;
-    async function carregarMembros(ligaId: string) {
+    // Carrega membros da liga principal + de todas as ligas participantes (evento em conjunto),
+    // removendo duplicados por usuário.
+    async function carregarMembros(ligaIds: string[]) {
       const token = await getToken();
-      const res = await fetch(`/api/ligas/${ligaId}/membros`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return;
-      const data = (await res.json()) as Array<{
-        usuario_id: string;
-        nome: string;
-        email: string;
-        avatar_url?: string | null;
-      }>;
-      setMembrosLiga(
-        data
-          .filter((m) => m.usuario_id !== usuarioId && m.email)
-          .map((m) => ({
-            usuario_id: m.usuario_id,
-            nome: m.nome,
-            email: m.email,
-            avatar_url: m.avatar_url,
-          })),
+      const listas = await Promise.all(
+        ligaIds.map(async (ligaId) => {
+          const res = await fetch(`/api/ligas/${ligaId}/membros`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!res.ok) return [];
+          return (await res.json()) as Array<{
+            usuario_id: string;
+            nome: string;
+            email: string;
+            avatar_url?: string | null;
+          }>;
+        }),
       );
+      const vistos = new Set<string>();
+      const membros: MembroLiga[] = [];
+      for (const m of listas.flat()) {
+        if (m.usuario_id === usuarioId || !m.email || vistos.has(m.usuario_id)) continue;
+        vistos.add(m.usuario_id);
+        membros.push({
+          usuario_id: m.usuario_id,
+          nome: m.nome,
+          email: m.email,
+          avatar_url: m.avatar_url,
+        });
+      }
+      setMembrosLiga(membros);
     }
-    void carregarMembros(eventoRecenteCriado.liga_id);
+    void carregarMembros([
+      eventoRecenteCriado.liga_id,
+      ...(eventoRecenteCriado.ligas_participantes_ids ?? []),
+    ]);
   }, [eventoRecenteCriado, usuarioId]);
 
   const precisaSala = ["encontro", "aula", "evento", "hub"].includes(form.categoria);
@@ -256,7 +269,11 @@ export function CriarEventoDialog({
         }
       }
 
-      const ligaNome = ligas.find((l) => l.id === form.liga_id)?.nome ?? "";
+      const ligaNomePrincipal = ligas.find((l) => l.id === form.liga_id)?.nome ?? "";
+      const nomesParticipantes = ligasParticipantes
+        .map((id) => ligas.find((l) => l.id === id)?.nome)
+        .filter((nome): nome is string => Boolean(nome));
+      const ligaNome = [ligaNomePrincipal, ...nomesParticipantes].filter(Boolean).join(" + ");
       setEventoRecenteCriado({
         titulo: form.titulo,
         data: form.data,
@@ -265,6 +282,7 @@ export function CriarEventoDialog({
         ligaNome,
         categoria: form.categoria,
         liga_id: form.liga_id,
+        ligas_participantes_ids: ligasParticipantes.length > 0 ? ligasParticipantes : undefined,
       });
       if (onEventoCriado) await onEventoCriado();
     } catch (e) {

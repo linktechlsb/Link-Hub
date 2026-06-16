@@ -140,7 +140,9 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-medium text-foreground">{evento.titulo}</p>
                   <p className="truncate text-[10px] text-foreground/50">
-                    {evento.liga?.nome ?? "Liga"}
+                    {[evento.liga?.nome, ...(evento.ligas_participantes?.map((l) => l.nome) ?? [])]
+                      .filter(Boolean)
+                      .join(" + ") || "Liga"}
                     {horario && <span className="ml-1.5 text-foreground/40">· {horario}</span>}
                   </p>
                 </div>

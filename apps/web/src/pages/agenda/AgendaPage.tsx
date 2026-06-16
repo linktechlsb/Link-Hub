@@ -971,7 +971,12 @@ export function AgendaPage() {
                             {evento.titulo}
                           </p>
                           <p className="text-xs text-foreground/50 mt-0.5 truncate">
-                            {evento.liga?.nome ?? "Liga"}
+                            {[
+                              evento.liga?.nome,
+                              ...(evento.ligas_participantes?.map((l) => l.nome) ?? []),
+                            ]
+                              .filter(Boolean)
+                              .join(" + ") || "Liga"}
                             {hora && ` · ${hora}`}
                           </p>
                           {evento.requer_aprovacao &&
