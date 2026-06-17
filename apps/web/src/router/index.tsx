@@ -19,6 +19,7 @@ import { ContaPage } from "@/pages/conta/ContaPage";
 import { FormularioDetalhePage } from "@/pages/formularios/FormularioDetalhePage";
 import { FormulariosPage } from "@/pages/formularios/FormulariosPage";
 import { NovoFormularioPage } from "@/pages/formularios/NovoFormularioPage";
+import { DadosPage } from "@/pages/gerenciamento/DadosPage";
 import { GerenciamentoPage } from "@/pages/gerenciamento/GerenciamentoPage";
 import { HomePage } from "@/pages/home/HomePage";
 import { LigaDetailPage } from "@/pages/ligas/LigaDetailPage";
@@ -78,6 +79,7 @@ export const router: BrowserRouter = createBrowserRouter([
           { path: "formularios/novo", element: <NovoFormularioPage /> },
           { path: "formularios/:id", element: <FormularioDetalhePage /> },
           { path: "gerenciamento", element: <GerenciamentoPage /> },
+          { path: "dados", element: <DadosPage /> },
           { path: "presenca", element: <PresencaPage /> },
           { path: "conta", element: <ContaPage /> },
         ],

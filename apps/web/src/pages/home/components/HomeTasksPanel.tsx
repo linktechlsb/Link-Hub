@@ -174,8 +174,6 @@ export function HomeTasksPanel({ data }: { data: HomeData }) {
           { value: "diretor", label: "Diretor" },
           { value: "professor", label: "Professor" },
           { value: "membro", label: "Membro" },
-          { value: "estudante", label: "Estudante" },
-          { value: "staff", label: "Staff" },
         ],
       },
       {

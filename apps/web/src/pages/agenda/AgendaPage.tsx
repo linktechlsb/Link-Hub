@@ -256,7 +256,12 @@ export function AgendaPage() {
 
   function podeGerenciarEvento(evento: Evento): boolean {
     if (role === "staff") return true;
-    if (role === "diretor") return ligasDisponiveis.some((l) => l.id === evento.liga_id);
+    // Diretor só altera Aula, Cowork e Encontro da própria liga.
+    if (role === "diretor")
+      return (
+        ["aula", "cowork", "encontro"].includes(evento.categoria) &&
+        ligasDisponiveis.some((l) => l.id === evento.liga_id)
+      );
     return false;
   }
 
@@ -910,6 +915,7 @@ export function AgendaPage() {
           <HomeCalendarPanel
             key={calendarKey}
             onEditarEvento={abrirEdicao}
+            onDeletarEvento={(evento) => setConfirmarDeletar(evento)}
             podeEditarEvento={podeGerenciarEvento}
           />
 
@@ -965,7 +971,12 @@ export function AgendaPage() {
                             {evento.titulo}
                           </p>
                           <p className="text-xs text-foreground/50 mt-0.5 truncate">
-                            {evento.liga?.nome ?? "Liga"}
+                            {[
+                              evento.liga?.nome,
+                              ...(evento.ligas_participantes?.map((l) => l.nome) ?? []),
+                            ]
+                              .filter(Boolean)
+                              .join(" + ") || "Liga"}
                             {hora && ` · ${hora}`}
                           </p>
                           {evento.requer_aprovacao &&

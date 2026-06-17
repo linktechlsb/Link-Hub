@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { MultiSelectLigas } from "@/components/ui/multi-select-ligas";
 import {
   Select,
   SelectContent,
@@ -15,7 +16,7 @@ import { supabase } from "@/lib/supabase";
 import type { Liga, Sala } from "@link-leagues/types";
 
 interface MarcarForm {
-  nome_solicitante: string;
+  titulo: string;
   liga_id: string;
   categoria: string;
   data: string;
@@ -43,7 +44,7 @@ interface Membro {
 
 function formVazio(): MarcarForm {
   return {
-    nome_solicitante: "",
+    titulo: "",
     liga_id: "",
     categoria: "",
     data: "",
@@ -91,6 +92,7 @@ export function MarcarEncontrosPage() {
   const [form, setForm] = useState<MarcarForm>(formVazio);
   const [ligas, setLigas] = useState<Liga[]>([]);
   const [salas, setSalas] = useState<Sala[]>([]);
+  const [ligasParticipantes, setLigasParticipantes] = useState<string[]>([]);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState(false);
@@ -104,15 +106,10 @@ export function MarcarEncontrosPage() {
     async function carregar() {
       const token = await getToken();
       const headers = { Authorization: `Bearer ${token}` };
-      const [resMe, resLigas, resSalas] = await Promise.all([
-        fetch("/api/usuarios/me", { headers }),
+      const [resLigas, resSalas] = await Promise.all([
         fetch("/api/ligas", { headers }),
         fetch("/api/salas", { headers }),
       ]);
-      if (resMe.ok) {
-        const me = (await resMe.json()) as { nome?: string };
-        setForm((prev) => ({ ...prev, nome_solicitante: me.nome ?? "" }));
-      }
       if (resLigas.ok) setLigas((await resLigas.json()) as Liga[]);
       if (resSalas.ok) setSalas((await resSalas.json()) as Sala[]);
     }
@@ -146,8 +143,14 @@ export function MarcarEncontrosPage() {
   }
 
   async function handleSalvar() {
-    if (!form.liga_id || !form.categoria || !form.data || !form.hora_inicio) {
-      setErro("Preencha comunidade, categoria, data e hora de início.");
+    if (
+      !form.titulo.trim() ||
+      !form.liga_id ||
+      !form.categoria ||
+      !form.data ||
+      !form.hora_inicio
+    ) {
+      setErro("Preencha título, comunidade, categoria, data e hora de início.");
       return;
     }
     setSalvando(true);
@@ -155,8 +158,7 @@ export function MarcarEncontrosPage() {
     try {
       const token = await getToken();
 
-      const ligaNome = ligas.find((l) => l.id === form.liga_id)?.nome ?? "";
-      const titulo = `${form.categoria.charAt(0).toUpperCase() + form.categoria.slice(1)} — ${ligaNome}`;
+      const titulo = form.titulo.trim();
 
       const salaId = form.sala ? getSalaId(form.sala) : undefined;
       const salaNaDescricao = form.sala && !salaId ? `Sala: ${form.sala}` : "";
@@ -174,6 +176,7 @@ export function MarcarEncontrosPage() {
           sala_id: salaId,
           hora_inicio: form.hora_inicio,
           hora_fim: form.hora_fim || undefined,
+          ligas_participantes_ids: ligasParticipantes.length > 0 ? ligasParticipantes : undefined,
         }),
       });
       if (!res.ok) {
@@ -349,14 +352,14 @@ export function MarcarEncontrosPage() {
 
       <div className="rounded-xl border border-border bg-card p-6">
         <div className="space-y-6">
-          {/* Nome completo */}
+          {/* Título do evento */}
           <div>
-            <p className={labelCls}>Nome completo</p>
+            <p className={labelCls}>Título do evento *</p>
             <input
               className={`${fieldCls} mt-1`}
-              value={form.nome_solicitante}
-              onChange={(e) => setForm({ ...form, nome_solicitante: e.target.value })}
-              placeholder="Seu nome"
+              value={form.titulo}
+              onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+              placeholder="Ex: Encontro semanal da liga"
             />
           </div>
 
@@ -446,6 +449,20 @@ export function MarcarEncontrosPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* Participação em conjunto */}
+          <div>
+            <p className={labelCls}>Participação em conjunto</p>
+            <div className="mt-1">
+              <MultiSelectLigas
+                ligas={ligas}
+                selecionadas={ligasParticipantes}
+                onChange={setLigasParticipantes}
+                excluirId={form.liga_id}
+                placeholder="Outras ligas em conjunto..."
+              />
             </div>
           </div>
 
