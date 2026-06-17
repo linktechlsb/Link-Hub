@@ -1,8 +1,8 @@
+import { Check, Loader2, Upload } from "lucide-react";
 import { useState } from "react";
 
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { FormSheet } from "@/components/ui/form-sheet";
-import { Input } from "@/components/ui/input";
+import { IconeCor } from "@/components/ui/recurso-icone";
 import {
   Select,
   SelectContent,
@@ -11,39 +11,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
-import type { TipoRecurso } from "@link-leagues/types";
+const TIPOS = ["URL", "PDF", "Apresentação", "Documento", "Notion", "Planilha", "Vídeo", "Outro"];
+const TIPOS_MIDIA = ["PDF", "Documento", "Vídeo", "Apresentação"];
 
-const LABEL_CLASS = "font-plex-mono text-[10px] uppercase tracking-[0.18em] text-foreground/40";
+const LABEL_CLASS = "text-xs text-foreground/40 mb-3 block";
 const INPUT_CLASS =
-  "border-border bg-muted/50 text-[13px] text-foreground placeholder:text-foreground/20";
-
-const TIPOS: { value: TipoRecurso; label: string }[] = [
-  { value: "link", label: "Link" },
-  { value: "documento", label: "Documento" },
-  { value: "video", label: "Vídeo" },
-  { value: "curso", label: "Curso" },
-];
-
-const ICONES_SUGERIDOS = [
-  { value: "link", label: "Link" },
-  { value: "file-text", label: "Documento" },
-  { value: "video", label: "Vídeo" },
-  { value: "book-open", label: "Livro" },
-  { value: "globe", label: "Web" },
-  { value: "folder", label: "Pasta" },
-];
-
-const CORES_SUGERIDAS = [
-  "#10284E",
-  "#546484",
-  "#FEC641",
-  "#6366f1",
-  "#10b981",
-  "#f43f5e",
-  "#f97316",
-  "#0ea5e9",
-];
+  "w-full text-sm text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded";
 
 type Props = {
   open: boolean;
@@ -59,24 +34,82 @@ async function getToken() {
 
 export function CriarRecursoDialog({ open, ligaId, onClose, onCriado }: Props) {
   const [titulo, setTitulo] = useState("");
-  const [tipo, setTipo] = useState<TipoRecurso>("link");
+  const [tipo, setTipo] = useState("URL");
   const [url, setUrl] = useState("");
   const [icone, setIcone] = useState("link");
-  const [cor, setCor] = useState(CORES_SUGERIDAS[0]!);
+  const [cor, setCor] = useState("#546484");
   const [publico, setPublico] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
   function resetar() {
     setTitulo("");
-    setTipo("link");
+    setTipo("URL");
     setUrl("");
     setIcone("link");
-    setCor(CORES_SUGERIDAS[0]!);
+    setCor("#546484");
     setPublico(false);
+    setErro(null);
+  }
+
+  async function uploadArquivo(file: File) {
+    const tiposPermitidos = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "video/mp4",
+      "video/webm",
+      "video/quicktime",
+    ];
+    const tamanhoMaximoMB = 50;
+    if (!tiposPermitidos.includes(file.type)) {
+      setErro("Tipo de ficheiro não permitido. Use PDF, documentos, apresentações ou vídeos.");
+      return;
+    }
+    if (file.size > tamanhoMaximoMB * 1024 * 1024) {
+      setErro(`O ficheiro não pode ter mais de ${tamanhoMaximoMB} MB.`);
+      return;
+    }
+
+    setErro(null);
+    setEnviando(true);
+    try {
+      const token = await getToken();
+      const form = new FormData();
+      form.append("arquivo", file);
+      form.append("liga_id", ligaId);
+      const res = await fetch("/api/recursos/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        setErro(body.error ?? "Falha ao enviar o ficheiro. Tente novamente.");
+        return;
+      }
+      const { url: publicUrl } = (await res.json()) as { url: string };
+      setUrl(publicUrl);
+    } finally {
+      setEnviando(false);
+    }
   }
 
   async function handleSubmit() {
-    if (!titulo.trim() || !url.trim()) return;
+    setErro(null);
+    if (!titulo.trim()) {
+      setErro("Informe o nome do recurso.");
+      return;
+    }
+    if (!url.trim()) {
+      setErro("Informe a URL ou envie um arquivo.");
+      return;
+    }
     setSalvando(true);
     try {
       const token = await getToken();
@@ -97,11 +130,24 @@ export function CriarRecursoDialog({ open, ligaId, onClose, onCriado }: Props) {
         resetar();
         onCriado();
         onClose();
+      } else {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        setErro(body.error ?? `Erro ${res.status} ao salvar.`);
       }
     } finally {
       setSalvando(false);
     }
   }
+
+  const ehMidia = TIPOS_MIDIA.includes(tipo);
+  const accept =
+    tipo === "Vídeo"
+      ? "video/*"
+      : tipo === "PDF"
+        ? ".pdf"
+        : tipo === "Apresentação"
+          ? ".pdf,.ppt,.pptx"
+          : ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx";
 
   return (
     <FormSheet
@@ -109,118 +155,136 @@ export function CriarRecursoDialog({ open, ligaId, onClose, onCriado }: Props) {
       onOpenChange={(o) => {
         if (!o) onClose();
       }}
-      eyebrow="Novo"
-      title="Novo Recurso"
+      eyebrow="Recursos"
+      title="Adicionar Recurso"
       footer={
         <>
           <button
             onClick={handleSubmit}
-            disabled={salvando || !titulo.trim() || !url.trim()}
-            className="w-full rounded-full bg-[#10244D] px-4 py-3 font-plex-mono text-[11px] uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={salvando || enviando || !titulo.trim() || !url.trim()}
+            className="w-full rounded-full bg-foreground px-4 py-3 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {salvando ? "Criando..." : "Criar recurso"}
+            {salvando ? "Adicionando..." : "Adicionar recurso"}
           </button>
           <button
             onClick={onClose}
-            className="w-full rounded-full border border-foreground/20 px-4 py-3 font-plex-mono text-[11px] uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-foreground/[0.06]"
+            className="w-full rounded-full border border-border px-4 py-3 text-xs font-medium text-foreground/60 transition-colors hover:bg-muted"
           >
             Cancelar
           </button>
         </>
       }
     >
-      <FieldGroup>
-        <Field>
-          <FieldLabel htmlFor="recurso-titulo" className={LABEL_CLASS}>
-            Título *
-          </FieldLabel>
-          <Input
-            id="recurso-titulo"
-            autoFocus
-            value={titulo}
-            onChange={(e) => setTitulo(e.target.value)}
-            placeholder="Ex: Guia de Onboarding"
-            className={INPUT_CLASS}
-          />
-        </Field>
+      <div className="space-y-6">
+        <div>
+          <label className={LABEL_CLASS}>Nome</label>
+          <div className="flex items-center gap-3">
+            <IconeCor
+              icone={icone}
+              cor={cor}
+              onChange={(ic, c) => {
+                setIcone(ic);
+                setCor(c);
+              }}
+            />
+            <input
+              autoFocus
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+              placeholder="Nome do recurso"
+              className="flex-1 text-sm text-foreground border border-border px-3 py-2.5 bg-muted/50 placeholder:text-foreground/20 focus:outline-none focus:border-foreground/30 rounded"
+            />
+          </div>
+        </div>
 
-        <Field>
-          <FieldLabel className={LABEL_CLASS}>Tipo *</FieldLabel>
-          <Select value={tipo} onValueChange={(v) => setTipo(v as TipoRecurso)}>
-            <SelectTrigger className={INPUT_CLASS}>
+        <div>
+          <label className={LABEL_CLASS}>Tipo</label>
+          <Select value={tipo} onValueChange={setTipo}>
+            <SelectTrigger className="w-full text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {TIPOS.map((t) => (
-                <SelectItem key={t.value} value={t.value}>
-                  {t.label}
+                <SelectItem key={t} value={t} className="text-sm">
+                  {t}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </Field>
+        </div>
 
-        <Field>
-          <FieldLabel htmlFor="recurso-url" className={LABEL_CLASS}>
-            URL *
-          </FieldLabel>
-          <Input
-            id="recurso-url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://..."
-            className={INPUT_CLASS}
-          />
-        </Field>
+        <div>
+          <label className={LABEL_CLASS}>{ehMidia ? "Arquivo" : "URL"}</label>
+          {ehMidia ? (
+            <label
+              className={cn(
+                "flex flex-col items-center justify-center gap-2 w-full h-24 border border-dashed rounded cursor-pointer transition-colors",
+                url
+                  ? "border-foreground/30 bg-muted/30"
+                  : "border-foreground/20 hover:border-foreground/40",
+              )}
+            >
+              {enviando ? (
+                <Loader2 className="h-5 w-5 animate-spin text-foreground/40" />
+              ) : url ? (
+                <>
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-[10px] text-foreground/50 max-w-[220px] truncate">
+                    {url.split("/").pop()}
+                  </span>
+                  <span className="text-[9px] uppercase tracking-[0.12em] text-foreground/30">
+                    Trocar arquivo
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-5 w-5 text-foreground/30" />
+                  <span className="text-xs text-foreground/40">Clique para selecionar</span>
+                </>
+              )}
+              <input
+                type="file"
+                accept={accept}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  void uploadArquivo(file);
+                }}
+              />
+            </label>
+          ) : (
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://..."
+              className={INPUT_CLASS}
+            />
+          )}
+        </div>
 
-        <Field>
-          <FieldLabel className={LABEL_CLASS}>Ícone</FieldLabel>
-          <Select value={icone} onValueChange={setIcone}>
-            <SelectTrigger className={INPUT_CLASS}>
+        <div>
+          <label className={LABEL_CLASS}>Visibilidade</label>
+          <Select
+            value={publico ? "publico" : "privado"}
+            onValueChange={(v) => setPublico(v === "publico")}
+          >
+            <SelectTrigger className="w-full text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {ICONES_SUGERIDOS.map((i) => (
-                <SelectItem key={i.value} value={i.value}>
-                  {i.label}
-                </SelectItem>
-              ))}
+              <SelectItem value="privado" className="text-sm">
+                Privado · só membros da liga
+              </SelectItem>
+              <SelectItem value="publico" className="text-sm">
+                Público · visível para todos
+              </SelectItem>
             </SelectContent>
           </Select>
-        </Field>
+        </div>
 
-        <Field>
-          <FieldLabel className={LABEL_CLASS}>Cor</FieldLabel>
-          <div className="flex flex-wrap gap-2">
-            {CORES_SUGERIDAS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setCor(c)}
-                className="size-7 rounded-full border-2 transition-transform hover:scale-110"
-                style={{
-                  backgroundColor: c,
-                  borderColor: cor === c ? c : "transparent",
-                  outline: cor === c ? `2px solid ${c}` : "none",
-                  outlineOffset: "2px",
-                }}
-              />
-            ))}
-          </div>
-        </Field>
-
-        <Field>
-          <label className="flex cursor-pointer items-center gap-3">
-            <input
-              type="checkbox"
-              checked={publico}
-              onChange={(e) => setPublico(e.target.checked)}
-              className="h-4 w-4 rounded border-border accent-[#10244D]"
-            />
-            <span className={LABEL_CLASS + " mb-0"}>Recurso público</span>
-          </label>
-        </Field>
-      </FieldGroup>
+        {erro && <p className="text-xs text-red-600">{erro}</p>}
+      </div>
     </FormSheet>
   );
 }
