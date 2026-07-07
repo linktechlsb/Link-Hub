@@ -35,12 +35,14 @@ export function HomeHeader({ nome, role, loading = false }: HomeHeaderProps) {
 
   const roleConfig = role ? ROLE_CONFIG[role] : null;
 
-  const dataFormatada = new Date().toLocaleDateString("pt-BR", {
+  const dataPorExtenso = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
   });
+  // Só a primeira letra maiúscula ("Segunda-feira, 7 de julho de 2026")
+  const dataFormatada = dataPorExtenso.charAt(0).toUpperCase() + dataPorExtenso.slice(1);
 
   return (
     <div className="mb-8 flex flex-col gap-1">
@@ -50,12 +52,12 @@ export function HomeHeader({ nome, role, loading = false }: HomeHeaderProps) {
         </h1>
         {roleConfig && (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
-            <roleConfig.icon className="h-3.5 w-3.5" />
+            <roleConfig.icon className="h-3.5 w-3.5" aria-hidden />
             {roleConfig.label}
           </span>
         )}
       </div>
-      <p className="text-sm capitalize text-foreground/50">{dataFormatada}</p>
+      <p className="text-sm text-foreground/60">{dataFormatada}</p>
     </div>
   );
 }

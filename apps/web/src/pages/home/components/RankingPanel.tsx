@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 import { DashboardCard } from "./DashboardCard";
 
-import type { HomeData } from "../v1/useHomeData";
+import type { HomeData } from "../useHomeData";
 import type { ConfiguracaoPontuacao, RankingLiga } from "@link-leagues/types";
 
 /** Quantas ligas listar na tabela (o restante fica em /ranking). */
@@ -65,12 +65,10 @@ function formatarPontos(valor: number): string {
   return valor.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
 }
 
-/** Cor do número da posição — pódio em destaque. */
+/** Cor do número da posição — só o 1º lugar ganha destaque de marca. */
 function corPosicao(pos: number): string {
   if (pos === 1) return "text-amber-500 dark:text-brand-yellow";
-  if (pos === 2) return "text-foreground/70";
-  if (pos === 3) return "text-foreground/50";
-  return "text-foreground/30";
+  return "text-foreground/60";
 }
 
 async function getToken(): Promise<string | null> {
@@ -79,9 +77,9 @@ async function getToken(): Promise<string | null> {
 }
 
 /**
- * Painel de ranking das ligas (dark mode) para a Home.
- * Segue o padrão "Citation Rank": posição em destaque, barra segmentada da
- * composição da pontuação da liga (por critério) + legenda, e tabela do ranking.
+ * Painel de ranking das ligas para a Home: posição em destaque, barra
+ * segmentada da composição da pontuação da liga (por critério) + legenda,
+ * e tabela do ranking.
  */
 export function RankingPanel({ data }: { data: HomeData }) {
   const { ranking, minhaLiga, loadingUser } = data;
@@ -139,18 +137,18 @@ export function RankingPanel({ data }: { data: HomeData }) {
       {/* Header: label + posição em destaque */}
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-xs text-foreground/40">
+          <h3 className="text-xs font-medium text-foreground/70">
             Ranking{ligaDestaque ? ` · ${ligaDestaque.nome}` : ""}
-          </p>
+          </h3>
           <p className="mt-1 font-display text-3xl font-bold leading-none text-foreground">
             {posicaoDestaque ? `#${posicaoDestaque}` : "—"}
           </p>
         </div>
         <Link
           to="/ranking"
-          className="flex items-center gap-1 text-[11px] text-foreground/40 transition-colors hover:text-foreground"
+          className="flex items-center gap-1 text-[11px] text-foreground/60 transition-colors hover:text-foreground"
         >
-          Ver ranking <ArrowUpRight className="h-3 w-3" />
+          Ver ranking <ArrowUpRight className="h-3 w-3" aria-hidden />
         </Link>
       </div>
 
@@ -198,15 +196,16 @@ export function RankingPanel({ data }: { data: HomeData }) {
 
           {/* Tabela do ranking */}
           {linhas.length === 0 ? (
-            <p className="py-6 text-center text-xs text-foreground/40">
-              Ainda não há ligas no ranking.
+            <p className="py-6 text-center text-xs text-foreground/60">
+              Ainda não há ligas no ranking. A pontuação aparece assim que as ligas registrarem
+              atividade.
             </p>
           ) : (
             <div className="flex flex-col">
-              <div className="flex items-center gap-3 border-b border-border pb-2 text-[10px] uppercase tracking-wide text-foreground/30">
+              <div className="flex items-center gap-3 border-b border-border pb-2 text-[10px] uppercase tracking-wide text-foreground/50">
                 <span className="w-4" />
                 <span className="flex-1">Liga</span>
-                <span className="w-12 text-right">Share</span>
+                <span className="w-12 text-right">Partic.</span>
                 <span className="w-14 text-right">Pontos</span>
               </div>
               {linhas.map((r, idx) => {
@@ -235,12 +234,12 @@ export function RankingPanel({ data }: { data: HomeData }) {
                       </Avatar>
                       <span className="truncate text-xs font-medium text-foreground">{r.nome}</span>
                       {ehMinha && (
-                        <span className="shrink-0 rounded bg-brand-yellow/20 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:text-brand-yellow">
-                          sua liga
+                        <span className="shrink-0 rounded bg-brand-yellow/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-brand-yellow">
+                          Sua liga
                         </span>
                       )}
                     </div>
-                    <span className="w-12 text-right text-xs tabular-nums text-foreground/50">
+                    <span className="w-12 text-right text-xs tabular-nums text-foreground/60">
                       {Math.round(share)}%
                     </span>
                     <span className="w-14 text-right font-display text-sm font-bold tabular-nums text-foreground">

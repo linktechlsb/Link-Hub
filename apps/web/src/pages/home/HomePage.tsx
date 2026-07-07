@@ -1,6 +1,6 @@
 import { HomeHeader } from "./components/HomeHeader";
 import { HomeDashboard } from "./HomeDashboard";
-import { useHomeData } from "./v1/useHomeData";
+import { useHomeData } from "./useHomeData";
 
 export function HomePage() {
   const data = useHomeData();

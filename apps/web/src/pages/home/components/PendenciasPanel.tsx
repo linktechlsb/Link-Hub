@@ -57,31 +57,38 @@ function formatPrazo(prazo?: string | null): string | null {
 export function PendenciasPanel() {
   const [itens, setItens] = useState<Pendencia[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let cancelado = false;
     async function carregar() {
-      const token = await getToken();
-      if (!token) {
+      setLoading(true);
+      setErro(false);
+      try {
+        const token = await getToken();
+        if (!token) throw new Error("Sessão expirada");
+        const res = await fetch(`/api/pendencias`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error(`Erro ${res.status}`);
+        if (!cancelado) setItens(await res.json());
+      } catch {
+        if (!cancelado) setErro(true);
+      } finally {
         if (!cancelado) setLoading(false);
-        return;
       }
-      const res = await fetch(`/api/pendencias`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok && !cancelado) setItens(await res.json());
-      if (!cancelado) setLoading(false);
     }
     void carregar();
     return () => {
       cancelado = true;
     };
-  }, []);
+  }, [tentativa]);
 
   return (
     <DashboardCard className="flex h-[260px] flex-col gap-3 p-5">
       <div className="flex items-center gap-2">
-        <h3 className="text-xs text-foreground/40">Pendências</h3>
+        <h3 className="text-xs font-medium text-foreground/70">Pendências</h3>
         {!loading && itens.length > 0 && (
           <span className="rounded-full bg-brand-yellow/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-brand-yellow">
             {itens.length}
@@ -104,10 +111,26 @@ export function PendenciasPanel() {
             </div>
           ))}
         </div>
+      ) : erro ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-2">
+          <AlertTriangle className="size-5 text-foreground/40" aria-hidden />
+          <p className="text-center text-xs text-foreground/60">
+            Não foi possível carregar as pendências.
+          </p>
+          <button
+            type="button"
+            onClick={() => setTentativa((t) => t + 1)}
+            className="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-foreground/70 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+          >
+            Tentar novamente
+          </button>
+        </div>
       ) : itens.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-1">
-          <CheckSquare className="size-5 text-foreground/20" />
-          <p className="text-center text-xs text-foreground/40">Tudo em dia por aqui.</p>
+          <CheckSquare className="size-5 text-foreground/30" aria-hidden />
+          <p className="text-center text-xs text-foreground/60">
+            Tudo em dia por aqui. Aprovações e tarefas pendentes aparecem nesta lista.
+          </p>
         </div>
       ) : (
         <ul className="flex min-h-0 flex-1 flex-col overflow-auto">
@@ -131,13 +154,13 @@ export function PendenciasPanel() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-medium text-foreground">{item.titulo}</p>
-                    <p className="truncate text-[10px] text-foreground/40">
+                    <p className="truncate text-[11px] text-foreground/60">
                       {info.rotulo}
                       {item.contexto ? ` · ${item.contexto}` : ""}
                     </p>
                   </div>
                   {prazo && (
-                    <span className="shrink-0 text-[11px] font-medium tabular-nums text-foreground/50">
+                    <span className="shrink-0 text-[11px] font-medium tabular-nums text-foreground/60">
                       {prazo}
                     </span>
                   )}

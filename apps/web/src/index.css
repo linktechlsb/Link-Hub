@@ -200,15 +200,6 @@
   animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Subtle radial amber glow at the top of the page in dark mode */
-.dark body {
-  background-image: radial-gradient(
-    ellipse 80% 45% at 50% -5%,
-    rgba(254, 198, 65, 0.04) 0%,
-    transparent 65%
-  );
-}
-
 /* Glass card surface (dark mode) */
 .dark .glass-card {
   background: rgba(255, 255, 255, 0.025);

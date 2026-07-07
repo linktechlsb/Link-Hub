@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { KpiRow, SectionHeader } from "@/components/dashboard-primitives";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { useCachedFetch } from "@/hooks/use-cached-fetch";
-import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
 
-import type { KpiItem } from "@/pages/home/v1/primitives";
+import type { KpiItem } from "@/components/dashboard-primitives";
 import type { Formulario, FormularioStatus, FormularioTipo } from "@link-leagues/types";
 
 const STATUS_LABELS: Record<FormularioStatus, string> = {

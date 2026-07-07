@@ -36,36 +36,43 @@ function rotuloPrazo(dias: number | null): string {
 export function MilestonesPanel() {
   const [milestones, setMilestones] = useState<MilestoneProximo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let cancelado = false;
     async function carregar() {
-      const token = await getToken();
-      if (!token) {
+      setLoading(true);
+      setErro(false);
+      try {
+        const token = await getToken();
+        if (!token) throw new Error("Sessão expirada");
+        const res = await fetch(`/api/milestones/proximos`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error(`Erro ${res.status}`);
+        if (!cancelado) setMilestones(await res.json());
+      } catch {
+        if (!cancelado) setErro(true);
+      } finally {
         if (!cancelado) setLoading(false);
-        return;
       }
-      const res = await fetch(`/api/milestones/proximos`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok && !cancelado) setMilestones(await res.json());
-      if (!cancelado) setLoading(false);
     }
     void carregar();
     return () => {
       cancelado = true;
     };
-  }, []);
+  }, [tentativa]);
 
   return (
     <DashboardCard className="flex h-[260px] flex-col gap-3 p-5">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs text-foreground/40">Próximos marcos</h3>
+        <h3 className="text-xs font-medium text-foreground/70">Próximos marcos</h3>
         <Link
           to="/projetos"
-          className="flex items-center gap-1 text-[11px] text-foreground/40 transition-colors hover:text-foreground"
+          className="flex items-center gap-1 text-[11px] text-foreground/60 transition-colors hover:text-foreground"
         >
-          Ver projetos <ArrowUpRight className="h-3 w-3" />
+          Ver projetos <ArrowUpRight className="h-3 w-3" aria-hidden />
         </Link>
       </div>
 
@@ -85,9 +92,24 @@ export function MilestonesPanel() {
             </div>
           ))}
         </div>
+      ) : erro ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-2">
+          <p className="text-center text-xs text-foreground/60">
+            Não foi possível carregar os marcos.
+          </p>
+          <button
+            type="button"
+            onClick={() => setTentativa((t) => t + 1)}
+            className="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-foreground/70 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+          >
+            Tentar novamente
+          </button>
+        </div>
       ) : milestones.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-center text-xs text-foreground/40">Nenhum marco a vencer.</p>
+        <div className="flex flex-1 items-center justify-center px-4">
+          <p className="text-center text-xs text-foreground/60">
+            Nenhum marco a vencer. Os prazos dos projetos aparecem aqui.
+          </p>
         </div>
       ) : (
         <ul className="flex min-h-0 flex-1 flex-col overflow-auto">
@@ -112,14 +134,14 @@ export function MilestonesPanel() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-medium text-foreground">{m.titulo}</p>
-                    <p className="truncate text-[10px] text-foreground/40">
+                    <p className="truncate text-[11px] text-foreground/60">
                       {m.projeto.titulo} · {m.liga.nome}
                     </p>
                   </div>
                   <span
                     className={cn(
                       "shrink-0 text-[11px] font-medium tabular-nums",
-                      atrasado ? "text-red-600 dark:text-red-300" : "text-foreground/50",
+                      atrasado ? "text-red-600 dark:text-red-300" : "text-foreground/60",
                     )}
                   >
                     {rotuloPrazo(dias)}
