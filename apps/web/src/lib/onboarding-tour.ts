@@ -1,3 +1,6 @@
+import { driver, type Driver, type DriveStep } from "driver.js";
+import "driver.js/dist/driver.css";
+
 export interface PassoTour {
   /** Seletor CSS do elemento a destacar. Ausente = balão centralizado. */
   seletor?: string;
@@ -72,4 +75,63 @@ export function filtrarPassosPresentes(
   raiz: Document | HTMLElement = document,
 ): PassoTour[] {
   return passos.filter((p) => !p.seletor || raiz.querySelector(p.seletor) !== null);
+}
+
+/**
+ * Inicia o tour sobre a interface atual. `aoFinalizar` é chamado uma única
+ * vez quando o usuário conclui, pula ou fecha o tour (Esc / Pular tour).
+ */
+export function iniciarTourPlataforma(aoFinalizar: () => void): void {
+  const passos = filtrarPassosPresentes(PASSOS_TOUR);
+  if (passos.length === 0) {
+    aoFinalizar();
+    return;
+  }
+
+  const reduzMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const steps: DriveStep[] = passos.map((p) => ({
+    element: p.seletor,
+    popover: { title: p.titulo, description: p.descricao },
+  }));
+
+  const instancia: Driver = driver({
+    steps,
+    animate: !reduzMotion,
+    overlayOpacity: 0.45,
+    stagePadding: 4,
+    stageRadius: 6,
+    allowClose: true,
+    popoverClass: "tour-plataforma",
+    progressText: "Passo {{current}} de {{total}}",
+    showProgress: true,
+    nextBtnText: "Próximo",
+    prevBtnText: "Anterior",
+    doneBtnText: "Concluir",
+    onPopoverRender: (popover, { state }) => {
+      // Barra de progresso fina em amarelo (design aprovado no mockup v2)
+      const total = steps.length;
+      const atual = (state.activeIndex ?? 0) + 1;
+      const trilha = document.createElement("div");
+      trilha.className = "tour-progresso";
+      const preenchimento = document.createElement("div");
+      preenchimento.className = "tour-progresso-preenchimento";
+      preenchimento.style.width = `${Math.round((atual / total) * 100)}%`;
+      trilha.appendChild(preenchimento);
+      popover.description.insertAdjacentElement("afterend", trilha);
+
+      // Botão "Pular tour" à esquerda do rodapé
+      const pular = document.createElement("button");
+      pular.type = "button";
+      pular.className = "tour-pular";
+      pular.innerText = "Pular tour";
+      pular.onclick = () => instancia.destroy();
+      popover.footer.prepend(pular);
+    },
+    onDestroyed: () => {
+      aoFinalizar();
+    },
+  });
+
+  instancia.drive();
 }
