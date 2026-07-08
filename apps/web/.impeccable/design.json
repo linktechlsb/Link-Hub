@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 2,
+  "title": "Design System: Link Leagues Platform",
+  "extensions": {
+    "colorMeta": {
+      "navy-institucional": {
+        "role": "primary",
+        "displayName": "Navy Institucional",
+        "canonical": "hsl(219 66% 18%)",
+        "tonalRamp": [
+          "#0a1729",
+          "#10254d",
+          "#10284e",
+          "#224478",
+          "#2c4f85",
+          "#3e649c",
+          "#7993ba",
+          "#c5d1e4"
+        ]
+      },
+      "link-blue": {
+        "role": "secondary",
+        "displayName": "Link Blue",
+        "canonical": "#546484",
+        "tonalRamp": [
+          "#1f2531",
+          "#3d4d6b",
+          "#546484",
+          "#6d7f9e",
+          "#8a9ab5",
+          "#a7b3c8",
+          "#c4cddb",
+          "#e2e6ee"
+        ]
+      },
+      "amarelo-de-servico": {
+        "role": "accent",
+        "displayName": "Amarelo de Serviço",
+        "canonical": "#FEC641",
+        "tonalRamp": [
+          "#4d3600",
+          "#805a00",
+          "#b37e00",
+          "#e6a200",
+          "#fec641",
+          "#fed469",
+          "#fee291",
+          "#fff0c2"
+        ]
+      },
+      "superficie-clara": {
+        "role": "neutral",
+        "displayName": "Superfície Clara",
+        "canonical": "hsl(0 0% 96.1%)",
+        "tonalRamp": [
+          "#0a0a0a",
+          "#404040",
+          "#737373",
+          "#a3a3a3",
+          "#d4d4d4",
+          "#e4e4e4",
+          "#f5f5f5",
+          "#ffffff"
+        ]
+      },
+      "noite-navy": {
+        "role": "neutral",
+        "displayName": "Noite Navy",
+        "canonical": "hsl(220 8% 11%)",
+        "tonalRamp": [
+          "#0d0e10",
+          "#1a1c1f",
+          "#1f2224",
+          "#2b2d31",
+          "#3a3d42",
+          "#54585f",
+          "#7a8087",
+          "#a8adb3"
+        ]
+      },
+      "sucesso": {
+        "role": "success",
+        "displayName": "Sucesso",
+        "canonical": "#10B981",
+        "tonalRamp": [
+          "#02261b",
+          "#065f46",
+          "#059669",
+          "#10b981",
+          "#34d399",
+          "#6ee7b7",
+          "#a7f3d0",
+          "#d1fae5"
+        ]
+      },
+      "info": {
+        "role": "info",
+        "displayName": "Info",
+        "canonical": "#8B5CF6",
+        "tonalRamp": [
+          "#1e0a42",
+          "#4c1d95",
+          "#6d28d9",
+          "#8b5cf6",
+          "#a78bfa",
+          "#c4b5fd",
+          "#ddd6fe",
+          "#ede9fe"
+        ]
+      },
+      "alerta": {
+        "role": "warning",
+        "displayName": "Alerta",
+        "canonical": "#EAB308",
+        "tonalRamp": [
+          "#3d2e04",
+          "#713f12",
+          "#a16207",
+          "#eab308",
+          "#facc15",
+          "#fde047",
+          "#fef08a",
+          "#fef9c3"
+        ]
+      },
+      "erro": {
+        "role": "error",
+        "displayName": "Erro",
+        "canonical": "#EF4444",
+        "tonalRamp": [
+          "#3f0a0a",
+          "#7f1d1d",
+          "#b91c1c",
+          "#ef4444",
+          "#f87171",
+          "#fca5a5",
+          "#fecaca",
+          "#fee2e2"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Título de página, um por tela (\"Olá, {Nome}\")."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Números de destaque — KPIs, posição no ranking; sempre tabular-nums."
+      },
+      "body": { "displayName": "Body", "purpose": "Texto de corpo e células de tabela." },
+      "label": { "displayName": "Label", "purpose": "Labels de KPI, badges, botões pequenos." },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Dados tabulares e contextos monoespaçados pontuais (IBM Plex Mono)."
+      }
+    },
+    "shadows": [
+      {
+        "name": "popover-dropdown",
+        "value": "herdado do shadcn/ui (Radix Popover/DropdownMenu default)",
+        "purpose": "Única exceção documentada ao sistema flat; discreta, nunca decorativa."
+      }
+    ],
+    "motion": [
+      {
+        "name": "theme-transition",
+        "value": "circle 0.45s cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "View transition circular ao alternar entre claro/escuro, a partir do ponto do clique."
+      },
+      {
+        "name": "fade-in-up",
+        "value": "translateY(8px)→0, opacity 0→1, 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Entrada de conteúdo pontual (não coreografia de carregamento de página)."
+      },
+      {
+        "name": "state-transition",
+        "value": "150-250ms ease-out",
+        "purpose": "Hover, focus, mudança de estado em componentes interativos."
+      }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Button Primary",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação primária da tela — fundo tinta, texto invertido.",
+      "html": "<button class=\"ds-btn-primary\">Registrar presença</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 8px 16px; border-radius: 6px; background: #0A0A0A; color: #FFFFFF; font-size: 14px; font-weight: 500; font-family: Inter, ui-sans-serif, sans-serif; border: none; cursor: pointer; transition: background-color 150ms ease-out; } .ds-btn-primary:hover { background: rgba(10,10,10,0.9); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #0A0A0A; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Button Outline",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Ação secundária — borda visível, fundo do tema.",
+      "html": "<button class=\"ds-btn-outline\">Cancelar</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 8px 16px; border-radius: 6px; background: #FFFFFF; color: #0A0A0A; font-size: 14px; font-weight: 500; font-family: Inter, ui-sans-serif, sans-serif; border: 1px solid #E4E4E4; cursor: pointer; transition: background-color 150ms ease-out; } .ds-btn-outline:hover { background: #F0F0F0; } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #0A0A0A; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo de texto padrão — altura 40px, placeholder ≥4.5:1.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Buscar liga...\" />",
+      "css": ".ds-input { height: 40px; width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #E4E4E4; background: #FFFFFF; color: #0A0A0A; font-size: 14px; font-family: Inter, ui-sans-serif, sans-serif; } .ds-input::placeholder { color: #737373; } .ds-input:focus-visible { outline: none; box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #0A0A0A; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "badge-status",
+      "description": "Badge de status semântico — pílula, fundo a 10% de alpha.",
+      "html": "<span class=\"ds-badge-info\">Em andamento</span>",
+      "css": ".ds-badge-info { display: inline-flex; align-items: center; border-radius: 9999px; padding: 2px 10px; font-size: 12px; font-weight: 600; font-family: Inter, ui-sans-serif, sans-serif; background: rgba(139, 92, 246, 0.1); color: #6d28d9; }"
+    },
+    {
+      "name": "Dashboard Card",
+      "kind": "card",
+      "refersTo": "card-dashboard",
+      "description": "Container neutro de painel — separação por tom, não por sombra ou borda (claro).",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Pendências</h3><p class=\"ds-card-body\">3 tarefas aguardando revisão.</p></div>",
+      "css": ".ds-card { background: #F5F5F5; color: #0A0A0A; border-radius: 12px; padding: 20px; border: 1px solid transparent; } .ds-card-title { font-size: 12px; font-weight: 600; color: rgba(10,10,10,0.7); margin: 0 0 8px; } .ds-card-body { font-size: 14px; margin: 0; }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": "sidebar",
+      "description": "Item de navegação da sidebar navy — ativo com fundo sidebar-accent.",
+      "html": "<a class=\"ds-nav-item ds-nav-item-active\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\"/></svg>Dashboard</a>",
+      "css": ".ds-nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 6px; color: rgba(255,255,255,0.7); font-size: 14px; font-family: Inter, ui-sans-serif, sans-serif; text-decoration: none; transition: background-color 150ms ease-out, color 150ms ease-out; } .ds-nav-item:hover { background: rgba(255,255,255,0.08); color: #FFFFFF; } .ds-nav-item-active { background: hsl(219 55% 26%); color: #FFFFFF; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "A Secretaria Impecável",
+    "overview": "Uma secretaria de faculdade de negócios que funciona: tudo tem lugar, nada grita, e quem chega resolve o que veio resolver. A interface é institucional, confiável e organizada — densidade é bem-vinda em tabelas e listas, a ênfase vem de peso e tamanho tipográfico, e a ferramenta desaparece na tarefa. A identidade da marca não se espalha pelo conteúdo: o navy mora na sidebar, o amarelo aparece só onde há informação de estado, e todo o resto é neutro para deixar os dados falarem. Este sistema rejeita explicitamente a estética de rede social e app de consumo: sem excesso de cor, sem emojis na UI, sem streaks chamativos, sem gradientes decorativos, sem cards-métricos gigantes de template SaaS e sem motion coreografado em carregamento de página.",
+    "keyCharacteristics": [
+      "Superfícies de conteúdo 100% neutras; marca concentrada na sidebar (navy) e em destaques pontuais (amarelo)",
+      "Dark e light mode de primeira classe, com os mesmos pisos de contraste (WCAG AA), com transição circular ao alternar tema",
+      "Separação por tom de superfície, não por sombra — sistema flat",
+      "Todo estado existe: skeleton fiel ao conteúdo, vazio que ensina, erro com \"Tentar novamente\"",
+      "Microcopy em português brasileiro, imperativo educado"
+    ],
+    "rules": [
+      {
+        "name": "A Regra do Navy na Sidebar",
+        "body": "O navy #10284E vive na sidebar e em mais lugar nenhum do tema claro. Se um botão, heading ou card do conteúdo aparecer navy, está errado.",
+        "section": "colors"
+      },
+      {
+        "name": "A Regra do Amarelo Cirúrgico",
+        "body": "O amarelo #FEC641 só aparece colado a uma informação de estado (hoje, pendência, sua liga, 1º lugar). Amarelo como decoração é proibido; a única exceção documentada é o gradiente pontual do badge \"Minha\".",
+        "section": "colors"
+      },
+      {
+        "name": "A Regra do Piso /60",
+        "body": "Texto que carrega informação nunca desce de 60% de opacidade do foreground nem de 11px.",
+        "section": "colors"
+      },
+      {
+        "name": "A Regra da Voz Única",
+        "body": "Inter carrega tudo. Não introduza segunda família de display; o font-plex-* existe apenas para dados monoespaçados.",
+        "section": "typography"
+      },
+      {
+        "name": "A Regra Flat",
+        "body": "Nenhuma superfície em repouso tem sombra. Se um card precisa se destacar, o caminho é tom de fundo (claro) ou borda hairline (escuro) — nunca box-shadow decorativo, nunca glassmorphism.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do manter o navy #10284E/#10254D exclusivamente na sidebar do tema claro; no escuro, ele vive como tint (hue 220) dos neutros.",
+      "Do usar o amarelo #FEC641 apenas colado a informação de estado — dia atual, contadores de pendência, \"Sua liga\", 1º lugar.",
+      "Do respeitar os pisos: texto informativo ≥ 60% de opacidade e ≥ 11px; componentes de UI interativos ≥ 3:1 de contraste; corpo ≥ 4.5:1.",
+      "Do entregar os quatro estados de toda tela: skeleton fiel, vazio que ensina, erro com retry, disabled.",
+      "Do usar focus-visible:ring-2 ring-ring em todo interativo e tabular-nums em todo número comparável.",
+      "Do escrever microcopy em PT-BR no imperativo educado e traduzir tudo.",
+      "Do respeitar prefers-reduced-motion em toda animação."
+    ],
+    "donts": [
+      "Don't usar estética de \"rede social / app de consumo\": excesso de cor, emojis na UI, streaks chamativos ou informalidade forçada.",
+      "Don't usar gradientes decorativos, glows de marca no fundo, glassmorphism ou cards-métricos gigantes de template SaaS.",
+      "Don't usar motion coreografado em carregamento de página, nem animate-pulse decorativo perpétuo.",
+      "Don't usar border-left/border-right maior que 1px como faixa colorida de acento.",
+      "Don't remover outline/foco sem substituto visível, nem depender de cor como único canal de informação.",
+      "Don't hardcodar hex fora dos tokens, salvo as exceções documentadas (texto sobre amarelo, gradiente do badge \"Minha\").",
+      "Don't deixar mutação sem feedback: ação otimista sem rollback + toast é bug de design."
+    ]
+  }
+}

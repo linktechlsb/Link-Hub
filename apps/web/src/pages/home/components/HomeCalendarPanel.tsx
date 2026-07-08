@@ -155,7 +155,7 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className="mt-0.5 shrink-0 rounded p-1 text-foreground/30 opacity-0 transition-opacity hover:bg-foreground/[0.06] hover:text-foreground focus:opacity-100 group-hover/ev:opacity-100 data-[state=open]:opacity-100"
+                        className="mt-0.5 shrink-0 rounded p-1 text-foreground/50 opacity-0 transition-opacity hover:bg-foreground/[0.06] hover:text-foreground focus:opacity-100 group-hover/ev:opacity-100 data-[state=open]:opacity-100"
                         aria-label={`Ações para ${evento.titulo}`}
                       >
                         <MoreVertical className="h-3 w-3" />
