@@ -109,6 +109,10 @@ export function iniciarTourPlataforma(aoFinalizar: () => void): void {
     prevBtnText: "Anterior",
     doneBtnText: "Concluir",
     onPopoverRender: (popover, { state }) => {
+      // Contador "Passo X de Y" acima do título, como no design aprovado —
+      // no rodapé ele comprime os demais textos em telas estreitas
+      popover.title.insertAdjacentElement("beforebegin", popover.progress);
+
       // Barra de progresso fina em amarelo (design aprovado no mockup v2)
       const total = steps.length;
       const atual = (state.activeIndex ?? 0) + 1;
@@ -116,7 +120,7 @@ export function iniciarTourPlataforma(aoFinalizar: () => void): void {
       trilha.className = "tour-progresso";
       const preenchimento = document.createElement("div");
       preenchimento.className = "tour-progresso-preenchimento";
-      preenchimento.style.width = `${Math.round((atual / total) * 100)}%`;
+      preenchimento.style.transform = `scaleX(${atual / total})`;
       trilha.appendChild(preenchimento);
       popover.description.insertAdjacentElement("afterend", trilha);
 
