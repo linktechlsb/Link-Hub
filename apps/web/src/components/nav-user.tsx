@@ -17,9 +17,8 @@ import {
 } from "@/components/ui/sidebar";
 import { Switch } from "@/components/ui/switch";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { useLancarTour } from "@/hooks/use-onboarding-tour";
 import { useTheme } from "@/hooks/use-theme";
-import { concluirOnboarding } from "@/lib/conta";
-import { iniciarTourPlataforma } from "@/lib/onboarding-tour";
 import { supabase } from "@/lib/supabase";
 
 import type { UserRole } from "@link-leagues/types";
@@ -40,24 +39,14 @@ const roleLabels: Record<UserRole, string> = {
 };
 
 export function NavUser({ user }: { user: NavUserData }) {
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { isMobile } = useSidebar();
   const navigate = useNavigate();
   const { theme, toggle } = useTheme();
+  const lancarTour = useLancarTour(300);
 
   async function handleLogout() {
     await supabase.auth.signOut();
     navigate("/login");
-  }
-
-  function handleReverTour() {
-    if (isMobile) setOpenMobile(true);
-    // Aguarda o dropdown fechar (e o menu mobile abrir) antes de medir os elementos
-    window.setTimeout(() => {
-      iniciarTourPlataforma(() => {
-        void concluirOnboarding();
-        if (isMobile) setOpenMobile(false);
-      });
-    }, 300);
   }
 
   return (
@@ -146,7 +135,7 @@ export function NavUser({ user }: { user: NavUserData }) {
 
             <DropdownMenuItem
               className="gap-2.5 rounded-lg px-2 py-1.5 text-[13px] cursor-pointer"
-              onClick={handleReverTour}
+              onClick={lancarTour}
             >
               <Compass className="size-3.5 text-muted-foreground" />
               Rever tour da plataforma
