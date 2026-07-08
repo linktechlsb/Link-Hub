@@ -60,7 +60,9 @@ function uploadSingle(field: string) {
 usuariosRouter.get("/me", authenticate, async (req, res, next) => {
   try {
     const [usuario] = await sql`
-      SELECT id, nome, email, role, avatar_url, biografia, instagram, linkedin, semestre FROM usuarios
+      SELECT id, nome, email, role, avatar_url, biografia, instagram, linkedin, semestre,
+             onboarding_concluido_em
+      FROM usuarios
       WHERE email = ${(req as AuthenticatedRequest).user!.email}
       LIMIT 1
     `;
@@ -79,12 +81,13 @@ usuariosRouter.get("/me", authenticate, async (req, res, next) => {
 // PATCH /usuarios/me — atualiza nome e/ou biografia do usuário autenticado
 usuariosRouter.patch("/me", authenticate, async (req, res, next) => {
   try {
-    const { nome, biografia, instagram, linkedin, semestre } = req.body as {
+    const { nome, biografia, instagram, linkedin, semestre, onboarding_concluido } = req.body as {
       nome?: string;
       biografia?: string;
       instagram?: string;
       linkedin?: string;
       semestre?: string;
+      onboarding_concluido?: boolean;
     };
 
     if (textoExcedeLimite(nome, biografia, instagram, linkedin, semestre)) {
@@ -99,9 +102,15 @@ usuariosRouter.patch("/me", authenticate, async (req, res, next) => {
         biografia = COALESCE(${biografia ?? null}, biografia),
         instagram = COALESCE(${instagram ?? null}, instagram),
         linkedin  = COALESCE(${linkedin ?? null}, linkedin),
-        semestre  = COALESCE(${semestre ?? null}, semestre)
+        semestre  = COALESCE(${semestre ?? null}, semestre),
+        onboarding_concluido_em = CASE
+          WHEN ${onboarding_concluido === true} THEN COALESCE(onboarding_concluido_em, NOW())
+          ELSE onboarding_concluido_em
+        END
       WHERE email = ${(req as AuthenticatedRequest).user!.email}
-      RETURNING id, nome, email, role, avatar_url, biografia, instagram, linkedin, semestre    `;
+      RETURNING id, nome, email, role, avatar_url, biografia, instagram, linkedin, semestre,
+                onboarding_concluido_em
+    `;
 
     if (!usuario) {
       res.status(404).json({ error: "Usuário não encontrado." });
