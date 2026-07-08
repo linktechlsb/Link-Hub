@@ -25,6 +25,7 @@ export interface UsuarioMe {
   instagram: string | null;
   linkedin: string | null;
   semestre: string | null;
+  onboarding_concluido_em: string | null;
 }
 
 export async function carregarUsuarioMe(): Promise<UsuarioMe | null> {
@@ -62,6 +63,21 @@ export async function salvarPerfilMe(data: {
     throw new ApiError(res.status, body);
   }
   return res.json() as Promise<UsuarioMe>;
+}
+
+export async function concluirOnboarding(): Promise<void> {
+  const token = await getToken();
+  if (!token) return;
+  await fetch(`/api/usuarios/me`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ onboarding_concluido: true }),
+  }).catch(() => {
+    // Falha silenciosa: o tour reaparece no próximo login, comportamento aceito na spec.
+  });
 }
 
 export interface MinhaLiga {

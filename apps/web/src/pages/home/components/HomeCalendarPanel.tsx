@@ -72,9 +72,9 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
         if (temEventos) setOpen(true);
       }}
       className={cn(
-        "relative flex h-9 w-full flex-col items-center justify-center gap-1 rounded-md text-xs transition-colors focus:outline-none",
+        "relative flex h-9 w-full flex-col items-center justify-center gap-1 rounded-md text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         temEventos ? "cursor-pointer hover:bg-foreground/[0.08]" : "cursor-default",
-        isToday ? "font-bold text-foreground" : "text-foreground/60",
+        isToday ? "font-bold text-foreground" : "text-foreground/70",
       )}
     >
       <span
@@ -87,10 +87,14 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
       </span>
       {cores.length > 0 && (
         <span className="flex items-center gap-0.5">
+          <span className="sr-only">
+            {eventos.length} evento{eventos.length !== 1 ? "s" : ""} neste dia
+          </span>
           {cores.map((cor, i) => (
             <span
               key={i}
-              className="h-1 w-1 animate-pulse rounded-full"
+              aria-hidden
+              className="h-1 w-1 rounded-full"
               style={{ backgroundColor: cor }}
             />
           ))}
@@ -116,7 +120,7 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
               month: "long",
             })}
           </p>
-          <p className="text-[10px] text-foreground/40">
+          <p className="text-[11px] text-foreground/60">
             {eventos.length} evento{eventos.length !== 1 ? "s" : ""}
           </p>
         </div>
@@ -139,11 +143,11 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-medium text-foreground">{evento.titulo}</p>
-                  <p className="truncate text-[10px] text-foreground/50">
+                  <p className="truncate text-[11px] text-foreground/60">
                     {[evento.liga?.nome, ...(evento.ligas_participantes?.map((l) => l.nome) ?? [])]
                       .filter(Boolean)
                       .join(" + ") || "Liga"}
-                    {horario && <span className="ml-1.5 text-foreground/40">· {horario}</span>}
+                    {horario && <span className="ml-1.5 text-foreground/60">· {horario}</span>}
                   </p>
                 </div>
                 {temAcoes && (
@@ -151,7 +155,7 @@ function HomeDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className="mt-0.5 shrink-0 rounded p-1 text-foreground/30 opacity-0 transition-opacity hover:bg-foreground/[0.06] hover:text-foreground focus:opacity-100 group-hover/ev:opacity-100 data-[state=open]:opacity-100"
+                        className="mt-0.5 shrink-0 rounded p-1 text-foreground/50 opacity-0 transition-opacity hover:bg-foreground/[0.06] hover:text-foreground focus:opacity-100 group-hover/ev:opacity-100 data-[state=open]:opacity-100"
                         aria-label={`Ações para ${evento.titulo}`}
                       >
                         <MoreVertical className="h-3 w-3" />
@@ -242,7 +246,7 @@ export function HomeCalendarPanel({
     <DashboardCard className="flex h-[26rem] flex-col gap-4 p-5">
       {/* Header: título + navegação do mês */}
       <div className="flex items-center justify-between">
-        <h3 className="text-xs text-foreground/40">Calendário</h3>
+        <h3 className="text-xs font-medium text-foreground/70">Calendário</h3>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setViewDate(new Date(year, month - 1, 1))}
@@ -283,7 +287,7 @@ export function HomeCalendarPanel({
             nav: "hidden",
             weekdays: "grid grid-cols-7",
             weekday:
-              "text-center text-[10px] font-medium uppercase tracking-wide text-foreground/30 pb-1",
+              "text-center text-[10px] font-medium uppercase tracking-wide text-foreground/50 pb-1",
             week: "grid grid-cols-7",
             day: "p-0",
             today: "",
@@ -305,7 +309,7 @@ export function HomeCalendarPanel({
               className="h-1.5 w-1.5 rounded-full"
               style={{ backgroundColor: CATEGORIA_EVENTO[cat].cor }}
             />
-            <span className="text-[10px] text-foreground/40">{CATEGORIA_EVENTO[cat].label}</span>
+            <span className="text-[11px] text-foreground/60">{CATEGORIA_EVENTO[cat].label}</span>
           </div>
         ))}
       </div>

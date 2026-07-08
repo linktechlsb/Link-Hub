@@ -20,6 +20,7 @@ export default tseslint.config(
       "**/*.d.ts",
       "**/*.tsbuildinfo",
       "apps/web/src/components/ui/**", // shadcn generated
+      "**/skills/impeccable/**", // vendored third-party skill scripts
     ],
   },
 

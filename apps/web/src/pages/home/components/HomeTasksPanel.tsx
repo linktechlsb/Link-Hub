@@ -5,9 +5,10 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpRight, FilterX, ListFilter } from "lucide-react";
+import { AlertCircle, ArrowUpRight, FilterX, ListFilter } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/reui/badge";
 import { DataGrid, DataGridContainer } from "@/components/reui/data-grid/data-grid";
@@ -23,7 +24,7 @@ import { cn } from "@/lib/utils";
 
 import { DashboardCard } from "./DashboardCard";
 
-import type { HomeData } from "../v1/useHomeData";
+import type { HomeData } from "../useHomeData";
 
 /** Linha de tarefa retornada por GET /api/tarefas. */
 interface TarefaRow {
@@ -117,6 +118,8 @@ export function HomeTasksPanel({ data }: { data: HomeData }) {
 
   const [tarefas, setTarefas] = useState<TarefaRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
   const [filters, setFilters] = useState<Filter[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -125,31 +128,68 @@ export function HomeTasksPanel({ data }: { data: HomeData }) {
     let cancelado = false;
     async function carregar() {
       setLoading(true);
-      const token = await getToken();
-      if (!token) {
+      setErro(false);
+      try {
+        const token = await getToken();
+        if (!token) throw new Error("Sessão expirada");
+        const res = await fetch(`/api/tarefas`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) throw new Error(`Erro ${res.status}`);
+        if (!cancelado) setTarefas(await res.json());
+      } catch {
+        if (!cancelado) setErro(true);
+      } finally {
         if (!cancelado) setLoading(false);
-        return;
       }
-      const res = await fetch(`/api/tarefas`, { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok && !cancelado) setTarefas(await res.json());
-      if (!cancelado) setLoading(false);
     }
     void carregar();
     return () => {
       cancelado = true;
     };
-  }, [role]);
+  }, [role, tentativa]);
 
-  const concluirTarefa = useCallback(async (id: string) => {
-    setTarefas((prev) => prev.filter((t) => t.id !== id));
-    const token = await getToken();
-    if (!token) return;
-    await fetch(`/api/tarefas/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ status: "concluida" }),
-    });
+  /** PATCH do status; retorna true se a API confirmou. */
+  const patchStatus = useCallback(async (id: string, status: string): Promise<boolean> => {
+    try {
+      const token = await getToken();
+      if (!token) return false;
+      const res = await fetch(`/api/tarefas/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
   }, []);
+
+  /** Conclusão otimista com rollback em falha e "Desfazer" em sucesso. */
+  const concluirTarefa = useCallback(
+    async (tarefa: TarefaRow) => {
+      setTarefas((prev) => prev.filter((t) => t.id !== tarefa.id));
+      const restaurar = () =>
+        setTarefas((prev) => (prev.some((t) => t.id === tarefa.id) ? prev : [tarefa, ...prev]));
+
+      const ok = await patchStatus(tarefa.id, "concluida");
+      if (!ok) {
+        restaurar();
+        toast.error("Não foi possível concluir a tarefa. Tente novamente.");
+        return;
+      }
+      toast.success("Tarefa concluída.", {
+        action: {
+          label: "Desfazer",
+          onClick: () => {
+            void patchStatus(tarefa.id, tarefa.status).then((revertido) => {
+              if (revertido) restaurar();
+              else toast.error("Não foi possível desfazer a conclusão.");
+            });
+          },
+        },
+      });
+    },
+    [patchStatus],
+  );
 
   // Escopo por papel + filtros do reui
   const baseData = useMemo(
@@ -201,7 +241,7 @@ export function HomeTasksPanel({ data }: { data: HomeData }) {
         header: () => null,
         cell: ({ row }) => (
           <Checkbox
-            onCheckedChange={() => void concluirTarefa(row.original.id)}
+            onCheckedChange={() => void concluirTarefa(row.original)}
             aria-label={`Concluir ${row.original.titulo}`}
             className="data-[state=checked]:border-emerald-400 data-[state=checked]:bg-emerald-400 data-[state=checked]:text-background"
           />
@@ -326,7 +366,9 @@ export function HomeTasksPanel({ data }: { data: HomeData }) {
     <DashboardCard className="flex h-[26rem] flex-col gap-3 p-5">
       {/* Header: título + botão de filtro (canto superior direito) */}
       <div className="flex shrink-0 items-center justify-between gap-2">
-        <h3 className="text-xs text-foreground/40">{ehPessoal ? "Minhas tarefas" : "Tarefas"}</h3>
+        <h3 className="text-xs font-medium text-foreground/70">
+          {ehPessoal ? "Minhas tarefas" : "Tarefas"}
+        </h3>
         <div className="flex items-center gap-2">
           {filtrosAtivos(filters).length > 0 && (
             <Button variant="outline" size="sm" onClick={() => setFilters([])}>
@@ -349,29 +391,41 @@ export function HomeTasksPanel({ data }: { data: HomeData }) {
         </div>
       </div>
 
-      {/* Data grid */}
-      <DataGrid
-        table={table}
-        isLoading={loading}
-        loadingMode="skeleton"
-        recordCount={filteredData.length}
-        emptyMessage={ehPessoal ? "Nenhuma tarefa pendente." : "Nenhuma tarefa."}
-        tableLayout={{ dense: true }}
-      >
-        <DataGridContainer className="min-h-0 flex-1 border-border">
-          <div className="h-full overflow-auto">
-            <DataGridTable />
-          </div>
-        </DataGridContainer>
-      </DataGrid>
+      {/* Data grid / estado de erro */}
+      {erro ? (
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2">
+          <AlertCircle className="size-5 text-foreground/40" aria-hidden />
+          <p className="text-center text-xs text-foreground/60">
+            Não foi possível carregar as tarefas.
+          </p>
+          <Button variant="outline" size="sm" onClick={() => setTentativa((t) => t + 1)}>
+            Tentar novamente
+          </Button>
+        </div>
+      ) : (
+        <DataGrid
+          table={table}
+          isLoading={loading}
+          loadingMode="skeleton"
+          recordCount={filteredData.length}
+          emptyMessage={ehPessoal ? "Nenhuma tarefa pendente." : "Nenhuma tarefa."}
+          tableLayout={{ dense: true }}
+        >
+          <DataGridContainer className="min-h-0 flex-1 border-border">
+            <div className="h-full overflow-auto">
+              <DataGridTable />
+            </div>
+          </DataGridContainer>
+        </DataGrid>
+      )}
 
       {/* Rodapé: "Ver todas" no canto inferior direito */}
       <div className="flex shrink-0 justify-end pt-1">
         <Link
           to="/tarefas"
-          className="flex items-center gap-1 text-[11px] text-foreground/40 transition-colors hover:text-foreground"
+          className="flex items-center gap-1 text-[11px] text-foreground/60 transition-colors hover:text-foreground"
         >
-          Ver todas <ArrowUpRight className="h-3 w-3" />
+          Ver todas <ArrowUpRight className="h-3 w-3" aria-hidden />
         </Link>
       </div>
     </DashboardCard>

@@ -18,6 +18,7 @@ export type NavMainItem = {
   title: string;
   url: string;
   icon: LucideIcon;
+  tourId?: string;
   disabled?: boolean;
   children?: { title: string; url: string; roles?: string[] }[];
 };
@@ -37,6 +38,7 @@ export function NavMain({ items, label }: { items: NavMainItem[]; label?: string
                   tooltip={item.title}
                   disabled
                   className="opacity-40 cursor-not-allowed"
+                  data-tour={item.tourId}
                 >
                   <item.icon />
                   <span>{item.title}</span>
@@ -63,7 +65,11 @@ export function NavMain({ items, label }: { items: NavMainItem[]; label?: string
             <SidebarMenuItem key={item.title}>
               <NavLink to={item.url}>
                 {({ isActive }) => (
-                  <SidebarMenuButton tooltip={item.title} isActive={isActive}>
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    isActive={isActive}
+                    data-tour={item.tourId}
+                  >
                     <item.icon />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
@@ -94,7 +100,7 @@ function NavItemWithChildren({
         <CollapsibleTrigger asChild>
           <NavLink to={item.url} onClick={() => setOpen(true)}>
             {({ isActive }) => (
-              <SidebarMenuButton tooltip={item.title} isActive={isActive}>
+              <SidebarMenuButton tooltip={item.title} isActive={isActive} data-tour={item.tourId}>
                 <item.icon />
                 <span>{item.title}</span>
                 <ChevronRight

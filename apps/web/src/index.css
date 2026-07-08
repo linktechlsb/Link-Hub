@@ -88,41 +88,43 @@
   }
 
   .dark {
-    --background: 0 0% 11%; /* #1C1C1C */
+    /* Neutros com tint navy (hue 220, croma baixo): o tema escuro carrega a
+       marca sem ler como "azul" — decisão aprovada em revisão de design */
+    --background: 220 8% 11%; /* ≈ #1A1D1F */
     --foreground: 0 0% 100%;
 
-    --card: 0 0% 13%; /* #212121 */
+    --card: 220 7% 13%; /* ≈ #1F2224 */
     --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 13%; /* #212121 */
+    --popover: 220 7% 13%;
     --popover-foreground: 0 0% 100%;
 
     --primary: 0 0% 100%;
     --primary-foreground: 0 0% 4%;
 
-    --secondary: 0 0% 18%;
+    --secondary: 220 6% 18%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 18%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 220 6% 18%;
+    --muted-foreground: 220 5% 65%;
 
-    --accent: 0 0% 18%;
+    --accent: 220 6% 18%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: var(--color-red-600);
 
-    --border: 0 0% 14.9%; /* #262626 */
-    --input: 0 0% 14.9%; /* #262626 */
+    --border: 220 6% 18%; /* visível sobre o card (14.9% era imperceptível) */
+    --input: 220 6% 18%;
     --ring: 0 0% 100%;
 
-    --sidebar-background: 0 0% 11.4%; /* #1D1D1D */
+    --sidebar-background: 220 10% 12%; /* tint navy um passo mais presente que o conteúdo */
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
     --sidebar-primary-foreground: 0 0% 4%;
-    --sidebar-accent: 0 0% 18%; /* nav ativo bg */
+    --sidebar-accent: 220 6% 18%; /* nav ativo bg */
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 14.9%; /* #262626 */
+    --sidebar-border: 220 6% 18%;
     --sidebar-ring: 0 0% 100%;
     --success: var(--color-emerald-500);
     --success-foreground: var(--color-emerald-600);
@@ -200,15 +202,6 @@
   animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Subtle radial amber glow at the top of the page in dark mode */
-.dark body {
-  background-image: radial-gradient(
-    ellipse 80% 45% at 50% -5%,
-    rgba(254, 198, 65, 0.04) 0%,
-    transparent 65%
-  );
-}
-
 /* Glass card surface (dark mode) */
 .dark .glass-card {
   background: rgba(255, 255, 255, 0.025);
@@ -229,13 +222,14 @@
 
 /* ── Sidebar: active item (dark mode) ──────────── */
 .dark [data-sidebar="menu-button"][data-active="true"] {
-  background: #212121;
+  background: hsl(var(--card));
 }
 
 /* ── Sidebar group label refinement ────────────────────────── */
 /* Apenas cor e tipografia — sem alterar padding/height (mantém igual ao light mode) */
 .dark [data-sidebar="group-label"] {
-  color: rgba(255, 255, 255, 0.22);
+  /* 0.5 ≈ 5:1 sobre #1D1D1D — 0.22 ficava em 2:1, abaixo do AA */
+  color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.6rem;
@@ -310,10 +304,17 @@
   color: hsl(0 0% 100% / 0.6);
 }
 
-/* Cards sem borda (light mode) */
+/* Cards sem borda (light mode) — no light a separação vem do bg #F5F5F5 sobre #FFF */
 .rounded-lg.border.bg-card,
 .rounded-xl.border.bg-card {
   border-color: transparent;
+}
+
+/* No dark a regra acima apagava a única separação de superfície
+   (card #212121 sobre bg #1C1C1C ≈ 1.06:1) — restaura a borda hairline */
+.dark .rounded-lg.border.bg-card,
+.dark .rounded-xl.border.bg-card {
+  border-color: hsl(var(--border));
 }
 
 @layer components {
@@ -434,4 +435,134 @@
     --shine: 200% 200%;
     --shadow: 0.5rem 0.5rem;
   }
+}
+
+/* ===== Tour de onboarding (driver.js) ===== */
+.driver-popover.tour-plataforma {
+  background: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  padding: 16px;
+  max-width: 300px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  font-family: inherit;
+}
+
+.dark .driver-popover.tour-plataforma {
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.35);
+}
+
+.driver-popover.tour-plataforma .driver-popover-title {
+  color: hsl(var(--foreground));
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.driver-popover.tour-plataforma .driver-popover-description {
+  color: hsl(var(--foreground));
+  font-size: 14px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.driver-popover.tour-plataforma .driver-popover-progress-text {
+  display: block;
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  margin-bottom: 6px;
+}
+
+.driver-popover.tour-plataforma .tour-progresso {
+  height: 3px;
+  border-radius: 9999px;
+  background: hsl(var(--border));
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.driver-popover.tour-plataforma .tour-progresso-preenchimento {
+  height: 100%;
+  width: 100%;
+  border-radius: 9999px;
+  background: #fec641;
+  transform-origin: left;
+  transition: transform 200ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .driver-popover.tour-plataforma .tour-progresso-preenchimento {
+    transition: none;
+  }
+}
+
+.driver-popover.tour-plataforma .driver-popover-footer {
+  margin-top: 12px;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.driver-popover.tour-plataforma .tour-pular {
+  margin-right: auto;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.driver-popover.tour-plataforma .tour-pular:hover {
+  color: hsl(var(--foreground));
+}
+
+.driver-popover.tour-plataforma .driver-popover-footer button:not(.tour-pular) {
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 14px;
+  text-shadow: none;
+  white-space: nowrap;
+  transition: background-color 150ms ease-out;
+}
+
+.driver-popover.tour-plataforma .driver-popover-prev-btn {
+  background: transparent;
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+
+.driver-popover.tour-plataforma .driver-popover-next-btn {
+  background: hsl(var(--primary));
+  border: none;
+  color: hsl(var(--primary-foreground));
+}
+
+.driver-popover.tour-plataforma .driver-popover-next-btn:hover {
+  background: hsl(var(--primary) / 0.9);
+}
+
+/* Anel amarelo no elemento destacado */
+.driver-active-element {
+  box-shadow: 0 0 0 2px #fec641 !important;
+  border-radius: 6px;
+}
+
+/* Setinha do popover acompanha o fundo do tema */
+.driver-popover.tour-plataforma .driver-popover-arrow-side-left.driver-popover-arrow {
+  border-left-color: hsl(var(--popover));
+}
+.driver-popover.tour-plataforma .driver-popover-arrow-side-right.driver-popover-arrow {
+  border-right-color: hsl(var(--popover));
+}
+.driver-popover.tour-plataforma .driver-popover-arrow-side-top.driver-popover-arrow {
+  border-top-color: hsl(var(--popover));
+}
+.driver-popover.tour-plataforma .driver-popover-arrow-side-bottom.driver-popover-arrow {
+  border-bottom-color: hsl(var(--popover));
 }

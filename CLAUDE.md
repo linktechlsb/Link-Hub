@@ -70,21 +70,23 @@ A API usa `tsx watch` em dev (hot reload). O frontend usa Vite com HMR.
 
 ### Cores da Marca
 
-| Token     | Hex       | Classe Tailwind                       | Uso                                             |
-| --------- | --------- | ------------------------------------- | ----------------------------------------------- |
-| Navy      | `#10284E` | `bg-navy` / `text-navy`               | Principal — sidebar, botões primários, headings |
-| Link Blue | `#546484` | `bg-link-blue` / `text-link-blue`     | Secundário — elementos de suporte               |
-| Amarelo   | `#FEC641` | `bg-brand-yellow`                     | Apoio — destaques, alertas, badges              |
-| Cinza     | `#EAEAEA` | `bg-brand-gray` / `border-brand-gray` | Neutro — bordas, fundos suaves                  |
+| Token     | Hex       | Classe Tailwind                       | Uso                                                        |
+| --------- | --------- | ------------------------------------- | ---------------------------------------------------------- |
+| Navy      | `#10284E` | `bg-navy` / `text-navy`               | Identidade — sidebar (light) e tint sutil dos neutros dark |
+| Link Blue | `#546484` | `bg-link-blue` / `text-link-blue`     | Secundário — elementos de suporte                          |
+| Amarelo   | `#FEC641` | `bg-brand-yellow`                     | Único acento de marca no conteúdo — destaques, badges      |
+| Cinza     | `#EAEAEA` | `bg-brand-gray` / `border-brand-gray` | Neutro — bordas, fundos suaves                             |
 
 Navy tem escala completa (`navy-50` a `navy-900`). Link Blue tem variantes `link-blue-light` e `link-blue-dark`.
 
-Os tokens semânticos do shadcn/ui mapeiam para a marca:
+**Estratégia de cor (decisão de 2026-07-07): navy fica na sidebar.** As superfícies de conteúdo são neutras (croma zero no light; neutros com ~1% de croma na direção do navy no dark), e o amarelo é o único acento de marca no conteúdo — usado cirurgicamente (dia atual, contadores, badge "sua liga"), nunca como decoração. Não remapeie `primary` para navy: os tokens semânticos são neutros de propósito.
 
-- `primary` → navy (`#10284E`)
-- `secondary` → link-blue (`#546484`)
-- `accent` → brand-yellow (`#FEC641`)
-- `muted` / `border` → brand-gray (`#EAEAEA`)
+Os tokens semânticos do shadcn/ui (ver `apps/web/src/index.css`):
+
+- `primary` → neutro de alto contraste (preto no light, branco no dark) — ações primárias
+- `secondary` / `muted` / `accent` → neutros de superfície
+- `sidebar-*` → navy (`#10284E`) no light; neutro escuro tintado de navy no dark
+- Amarelo, cores de status e categorias entram por classes/tokens dedicados, não via `primary`
 
 ### Tipografia
 
@@ -100,7 +102,7 @@ Toda página dentro do `AppLayout` segue:
 ```tsx
 <div className="p-8">
   <div className="mb-6">
-    <h1 className="font-display font-bold text-2xl text-navy">Título da Página</h1>
+    <h1 className="font-display font-bold text-2xl text-foreground">Título da Página</h1>
     <p className="text-muted-foreground text-sm mt-1">Subtítulo</p>
   </div>
   {/* conteúdo da página */}

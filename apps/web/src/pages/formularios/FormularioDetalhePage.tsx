@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
+import { KpiRow, SectionHeader } from "@/components/dashboard-primitives";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,9 +22,8 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
-import { KpiRow, SectionHeader } from "@/pages/home/v1/primitives";
 
-import type { KpiItem } from "@/pages/home/v1/primitives";
+import type { KpiItem } from "@/components/dashboard-primitives";
 import type {
   FormularioComCampos,
   FormularioResposta,

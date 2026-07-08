@@ -1,0 +1,79 @@
+<h2>Qual formato de onboarding faz mais sentido?</h2>
+<p class="subtitle">Três jeitos comuns de apresentar o que cada página da plataforma faz</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Modal de boas-vindas com cards navegáveis</h3>
+      <p>Ao entrar pela primeira vez, abre um dialog com uma sequência de cards (um por página: Home, Ligas, Projetos, Tarefas...). O usuário navega com "Próximo/Anterior" e pode pular. Reaparece só se o usuário pedir.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-body">
+          <div style="background:rgba(0,0,0,.25);padding:24px;border-radius:8px;display:flex;justify-content:center">
+            <div style="background:#fff;color:#10284E;border-radius:12px;padding:20px;width:280px;text-align:center">
+              <div style="font-size:24px">📁</div>
+              <strong>Projetos</strong>
+              <p style="font-size:12px;color:#546484;margin:6px 0">Acompanhe os projetos da sua liga, com status e entregas.</p>
+              <div style="display:flex;justify-content:center;gap:4px;margin:8px 0">
+                <span style="width:6px;height:6px;border-radius:50%;background:#EAEAEA;display:inline-block"></span>
+                <span style="width:6px;height:6px;border-radius:50%;background:#10284E;display:inline-block"></span>
+                <span style="width:6px;height:6px;border-radius:50%;background:#EAEAEA;display:inline-block"></span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11px">
+                <span style="color:#546484">Pular</span>
+                <span style="background:#10284E;color:#fff;padding:4px 10px;border-radius:6px">Próximo →</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Página "Guia da Plataforma" com grade de cards</h3>
+      <p>Uma rota fixa (ex.: /guia) com todos os cards visíveis de uma vez em uma grade — cada card explica uma página e tem um botão "Ir para lá". Sempre acessível pela sidebar, serve de referência permanente.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-body">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div style="background:#fff;border:1px solid #EAEAEA;border-radius:8px;padding:10px;color:#10284E"><div>🏠</div><strong style="font-size:12px">Home</strong><p style="font-size:10px;color:#546484;margin:2px 0">Visão geral do seu dia</p></div>
+            <div style="background:#fff;border:1px solid #EAEAEA;border-radius:8px;padding:10px;color:#10284E"><div>👥</div><strong style="font-size:12px">Ligas</strong><p style="font-size:10px;color:#546484;margin:2px 0">Conheça e gerencie as ligas</p></div>
+            <div style="background:#fff;border:1px solid #EAEAEA;border-radius:8px;padding:10px;color:#10284E"><div>📁</div><strong style="font-size:12px">Projetos</strong><p style="font-size:10px;color:#546484;margin:2px 0">Status e entregas</p></div>
+            <div style="background:#fff;border:1px solid #EAEAEA;border-radius:8px;padding:10px;color:#10284E"><div>✅</div><strong style="font-size:12px">Tarefas</strong><p style="font-size:10px;color:#546484;margin:2px 0">Suas pendências</p></div>
+            <div style="background:#fff;border:1px solid #EAEAEA;border-radius:8px;padding:10px;color:#10284E"><div>📅</div><strong style="font-size:12px">Eventos</strong><p style="font-size:10px;color:#546484;margin:2px 0">Calendário e encontros</p></div>
+            <div style="background:#fff;border:1px solid #EAEAEA;border-radius:8px;padding:10px;color:#10284E"><div>🏆</div><strong style="font-size:12px">Ranking</strong><p style="font-size:10px;color:#546484;margin:2px 0">Pontuação das ligas</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Tour guiado sobre a interface real (spotlight)</h3>
+      <p>Balões/tooltips que destacam cada item da sidebar na interface real, passo a passo ("Aqui você vê seus projetos →"). Mais imersivo, porém mais complexo de implementar e manter quando a navegação muda.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-body">
+          <div style="display:flex;gap:8px">
+            <div style="background:#10284E;border-radius:8px;padding:10px;width:110px;font-size:11px;color:#8fa3c4">
+              <div style="padding:4px">Home</div>
+              <div style="background:#FEC641;color:#10284E;border-radius:4px;padding:4px;font-weight:bold">Projetos</div>
+              <div style="padding:4px">Tarefas</div>
+              <div style="padding:4px">Mural</div>
+            </div>
+            <div style="position:relative;flex:1">
+              <div style="background:#fff;border:1px solid #EAEAEA;border-radius:8px;padding:10px;font-size:11px;color:#10284E;width:200px">
+                <strong>Passo 3 de 8</strong>
+                <p style="font-size:10px;color:#546484;margin:4px 0">Em Projetos você acompanha as entregas da sua liga.</p>
+                <span style="background:#10284E;color:#fff;padding:2px 8px;border-radius:4px;font-size:10px">Próximo</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 import type { KpiItem } from "./KpiStrip";
-import type { HomeData } from "../v1/useHomeData";
+import type { HomeData } from "../useHomeData";
 import type { Tarefa } from "@link-leagues/types";
 
 interface UseHomeKpisResult {

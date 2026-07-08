@@ -7,6 +7,7 @@ export interface Usuario {
   role: UserRole;
   avatar_url?: string;
   biografia?: string;
+  onboarding_concluido_em?: string | null;
   criado_em: string;
   atualizado_em: string;
 }
