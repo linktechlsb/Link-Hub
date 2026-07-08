@@ -1,4 +1,4 @@
-import { ChevronsUpDown, HelpCircle, LogOut, Moon, UserRound } from "lucide-react";
+import { ChevronsUpDown, Compass, HelpCircle, LogOut, Moon, UserRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Switch } from "@/components/ui/switch";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { useLancarTour } from "@/hooks/use-onboarding-tour";
 import { useTheme } from "@/hooks/use-theme";
 import { supabase } from "@/lib/supabase";
 
@@ -41,6 +42,7 @@ export function NavUser({ user }: { user: NavUserData }) {
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
   const { theme, toggle } = useTheme();
+  const lancarTour = useLancarTour(300);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -129,6 +131,14 @@ export function NavUser({ user }: { user: NavUserData }) {
             >
               <HelpCircle className="size-3.5 text-muted-foreground" />
               Ajuda
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              className="gap-2.5 rounded-lg px-2 py-1.5 text-[13px] cursor-pointer"
+              onClick={lancarTour}
+            >
+              <Compass className="size-3.5 text-muted-foreground" />
+              Rever tour da plataforma
             </DropdownMenuItem>
 
             <DropdownMenuSeparator className="my-0.5" />

@@ -5,6 +5,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CommandMenu } from "@/components/command-menu";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
+import { OnboardingTourLauncher } from "@/components/onboarding-tour-launcher";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useClickTracking } from "@/hooks/use-click-tracking";
@@ -27,6 +28,7 @@ export function AppLayout() {
 
   return (
     <SidebarProvider>
+      <OnboardingTourLauncher />
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 px-4">

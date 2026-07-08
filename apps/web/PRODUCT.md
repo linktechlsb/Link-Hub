@@ -30,7 +30,7 @@ Sistema centralizado de gestão das ligas acadêmicas da Link. Substitui planilh
 ## Design Principles
 
 1. **A ferramenta desaparece na tarefa** — familiaridade conquistada; padrões que aluno e coordenador reconhecem sem aprender.
-2. **Navy comanda, amarelo pontua** — o navy `#10284E` carrega identidade (sidebar, ações primárias, headings); o amarelo `#FEC641` é destaque cirúrgico (estados, badges, alertas), nunca decoração.
+2. **Navy na moldura, amarelo no conteúdo** — o navy `#10284E` carrega identidade pela sidebar (light) e por um tint sutil (~1% de croma) nos neutros do dark mode; as superfícies de conteúdo são neutras e o amarelo `#FEC641` é o único acento de marca nelas — destaque cirúrgico (estados, badges, contadores), nunca decoração. Decisão de 2026-07-07: não remapear `primary` para navy.
 3. **Hierarquia pela informação, não pelo ornamento** — densidade é bem-vinda em tabelas e listas; ênfase vem de peso e tamanho tipográfico, não de cor extra.
 4. **Todo estado existe** — loading (skeleton), vazio (que ensina), erro (que orienta), desabilitado. Nenhuma tela ganha só o caminho feliz.
 5. **Consistência entre módulos** — são ~19 módulos; o mesmo vocabulário de componentes (botões, formulários, tabelas, ícones Lucide) em todos. Se dois "salvar" diferem, um está errado.

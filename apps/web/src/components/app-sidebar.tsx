@@ -30,14 +30,15 @@ import { useUser } from "@/hooks/use-user";
 import { supabase } from "@/lib/supabase";
 
 const mainNav: NavMainItem[] = [
-  { title: "Home", url: "/home", icon: Home },
-  { title: "Ligas", url: "/ligas", icon: Users },
-  { title: "Projetos", url: "/projetos", icon: FolderKanban },
-  { title: "Tarefas", url: "/tarefas", icon: ListTodo },
+  { title: "Home", url: "/home", icon: Home, tourId: "home" },
+  { title: "Ligas", url: "/ligas", icon: Users, tourId: "ligas" },
+  { title: "Projetos", url: "/projetos", icon: FolderKanban, tourId: "projetos" },
+  { title: "Tarefas", url: "/tarefas", icon: ListTodo, tourId: "tarefas" },
   {
     title: "Eventos",
     url: "/calendario",
     icon: Calendar,
+    tourId: "eventos",
     children: [
       { title: "Calendário", url: "/calendario" },
       {
@@ -49,8 +50,8 @@ const mainNav: NavMainItem[] = [
       { title: "Guia", url: "/calendario/guia" },
     ],
   },
-  { title: "Mural", url: "/mural", icon: MessageSquare },
-  { title: "Ranking", url: "/ranking", icon: Trophy },
+  { title: "Mural", url: "/mural", icon: MessageSquare, tourId: "mural" },
+  { title: "Ranking", url: "/ranking", icon: Trophy, tourId: "ranking" },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -105,7 +106,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const manageNav: NavMainItem[] = [];
   if (isStaff) {
-    manageNav.push({ title: "Super Admin", url: "/super-admin", icon: ShieldCheck });
+    manageNav.push({
+      title: "Super Admin",
+      url: "/super-admin",
+      icon: ShieldCheck,
+      tourId: "super-admin",
+    });
   }
   if (canManage) {
     manageNav.push({
@@ -114,10 +120,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: ClipboardList,
       disabled: true,
     });
-    manageNav.push({ title: "Gerenciamento", url: "/gerenciamento", icon: Settings });
+    manageNav.push({
+      title: "Gerenciamento",
+      url: "/gerenciamento",
+      icon: Settings,
+      tourId: "gerenciamento",
+    });
   }
   if (podeVerDados) {
-    manageNav.push({ title: "Dados", url: "/dados", icon: BarChart3 });
+    manageNav.push({ title: "Dados", url: "/dados", icon: BarChart3, tourId: "dados" });
   }
 
   return (
